@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "ganache-cli": "^6.12.2",
+    "solidity-coverage": "^0.7.17",
     "truffle": "^5.4.26"
   }
 }
