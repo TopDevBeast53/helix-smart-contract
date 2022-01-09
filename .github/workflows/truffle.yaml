@@ -19,7 +19,11 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: '14'
+    
     - name: Show NodeJS version    
+      run: node -v
+      
+    - name: Show Npm version    
       run: npm --version
     
     - name: Install Truffle
@@ -27,9 +31,15 @@ jobs:
     
     - name: Install Truffle Dependencies
       run: npm install      
-    
-    - name: Run Truffle Test
-      run: truffle test
+   
+#     - name: Increase memory allocation
+#       run: export NODE_OPTIONS="--max-old-space-size=8192"
+      
+#     - name: check memory allocation
+#       run: node -e 'console.log(v8.getHeapStatistics().heap_size_limit/(1024*1024))'
+   
+#     - name: Run Truffle Test
+#       run: truffle test --max-old-space-size=8192
     
     - name: Run Test Coverage
       run: truffle run coverage

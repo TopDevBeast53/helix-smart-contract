@@ -1,10 +1,14 @@
 {
   "devDependencies": {
+    "@openzeppelin/test-helpers": "^0.5.15",
+    "chai": "^4.3.4",
+    "chai-as-promised": "^7.1.1",
     "ganache-cli": "^6.12.2",
     "solidity-coverage": "^0.7.17",
     "truffle": "^5.4.26"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "^4.0.0",
     "@rari-capital/solmate": "^6.2.0"
   }
 }
