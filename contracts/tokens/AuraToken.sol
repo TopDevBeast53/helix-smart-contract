@@ -1,11 +1,11 @@
 //SPDX-License-Identifier:MIT
 pragma solidity >=0.8.0;
 
-import "./libs/BEP20.sol";
+import "../libs/BEP20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // Geometry token with Governance.
-contract GXOToken is BEP20("Geometry", "GXO") {
+contract GXOToken is BEP20("Aura", "AURA") {
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private _minters;
 
