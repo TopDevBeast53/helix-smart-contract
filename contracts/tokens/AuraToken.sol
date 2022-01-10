@@ -5,7 +5,7 @@ import "../libs/BEP20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // Geometry token with Governance.
-contract GXOToken is BEP20("Aura", "AURA") {
+contract AuraToken is BEP20("Aura", "AURA") {
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private _minters;
 
