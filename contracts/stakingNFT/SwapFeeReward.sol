@@ -54,6 +54,19 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
         require(a != b, "Addresses are identical.");
         (c, d) = (a < b) ? (a, b) : (b, a);
         require(c != address(0), "The 0 address is invalid.");
-    }    
+    }
 
+    /**
+     * @return the pair of addresses `a` and `b` as a single hashed address.
+     */
+    function hashPair(address a, address b) public view returns(address hashed) {
+        // Sort first to establish consistency across calls since hashing (a, b) != (b, a).
+        (address c, address d) = sortAddresses(a, b);
+        hashed = address(uint(keccak256(abi.encodePacked(
+                hex"ff",
+                factory,
+                keccack256(abi.encodePacked(c, d)),
+                CODE_HASH
+            ))));
+    }
 }
