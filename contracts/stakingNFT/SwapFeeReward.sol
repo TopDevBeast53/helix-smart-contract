@@ -47,6 +47,13 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
         targetAuraNFT = _targetAuraNFT;
     }
 
-        
+    /**
+     * @return the addresses `a` and `b` sorted in ascending order.
+     */
+    function sortAddresses(address a, address b) public pure returns(address c, address d) {
+        require(a != b, "Addresses are identical.");
+        (c, d) = (a < b) ? (a, b) : (b, a);
+        require(c != address(0), "The 0 address is invalid.");
+    }    
 
 }
