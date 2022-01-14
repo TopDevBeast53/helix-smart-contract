@@ -69,4 +69,11 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
                 CODE_HASH
             ))));
     }
+
+    /**
+     * @return the fee incurred for swapping tokens `a` and `b`.
+     */
+    function getSwapFee(address a, address b) internal view returns(uint swapFee) {
+        swapFee = uint(1000) - (ISwapPair(hashPair(a, b).swapfee());
+    }
 }
