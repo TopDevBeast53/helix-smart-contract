@@ -11,5 +11,42 @@ interface IAuraToken {}
 interface IAuraNFT {}
 
 contract SwapFeeReward is Ownable, ReentrancyGuard {
+    address factory;
+    address router;
+    bytes CODE_HASH;
+    IAuraToken auraToken;
+    IAuraNFT auraNFT;
+    // TODO - Add an oracle 
+    address targetToken;
+    address targetAuraNFT;
+
+    constructor(
+        address _factory,
+        address _router, 
+        bytes _CODE_HASH,
+        IAuraToken _auraToken,
+        IAuraNFT _auraNFT,
+        // TODO - Add an oracle 
+        address _targetToken,
+        address _targetAuraNFT
+    ) public {
+        require(
+            _factory != address(0)
+            && _router != address(0)
+            && _targetToken != address(0)
+            && _targetAuraNFT != address(0),
+            "Address cannot be zero."
+        );
+        factory = _factory,
+        router = _router,
+        CODE_HASH = _CODE_HASH,
+        auraToken = _auraToken,
+        auraNFT = _auraNFT;
+        // TODO - assign oracle
+        targetToken = _targetToken;
+        targetAuraNFT = _targetAuraNFT;
+    }
+
+        
 
 }
