@@ -54,18 +54,18 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
      * @return c the smaller of the two token addresses.
      * @return d the larger of the two token addresses. 
      */
-    function sortAddresses(address a, address b) public pure returns(address c, address d) {
+    function sortTokens(address a, address b) public pure returns(address c, address d) {
         require(a != b, "Addresses are identical.");
         (c, d) = (a < b) ? (a, b) : (b, a);
         require(c != address(0), "The 0 address is invalid.");
     }
 
     /**
-     * @return hashed the pair of addresses `a` and `b` as a single hashed address.
+     * @return hashed pair of addresses `a` and `b` and other data into a single address.
      */
     function hashPair(address a, address b) public view returns(address hashed) {
         // Sort first to establish consistency across calls since hashing (a, b) != (b, a).
-        (address c, address d) = sortAddresses(a, b);
+        (address c, address d) = sortTokens(a, b);
         // TODO - confirm that converting from uint256 -> uint160 -> address results in acceptable behavior.
         //        It's a work-around since uint256 -> address is not permitted. 
         //        It should be fine as long as the address isn't supposed to point at an 
@@ -79,7 +79,7 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @return swapFee the fee incurred for swapping tokens `a` and `b`.
+     * @return swapFee incurred for swapping tokens `a` and `b`.
      */
     function getSwapFee(address a, address b) internal view returns(uint swapFee) {
         swapFee = uint(1000) - ISwapPair(hashPair(a, b)).swapFee();
