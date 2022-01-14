@@ -11,6 +11,15 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
     address targetToken;
     address targetAuraNFT;
 
+    struct PairsList {
+        address pair;
+        bool enabled;
+    }
+
+    PairsList[] pairsList;
+
+    mapping(address => uint) pairOfPid;
+
     constructor(
         address _factory,
         address _router, 
@@ -28,5 +37,15 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
         router = _router;
         targetToken = _targetToken;
         targetAuraNFT = _targetAuraNFT;
+    }
+
+    /**
+     * @return _pairExists which is true if the token pair of `a` and `b` exists
+     *         and false otherwise.
+     */
+    function pairExists(address a, address b) public view returns(bool _pairExists) {
+        address pair = AuraLibrary.pairFor(factory, a, b);
+        PairsList storage pool = pairsList[pairOfPid[pair]];
+        _pairExists = (pool.pair == pair);
     }
 }
