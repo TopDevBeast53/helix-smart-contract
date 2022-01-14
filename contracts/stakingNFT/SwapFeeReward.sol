@@ -43,8 +43,7 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @return _pairExists which is true if the token pair of `a` and `b` exists
-     *         and false otherwise.
+     * @return _pairExists is true if the token pair of `a` and `b` exists and false otherwise.
      */
     function pairExists(address a, address b) public view returns(bool _pairExists) {
         address pair = AuraLibrary.pairFor(factory, a, b);
