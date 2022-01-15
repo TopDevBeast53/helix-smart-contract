@@ -4,6 +4,7 @@ pragma solidity >= 0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@rari-capital/solmate/src/tokens/ERC20.sol';
+import "../libraries/ExtraMath.sol";
 
 interface IAuraNFT {
     function getInfoForStaking(uint tokenId) external view returns(address tokenOwner, bool isStaked, uint auraPoints);
@@ -92,15 +93,9 @@ contract SmartChefNFT is Ownable, ReentrancyGuard {
         for(uint i = 0; i < rewardTokenAddresses.length; i++){
             address _tokenAddress = rewardTokenAddresses[i];
             RewardToken memory curRewardToken = rewardTokens[_tokenAddress];
-            if(curRewardToken.enabled == false || curRewardToken.startBlock >= block.number){
-                continue;
-            } else {
-                uint curMultiplier;
-                if(getDiffBlock(curRewardToken.startBlock, block.number) < _fromLastRewardToNow){
-                    curMultiplier = getDiffBlock(curRewardToken.startBlock, block.number);
-                } else {
-                    curMultiplier = _fromLastRewardToNow;
-                }
+            if(curRewardToken.enabled == true && curRewardToken.startBlock < block.number){
+                uint fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
+                uint curMultiplier = ExtraMath.min(fromRewardStartToNow, _fromLastRewardToNow);
                 rewardTokens[_tokenAddress].accTokenPerShare += (curRewardToken.rewardPerBlock * curMultiplier * 1e12) / _totalAuraPoints;
             }
         }
@@ -322,12 +317,8 @@ contract SmartChefNFT is Ownable, ReentrancyGuard {
             address _tokenAddress = rewardTokenAddresses[i];
             RewardToken memory curRewardToken = rewardTokens[_tokenAddress];
             if (_fromLastRewardToNow != 0 && _totalAuraPoints != 0 && curRewardToken.enabled == true) {
-                uint curMultiplier;
-                if(getDiffBlock(curRewardToken.startBlock, block.number) < _fromLastRewardToNow){
-                    curMultiplier = getDiffBlock(curRewardToken.startBlock, block.number);
-                } else {
-                    curMultiplier = _fromLastRewardToNow;
-                }
+                uint fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
+                uint curMultiplier = ExtraMath.min(fromRewardStartToNow, _fromLastRewardToNow);
                 _accTokenPerShare = curRewardToken.accTokenPerShare + (curMultiplier * curRewardToken.rewardPerBlock * 1e12 / _totalAuraPoints);
             } else {
                 _accTokenPerShare = curRewardToken.accTokenPerShare;
