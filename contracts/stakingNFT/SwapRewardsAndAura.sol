@@ -3,21 +3,27 @@ pragma solidity >= 0.8.0;
 
 import "../libraries/AuraLibrary.sol";
 import "../interfaces/IOracle.sol";
+import "../interfaces/IAuraNFT.sol";
 import "../swaps/AuraFactory.sol";
 import "./AddressWhitelist.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 
 // TODO - initialize certain storage variables: i.e. maxMiningAmount;
+// TODO - clarify distinction between AURA and points: i.e. BSW and RobiBoost. 
+//        May require renaming variables with aura in name.
 
 contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     AddressWhitelist whitelist;
     IOracle oracle;
+    IAuraNFT auraNFT;
 
     address factory;
     address router;
     address targetToken;
     address targetAuraToken;
+    address market;
+    address auction;
 
     uint auraWagerOnSwap;
     uint defaultFeeDistribution;
@@ -25,6 +31,11 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     uint maxMiningAmount;
     uint currentPhase;
     uint maxMiningInPhase;
+    uint auraPercentMarket;
+    uint auraPercentAuction;
+    uint totalAccruedAura;
+    uint currentPhaseAura;
+    uint maxAccruedAuraInPhase;
 
     struct PairsList {
         address pair;
@@ -45,7 +56,8 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         address _router, 
         address _targetToken,
         address _targetAuraToken,
-        IOracle _oracle
+        IOracle _oracle,
+        IAuraNFT _auraNFT
     ) {
         require(
             _factory != address(0)
@@ -59,6 +71,7 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         targetToken = _targetToken;
         targetAuraToken = _targetAuraToken;
         oracle = _oracle;
+        auraNFT = _auraNFT;
 
         // Initialize a new whitelist for this contract.
         whitelist = new AddressWhitelist();
@@ -136,7 +149,7 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     * TODO
     */
     function swap(address account, address input, address output, uint amount) public returns(bool) {
-        require (msg.sender == router, "Caller is not the router");
+        require (msg.sender == router, "Caller is not the router.");
 
         if (!whitelist.contains(input) || !whitelist.contains(output)) { return false; }
 
@@ -157,4 +170,36 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
 
         return true;
     }
+
+    /**
+     * TODO
+     */
+    function accrueAuraFromMarket(address account, address fromToken, uint amount) public {
+        require(msg.sender == market, "Caller is not the market.");
+        amount = amount * auraPercentMarket / 10000;
+        _accrueAura(account, fromToken, amount);
+    }
+
+    /**
+     * TODO
+     */
+    function accrueAuraFromAuction(address account, address fromToken, uint amount) public {
+        require(msg.sender == auction, "Caller is not the auction.");
+        amount = amount * auraPercentAuction / 10000;
+        _accrueAura(account, fromToken, amount);
+    }
+
+    /**
+     * TODO
+     */
+    function _accrueAura(address account, address output, uint amount) private {
+        uint quantity = getQuantity(output, amount, targetAuraToken);
+        if (quantity > 0) {
+            totalAccruedAura += quantity;
+            if (totalAccruedAura <= currentPhaseAura * maxAccruedAuraInPhase) {
+                auraNFT.accruePoints(account, quantity);
+            }
+        }
+    }
+
 }
