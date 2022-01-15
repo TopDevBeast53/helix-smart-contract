@@ -14,6 +14,7 @@ import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 // TODO - Fix distinction between AURA and points: i.e. BSW and RobiBoost. 
 //        Requires renaming some variables with aura in name.
 // TODO - Add NatSpec comments to latter functions.
+// TODO - Set visibilities for storage variables. 
 
 contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     AddressWhitelist whitelist;
