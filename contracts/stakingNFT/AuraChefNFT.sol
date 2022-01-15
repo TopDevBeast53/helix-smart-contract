@@ -74,9 +74,36 @@ contract SmartChefNFT is Ownable, ReentrancyGuard {
     
     /**
      * @dev Update reward variables of the pool to be up-to-date.
+     *
+     * NOTE: - Update `lastRewardBlock` with current block number.
+     *       - Update `accTokenPerShare` of all `rewardTokens` to current time.
      */
     function updatePool() public {
-        // TODO:
+        uint _fromLastRewardToNow = getDiffBlock(lastRewardBlock, block.number);
+        uint _totalAuraPoints = totalAuraPoints;
+
+        if(_fromLastRewardToNow == 0){
+            return;
+        }
+        lastRewardBlock = block.number;
+        if(_totalAuraPoints == 0){
+            return;
+        }
+        for(uint i = 0; i < rewardTokenAddresses.length; i++){
+            address _tokenAddress = rewardTokenAddresses[i];
+            RewardToken memory curRewardToken = rewardTokens[_tokenAddress];
+            if(curRewardToken.enabled == false || curRewardToken.startBlock >= block.number){
+                continue;
+            } else {
+                uint curMultiplier;
+                if(getDiffBlock(curRewardToken.startBlock, block.number) < _fromLastRewardToNow){
+                    curMultiplier = getDiffBlock(curRewardToken.startBlock, block.number);
+                } else {
+                    curMultiplier = _fromLastRewardToNow;
+                }
+                rewardTokens[_tokenAddress].accTokenPerShare += (curRewardToken.rewardPerBlock * curMultiplier * 1e12) / _totalAuraPoints;
+            }
+        }
     }
     
     /**
