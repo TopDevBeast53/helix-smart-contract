@@ -2,10 +2,14 @@
 pragma solidity >= 0.8.0;
 
 import "../libraries/AuraLibrary.sol";
+import "./AddressWhitelist.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 
 contract SwapFeeReward is Ownable, ReentrancyGuard {
+    // Collection of whitelisted addresses. 
+    AddressWhitelist whitelist;
+
     address factory;
     address router;
     address targetToken;
@@ -40,6 +44,9 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
         router = _router;
         targetToken = _targetToken;
         targetAuraToken = _targetAuraToken;
+
+        // Initialize a new whitelist for this contract.
+        whitelist = new AddressWhitelist();
     }
 
     /**
@@ -47,14 +54,14 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
      */
     function pairExists(address a, address b) public view returns(bool _pairExists) {
         address pair = AuraLibrary.pairFor(factory, a, b);
-        PairsList storage pool = pairsList[pairOfPid[pair]];
+        PairsList memory pool = pairsList[pairOfPid[pair]];
         _pairExists = (pool.pair == pair);
     }
     
     /**
      * TODO
      */
-    function calculateFee(address account, address input, address output, uint amount) 
+    function getFees(address account, address input, address output, uint amount) 
         public
         view
         returns(
@@ -67,19 +74,12 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
         address pair = AuraLibrary.pairFor(factory, input, output);
         PairsList memory pool = pairsList[pairOfPid[pair]];
 
-        if (pool.pair == pair && pool.enabled && isWhitelisted(input) && isWhitelisted(output)) {
+        if (pool.pair == pair && pool.enabled && whitelist.contains(input) && whitelist.contains(output)) {
             (uint feeAmount, uint pointAmount) = calcAmounts(amount, account);
             feeInAURA = getQuantity(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
             feeInUSD = getQuantity(output, pointAmount / auraWagerOnSwap, targetAuraToken);
             pointsAccrued = getQuantity(targetToken, feeInAURA, targetAuraToken);
         }
-    }
-
-    /**
-     * TODO
-     */
-    function isWhitelisted(address token) public view returns(bool _isWhitelisted) {
-        // TODO - Implement
     }
 
     /**
