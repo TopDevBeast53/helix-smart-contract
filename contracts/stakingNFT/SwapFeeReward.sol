@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 
 contract SwapFeeReward is Ownable, ReentrancyGuard {
-    // Collection of whitelisted addresses. 
     AddressWhitelist whitelist;
 
     address factory;
@@ -16,6 +15,7 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
     address targetAuraToken;
 
     uint auraWagerOnSwap;
+    uint defaultFeeDistribution;
 
     struct PairsList {
         address pair;
@@ -26,6 +26,7 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
     PairsList[] pairsList;
 
     mapping(address => uint) pairOfPid;
+    mapping(address => uint) feeDistribution;
 
     constructor(
         address _factory,
@@ -75,7 +76,7 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
         PairsList memory pool = pairsList[pairOfPid[pair]];
 
         if (pool.pair == pair && pool.enabled && whitelist.contains(input) && whitelist.contains(output)) {
-            (uint feeAmount, uint pointAmount) = calcAmounts(amount, account);
+            (uint feeAmount, uint pointAmount) = getAmounts(amount, account);
             feeInAURA = getQuantity(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
             feeInUSD = getQuantity(output, pointAmount / auraWagerOnSwap, targetAuraToken);
             pointsAccrued = getQuantity(targetToken, feeInAURA, targetAuraToken);
@@ -85,8 +86,9 @@ contract SwapFeeReward is Ownable, ReentrancyGuard {
     /**
      * TODO
      */
-    function calcAmounts(uint amount, address account) internal view returns(uint feeAmount, uint auraAmount) {
-        // TODO - Implement
+    function getAmounts(uint amount, address account) internal view returns(uint feeAmount, uint auraAmount) {
+        feeAmount = amount * (defaultFeeDistribution - feeDistribution[account]) / 100;
+        auraAmount = amount - feeAmount;
     }
 
     /**
