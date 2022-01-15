@@ -39,6 +39,9 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     uint totalAccruedAura;
     uint currentPhaseAura;
     uint maxAccruedAuraInPhase;
+    uint pointsWagerOnSwap;
+    uint pointsPercentMarket;
+    uint pointsPercentAuction;
 
     struct PairsList {
         address pair;
@@ -48,7 +51,7 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
 
     PairsList[] pairsList;
 
-    mapping(address => uint) pairOfPid;
+    mapping(address => uint) pairOfpairIds;
     mapping(address => uint) feeDistribution;
     mapping(address => uint) _balances;
     mapping(address => uint) nonces;
@@ -57,6 +60,11 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     event Withdraw(address user, uint amount);
     event NewPhase(uint phase);
     event NewPhasePoints(uint phasePoints);
+    event NewRouter(address router);
+    event NewMarket(address market);
+    event NewFactory(address factory);
+    event NewAuraNFT(IAuraNFT auraNFT);
+    event NewOracle(IOracle oracle);
 
     constructor(
         address _factory,
@@ -91,7 +99,7 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
      */
     function pairExists(address a, address b) public view returns(bool _pairExists) {
         address pair = AuraLibrary.pairFor(factory, a, b);
-        PairsList memory pool = pairsList[pairOfPid[pair]];
+        PairsList memory pool = pairsList[pairOfpairIds[pair]];
         _pairExists = (pool.pair == pair);
     }
     
@@ -109,7 +117,7 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     {
         uint swapFee = AuraLibrary.getSwapFee(factory, input, output); 
         address pair = AuraLibrary.pairFor(factory, input, output);
-        PairsList memory pool = pairsList[pairOfPid[pair]];
+        PairsList memory pool = pairsList[pairOfpairIds[pair]];
 
         if (pool.pair == pair && pool.enabled && whitelist.contains(input) && whitelist.contains(output)) {
             (uint feeAmount, uint pointAmount) = getAmounts(amount, account);
@@ -157,7 +165,7 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         if (!whitelist.contains(input) || !whitelist.contains(output)) { return false; }
 
         address pair = AuraLibrary.pairFor(factory, input, output);
-        PairsList memory pool = pairsList[pairOfPid[pair]];
+        PairsList memory pool = pairsList[pairOfpairIds[pair]];
         if (pool.pair != pair || !pool.enabled) { return false; }
 
         uint pairFee = AuraLibrary.getSwapFee(factory, input, output);
@@ -233,5 +241,70 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     function setPhasePoints(uint _phasePoints) public onlyOwner {
         currentPhasePoints = _phasePoints;
         emit NewPhasePoints(_phasePoints);
+    }
+
+    function setRouter(address _router) public onlyOwner {
+        require(_router != address(0), "Router is the zero address.");
+        router = _router;
+        emit NewRouter(_router);
+    }
+
+    function setMarket(address _market) public onlyOwner {
+        require(_market != address(0), "Market is the zero address.");
+        market = _market;
+        emit NewMarket(_market);
+    }
+
+    function setFactory(address _factory) public onlyOwner {
+        require(_factory != address(0), "Factory is the zero address.");
+        factory = _factory;
+        emit NewFactory(_factory);
+    }
+
+    function setAuraNFT(IAuraNFT _auraNFT) public onlyOwner {
+        require(address(_auraNFT) != address(0), "AuraNFT is the zero address.");
+        auraNFT = _auraNFT;
+        emit NewAuraNFT(_auraNFT);
+    }
+
+    function setOracle(IOracle _oracle) public onlyOwner {
+        require(address(_oracle) != address(0), "Oracle is the zero address.");
+        oracle = _oracle;
+        emit NewOracle(_oracle);
+    }
+
+    function getPairsListLength() public view returns(uint) {
+        return pairsList.length;
+    }
+
+    function addPair(uint _percentReward, address _pair) public onlyOwner {
+        require(_pair != address(0), "`_pair` is the zero address.");
+        pairsList.push(
+            PairsList({
+                pair: _pair,
+                percentReward: _percentReward,
+                enabled: true
+            })
+        );
+        pairOfpairIds[_pair] = getPairsListLength() - 1;
+    }
+
+    function setPair(uint _pairId, uint _percentReward) public onlyOwner {
+        pairsList[_pairId].percentReward = _percentReward;
+    }
+
+    function setPairEnabled(uint _pairId, bool _enabled) public onlyOwner {
+        pairsList[_pairId].enabled = _enabled;
+    }
+
+    function setPointsReward(uint _pointsWagerOnSwap, uint _percentMarket, uint _percentAuction) public onlyOwner {
+        pointsWagerOnSwap = _pointsWagerOnSwap;
+        pointsPercentMarket = _percentMarket;
+        pointsPercentAuction = _percentAuction;
+    }
+
+    function setFeeDistribution(uint _distribution) public {
+        require(_distribution <= defaultFeeDistribution, "Invalid fee distribution.");
+        feeDistribution[msg.sender] = _distribution;
     }
 }
