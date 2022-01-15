@@ -32,6 +32,7 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     uint totalMined;
     uint maxMiningAmount;
     uint currentPhase;
+    uint currentPhasePoints;
     uint maxMiningInPhase;
     uint auraPercentMarket;
     uint auraPercentAuction;
@@ -54,6 +55,8 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
 
     event Rewarded(address account, address input, address output, uint amount, uint quantity);
     event Withdraw(address user, uint amount);
+    event NewPhase(uint phase);
+    event NewPhasePoints(uint phasePoints);
 
     constructor(
         address _factory,
@@ -220,5 +223,15 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
             }
         }
         return false;
+    }
+
+    function setPhase(uint _phase) public onlyOwner {
+        currentPhase = _phase;
+        emit NewPhase(_phase);
+    }
+
+    function setPhasePoints(uint _phasePoints) public onlyOwner {
+        currentPhasePoints = _phasePoints;
+        emit NewPhasePoints(_phasePoints);
     }
 }
