@@ -4,6 +4,7 @@ pragma solidity >= 0.8.0;
 import "../libraries/AuraLibrary.sol";
 import "../interfaces/IOracle.sol";
 import "../interfaces/IAuraNFT.sol";
+import "../interfaces/IAuraToken.sol";
 import "../swaps/AuraFactory.sol";
 import "./AddressWhitelist.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -17,6 +18,7 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     AddressWhitelist whitelist;
     IOracle oracle;
     IAuraNFT auraNFT;
+    IAuraToken auraToken;
 
     address factory;
     address router;
@@ -48,8 +50,10 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     mapping(address => uint) pairOfPid;
     mapping(address => uint) feeDistribution;
     mapping(address => uint) _balances;
+    mapping(address => uint) nonces;
 
     event Rewarded(address account, address input, address output, uint amount, uint quantity);
+    event Withdraw(address user, uint amount);
 
     constructor(
         address _factory,
@@ -57,7 +61,8 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         address _targetToken,
         address _targetAuraToken,
         IOracle _oracle,
-        IAuraNFT _auraNFT
+        IAuraNFT _auraNFT,
+        IAuraToken _auraToken
     ) {
         require(
             _factory != address(0)
@@ -72,6 +77,7 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         targetAuraToken = _targetAuraToken;
         oracle = _oracle;
         auraNFT = _auraNFT;
+        auraToken = _auraToken;
 
         // Initialize a new whitelist for this contract.
         whitelist = new AddressWhitelist();
@@ -202,4 +208,41 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         }
     }
 
+    /**
+     * TODO
+     */
+    function getRewardBalance(address account) public view returns(uint) {
+        return _balances[account];
+    }
+
+    /**
+     * TODO
+     */
+    function permit(address spender, uint value, uint8 v, bytes32 r, bytes32 s) private {
+        bytes32 message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(spender, value, nonces[spender]++))));
+        address recoveredAddress = ecrecover(message, v, r, s);
+        require(recoveredAddress != address(0) && recoveredAddress == spender, "Invalid signature.");
+    }
+
+    /**
+     * TODO
+     */
+    function withdraw(uint8 v, bytes32 r, bytes32 s) public nonReentrant returns(bool) {
+        require (totalMined < maxMiningAmount, "All tokens have been mined.");
+
+        uint balance = _balances[msg.sender];
+        require ((totalMined + balance) <= (currentPhase * maxMiningInPhase), "All tokens in this phase have been mined.");
+       
+        permit(msg.sender, balance, v, r, s);
+
+        if (balance > 0) {
+            _balances[msg.sender] -= balance;
+            totalMined += balance;
+            if (auraToken.transfer(msg.sender, balance)) {
+                emit Withdraw(msg.sender, balance);
+                return true;
+            }
+        }
+        return false;
+    }
 }
