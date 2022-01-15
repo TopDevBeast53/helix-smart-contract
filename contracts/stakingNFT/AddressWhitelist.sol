@@ -13,11 +13,14 @@ contract AddressWhitelist is Ownable {
 
     /**
      * @dev Add `_addr` to the whitelist.
+     */
     function add(address _addr) public onlyOwner returns(bool) {
         require(_addr != address(0), "Zero address is invalid.");
         return EnumerableSet.add(_whitelist, _addr);
     }
-   
+  
+    /**
+     * @dev Remove `_addr` from the whitelist.
      */
     function remove(address _addr) public onlyOwner returns(bool) {
         require(_addr != address(0), "Zero address is invalid.");
