@@ -132,16 +132,72 @@ contract SmartChefNFT is Ownable, ReentrancyGuard {
 
     /**
      * @dev staking
+     *
+     * NOTE: 1. UpdatePool and User receives the pending reward sent to user's address.
+     *       2. Push new NFT to be staked
+     *       3. User's `auraPointAmount`(and `totalAuraPoints`) gets updated.
+     *       4. User's `rewardDebt` gets updated.
+     *
+     * Requirements:
+     *
+     * - `tokensId`'s owner must be sender
+     * - `tokensId` must be unstaked
      */
     function stake(uint[] calldata tokensId) public nonReentrant {
-        // TODO:
+        
+        withdrawRewardToken();// --------1
+        
+        UserInfo storage user = users[msg.sender];
+        uint depositedAPs = 0;
+        for(uint i = 0; i < tokensId.length; i++){
+            (address tokenOwner, bool isStaked, uint auraPoints) = auraNFT.getInfoForStaking(tokensId[i]);
+            require(tokenOwner == msg.sender, "Not token owner");
+            require(isStaked == false, "Token has already been staked");
+            auraNFT.setIsStaked(tokensId[i], true);
+            depositedAPs += auraPoints;
+            user.stakedNFTsId.push(tokensId[i]);// --------2
+        }
+        if(depositedAPs > 0){
+            user.auraPointAmount += depositedAPs;// --------3
+            totalAuraPoints += depositedAPs;
+        }
+        _updateRewardDebt(msg.sender);// --------4
+        emit StakeTokens(msg.sender, depositedAPs, tokensId);
     }
 
     /**
      * @dev unstaking
+     *
+     * NOTE: 1. UpdatePool and User receives the pending reward sent to user's address.
+     *       2. Remove NFTs to be unstaked
+     *       3. User's `auraPointAmount`(and `totalAuraPoints`) gets updated.
+     *       4. User's `rewardDebt` gets updated.
+     *
+     * Requirements:
+     *
+     * - `tokensId`'s owner must be sender
+     * - `tokensId` must be staked
      */
     function unstake(uint[] calldata tokensId) public nonReentrant {
-        // TODO:
+        
+        withdrawRewardToken();// --------1
+        
+        UserInfo storage user = users[msg.sender];
+        uint withdrawalAPs = 0;
+        for(uint i = 0; i < tokensId.length; i++){
+            (address tokenOwner, bool isStaked, uint auraPoints) = auraNFT.getInfoForStaking(tokensId[i]);
+            require(tokenOwner == msg.sender, "Not token owner");
+            require(isStaked == true, "Token has already been unstaked");
+            auraNFT.setIsStaked(tokensId[i], false);
+            withdrawalAPs += auraPoints;
+            removeTokenIdFromUsers(tokensId[i], msg.sender);// --------2
+        }
+        if(withdrawalAPs > 0){
+            user.auraPointAmount -= withdrawalAPs;// --------3
+            totalAuraPoints -= withdrawalAPs;
+        }
+        _updateRewardDebt(msg.sender);// --------4
+        emit UnstakeToken(msg.sender, withdrawalAPs, tokensId);
     }
 
     /**
@@ -313,22 +369,18 @@ contract SmartChefNFT is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Used by owner to enable rewardToken
-     * @param index address of reward Token to be enabled
-     * @param user startBlock of reward Token to be enabled
-     *
-     * NOTE: UpdatePool() is required to refresh once token is enabled.
-     *
-     * Requirements:
-     *
-     * - `token` must exist.
-     * - `token` must be diabled.
-     * - `rewardPerBlock` cannot be the zero.
-     * - `startBlock` must be later than current.
+     * @dev Remove TokenId to be unstaked from userInfo
+     * @param tokenId to be removed
+     * @param user who is unstaking
      */
-    function removeTokenIdFromUsers(uint index, address user) internal {
+    function removeTokenIdFromUsers(uint tokenId, address user) internal {
         uint[] storage tokensId = users[user].stakedNFTsId;
-        tokensId[index] = tokensId[tokensId.length - 1];
-        tokensId.pop();
+        for (uint i = 0; i < tokensId.length; i++) {
+            if (tokenId == tokensId[i]) {
+                tokensId[i] = tokensId[tokensId.length - 1];
+                tokensId.pop();
+                return;
+            }
+        }
     }
 }
