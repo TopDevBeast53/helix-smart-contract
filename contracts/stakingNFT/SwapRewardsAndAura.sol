@@ -8,6 +8,8 @@ import "./AddressWhitelist.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 
+// TODO - initialize certain storage variables: i.e. maxMiningAmount;
+
 contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     AddressWhitelist whitelist;
     IOracle oracle;
@@ -19,6 +21,10 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
 
     uint auraWagerOnSwap;
     uint defaultFeeDistribution;
+    uint totalMined;
+    uint maxMiningAmount;
+    uint currentPhase;
+    uint maxMiningInPhase;
 
     struct PairsList {
         address pair;
@@ -30,6 +36,9 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
 
     mapping(address => uint) pairOfPid;
     mapping(address => uint) feeDistribution;
+    mapping(address => uint) _balances;
+
+    event Rewarded(address account, address input, address output, uint amount, uint quantity);
 
     constructor(
         address _factory,
@@ -121,5 +130,31 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
                 }
             }
         }
+    }
+
+    /**
+    * TODO
+    */
+    function swap(address account, address input, address output, uint amount) public returns(bool) {
+        require (msg.sender == router, "Caller is not the router");
+
+        if (!whitelist.contains(input) || !whitelist.contains(output)) { return false; }
+
+        address pair = AuraLibrary.pairFor(factory, input, output);
+        PairsList memory pool = pairsList[pairOfPid[pair]];
+        if (pool.pair != pair || !pool.enabled) { return false; }
+
+        uint pairFee = AuraLibrary.getSwapFee(factory, input, output);
+        (uint feeAmount, uint auraAmount) = getAmounts(amount, account);
+        uint fee = feeAmount / pairFee;
+        auraAmount = auraAmount / auraWagerOnSwap;
+
+        uint quantity = getQuantity(output, fee, targetToken);
+        if ((totalMined + quantity) <= maxMiningAmount && (totalMined + quantity) <= (currentPhase * maxMiningInPhase)) {
+            _balances[account] += quantity;
+            emit Rewarded(account, input, output, amount, quantity);
+        }
+
+        return true;
     }
 }
