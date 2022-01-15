@@ -108,9 +108,26 @@ contract SmartChefNFT is Ownable, ReentrancyGuard {
     
     /**
      * @dev Withdraw rewardToken from AuraChefNFT.
+     *
+     * NOTE: 1. updatePool()
+     *       2. User receives the pending reward sent to user's address.
+     *       3. User's `rewardDebt` gets updated.
      */
     function withdrawRewardToken() public {
-        // TODO:
+        updatePool();// -----1
+        UserInfo memory user = users[msg.sender];
+        address[] memory _rewardTokenAddresses = rewardTokenAddresses;
+        if(user.auraPointAmount == 0){
+            return;
+        }
+        for(uint i = 0; i < _rewardTokenAddresses.length; i++){
+            RewardToken memory curRewardToken = rewardTokens[_rewardTokenAddresses[i]];
+            uint pending = user.auraPointAmount * curRewardToken.accTokenPerShare / 1e12 - rewardDebt[msg.sender][_rewardTokenAddresses[i]];
+            if(pending > 0){
+                ERC20(_rewardTokenAddresses[i]).transfer(address(msg.sender), pending);// ------2
+                rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.auraPointAmount * curRewardToken.accTokenPerShare / 1e12;// -----3
+            }
+        }
     }
 
     /**
