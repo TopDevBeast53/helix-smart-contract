@@ -2,6 +2,7 @@
 pragma solidity >= 0.8.0;
 
 import "../libraries/AuraLibrary.sol";
+import "../swaps/AuraFactory.sol";
 import "./AddressWhitelist.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
@@ -60,7 +61,7 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     }
     
     /**
-     * TODO
+     * @dev get the different fees.
      */
     function getFees(address account, address input, address output, uint amount) 
         public
@@ -84,7 +85,8 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     }
 
     /**
-     * TODO
+     * @return feeAmount due to the account.
+     * @return auraAmount due to the account.
      */
     function getAmounts(uint amount, address account) internal view returns(uint feeAmount, uint auraAmount) {
         feeAmount = amount * (defaultFeeDistribution - feeDistribution[account]) / 100;
@@ -95,6 +97,25 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
      * TODO
      */
     function getQuantity(address outputToken, uint outputAmount, address anchorToken) public view returns(uint quantity) {
-        // TODO - Implement
+        if (outputToken == anchorToken) {
+            quantity = outputAmount;
+        } else if (AuraFactory(factory).getPair(outputToken, anchorToken) != address(0) 
+            && pairExists(outputToken, anchorToken)) 
+        {
+            quantity = 0; // TODO
+        } else {
+            uint length = whitelist.getLength();
+            for(uint i = 0; i < length; i++) {
+                address intermediate = whitelist.get(i);
+                if(AuraFactory(factory).getPair(outputToken, intermediate) != address(0)
+                    && AuraFactory(factory).getPair(intermediate, anchorToken) != address(0)
+                    && pairExists(intermediate, anchorToken))
+                {
+                    uint interQuantity = 0; // TODO
+                    quantity = 0; // TODO
+                }
+            }
+        }
+        return quantity;
     }
 }
