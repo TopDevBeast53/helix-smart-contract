@@ -6,7 +6,7 @@ import "./AddressWhitelist.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 
-contract SwapFeeReward is Ownable, ReentrancyGuard {
+contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     AddressWhitelist whitelist;
 
     address factory;
