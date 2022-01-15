@@ -125,9 +125,6 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         auraAmount = amount - feeAmount;
     }
 
-    /**
-     * TODO
-     */
     function getQuantity(address outputToken, uint outputAmount, address anchorToken) public view returns(uint quantity) {
         if (outputToken == anchorToken) {
             quantity = outputAmount;
@@ -151,9 +148,6 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         }
     }
 
-    /**
-    * TODO
-    */
     function swap(address account, address input, address output, uint amount) public returns(bool) {
         require (msg.sender == router, "Caller is not the router.");
 
@@ -177,27 +171,18 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         return true;
     }
 
-    /**
-     * TODO
-     */
     function accrueAuraFromMarket(address account, address fromToken, uint amount) public {
         require(msg.sender == market, "Caller is not the market.");
         amount = amount * auraPercentMarket / 10000;
         _accrueAura(account, fromToken, amount);
     }
 
-    /**
-     * TODO
-     */
     function accrueAuraFromAuction(address account, address fromToken, uint amount) public {
         require(msg.sender == auction, "Caller is not the auction.");
         amount = amount * auraPercentAuction / 10000;
         _accrueAura(account, fromToken, amount);
     }
 
-    /**
-     * TODO
-     */
     function _accrueAura(address account, address output, uint amount) private {
         uint quantity = getQuantity(output, amount, targetAuraToken);
         if (quantity > 0) {
@@ -208,25 +193,16 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         }
     }
 
-    /**
-     * TODO
-     */
     function getRewardBalance(address account) public view returns(uint) {
         return _balances[account];
     }
 
-    /**
-     * TODO
-     */
     function permit(address spender, uint value, uint8 v, bytes32 r, bytes32 s) private {
         bytes32 message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(spender, value, nonces[spender]++))));
         address recoveredAddress = ecrecover(message, v, r, s);
         require(recoveredAddress != address(0) && recoveredAddress == spender, "Invalid signature.");
     }
 
-    /**
-     * TODO
-     */
     function withdraw(uint8 v, bytes32 r, bytes32 s) public nonReentrant returns(bool) {
         require (totalMined < maxMiningAmount, "All tokens have been mined.");
 
