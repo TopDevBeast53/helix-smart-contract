@@ -2,6 +2,7 @@
 pragma solidity >= 0.8.0;
 
 import "../libraries/AuraLibrary.sol";
+import "../interfaces/IOracle.sol";
 import "../swaps/AuraFactory.sol";
 import "./AddressWhitelist.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -9,6 +10,7 @@ import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 
 contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     AddressWhitelist whitelist;
+    IOracle oracle;
 
     address factory;
     address router;
@@ -33,7 +35,8 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         address _factory,
         address _router, 
         address _targetToken,
-        address _targetAuraToken
+        address _targetAuraToken,
+        IOracle _oracle
     ) {
         require(
             _factory != address(0)
@@ -46,6 +49,7 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         router = _router;
         targetToken = _targetToken;
         targetAuraToken = _targetAuraToken;
+        oracle = _oracle;
 
         // Initialize a new whitelist for this contract.
         whitelist = new AddressWhitelist();
@@ -102,20 +106,20 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         } else if (AuraFactory(factory).getPair(outputToken, anchorToken) != address(0) 
             && pairExists(outputToken, anchorToken)) 
         {
-            quantity = 0; // TODO
+            quantity = IOracle(oracle).consult(outputToken, outputAmount, anchorToken);
         } else {
             uint length = whitelist.getLength();
-            for(uint i = 0; i < length; i++) {
+            for (uint i = 0; i < length; i++) {
                 address intermediate = whitelist.get(i);
-                if(AuraFactory(factory).getPair(outputToken, intermediate) != address(0)
+                if (AuraFactory(factory).getPair(outputToken, intermediate) != address(0)
                     && AuraFactory(factory).getPair(intermediate, anchorToken) != address(0)
                     && pairExists(intermediate, anchorToken))
                 {
-                    uint interQuantity = 0; // TODO
-                    quantity = 0; // TODO
+                    uint interQuantity = IOracle(oracle).consult(outputToken, outputAmount, intermediate);
+                    quantity = IOracle(oracle).consult(intermediate, interQuantity, anchorToken);
+                    break;
                 }
             }
         }
-        return quantity;
     }
 }
