@@ -11,8 +11,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 
 // TODO - initialize certain storage variables: i.e. maxMiningAmount;
-// TODO - clarify distinction between AURA and points: i.e. BSW and RobiBoost. 
-//        May require renaming variables with aura in name.
+// TODO - Fix distinction between AURA and points: i.e. BSW and RobiBoost. 
+//        Requires renaming some variables with aura in name.
+// TODO - Add NatSpec comments to latter functions.
 
 contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     AddressWhitelist whitelist;
