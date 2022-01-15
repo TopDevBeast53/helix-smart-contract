@@ -11,12 +11,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 
 // TODO - initialize certain storage variables: i.e. maxMiningAmount;
-// TODO - Fix distinction between AURA and points: i.e. BSW and RobiBoost. 
-//        Requires renaming some variables with aura in name.
 // TODO - Add NatSpec comments to latter functions.
 // TODO - Set visibilities for storage variables. 
 
-contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
+contract SwapRewardsAndPoints is Ownable, ReentrancyGuard {
     AddressWhitelist whitelist;
     IOracle oracle;
     IAuraNFT auraNFT;
@@ -25,22 +23,22 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
     address factory;
     address router;
     address targetToken;
-    address targetAuraToken;
+    address targetPointsToken;
     address market;
     address auction;
 
-    uint auraWagerOnSwap;
+    uint pointsWagerOnSwap;
     uint defaultFeeDistribution;
     uint totalMined;
     uint maxMiningAmount;
     uint currentPhase;
     uint currentPhasePoints;
     uint maxMiningInPhase;
-    uint auraPercentMarket;
-    uint auraPercentAuction;
-    uint totalAccruedAura;
-    uint currentPhaseAura;
-    uint maxAccruedAuraInPhase;
+    uint pointsPercentMarket;
+    uint pointsPercentAuction;
+    uint totalAccruedPoints;
+    uint currentPhasePoints;
+    uint maxAccruedPointsInPhase;
     uint pointsWagerOnSwap;
     uint pointsPercentMarket;
     uint pointsPercentAuction;
@@ -72,7 +70,7 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         address _factory,
         address _router, 
         address _targetToken,
-        address _targetAuraToken,
+        address _targetPointsToken,
         IOracle _oracle,
         IAuraNFT _auraNFT,
         IAuraToken _auraToken
@@ -81,13 +79,13 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
             _factory != address(0)
             && _router != address(0)
             && _targetToken != address(0)
-            && _targetAuraToken != address(0),
+            && _targetPointsToken != address(0),
             "Address cannot be zero."
         );
         factory = _factory;
         router = _router;
         targetToken = _targetToken;
-        targetAuraToken = _targetAuraToken;
+        targetPointsToken = _targetPointsToken;
         oracle = _oracle;
         auraNFT = _auraNFT;
         auraToken = _auraToken;
@@ -124,18 +122,18 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         if (pool.pair == pair && pool.enabled && whitelist.contains(input) && whitelist.contains(output)) {
             (uint feeAmount, uint pointAmount) = getAmounts(amount, account);
             feeInAURA = getQuantity(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
-            feeInUSD = getQuantity(output, pointAmount / auraWagerOnSwap, targetAuraToken);
-            pointsAccrued = getQuantity(targetToken, feeInAURA, targetAuraToken);
+            feeInUSD = getQuantity(output, pointAmount / pointsWagerOnSwap, targetPointsToken);
+            pointsAccrued = getQuantity(targetToken, feeInAURA, targetPointsToken);
         }
     }
 
     /**
      * @return feeAmount due to the account.
-     * @return auraAmount due to the account.
+     * @return pointsAmount due to the account.
      */
-    function getAmounts(uint amount, address account) internal view returns(uint feeAmount, uint auraAmount) {
+    function getAmounts(uint amount, address account) internal view returns(uint feeAmount, uint pointsAmount) {
         feeAmount = amount * (defaultFeeDistribution - feeDistribution[account]) / 100;
-        auraAmount = amount - feeAmount;
+        pointsAmount = amount - feeAmount;
     }
 
     function getQuantity(address outputToken, uint outputAmount, address anchorToken) public view returns(uint quantity) {
@@ -171,9 +169,9 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
         if (pool.pair != pair || !pool.enabled) { return false; }
 
         uint pairFee = AuraLibrary.getSwapFee(factory, input, output);
-        (uint feeAmount, uint auraAmount) = getAmounts(amount, account);
+        (uint feeAmount, uint pointsAmount) = getAmounts(amount, account);
         uint fee = feeAmount / pairFee;
-        auraAmount = auraAmount / auraWagerOnSwap;
+        pointsAmount = pointsAmount / pointsWagerOnSwap;
 
         uint quantity = getQuantity(output, fee, targetToken);
         if ((totalMined + quantity) <= maxMiningAmount && (totalMined + quantity) <= (currentPhase * maxMiningInPhase)) {
@@ -186,21 +184,21 @@ contract SwapRewardsAndAura is Ownable, ReentrancyGuard {
 
     function accrueAuraFromMarket(address account, address fromToken, uint amount) public {
         require(msg.sender == market, "Caller is not the market.");
-        amount = amount * auraPercentMarket / 10000;
-        _accrueAura(account, fromToken, amount);
+        amount = amount * pointsPercentMarket / 10000;
+        _accruePoints(account, fromToken, amount);
     }
 
     function accrueAuraFromAuction(address account, address fromToken, uint amount) public {
         require(msg.sender == auction, "Caller is not the auction.");
-        amount = amount * auraPercentAuction / 10000;
-        _accrueAura(account, fromToken, amount);
+        amount = amount * pointsPercentAuction / 10000;
+        _accruePoints(account, fromToken, amount);
     }
 
-    function _accrueAura(address account, address output, uint amount) private {
-        uint quantity = getQuantity(output, amount, targetAuraToken);
+    function _accruePoints(address account, address output, uint amount) private {
+        uint quantity = getQuantity(output, amount, targetPointsToken);
         if (quantity > 0) {
-            totalAccruedAura += quantity;
-            if (totalAccruedAura <= currentPhaseAura * maxAccruedAuraInPhase) {
+            totalAccruedPoints += quantity;
+            if (totalAccruedPoints <= currentPhasePoints * maxAccruedPointsInPhase) {
                 auraNFT.accruePoints(account, quantity);
             }
         }
