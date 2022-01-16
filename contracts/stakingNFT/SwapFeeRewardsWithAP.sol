@@ -165,12 +165,19 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      */
     function getQuantityOut(address tokenIn, uint quantityIn, address tokenOut) public view returns(uint quantityOut) {
         if (tokenIn == tokenOut) {
+            // If the tokenIn is the same as the tokenOut, then there's no exchange quantity to compute.
+            // I.e. ETH -> ETH.
             quantityOut = quantityIn;
         } else if (AuraFactory(factory).getPair(tokenIn, tokenOut) != address(0) 
             && pairExists(tokenIn, tokenOut)) 
         {
+            // If a direct exchange pair exists, then get the exchange quantity directly.
+            // I.e. ETH -> BTC where a ETH -> BTC pair exists.
             quantityOut = IOracle(oracle).consult(tokenIn, quantityIn, tokenOut);
         } else {
+            // Otherwise, try to find an intermediate exchange token
+            // and compute the exchange quantity via that intermediate token.
+            // I.e. ETH -> BTC where ETH -> BTC doesn't exist but ETH -> SOL -> BTC does.
             uint length = getWhitelistLength();
             for (uint i = 0; i < length; i++) {
                 address intermediate = whitelistGet(i);
