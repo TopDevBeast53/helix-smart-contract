@@ -250,7 +250,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     /* 
      * EXTERNAL SETTERS 
      * 
-     * These contracts provide callers with functionality for altering users' accounts.
+     * Provide callers with functionality for setting contract state.
      */
 
     function accrueAuraFromMarket(address account, address fromToken, uint amount) external {
