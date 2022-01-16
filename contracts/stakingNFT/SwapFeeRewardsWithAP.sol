@@ -115,9 +115,9 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
         PairsList memory pool = pairsList[pairOfpairIds[pair]];
         if (!pool.enabled || pool.pair != pair) { return false; }
 
-        uint pairFee = AuraLibrary.getSwapFee(factory, input, output);
+        uint swapFee = AuraLibrary.getSwapFee(factory, input, output);
         (uint feeAmount, uint apAmount) = getAmounts(amount, account);
-        uint fee = feeAmount / pairFee;
+        uint fee = feeAmount / swapFee;
         apAmount = apAmount / apWagerOnSwap;
 
         uint quantity = getQuantity(output, fee, targetToken);
