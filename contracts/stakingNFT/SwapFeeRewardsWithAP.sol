@@ -96,73 +96,14 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
         auraToken = _auraToken;
     }
 
-    /**
-     * @return _pairExists is true if the token pair of `a` and `b` exists and false otherwise.
-     */
-    function pairExists(address a, address b) public view returns(bool _pairExists) {
-        address pair = AuraLibrary.pairFor(factory, a, b);
-        PairsList memory pool = pairsList[pairOfpairIds[pair]];
-        _pairExists = (pool.pair == pair);
-    }
-    
-    /**
-     * @dev get the different fees.
-     */
-    function getFees(address account, address input, address output, uint amount) 
-        public
-        view
-        returns(
-            uint feeInAURA,
-            uint feeInUSD,
-            uint apAccrued
-        )
-    {
-        uint swapFee = AuraLibrary.getSwapFee(factory, input, output); 
-        address pair = AuraLibrary.pairFor(factory, input, output);
-        PairsList memory pool = pairsList[pairOfpairIds[pair]];
-
-        if (pool.pair == pair && pool.enabled && whitelistContains(input) && whitelistContains(output)) {
-            (uint feeAmount, uint apAmount) = getAmounts(amount, account);
-            feeInAURA = getQuantity(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
-            feeInUSD = getQuantity(output, apAmount / apWagerOnSwap, targetAPToken);
-            apAccrued = getQuantity(targetToken, feeInAURA, targetAPToken);
-        }
-    }
-
-    /**
-     * @return feeAmount due to the account.
-     * @return apAmount due to the account.
-     */
-    function getAmounts(uint amount, address account) internal view returns(uint feeAmount, uint apAmount) {
-        feeAmount = amount * (defaultFeeDistribution - feeDistribution[account]) / 100;
-        apAmount = amount - feeAmount;
-    }
-
-    function getQuantity(address outputToken, uint outputAmount, address anchorToken) public view returns(uint quantity) {
-        if (outputToken == anchorToken) {
-            quantity = outputAmount;
-        } else if (AuraFactory(factory).getPair(outputToken, anchorToken) != address(0) 
-            && pairExists(outputToken, anchorToken)) 
-        {
-            quantity = IOracle(oracle).consult(outputToken, outputAmount, anchorToken);
-        } else {
-            uint length = getWhitelistLength();
-            for (uint i = 0; i < length; i++) {
-                address intermediate = whitelistGet(i);
-                if (AuraFactory(factory).getPair(outputToken, intermediate) != address(0)
-                    && AuraFactory(factory).getPair(intermediate, anchorToken) != address(0)
-                    && pairExists(intermediate, anchorToken))
-                {
-                    uint interQuantity = IOracle(oracle).consult(outputToken, outputAmount, intermediate);
-                    quantity = IOracle(oracle).consult(intermediate, interQuantity, anchorToken);
-                    break;
-                }
-            }
-        }
-    }
-
-    /**
+    /* 
+     * PUBLIC CORE 
      *
+     * These functions constitue this contract's core, user-facing functionality. 
+     */
+
+    /**
+     * @dev swap the `input` token for the `output` token and credit the result to `account`.
      */
     function swap(address account, address input, address output, uint amount) public returns(bool) {
         require (msg.sender == router, "Caller is not the router.");
@@ -199,26 +140,6 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
         _accrueAP(account, fromToken, amount);
     }
 
-    function _accrueAP(address account, address output, uint amount) private {
-        uint quantity = getQuantity(output, amount, targetAPToken);
-        if (quantity > 0) {
-            totalAccruedAP += quantity;
-            if (totalAccruedAP <= currentPhaseAP * maxAccruedAPInPhase) {
-                auraNFT.accrueAP(account, quantity);
-            }
-        }
-    }
-
-    function getRewardBalance(address account) public view returns(uint) {
-        return _balances[account];
-    }
-
-    function permit(address spender, uint value, uint8 v, bytes32 r, bytes32 s) private {
-        bytes32 message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(spender, value, nonces[spender]++))));
-        address recoveredAddress = ecrecover(message, v, r, s);
-        require(recoveredAddress != address(0) && recoveredAddress == spender, "Invalid signature.");
-    }
-
     function withdraw(uint8 v, bytes32 r, bytes32 s) public nonReentrant returns(bool) {
         require (totalMined < maxMiningAmount, "All tokens have been mined.");
 
@@ -238,51 +159,173 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
         return false;
     }
 
-    function setPhase(uint _phase) public onlyOwner {
+    /* 
+     * EXTERNAL SETTERS 
+     * 
+     * These contracts provide callers with useful functionality for managing their accounts.
+     */
+
+    function setFeeDistribution(uint _distribution) external {
+        require(_distribution <= defaultFeeDistribution, "Invalid fee distribution.");
+        feeDistribution[msg.sender] = _distribution;
+    }
+
+    /* 
+     * PUBLIC UTILS 
+     * 
+     * These utility functions are used within this contract but are useful and safe enough 
+     * to expose to callers as well. 
+     */
+
+    function getQuantity(address outputToken, uint outputAmount, address anchorToken) public view returns(uint quantity) {
+        if (outputToken == anchorToken) {
+            quantity = outputAmount;
+        } else if (AuraFactory(factory).getPair(outputToken, anchorToken) != address(0) 
+            && pairExists(outputToken, anchorToken)) 
+        {
+            quantity = IOracle(oracle).consult(outputToken, outputAmount, anchorToken);
+        } else {
+            uint length = getWhitelistLength();
+            for (uint i = 0; i < length; i++) {
+                address intermediate = whitelistGet(i);
+                if (AuraFactory(factory).getPair(outputToken, intermediate) != address(0)
+                    && AuraFactory(factory).getPair(intermediate, anchorToken) != address(0)
+                    && pairExists(intermediate, anchorToken))
+                {
+                    uint interQuantity = IOracle(oracle).consult(outputToken, outputAmount, intermediate);
+                    quantity = IOracle(oracle).consult(intermediate, interQuantity, anchorToken);
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * @return _pairExists is true if the token pair of `a` and `b` exists and false otherwise.
+     */
+    function pairExists(address a, address b) public view returns(bool _pairExists) {
+        address pair = AuraLibrary.pairFor(factory, a, b);
+        PairsList memory pool = pairsList[pairOfpairIds[pair]];
+        _pairExists = (pool.pair == pair);
+    }
+
+    /* 
+     * PRIVATE UTILS 
+     * 
+     * These functions are used within this contract but would be unsafe or useless
+     * if exposed to callers.
+     */
+
+    function permit(address spender, uint value, uint8 v, bytes32 r, bytes32 s) private {
+        bytes32 message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(spender, value, nonces[spender]++))));
+        address recoveredAddress = ecrecover(message, v, r, s);
+        require(recoveredAddress != address(0) && recoveredAddress == spender, "Invalid signature.");
+    }
+
+    function _accrueAP(address account, address output, uint amount) private {
+        uint quantity = getQuantity(output, amount, targetAPToken);
+        if (quantity > 0) {
+            totalAccruedAP += quantity;
+            if (totalAccruedAP <= currentPhaseAP * maxAccruedAPInPhase) {
+                auraNFT.accrueAP(account, quantity);
+            }
+        }
+    }
+
+    /**
+     * @return feeAmount due to the account.
+     * @return apAmount due to the account.
+     */
+    function getAmounts(uint amount, address account) internal view returns(uint feeAmount, uint apAmount) {
+        feeAmount = amount * (defaultFeeDistribution - feeDistribution[account]) / 100;
+        apAmount = amount - feeAmount;
+    }
+
+    /* 
+     * EXTERNAL GETTERS 
+     * 
+     * These functions provide useful information to callers about this contract's state. 
+     */
+
+    function getPairsListLength() external view returns(uint) {
+        return pairsList.length;
+    }
+
+    function getRewardBalance(address account) external view returns(uint) {
+        return _balances[account];
+    }
+
+    /**
+     * @dev get the different fees.
+     */
+    function getFees(address account, address input, address output, uint amount) 
+        external
+        view
+        returns(
+            uint feeInAURA,
+            uint feeInUSD,
+            uint apAccrued
+        )
+    {
+        uint swapFee = AuraLibrary.getSwapFee(factory, input, output); 
+        address pair = AuraLibrary.pairFor(factory, input, output);
+        PairsList memory pool = pairsList[pairOfpairIds[pair]];
+
+        if (pool.pair == pair && pool.enabled && whitelistContains(input) && whitelistContains(output)) {
+            (uint feeAmount, uint apAmount) = getAmounts(amount, account);
+            feeInAURA = getQuantity(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
+            feeInUSD = getQuantity(output, apAmount / apWagerOnSwap, targetAPToken);
+            apAccrued = getQuantity(targetToken, feeInAURA, targetAPToken);
+        }
+    }
+
+    /* 
+     * ONLY OWNER SETTERS 
+     * 
+     * These functions alter contract core data and are only available to the owner. 
+     */
+
+    function setPhase(uint _phase) external onlyOwner {
         currentPhase = _phase;
         emit NewPhase(_phase);
     }
 
-    function setPhaseAP(uint _phaseAP) public onlyOwner {
+    function setPhaseAP(uint _phaseAP) external onlyOwner {
         currentPhaseAP = _phaseAP;
         emit NewPhaseAP(_phaseAP);
     }
 
-    function setRouter(address _router) public onlyOwner {
+    function setRouter(address _router) external onlyOwner {
         require(_router != address(0), "Router is the zero address.");
         router = _router;
         emit NewRouter(_router);
     }
 
-    function setMarket(address _market) public onlyOwner {
+    function setMarket(address _market) external onlyOwner {
         require(_market != address(0), "Market is the zero address.");
         market = _market;
         emit NewMarket(_market);
     }
 
-    function setFactory(address _factory) public onlyOwner {
+    function setFactory(address _factory) external onlyOwner {
         require(_factory != address(0), "Factory is the zero address.");
         factory = _factory;
         emit NewFactory(_factory);
     }
 
-    function setAuraNFT(IAuraNFT _auraNFT) public onlyOwner {
+    function setAuraNFT(IAuraNFT _auraNFT) external onlyOwner {
         require(address(_auraNFT) != address(0), "AuraNFT is the zero address.");
         auraNFT = _auraNFT;
         emit NewAuraNFT(_auraNFT);
     }
 
-    function setOracle(IOracle _oracle) public onlyOwner {
+    function setOracle(IOracle _oracle) external onlyOwner {
         require(address(_oracle) != address(0), "Oracle is the zero address.");
         oracle = _oracle;
         emit NewOracle(_oracle);
     }
 
-    function getPairsListLength() public view returns(uint) {
-        return pairsList.length;
-    }
-
-    function addPair(uint _percentReward, address _pair) public onlyOwner {
+    function addPair(uint _percentReward, address _pair) external onlyOwner {
         require(_pair != address(0), "`_pair` is the zero address.");
         pairsList.push(
             PairsList({
@@ -291,29 +334,28 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
                 enabled: true
             })
         );
-        pairOfpairIds[_pair] = getPairsListLength() - 1;
+        pairOfpairIds[_pair] = pairsList.length - 1;
     }
 
-    function setPair(uint _pairId, uint _percentReward) public onlyOwner {
+    function setPair(uint _pairId, uint _percentReward) external onlyOwner {
         pairsList[_pairId].percentReward = _percentReward;
     }
 
-    function setPairEnabled(uint _pairId, bool _enabled) public onlyOwner {
+    function setPairEnabled(uint _pairId, bool _enabled) external onlyOwner {
         pairsList[_pairId].enabled = _enabled;
     }
 
-    function setAPReward(uint _apWagerOnSwap, uint _percentMarket, uint _percentAuction) public onlyOwner {
+    function setAPReward(uint _apWagerOnSwap, uint _percentMarket, uint _percentAuction) external onlyOwner {
         apWagerOnSwap = _apWagerOnSwap;
         apPercentMarket = _percentMarket;
         apPercentAuction = _percentAuction;
     }
 
-    function setFeeDistribution(uint _distribution) public {
-        require(_distribution <= defaultFeeDistribution, "Invalid fee distribution.");
-        feeDistribution[msg.sender] = _distribution;
-    }
-
-    /* WHITELIST */
+    /* 
+     * WHITELIST 
+     * 
+     * This special group of utility functions are for interacting with the whitelist.
+     */
 
     /**
      * @dev Add `_addr` to the whitelist.
