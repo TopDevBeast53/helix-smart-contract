@@ -208,6 +208,9 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * These functions provide useful information to callers about this contract's state. 
      */
 
+    /**
+     * @return the number of swap pairs recognized by the exchange.
+     */
     function getPairsListLength() external view returns(uint) {
         return pairsList.length;
     }
