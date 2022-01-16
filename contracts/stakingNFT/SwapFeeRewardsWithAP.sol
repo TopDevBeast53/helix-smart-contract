@@ -60,15 +60,17 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
     mapping(address => uint) _balances;
     mapping(address => uint) nonces;
 
+    event NewAuraNFT(IAuraNFT auraNFT);
+    event NewOracle(IOracle oracle);
+
     event Rewarded(address account, address input, address output, uint amount, uint quantity);
     event Withdraw(address user, uint amount);
+
     event NewPhase(uint phase);
     event NewPhaseAP(uint phaseAP);
     event NewRouter(address router);
     event NewMarket(address market);
     event NewFactory(address factory);
-    event NewAuraNFT(IAuraNFT auraNFT);
-    event NewOracle(IOracle oracle);
 
     constructor(
         address _factory,
