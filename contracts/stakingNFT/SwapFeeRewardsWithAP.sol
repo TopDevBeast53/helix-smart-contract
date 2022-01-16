@@ -32,21 +32,21 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
     address targetToken;
     address targetAPToken;
 
-    uint maxMiningAmount;
-    uint maxMiningInPhase;
-    uint maxAccruedAPInPhase;
+    uint maxMiningAmount = 100000000 ether;
+    uint maxMiningInPhase = 5000 ether;
+    uint maxAccruedAPInPhase = 5000 ether;
 
-    uint currentPhase;
-    uint currentPhaseAP;
+    uint currentPhase = 1;
+    uint currentPhaseAP = 1; 
     
-    uint totalMined;
-    uint totalAccruedAP;
+    uint totalMined = 0;
+    uint totalAccruedAP = 0;
 
-    uint apWagerOnSwap;
-    uint apPercentMarket;
-    uint apPercentAuction;
+    uint apWagerOnSwap = 1500;
+    uint apPercentMarket = 10000; // (div 10000)
+    uint apPercentAuction = 10000; // (div 10000)
 
-    uint defaultFeeDistribution;
+    uint defaultFeeDistribution = 90;
 
     struct PairsList {
         address pair;
