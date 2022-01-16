@@ -159,17 +159,6 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
     }
 
     /* 
-     * EXTERNAL SETTERS 
-     * 
-     * These contracts provide callers with useful functionality for managing their accounts.
-     */
-
-    function setFeeDistribution(uint _distribution) external {
-        require(_distribution <= defaultFeeDistribution, "Invalid fee distribution.");
-        feeDistribution[msg.sender] = _distribution;
-    }
-
-    /* 
      * PUBLIC UTILS 
      * 
      * These utility functions are used within this contract but are useful and safe enough 
@@ -209,38 +198,6 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
     }
 
     /* 
-     * PRIVATE UTILS 
-     * 
-     * These functions are used within this contract but would be unsafe or useless
-     * if exposed to callers.
-     */
-
-    function permit(address spender, uint value, uint8 v, bytes32 r, bytes32 s) private {
-        bytes32 message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(spender, value, nonces[spender]++))));
-        address recoveredAddress = ecrecover(message, v, r, s);
-        require(recoveredAddress != address(0) && recoveredAddress == spender, "Invalid signature.");
-    }
-
-    function _accrueAP(address account, address output, uint amount) private {
-        uint quantity = getQuantity(output, amount, targetAPToken);
-        if (quantity > 0) {
-            totalAccruedAP += quantity;
-            if (totalAccruedAP <= currentPhaseAP * maxAccruedAPInPhase) {
-                auraNFT.accrueAP(account, quantity);
-            }
-        }
-    }
-
-    /**
-     * @return feeAmount due to the account.
-     * @return apAmount due to the account.
-     */
-    function getAmounts(uint amount, address account) internal view returns(uint feeAmount, uint apAmount) {
-        feeAmount = amount * (defaultFeeDistribution - feeDistribution[account]) / 100;
-        apAmount = amount - feeAmount;
-    }
-
-    /* 
      * EXTERNAL GETTERS 
      * 
      * These functions provide useful information to callers about this contract's state. 
@@ -276,6 +233,49 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
             feeInUSD = getQuantity(output, apAmount / apWagerOnSwap, targetAPToken);
             apAccrued = getQuantity(targetToken, feeInAURA, targetAPToken);
         }
+    }
+
+    /* 
+     * EXTERNAL SETTERS 
+     * 
+     * These contracts provide callers with useful functionality for managing their accounts.
+     */
+
+    function setFeeDistribution(uint _distribution) external {
+        require(_distribution <= defaultFeeDistribution, "Invalid fee distribution.");
+        feeDistribution[msg.sender] = _distribution;
+    }
+
+    /* 
+     * PRIVATE UTILS 
+     * 
+     * These functions are used within this contract but would be unsafe or useless
+     * if exposed to callers.
+     */
+
+    function permit(address spender, uint value, uint8 v, bytes32 r, bytes32 s) private {
+        bytes32 message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(spender, value, nonces[spender]++))));
+        address recoveredAddress = ecrecover(message, v, r, s);
+        require(recoveredAddress != address(0) && recoveredAddress == spender, "Invalid signature.");
+    }
+
+    function _accrueAP(address account, address output, uint amount) private {
+        uint quantity = getQuantity(output, amount, targetAPToken);
+        if (quantity > 0) {
+            totalAccruedAP += quantity;
+            if (totalAccruedAP <= currentPhaseAP * maxAccruedAPInPhase) {
+                auraNFT.accrueAP(account, quantity);
+            }
+        }
+    }
+
+    /**
+     * @return feeAmount due to the account.
+     * @return apAmount due to the account.
+     */
+    function getAmounts(uint amount, address account) private view returns(uint feeAmount, uint apAmount) {
+        feeAmount = amount * (defaultFeeDistribution - feeDistribution[account]) / 100;
+        apAmount = amount - feeAmount;
     }
 
     /* 
