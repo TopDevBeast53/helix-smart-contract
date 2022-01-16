@@ -14,7 +14,7 @@ contract AddressWhitelist is Ownable {
     /**
      * @dev Add `_addr` to the whitelist.
      */
-    function add(address _addr) public onlyOwner returns(bool) {
+    function add(address _addr) external onlyOwner returns(bool) {
         require(_addr != address(0), "Zero address is invalid.");
         return EnumerableSet.add(_whitelist, _addr);
     }
@@ -22,7 +22,7 @@ contract AddressWhitelist is Ownable {
     /**
      * @dev Remove `_addr` from the whitelist.
      */
-    function remove(address _addr) public onlyOwner returns(bool) {
+    function remove(address _addr) external onlyOwner returns(bool) {
         require(_addr != address(0), "Zero address is invalid.");
         return EnumerableSet.remove(_whitelist, _addr);
     }
@@ -30,7 +30,7 @@ contract AddressWhitelist is Ownable {
     /**
      * @return true if the whitelist contains `_addr` and false otherwise.
      */
-    function contains(address _addr) public view returns(bool) {
+    function contains(address _addr) external view returns(bool) {
         return EnumerableSet.contains(_whitelist, _addr);
     }
 
@@ -44,7 +44,7 @@ contract AddressWhitelist is Ownable {
     /**
      * @return the whitelisted address as `_index`.
      */
-    function get(uint _index) public view returns(address) {
+    function get(uint _index) external view returns(address) {
         require(_index <= getLength() - 1, "Index out of bounds.");
         return EnumerableSet.at(_whitelist, _index);
     }
