@@ -120,6 +120,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         uint fee = feeAmount / swapFee;
         apAmount = apAmount / apWagerOnSwap;
 
+        // Gets the quantity of AURA (targetToken) equivalent in value to quantity (fee) of the input token (output).
         uint quantity = getQuantityOut(output, fee, targetToken);
         if ((totalMined + quantity) <= maxMiningAmount && (totalMined + quantity) <= (currentPhase * maxMiningInPhase)) {
             _balances[account] += quantity;
@@ -159,6 +160,9 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * to expose to callers as well. 
      */
 
+    /**
+     * @dev Gets the quantity of `tokenOut` equivalent in value to `quantityIn` many `tokenIn`.
+     */
     function getQuantityOut(address tokenIn, uint quantityIn, address tokenOut) public view returns(uint quantityOut) {
         if (tokenIn == tokenOut) {
             quantityOut = quantityIn;
