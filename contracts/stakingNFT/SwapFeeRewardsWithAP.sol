@@ -6,9 +6,9 @@ import "../interfaces/IOracle.sol";
 import "../interfaces/IAuraNFT.sol";
 import "../interfaces/IAuraToken.sol";
 import "../swaps/AuraFactory.sol";
-import "./AddressWhitelist.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // TODO - initialize certain storage variables: i.e. maxMiningAmount;
 // TODO - Add NatSpec comments to latter functions.
@@ -18,33 +18,35 @@ import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
  * @title Convert between Swap Reward Fees to Aura Points (ap/AP)
  */
 contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
-    AddressWhitelist whitelist;
+    using EnumerableSet for EnumerableSet.AddressSet;
+    EnumerableSet.AddressSet whitelist;
+
     IOracle oracle;
     IAuraNFT auraNFT;
     IAuraToken auraToken;
 
     address factory;
     address router;
-    address targetToken;
-    address targetAPToken;
     address market;
     address auction;
+    address targetToken;
+    address targetAPToken;
 
-    uint apWagerOnSwap;
-    uint defaultFeeDistribution;
-    uint totalMined;
     uint maxMiningAmount;
+    uint maxMiningInPhase;
+    uint maxAccruedAPInPhase;
+
     uint currentPhase;
     uint currentPhaseAP;
-    uint maxMiningInPhase;
-    uint apPercentMarket;
-    uint apPercentAuction;
+    
+    uint totalMined;
     uint totalAccruedAP;
-    uint currentPhaseAP;
-    uint maxAccruedAPInPhase;
+
     uint apWagerOnSwap;
     uint apPercentMarket;
     uint apPercentAuction;
+
+    uint defaultFeeDistribution;
 
     struct PairsList {
         address pair;
@@ -92,9 +94,6 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
         oracle = _oracle;
         auraNFT = _auraNFT;
         auraToken = _auraToken;
-
-        // Initialize a new whitelist for this contract.
-        whitelist = new AddressWhitelist();
     }
 
     /**
@@ -122,7 +121,7 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
         address pair = AuraLibrary.pairFor(factory, input, output);
         PairsList memory pool = pairsList[pairOfpairIds[pair]];
 
-        if (pool.pair == pair && pool.enabled && whitelist.contains(input) && whitelist.contains(output)) {
+        if (pool.pair == pair && pool.enabled && whitelistContains(input) && whitelistContains(output)) {
             (uint feeAmount, uint apAmount) = getAmounts(amount, account);
             feeInAURA = getQuantity(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
             feeInUSD = getQuantity(output, apAmount / apWagerOnSwap, targetAPToken);
@@ -147,9 +146,9 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
         {
             quantity = IOracle(oracle).consult(outputToken, outputAmount, anchorToken);
         } else {
-            uint length = whitelist.getLength();
+            uint length = getWhitelistLength();
             for (uint i = 0; i < length; i++) {
-                address intermediate = whitelist.get(i);
+                address intermediate = whitelistGet(i);
                 if (AuraFactory(factory).getPair(outputToken, intermediate) != address(0)
                     && AuraFactory(factory).getPair(intermediate, anchorToken) != address(0)
                     && pairExists(intermediate, anchorToken))
@@ -162,14 +161,17 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
         }
     }
 
+    /**
+     *
+     */
     function swap(address account, address input, address output, uint amount) public returns(bool) {
         require (msg.sender == router, "Caller is not the router.");
 
-        if (!whitelist.contains(input) || !whitelist.contains(output)) { return false; }
+        if (!whitelistContains(input) || !whitelistContains(output)) { return false; }
 
         address pair = AuraLibrary.pairFor(factory, input, output);
         PairsList memory pool = pairsList[pairOfpairIds[pair]];
-        if (pool.pair != pair || !pool.enabled) { return false; }
+        if (!pool.enabled || pool.pair != pair) { return false; }
 
         uint pairFee = AuraLibrary.getSwapFee(factory, input, output);
         (uint feeAmount, uint apAmount) = getAmounts(amount, account);
@@ -309,5 +311,45 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
     function setFeeDistribution(uint _distribution) public {
         require(_distribution <= defaultFeeDistribution, "Invalid fee distribution.");
         feeDistribution[msg.sender] = _distribution;
+    }
+
+    /* WHITELIST */
+
+    /**
+     * @dev Add `_addr` to the whitelist.
+     */
+    function whitelistAdd(address _addr) public onlyOwner returns(bool) {
+        require(_addr != address(0), "Zero address is invalid.");
+        return EnumerableSet.add(whitelist, _addr);
+    }
+
+    /**
+     * @dev Remove `_addr` from the whitelist.
+     */
+    function whitelistRemove(address _addr) public onlyOwner returns(bool) {
+        require(_addr != address(0), "Zero address is invalid.");
+        return EnumerableSet.remove(whitelist, _addr);
+    }
+
+    /**
+     * @return true if the whitelist contains `_addr` and false otherwise.
+     */
+    function whitelistContains(address _addr) public view returns(bool) {
+        return EnumerableSet.contains(whitelist, _addr);
+    }
+
+    /**
+     * @return the number of whitelisted addresses.
+     */
+    function getWhitelistLength() public view returns(uint256) {
+        return EnumerableSet.length(whitelist);
+    }
+
+    /**
+     * @return the whitelisted address as `_index`.
+     */
+    function whitelistGet(uint _index) public view returns(address) {
+        require(_index <= getWhitelistLength() - 1, "Index out of bounds.");
+        return EnumerableSet.at(whitelist, _index);
     }
 }
