@@ -131,7 +131,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Withdraw AURA to the caller's address.
+     * @dev Withdraw AURA from the caller's contract balance to the caller's address.
      */
     function withdraw(uint8 v, bytes32 r, bytes32 s) external nonReentrant returns(bool) {
         require (totalMined < maxMiningAmount, "All tokens have been mined.");
