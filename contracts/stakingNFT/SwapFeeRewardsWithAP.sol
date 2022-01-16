@@ -98,7 +98,7 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
     }
 
     /* 
-     * PUBLIC CORE 
+     * EXTERNAL CORE 
      *
      * These functions constitue this contract's core, user-facing functionality. 
      */
@@ -106,7 +106,7 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
     /**
      * @dev swap the `input` token for the `output` token and credit the result to `account`.
      */
-    function swap(address account, address input, address output, uint amount) public returns(bool) {
+    function swap(address account, address input, address output, uint amount) external returns(bool) {
         require (msg.sender == router, "Caller is not the router.");
 
         if (!whitelistContains(input) || !whitelistContains(output)) { return false; }
@@ -129,19 +129,7 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
         return true;
     }
 
-    function accrueAuraFromMarket(address account, address fromToken, uint amount) public {
-        require(msg.sender == market, "Caller is not the market.");
-        amount = amount * apPercentMarket / 10000;
-        _accrueAP(account, fromToken, amount);
-    }
-
-    function accrueAuraFromAuction(address account, address fromToken, uint amount) public {
-        require(msg.sender == auction, "Caller is not the auction.");
-        amount = amount * apPercentAuction / 10000;
-        _accrueAP(account, fromToken, amount);
-    }
-
-    function withdraw(uint8 v, bytes32 r, bytes32 s) public nonReentrant returns(bool) {
+    function withdraw(uint8 v, bytes32 r, bytes32 s) external nonReentrant returns(bool) {
         require (totalMined < maxMiningAmount, "All tokens have been mined.");
 
         uint balance = _balances[msg.sender];
@@ -158,6 +146,18 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
             }
         }
         return false;
+    }
+
+    function accrueAuraFromMarket(address account, address fromToken, uint amount) external {
+        require(msg.sender == market, "Caller is not the market.");
+        amount = amount * apPercentMarket / 10000;
+        _accrueAP(account, fromToken, amount);
+    }
+
+    function accrueAuraFromAuction(address account, address fromToken, uint amount) external {
+        require(msg.sender == auction, "Caller is not the auction.");
+        amount = amount * apPercentAuction / 10000;
+        _accrueAP(account, fromToken, amount);
     }
 
     /* 
