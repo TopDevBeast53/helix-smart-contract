@@ -100,7 +100,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     /* 
      * EXTERNAL CORE 
      *
-     * These functions constitue this contract's core, user-facing functionality. 
+     * These functions constitute this contract's core functionality. 
      */
 
     /**
@@ -120,7 +120,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         uint fee = feeAmount / swapFee;
         apAmount = apAmount / apWagerOnSwap;
 
-        uint quantity = getQuantity(output, fee, targetToken);
+        uint quantity = getQuantityOut(output, fee, targetToken);
         if ((totalMined + quantity) <= maxMiningAmount && (totalMined + quantity) <= (currentPhase * maxMiningInPhase)) {
             _balances[account] += quantity;
             emit Rewarded(account, input, output, amount, quantity);
@@ -129,12 +129,16 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         return true;
     }
 
+    /**
+     * @dev Withdraw AURA to the caller's address.
+     */
     function withdraw(uint8 v, bytes32 r, bytes32 s) external nonReentrant returns(bool) {
         require (totalMined < maxMiningAmount, "All tokens have been mined.");
 
         uint balance = _balances[msg.sender];
         require ((totalMined + balance) <= (currentPhase * maxMiningInPhase), "All tokens in this phase have been mined.");
-       
+      
+        // Verify the sender's signature.
         permit(msg.sender, balance, v, r, s);
 
         if (balance > 0) {
@@ -155,23 +159,23 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * to expose to callers as well. 
      */
 
-    function getQuantity(address outputToken, uint outputAmount, address anchorToken) public view returns(uint quantity) {
-        if (outputToken == anchorToken) {
-            quantity = outputAmount;
-        } else if (AuraFactory(factory).getPair(outputToken, anchorToken) != address(0) 
-            && pairExists(outputToken, anchorToken)) 
+    function getQuantityOut(address tokenIn, uint quantityIn, address tokenOut) public view returns(uint quantityOut) {
+        if (tokenIn == tokenOut) {
+            quantityOut = quantityIn;
+        } else if (AuraFactory(factory).getPair(tokenIn, tokenOut) != address(0) 
+            && pairExists(tokenIn, tokenOut)) 
         {
-            quantity = IOracle(oracle).consult(outputToken, outputAmount, anchorToken);
+            quantityOut = IOracle(oracle).consult(tokenIn, quantityIn, tokenOut);
         } else {
             uint length = getWhitelistLength();
             for (uint i = 0; i < length; i++) {
                 address intermediate = whitelistGet(i);
-                if (AuraFactory(factory).getPair(outputToken, intermediate) != address(0)
-                    && AuraFactory(factory).getPair(intermediate, anchorToken) != address(0)
-                    && pairExists(intermediate, anchorToken))
+                if (AuraFactory(factory).getPair(tokenIn, intermediate) != address(0)
+                    && AuraFactory(factory).getPair(intermediate, tokenOut) != address(0)
+                    && pairExists(intermediate, tokenOut))
                 {
-                    uint interQuantity = IOracle(oracle).consult(outputToken, outputAmount, intermediate);
-                    quantity = IOracle(oracle).consult(intermediate, interQuantity, anchorToken);
+                    uint interQuantity = IOracle(oracle).consult(tokenIn, quantityIn, intermediate);
+                    quantityOut = IOracle(oracle).consult(intermediate, interQuantity, tokenOut);
                     break;
                 }
             }
@@ -219,9 +223,9 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
 
         if (pool.pair == pair && pool.enabled && whitelistContains(input) && whitelistContains(output)) {
             (uint feeAmount, uint apAmount) = getAmounts(amount, account);
-            feeInAURA = getQuantity(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
-            feeInUSD = getQuantity(output, apAmount / apWagerOnSwap, targetAPToken);
-            apAccrued = getQuantity(targetToken, feeInAURA, targetAPToken);
+            feeInAURA = getQuantityOut(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
+            feeInUSD = getQuantityOut(output, apAmount / apWagerOnSwap, targetAPToken);
+            apAccrued = getQuantityOut(targetToken, feeInAURA, targetAPToken);
         }
     }
 
@@ -255,6 +259,9 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * if exposed to callers.
      */
 
+    /**
+     * @dev verifies the spenders signature.
+     */
     function permit(address spender, uint value, uint8 v, bytes32 r, bytes32 s) private {
         bytes32 message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(spender, value, nonces[spender]++))));
         address recoveredAddress = ecrecover(message, v, r, s);
@@ -262,7 +269,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     }
 
     function _accrueAP(address account, address output, uint amount) private {
-        uint quantity = getQuantity(output, amount, targetAPToken);
+        uint quantity = getQuantityOut(output, amount, targetAPToken);
         if (quantity > 0) {
             totalAccruedAP += quantity;
             if (totalAccruedAP <= currentPhaseAP * maxAccruedAPInPhase) {
