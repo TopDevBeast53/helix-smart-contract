@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-// TODO - initialize certain storage variables: i.e. maxMiningAmount;
 // TODO - Add NatSpec comments to latter functions.
 // TODO - Set visibilities for storage variables. 
 
