@@ -148,18 +148,6 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
         return false;
     }
 
-    function accrueAuraFromMarket(address account, address fromToken, uint amount) external {
-        require(msg.sender == market, "Caller is not the market.");
-        amount = amount * apPercentMarket / 10000;
-        _accrueAP(account, fromToken, amount);
-    }
-
-    function accrueAuraFromAuction(address account, address fromToken, uint amount) external {
-        require(msg.sender == auction, "Caller is not the auction.");
-        amount = amount * apPercentAuction / 10000;
-        _accrueAP(account, fromToken, amount);
-    }
-
     /* 
      * PUBLIC UTILS 
      * 
@@ -240,8 +228,20 @@ contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
     /* 
      * EXTERNAL SETTERS 
      * 
-     * These contracts provide callers with useful functionality for managing their accounts.
+     * These contracts provide callers with functionality for altering users' accounts.
      */
+
+    function accrueAuraFromMarket(address account, address fromToken, uint amount) external {
+        require(msg.sender == market, "Caller is not the market.");
+        amount = amount * apPercentMarket / 10000;
+        _accrueAP(account, fromToken, amount);
+    }
+
+    function accrueAuraFromAuction(address account, address fromToken, uint amount) external {
+        require(msg.sender == auction, "Caller is not the auction.");
+        amount = amount * apPercentAuction / 10000;
+        _accrueAP(account, fromToken, amount);
+    }
 
     function setFeeDistribution(uint _distribution) external {
         require(_distribution <= defaultFeeDistribution, "Invalid fee distribution.");
