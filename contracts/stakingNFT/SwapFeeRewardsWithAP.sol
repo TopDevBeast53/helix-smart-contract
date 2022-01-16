@@ -223,15 +223,16 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev get the different fees.
+     * @dev Return to the caller the token quantities in AURA, USD, and AP
+     *      that `account` could withdraw.
      */
-    function getFees(address account, address input, address output, uint amount) 
+    function getQuantities(address account, address input, address output, uint amount) 
         external
         view
         returns(
-            uint feeInAURA,
-            uint feeInUSD,
-            uint apAccrued
+            uint inAURA,
+            uint inUSD,
+            uint inAP
         )
     {
         uint swapFee = AuraLibrary.getSwapFee(factory, input, output); 
@@ -240,9 +241,9 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
 
         if (pool.pair == pair && pool.enabled && whitelistContains(input) && whitelistContains(output)) {
             (uint feeAmount, uint apAmount) = getAmounts(amount, account);
-            feeInAURA = getQuantityOut(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
-            feeInUSD = getQuantityOut(output, apAmount / apWagerOnSwap, targetAPToken);
-            apAccrued = getQuantityOut(targetToken, feeInAURA, targetAPToken);
+            inAURA = getQuantityOut(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
+            inUSD = getQuantityOut(output, apAmount / apWagerOnSwap, targetAPToken);
+            inAP = getQuantityOut(targetToken, inAURA, targetAPToken);
         }
     }
 
