@@ -16,7 +16,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 /**
  * @title Convert between Swap Reward Fees to Aura Points (ap/AP)
  */
-contract SwapRewardsAndAP is Ownable, ReentrancyGuard {
+contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet whitelist;
 
