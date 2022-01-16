@@ -212,7 +212,10 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         return pairsList.length;
     }
 
-    function getRewardBalance(address account) external view returns(uint) {
+    /**
+     * @return the earned but unwithdrawn AURA in `account`.
+     */
+    function getBalance(address account) external view returns(uint) {
         return _balances[account];
     }
 
