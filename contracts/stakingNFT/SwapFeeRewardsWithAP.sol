@@ -88,6 +88,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     event NewPhaseAP(uint phaseAP);
     event NewRouter(address router);
     event NewMarket(address market);
+    event NewAuction(address auction);
     event NewFactory(address factory);
 
     constructor(
@@ -198,7 +199,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
             // Otherwise, try to find an intermediate exchange token
             // and compute the exchange quantity via that intermediate token.
             // I.e. ETH -> BTC where ETH -> BTC doesn't exist but ETH -> SOL -> BTC does.
-            uint length = getWhitelistLength();
+            uint length = whitelistLength();
             for (uint i = 0; i < length; i++) {
                 address intermediate = whitelistGet(i);
                 if (AuraFactory(factory).getPair(tokenIn, intermediate) != address(0)
@@ -435,7 +436,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     /**
      * @return the number of whitelisted addresses.
      */
-    function getWhitelistLength() public view returns(uint256) {
+    function whitelistLength() public view returns(uint256) {
         return EnumerableSet.length(whitelist);
     }
 
@@ -443,7 +444,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * @return the whitelisted address as `_index`.
      */
     function whitelistGet(uint _index) public view returns(address) {
-        require(_index <= getWhitelistLength() - 1, "Index out of bounds.");
+        require(_index <= whitelistLength() - 1, "Index out of bounds.");
         return EnumerableSet.at(whitelist, _index);
     }
 }
