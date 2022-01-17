@@ -45,7 +45,15 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     uint apPercentMarket = 10000; // (div 10000)
     uint apPercentAuction = 10000; // (div 10000)
 
-    uint defaultFeeDistribution = 90;
+    /*
+     * Sets the upper limit of maximum AURA percentage of users' rewards.
+     * Higher value -> higher max AURA percentage and more user choice.
+     * 0   -> Rewards are [0]% AURA and [100]% AP. User has no choice.
+     * 50  -> Rewards are [0, 50]% AURA and [0, 100]% AP. User has some choice.
+     * 100 -> Rewards are [0, 100]% AURA and [0, 100]% AP. User has full choice.
+     * Invariant: must be in range [0, 100].
+     */
+    uint defaultRewardDistribution = 100; 
 
     struct PairsList {
         address pair;
@@ -55,8 +63,18 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
 
     PairsList[] pairsList;
 
+    /* 
+     * Fee distribution is a user setting for how that user wants their rewards distributed.
+     * Assuming defaultRewardDistribution == 100, then:
+     * 0   -> Rewards are distributed entirely in AURA.
+     * 50  -> Rewards are 50% AURA and 50% AP.
+     * 100 -> Rewards are distributed entirely in AP.
+     * More generally, low values maximize AURA while high values maximize AP.
+     * Invariant: rewardDistribution[user] <= defaultRewardDistribution.
+     */
+    mapping(address => uint) rewardDistribution;
+
     mapping(address => uint) pairOfpairIds;
-    mapping(address => uint) feeDistribution;
     mapping(address => uint) _balances;
     mapping(address => uint) nonces;
 
@@ -265,9 +283,9 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         _accrueAP(account, fromToken, amount);
     }
 
-    function setFeeDistribution(uint _distribution) external {
-        require(_distribution <= defaultFeeDistribution, "Invalid fee distribution.");
-        feeDistribution[msg.sender] = _distribution;
+    function setRewardDistribution(uint _distribution) external {
+        require(_distribution <= defaultRewardDistribution, "Invalid fee distribution.");
+        rewardDistribution[msg.sender] = _distribution;
     }
 
     /* 
@@ -301,7 +319,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * @return apAmount due to the account.
      */
     function getAmounts(uint amount, address account) private view returns(uint feeAmount, uint apAmount) {
-        feeAmount = amount * (defaultFeeDistribution - feeDistribution[account]) / 100;
+        feeAmount = amount * (defaultRewardDistribution - rewardDistribution[account]) / 100;
         apAmount = amount - feeAmount;
     }
 
