@@ -134,16 +134,18 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         if (!pool.enabled || pool.pair != pair) { return false; }
 
         uint swapFee = AuraLibrary.getSwapFee(factory, input, output);
-        (uint feeAmount, uint apAmount) = getAmounts(amount, account);
-        uint fee = feeAmount / swapFee;
-        apAmount = apAmount / apWagerOnSwap;
+        (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
+        feeAmount = feeAmount / swapFee;
 
-        // Gets the quantity of AURA (targetToken) equivalent in value to quantity (fee) of the input token (output).
-        uint quantity = getQuantityOut(output, fee, targetToken);
+        // Gets the quantity of AURA (targetToken) equivalent in value to quantity (feeAmount) of the input token (output).
+        uint quantity = getQuantityOut(output, feeAmount, targetToken);
         if ((totalMined + quantity) <= maxMiningAmount && (totalMined + quantity) <= (currentPhase * maxMiningInPhase)) {
             _balances[account] += quantity;
             emit Rewarded(account, input, output, amount, quantity);
         }
+
+        apAmount = apAmount / apWagerOnSwap;
+        _accrueAP(account, output, apAmount);
 
         return true;
     }
@@ -244,7 +246,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * @dev Return to the caller the token quantities in AURA, USD, and AP
      *      that `account` could withdraw.
      */
-    function getQuantities(address account, address input, address output, uint amount) 
+    function getPotentialRewardQuantities(address account, address input, address output, uint amount) 
         external
         view
         returns(
@@ -258,7 +260,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         PairsList memory pool = pairsList[pairOfpairIds[pair]];
 
         if (pool.pair == pair && pool.enabled && whitelistContains(input) && whitelistContains(output)) {
-            (uint feeAmount, uint apAmount) = getAmounts(amount, account);
+            (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
             inAURA = getQuantityOut(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
             inUSD = getQuantityOut(output, apAmount / apWagerOnSwap, targetAPToken);
             inAP = getQuantityOut(targetToken, inAURA, targetAPToken);
@@ -318,7 +320,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * @return feeAmount due to the account.
      * @return apAmount due to the account.
      */
-    function getAmounts(uint amount, address account) private view returns(uint feeAmount, uint apAmount) {
+    function getSplitRewardAmounts(uint amount, address account) private view returns(uint feeAmount, uint apAmount) {
         feeAmount = amount * (defaultRewardDistribution - rewardDistribution[account]) / 100;
         apAmount = amount - feeAmount;
     }
@@ -381,7 +383,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         pairOfpairIds[_pair] = pairsList.length - 1;
     }
 
-    function setPair(uint _pairId, uint _percentReward) external onlyOwner {
+    function setPairPercentReward(uint _pairId, uint _percentReward) external onlyOwner {
         pairsList[_pairId].percentReward = _percentReward;
     }
 
