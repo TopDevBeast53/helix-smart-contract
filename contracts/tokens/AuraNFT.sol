@@ -138,6 +138,13 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         _tokens[tokenId].isStaked = isStaked;
     }
 
+    /**
+     * TODO
+     */
+    function accrueAP(address user, uint amount) external { 
+        //TODO 
+    }
+
     //Internal functions --------------------------------------------------------------------------------------------
 
     /**
