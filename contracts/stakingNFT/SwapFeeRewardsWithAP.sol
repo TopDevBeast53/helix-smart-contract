@@ -411,26 +411,26 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      */
 
     /**
-     * @dev Add `_addr` to the whitelist.
+     * @dev Add `token` to the whitelist.
      */
-    function whitelistAdd(address _addr) public onlyOwner returns(bool) {
-        require(_addr != address(0), "Zero address is invalid.");
-        return EnumerableSet.add(whitelist, _addr);
+    function whitelistAdd(address token) public onlyOwner returns(bool) {
+        require(token != address(0), "Zero address is invalid.");
+        return EnumerableSet.add(whitelist, token);
     }
 
     /**
-     * @dev Remove `_addr` from the whitelist.
+     * @dev Remove `token` from the whitelist.
      */
-    function whitelistRemove(address _addr) public onlyOwner returns(bool) {
-        require(_addr != address(0), "Zero address is invalid.");
-        return EnumerableSet.remove(whitelist, _addr);
+    function whitelistRemove(address token) public onlyOwner returns(bool) {
+        require(token != address(0), "Zero address is invalid.");
+        return EnumerableSet.remove(whitelist, token);
     }
 
     /**
-     * @return true if the whitelist contains `_addr` and false otherwise.
+     * @return true if the whitelist contains `token` and false otherwise.
      */
-    function whitelistContains(address _addr) public view returns(bool) {
-        return EnumerableSet.contains(whitelist, _addr);
+    function whitelistContains(address token) public view returns(bool) {
+        return EnumerableSet.contains(whitelist, token);
     }
 
     /**
