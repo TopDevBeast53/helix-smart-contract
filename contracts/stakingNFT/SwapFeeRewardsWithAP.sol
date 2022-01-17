@@ -273,13 +273,13 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * Provide callers with functionality for setting contract state.
      */
 
-    function accrueAuraFromMarket(address account, address fromToken, uint amount) external {
+    function accrueAPFromMarket(address account, address fromToken, uint amount) external {
         require(msg.sender == market, "Caller is not the market.");
         amount = amount * apPercentMarket / 10000;
         _accrueAP(account, fromToken, amount);
     }
 
-    function accrueAuraFromAuction(address account, address fromToken, uint amount) external {
+    function accrueAPFromAuction(address account, address fromToken, uint amount) external {
         require(msg.sender == auction, "Caller is not the auction.");
         amount = amount * apPercentAuction / 10000;
         _accrueAP(account, fromToken, amount);
@@ -351,6 +351,12 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         require(_market != address(0), "Market is the zero address.");
         market = _market;
         emit NewMarket(_market);
+    }
+
+    function setAuction(address _auction) external onlyOwner {
+        require(_auction!= address(0), "Auction is the zero address.");
+        auction = _auction;
+        emit NewAuction(_auction);
     }
 
     function setFactory(address _factory) external onlyOwner {
