@@ -32,6 +32,49 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     string private _internalBaseURI;
 
     /**
+     * @dev Last NFT token id, it's increasing on mint
+     */
+    uint private _lastTokenId;
+    
+    /**
+     * @dev A AuraNFT has Aura Points amount initially when it is minted
+     *
+     * NOTE : Set its value when deploy this contract
+     */
+    uint private _initialAuraPoints;
+
+    /**
+     * @dev When level up, add a percentage to the sum of your previous AuraPoints.
+     *
+     * NOTE : Set its value when deploy this contract
+     */
+    uint8 private _levelUpPercent; 
+
+    
+    //NFTs of the first 5 levels can be exchanged for NFTs of the next level by collecting a certain number of the most pumped NFTs of a certain level.
+
+    //e.g.
+    //   To get one NFT of the 2nd level, the user needs to have 6 NFTs of the 1st level with 10 Aura Points.
+    //   To get one NFT of the 3rd level, the user needs to have 5 NFTs of the 2nd level, with 100 Aura Points.
+    //   To get one NFT of the 4th level, the user needs to have 4 NFTs of the 3rd level, with 1000 Aura Points.
+    //   To get one NFT of the 5th level, the user needs to have 3 NFTs of the 4th level, with 10,000 Aura Points.
+    //   To get one NFT of the 6th level, the user needs to have 2 NFTs of the 5th level, with 50,000 Aura Points.
+
+    // When upgrading the level, the lower-level NFTs are permanently burned out.
+    // e.g. a user upgrades 6 NFTs of the first level to 1 NFT of the 2nd level. 
+    //      In this case, the 6 NFTs of the first level are permanently burned out.
+    
+    /**
+     * @dev List of AuraPoints amount limits that a NFT can have by level
+     */
+    uint[7] private _auraPointsTable;
+    
+    /**
+     * @dev List of NFTs' amount be exchanged for NFTs of the next level
+     */
+    uint[7] private _levelTable;
+
+    /**
      * @dev Structure for attributes the Aura NFTs
      */
     struct Token {
