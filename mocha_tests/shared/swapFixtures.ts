@@ -2,6 +2,12 @@ import { Wallet } from 'ethers';
 import { Web3Provider } from 'ethers/providers';
 import { deployContract } from 'ethereum-waffle';
 
+import AuraToken from '../../build/contracts/AuraToken.json'
+import { expandTo18Decimals } from './utilities'
+
+import AuraFactory from '../../build/contracts/AuraFactory.json';
+import AuraRouterV1 from '../../build/contracts/AuraRouterV1.json';
+
 /*
  * NOTE:
  * This file is intended to be a temporary, minimally cluttered development space 
@@ -10,11 +16,21 @@ import { deployContract } from 'ethereum-waffle';
  * they are available to other tests.
  */
 
-import AuraFactory from '../../build/contracts/AuraFactory.json'
-
-const overrides = { gasLimit: 6500000 };
+const overrides = { gasLimit: 6700000 };
 
 export async function factoryFixture(provider: Web3Provider, [wallet]: Wallet[]) {
     const factory = await deployContract(wallet, AuraFactory, [wallet.address], overrides);
     return factory;
 }; 
+
+export async function routerFixture(provider: Web3Provider, [wallet]: Wallet[]) {
+    const factory = await factoryFixture(provider, [wallet]);
+    const weth = await deployContract(wallet, AuraToken, [], overrides)
+
+    // TODO - Next line throws Out of Gas Error.
+    // const router = await deployContract(wallet, AuraRouterV1, [factory.address, weth.address], overrides);
+    // Temporary router until Out of Gas Error is fixed.
+    let router = { address: '0x90BBC489677C87e26361f665ad3e26E18b063551' };
+
+    return router;
+};
