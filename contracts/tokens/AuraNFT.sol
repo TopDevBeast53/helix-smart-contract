@@ -35,8 +35,8 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
      * @dev Structure for attributes the Aura NFTs
      */
     struct Token {
-        // Aura Boost is a “power” of your NFT and a tool that helps you to boost your NFT and earn more crypto
-        uint auraBoost;
+        // Aura Point is a “power” of your NFT and a tool that helps you to boost your NFT and earn more crypto
+        uint auraPoints;
         // Aura NFT consists of on a particular level:
         uint level;
         // True if staked, false otherwise
@@ -92,6 +92,13 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     //External functions --------------------------------------------------------------------------------------------
 
     /**
+     * @dev External function to get auraPoints by `tokenId`
+     */
+    function getAuraPoints(uint tokenId) external view returns (uint) {
+        return _tokens[tokenId].auraPoints;
+    }
+
+    /**
      * @dev External function to set new Base URI
      */
     function setBaseURI(string calldata newBaseUri) external onlyOwner {
@@ -103,9 +110,12 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
      * 
      * AuraChefNFT's `stake` function calls it to get token's information by token ID
      */
-    function getInfoForStaking(uint tokenId) external view returns (address tokenOwner, bool isStaked) {
+    function getInfoForStaking(uint tokenId) external view returns (address tokenOwner, bool isStaked, uint auraPoints) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+
         tokenOwner = ownerOf[tokenId];
         isStaked = _tokens[tokenId].isStaked;
+        auraPoints = _tokens[tokenId].auraPoints;
     }
 
     /** 
@@ -126,6 +136,13 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
             getApproved[tokenId] = address(0);
         }
         _tokens[tokenId].isStaked = isStaked;
+    }
+
+    /**
+     * TODO
+     */
+    function accrueAP(address user, uint amount) external { 
+        //TODO 
     }
 
     //Internal functions --------------------------------------------------------------------------------------------

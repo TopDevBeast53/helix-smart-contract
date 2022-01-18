@@ -82,10 +82,10 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
         uint deadline
     ) external virtual override ensure(deadline) returns (uint amountA, uint amountB, uint liquidity) {
         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
-        // address pair = AuraLibrary.pairFor(_factory, tokenA, tokenB);
-        // SafeTransferLib.safeTransferFrom(ERC20(tokenA), msg.sender, pair, amountA);
-        // SafeTransferLib.safeTransferFrom(ERC20(tokenB), msg.sender, pair, amountB);
-        // liquidity = AuraPair(pair).mint(to);
+        address pair = AuraLibrary.pairFor(_factory, tokenA, tokenB);
+        SafeTransferLib.safeTransferFrom(ERC20(tokenA), msg.sender, pair, amountA);
+        SafeTransferLib.safeTransferFrom(ERC20(tokenB), msg.sender, pair, amountB);
+        liquidity = AuraPair(pair).mint(to);
     }
     function addLiquidityETH(
         address token,
