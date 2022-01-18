@@ -47,35 +47,24 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     uint private _initialAuraPoints;
 
     /**
-     * @dev When level up, add a percentage to the sum of your previous AuraPoints.
-     *
-     * NOTE : Set its value when deploy this contract
+     * @dev When level up, add a percentage of your previous AuraPoints.
      */
     uint8 private _levelUpPercent; 
 
-    
-    //NFTs of the first 5 levels can be exchanged for NFTs of the next level by collecting a certain number of the most pumped NFTs of a certain level.
+    //User can upgrade a NFT which he/she wants to boost, it needs to put certain Amount of Aura Points in the NFT.
 
     //e.g.
-    //   To get one NFT of the 2nd level, the user needs to have 6 NFTs of the 1st level with 10 Aura Points.
-    //   To get one NFT of the 3rd level, the user needs to have 5 NFTs of the 2nd level, with 100 Aura Points.
-    //   To get one NFT of the 4th level, the user needs to have 4 NFTs of the 3rd level, with 1000 Aura Points.
-    //   To get one NFT of the 5th level, the user needs to have 3 NFTs of the 4th level, with 10,000 Aura Points.
-    //   To get one NFT of the 6th level, the user needs to have 2 NFTs of the 5th level, with 50,000 Aura Points.
-
-    // When upgrading the level, the lower-level NFTs are permanently burned out.
-    // e.g. a user upgrades 6 NFTs of the first level to 1 NFT of the 2nd level. 
-    //      In this case, the 6 NFTs of the first level are permanently burned out.
+    //   To upgrade 1st level NFT to 2nd level, the user needs to have 10 Aura Points in the token
+    //   To upgrade 2nd level NFT to 3rd level, the user needs to have 50 Aura Points in the token
+    //   To upgrade 3rd level NFT to 4th level, the user needs to have 100 Aura Points in the token
+    //   To upgrade 4th level NFT to 5th level, the user needs to have 200 Aura Points in the token
+    //   To upgrade 5th level NFT to 6th level, the user needs to have 500 Aura Points in the token
 
     /**
      * @dev List of AuraPoints amount limits that a NFT can have by level
      */
     uint[7] private _auraPointsTable;
     
-    /**
-     * @dev List of NFTs' amount be exchanged for NFTs of the next level
-     */
-    uint[7] private _levelTable;
 
     /**
      * @dev Structure for attributes the Aura NFTs
@@ -95,11 +84,9 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     mapping(uint256 => Token) private _tokens;
 
     // event when any tokenId gain AuraPoints 
-    event GainRB(uint indexed tokenId, uint newAP);
-    // event when an user receive AuraPoints
-    event RBAccrued(address user, uint amount);
+    event AccrueAuraPoints(uint indexed tokenId, uint newAP);
     // event when an user level up from which tokenId
-    event LevelUp(address indexed user, uint indexed newLevel, uint[] parentsTokensId);
+    event LevelUp(address indexed user, uint indexed newLevel, uint tokenId);
     event Initialize(string baseURI, uint initialAuraPoints);
     event TokenMint(address indexed to, uint indexed tokenId, uint level, uint auraPoints);
 
@@ -119,21 +106,12 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
 
         _auraPointsTable[0] = 100 ether;//it means nothing because level start from `1 LEVEL`
         _auraPointsTable[1] = 10 ether;
-        _auraPointsTable[2] = 100 ether;
-        _auraPointsTable[3] = 1000 ether;
-        _auraPointsTable[4] = 10000 ether;
-        _auraPointsTable[5] = 50000 ether;
-        _auraPointsTable[6] = 150000 ether;
+        _auraPointsTable[2] = 50 ether;
+        _auraPointsTable[3] = 100 ether;
+        _auraPointsTable[4] = 200 ether;
+        _auraPointsTable[5] = 500 ether;
+        _auraPointsTable[6] = 10000 ether;
 
-        _levelTable[0] = 0;//it means nothing because level start from `1 LEVEL`
-        _levelTable[1] = 6;
-        _levelTable[2] = 5;
-        _levelTable[3] = 4;
-        _levelTable[4] = 3;
-        _levelTable[5] = 2;
-        _levelTable[6] = 0;
-
-        //BNF-01, SFR-01
         emit Initialize(baseURI, initialAuraPoints);
     }
     
@@ -180,38 +158,45 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Public funtion to upgrade `tokensId` to the next level
+     * @dev Public funtion to upgrade `tokenId` to the next level
      *
-     * NOTE: Once levelup, mint new a token upgraded and burn previos tokens
+     * NOTE: When level up, it's added a `_levelUpPercent` percentage of your previous AuraPoints
      *
      * Requirements:
-     * - Length of `tokensId` must be not over than MAX_ARRAY_LENGTH_PER_REQUEST(default 30).
      * - The current token level must be valid.
-     * - The token amount must be same as number needed.
-     * - The levels of tokens required must be all same level.
      * - The current held AuraPoints amount must be sufficient.
-     *      The needed AuraPoints amount is `_levelTable[curLevel] * _auraPointsTable[curLevel]`
      */
-    function levelUp(uint[] calldata tokensId) public nonReentrant {
-        require(tokensId.length <= MAX_ARRAY_LENGTH_PER_REQUEST, "Array length gt max");
-        uint curLevel = _tokens[tokensId[0]].level;
-        require(_levelTable[curLevel] != 0, "This level not upgradable");
-        uint neededNumbersOfToken = _levelTable[curLevel];
-        require(neededNumbersOfToken == tokensId.length, "Wrong numbers of tokens received");
+    function levelUp(uint tokenId) public nonReentrant {
 
-        uint neededAPs = neededNumbersOfToken * _auraPointsTable[curLevel];
-        uint curHeldAPs = 0;
-        for (uint i = 0; i < neededNumbersOfToken; i++) {
-            Token memory token = _tokens[tokensId[i]];
-            require(token.level == curLevel, "Token not from this level");
-            curHeldAPs += token.auraPoints;
-        }
-        if (neededAPs == curHeldAPs) {
-            _mintLevelUp((curLevel + 1), tokensId);
-        } else {
-            revert("Insufficient amount of AuraPoints");
-        }
-        emit LevelUp(msg.sender, (curLevel + 1), tokensId);
+        require(ownerOf[tokenId] == msg.sender, "Not owner of token");
+        Token storage token = _tokens[tokenId];
+        uint curLevel = token.level;
+        require(curLevel > 0 && curLevel < 7, "Token level is not valid");
+        uint curAuraPoints = token.auraPoints;
+        require(_auraPointsTable[curLevel] == curAuraPoints, "Insufficient amount of AuraPoints");
+
+        token.level = curLevel + 1;
+        token.auraPoints = curAuraPoints + (curAuraPoints * _levelUpPercent) / 100;
+
+        emit LevelUp(msg.sender, (curLevel + 1), tokenId);
+    }
+
+    /**
+     * @dev Used by staker to accrue AuraPoints `amount` to `user`
+     *
+     * NOTE: It would be called by swap contract(staker).
+     *       An user can receive AuraPoints as a reward when Swapping
+     *
+     * Requirements:
+     * - The counted AuraPoints amount must be not over limit by level
+     */
+    function accrueAuraPoints(uint tokenId, uint amount) public onlyStaker {
+        require(_exists(tokenId), "Token does not exist");
+        Token storage token = _tokens[tokenId];
+        uint newAP = token.auraPoints + amount;
+        require(newAP <= _auraPointsTable[token.level], "Counted auraPoints value over limit by level");
+        token.auraPoints = newAP;
+        emit AccrueAuraPoints(tokenId, newAP);
     }
 
     //External functions --------------------------------------------------------------------------------------------
@@ -305,13 +290,6 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev External function to set LevelTable
-     */
-    function setLevelTable(uint[7] calldata levelTable) external onlyOwner {
-        _levelTable = levelTable;
-    }
-
-    /**
      * @dev External function to set LevelUpPercent
      *
      * NOTE: percentage value: e.g. 10%
@@ -319,16 +297,6 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     function setLevelUpPercent(uint8 percent) external onlyOwner {
         require(percent > 0, "Wrong percent value");
         _levelUpPercent = percent;
-    }
-
-    /**
-     * @dev Used by stake Admin function to accrue AuraPoints `amount` to `user`
-     *
-     * NOTE: It would be called by swap contract.
-     *       An user can receive AuraPoints as a reward when Swapping
-     */
-    function accruePoints(address user, uint amount) external onlyStaker {
-        // TODO:
     }
 
     //Internal functions --------------------------------------------------------------------------------------------
@@ -354,30 +322,6 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
 
     //Private functions ---------------------------------------------------------------------------------------------
     
-    /**
-     * @dev To mint an upgraded Token when levelling up
-     *
-     * NOTE: - Once levelup, mint new a token upgraded and burn previos tokens
-     *       - The AuraPoints amount of new token is a value added its percent with sum of previous RobiBoosts
-     *              `sumAuraPoints + (sumAuraPoints * _levelUpPercent) / 100`
-     * Requirements:
-     *      Sender must be `tokensId`'s owner
-     */
-    function _mintLevelUp(uint level, uint[] memory tokensId) private {
-        uint sumAuraPoints = 0;
-        for (uint i = 0; i < tokensId.length; i++) {
-            require(ownerOf[tokensId[i]] == msg.sender, "Not owner of token");
-            sumAuraPoints += _tokens[tokensId[i]].auraPoints;
-            _burn(tokensId[i]);
-        }
-        _lastTokenId += 1;
-        uint newTokenId = _lastTokenId;
-        _tokens[newTokenId].auraPoints = sumAuraPoints + (sumAuraPoints * _levelUpPercent) / 100;
-        _tokens[newTokenId].createTimestamp = block.timestamp;
-        _tokens[newTokenId].level = level;
-        _safeMint(msg.sender, newTokenId);
-    }
-
     //Role functions for Staker --------------------------------------------------------------------------------------
 
     /**
