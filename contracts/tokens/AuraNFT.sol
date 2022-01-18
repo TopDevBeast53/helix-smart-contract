@@ -175,13 +175,6 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev External function to set new Base URI
-     */
-    function setBaseURI(string calldata newBaseUri) external onlyOwner {
-        _internalBaseURI = newBaseUri;
-    }
-
-    /**
      * @dev Returns the owner address and staked status among the token information with the given 'tokenId'.
      * 
      * AuraChefNFT's `stake` function calls it to get token's information by token ID
@@ -192,6 +185,13 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         tokenOwner = ownerOf[tokenId];
         isStaked = _tokens[tokenId].isStaked;
         auraPoints = _tokens[tokenId].auraPoints;
+    }
+
+    /**
+     * @dev External function to get level by `tokenId`
+     */
+    function getLevel(uint tokenId) external view returns (uint) {
+        return _tokens[tokenId].level;
     }
 
     /** 
@@ -212,6 +212,47 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
             getApproved[tokenId] = address(0);
         }
         _tokens[tokenId].isStaked = isStaked;
+    }
+
+    /**
+     * @dev External function to set new Base URI
+     */
+    function setBaseURI(string calldata newBaseUri) external onlyOwner {
+        _internalBaseURI = newBaseUri;
+    }
+
+    /**
+     * @dev External function to set AuraPointsTable
+     */
+    function setAuraPointsTable(uint[7] calldata apTable) external onlyOwner {
+        _auraPointsTable = apTable;
+    }
+
+    /**
+     * @dev External function to set LevelTable
+     */
+    function setLevelTable(uint[7] calldata levelTable) external onlyOwner {
+        _levelTable = levelTable;
+    }
+
+    /**
+     * @dev External function to set LevelUpPercent
+     *
+     * NOTE: percentage value: e.g. 10%
+     */
+    function setLevelUpPercent(uint8 percent) external onlyOwner {
+        require(percent > 0, "Wrong percent value");
+        _levelUpPercent = percent;
+    }
+
+    /**
+     * @dev Used by stake Admin function to accrue AuraPoints `amount` to `user`
+     *
+     * NOTE: It would be called by swap contract.
+     *       An user can receive AuraPoints as a reward when Swapping
+     */
+    function accrueAuraPoints(address user, uint amount) external onlyStaker {
+        // TODO:
     }
 
     //Internal functions --------------------------------------------------------------------------------------------
