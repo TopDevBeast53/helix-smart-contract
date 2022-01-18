@@ -4,7 +4,7 @@ import { Web3Provider} from 'ethers/providers';
 import { solidity, loadFixture, deployContract, MockProvider } from 'ethereum-waffle';
 
 import SwapFeeRewardsWithAP from '../build/contracts/SwapFeeRewardsWithAP.json';
-import { factoryFixture, routerFixture } from './shared/swapFixtures';
+import { factoryFixture, routerFixture, targetTokenFixture } from './shared/swapFixtures';
 
 use(solidity);
 
@@ -15,10 +15,9 @@ describe('SwapFeeRewardsWithAP', () => {
 
     let factory;
     let router;
+    let targetToken;
 
     // TODO - Replace with actual contract implementations.
-    //let router = '0x90BBC489677C87e26361f665ad3e26E18b063551';
-    let targetToken = '0x4cfdC5Cf9659A57671DAa395AE3F043f8dFB9957';
     let targetAPToken = '0x8f593d9fb3adBDFffBFDb3212BEA73f3DA0d8d30';
     let oracle = '0xae0463B8A46aD8981FF7BD776511cEdC4c5D72f9';
     let auraNFT = '0x471105204EE017cCEaDFBC58EB6641B9cfbCad56';
@@ -30,14 +29,15 @@ describe('SwapFeeRewardsWithAP', () => {
     let token4 = '0x436b98aEd76BeD7B927f7718D1143f98adaC2033';
 
     beforeEach(async () => {
-        let factory = await loadFixture(factoryFixture);
-        let router = await loadFixture(routerFixture);
+        factory = await loadFixture(factoryFixture);
+        router = await loadFixture(routerFixture);
+        targetToken = await loadFixture(targetTokenFixture);
 
         // Deploy new contract.
         contract = await deployContract(wallet, SwapFeeRewardsWithAP, [
             factory.address, 
             router.address, 
-            targetToken, 
+            targetToken.address, 
             targetAPToken, 
             oracle, 
             auraNFT, 
