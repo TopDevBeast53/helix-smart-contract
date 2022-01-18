@@ -85,6 +85,6 @@ describe('AuraFactory', () => {
   })
 
   it('initCodeHash', async () => {
-    console.log('init_code - ', await factory.INIT_CODE_HASH());
+    //console.log('init_code - ', await factory.INIT_CODE_HASH());
   })
 })
