@@ -312,7 +312,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         if (quantity > 0) {
             totalAccruedAP += quantity;
             if (totalAccruedAP <= currentPhaseAP * maxAccruedAPInPhase) {
-                auraNFT.accrueAP(account, quantity);
+                auraNFT.accruePoints(account, quantity);
             }
         }
     }
