@@ -145,24 +145,25 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         return bytes(_internalBaseURI).length > 0 ? string(abi.encodePacked(_internalBaseURI, id.toString())) : "";
     }
 
-    function mint(address to, uint256 tokenId) public onlyMinter nonReentrant {
-        _mint(to, tokenId);
+    /**
+     * @dev To mint AuraNFT
+     *
+     * Initialize:
+     *      set auraPoints as initialAuraPoints value
+     *      set level as 1 (start from 1 LEVEL)
+     */
+    function mint(address to) public onlyMinter nonReentrant {
+        require(to != address(0), "Address can not be zero");
+        _lastTokenId += 1;
+        uint tokenId = _lastTokenId;
+        _tokens[tokenId].auraPoints = _initialAuraPoints;
+        _tokens[tokenId].createTimestamp = block.timestamp;
+        _tokens[tokenId].level = 1;
+        _safeMint(to, tokenId);
     }
 
     function burn(uint256 tokenId) public nonReentrant {
         _burn(tokenId);
-    }
-
-    function safeMint(address to, uint256 tokenId) public nonReentrant {
-        _safeMint(to, tokenId);
-    }
-
-    function safeMint(
-        address to,
-        uint256 tokenId,
-        bytes memory data
-    ) public nonReentrant {
-        _safeMint(to, tokenId, data);
     }
     
     /**
