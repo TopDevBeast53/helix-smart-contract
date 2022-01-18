@@ -165,6 +165,16 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         _safeMint(to, tokenId, data);
     }
     
+    /**
+     * @dev Override funtion to avoid the approval of the staked token
+     */
+    function approve(address to, uint256 tokenId) public override {
+        if (_tokens[tokenId].isStaked == true) {
+            revert("ERC721: Token is staked");
+        }
+        super.approve(to, tokenId);
+    }
+
     //External functions --------------------------------------------------------------------------------------------
 
     /**
