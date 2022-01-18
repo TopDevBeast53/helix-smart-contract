@@ -168,6 +168,33 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     //External functions --------------------------------------------------------------------------------------------
 
     /**
+     * @dev External function to get the information of `tokenId`
+     */
+    function getToken(uint _tokenId) external view
+        returns (
+            uint tokenId,
+            address tokenOwner,
+            uint level,
+            uint auraPoints,
+            bool isStaked,
+            uint createTimestamp,
+            uint remainAPToNextLevel,
+            string memory uri
+        )
+    {
+        require(_exists(_tokenId), "ERC721: token does not exist");
+        Token memory token = _tokens[_tokenId];
+        tokenId = _tokenId;
+        tokenOwner = ownerOf[_tokenId];
+        level = token.level;
+        auraPoints = token.auraPoints;
+        isStaked = token.isStaked;
+        createTimestamp = token.createTimestamp;
+        remainAPToNextLevel = _remainAPToNextLevel(_tokenId);
+        uri = tokenURI(_tokenId);
+    }
+
+    /**
      * @dev External function to get auraPoints by `tokenId`
      */
     function getAuraPoints(uint tokenId) external view returns (uint) {
@@ -267,6 +294,13 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
      */
     function _exists(uint256 tokenId) internal view virtual returns (bool) {
         return ownerOf[tokenId] != address(0);
+    }
+
+    /**
+     * @dev Returns (AuraPoints amount to upgrade to the next level - current AP amount)
+     */
+    function _remainAPToNextLevel(uint tokenId) internal view returns (uint) {
+        return _auraPointsTable[uint(_tokens[tokenId].level)] - _tokens[tokenId].auraPoints;
     }
 
     //Role functions for Staker --------------------------------------------------------------------------------------
