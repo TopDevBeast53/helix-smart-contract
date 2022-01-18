@@ -28,5 +28,9 @@
     "pretest": "yarn compile",
     "test": "mocha",
     "prepublishOnly": "yarn test"
+  },
+  "dependencies": {
+    "mocha": "^9.1.4",
+    "yarn": "^1.22.17"
   }
 }
