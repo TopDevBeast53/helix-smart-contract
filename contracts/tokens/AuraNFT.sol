@@ -63,7 +63,7 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     // When upgrading the level, the lower-level NFTs are permanently burned out.
     // e.g. a user upgrades 6 NFTs of the first level to 1 NFT of the 2nd level. 
     //      In this case, the 6 NFTs of the first level are permanently burned out.
-    
+
     /**
      * @dev List of AuraPoints amount limits that a NFT can have by level
      */
@@ -88,17 +88,50 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         uint createTimestamp;
     }
 
-    // Mapping from token ID to the token's info
+    // map token info by token ID : TokenId => Token
     mapping(uint256 => Token) private _tokens;
+
+    // event when any tokenId gain AuraPoints 
+    event GainRB(uint indexed tokenId, uint newAP);
+    // event when an user receive AuraPoints
+    event RBAccrued(address user, uint amount);
+    // event when an user level up from which tokenId
+    event LevelUp(address indexed user, uint indexed newLevel, uint[] parentsTokensId);
+    event Initialize(string baseURI, uint initialAuraPoints);
+    event TokenMint(address indexed to, uint indexed tokenId, uint level, uint auraPoints);
+
 
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
     constructor (
-        string memory baseURI
+        string memory baseURI,
+        uint initialAuraPoints,
+        uint8 levelUpPercent
     ) ERC721(/*name=*/'Aura NFT', /*symbol=*/'AURA-NFT') {
         
         _internalBaseURI = baseURI;
+        _initialAuraPoints = initialAuraPoints;
+        _levelUpPercent = levelUpPercent;
+
+        _auraPointsTable[0] = 100 ether;//it means nothing because level start from `1 LEVEL`
+        _auraPointsTable[1] = 10 ether;
+        _auraPointsTable[2] = 100 ether;
+        _auraPointsTable[3] = 1000 ether;
+        _auraPointsTable[4] = 10000 ether;
+        _auraPointsTable[5] = 50000 ether;
+        _auraPointsTable[6] = 150000 ether;
+
+        _levelTable[0] = 0;//it means nothing because level start from `1 LEVEL`
+        _levelTable[1] = 6;
+        _levelTable[2] = 5;
+        _levelTable[3] = 4;
+        _levelTable[4] = 3;
+        _levelTable[5] = 2;
+        _levelTable[6] = 0;
+
+        //BNF-01, SFR-01
+        emit Initialize(baseURI, initialAuraPoints);
     }
     
     //Public functions --------------------------------------------------------------------------------------------
