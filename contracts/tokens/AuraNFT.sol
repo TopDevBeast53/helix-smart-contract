@@ -123,7 +123,7 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     function tokenURI(uint256 id) public view override returns (string memory) {
         require(_exists(id), "ERC721Metadata: URI query for nonexistent token");
 
-        return bytes(_internalBaseURI).length > 0 ? string(abi.encodePacked(_internalBaseURI, id.toString())) : "";
+        return bytes(_internalBaseURI).length > 0 ? string(abi.encodePacked(_internalBaseURI, "/", id.toString())) : "";
     }
 
     /**
