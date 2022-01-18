@@ -327,7 +327,7 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
      * NOTE: It would be called by swap contract.
      *       An user can receive AuraPoints as a reward when Swapping
      */
-    function accrueAuraPoints(address user, uint amount) external onlyStaker {
+    function accruePoints(address user, uint amount) external onlyStaker {
         // TODO:
     }
 

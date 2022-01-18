@@ -5,12 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@rari-capital/solmate/src/tokens/ERC20.sol';
 import "../libraries/ExtraMath.sol";
-
-interface IAuraNFT {
-    function getInfoForStaking(uint tokenId) external view returns(address tokenOwner, bool isStaked, uint auraPoints);
-    function setIsStaked(uint tokenId, bool isStaked) external;
-    function getAuraPoints(uint tokenId) external returns(uint);
-}
+import "../interfaces/IAuraNFT.sol";
 
 contract SmartChefNFT is Ownable, ReentrancyGuard {
 
