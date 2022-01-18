@@ -12,7 +12,17 @@
     "truffle-assertions": "^0.9.2"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.0.0",
-    "@rari-capital/solmate": "^6.2.0"
+    "@truffle/hdwallet-provider": "^2.0.0",
+    "dotenv": "^14.2.0"
+  },
+  "scripts": {
+    "lint": "yarn prettier ./test/*.ts --check",
+    "lint:fix": "yarn prettier ./test/*.ts --write",
+    "clean": "rimraf ./build/",
+    "precompile": "yarn clean",
+    "compile": "waffle .waffle.json",
+    "pretest": "yarn compile",
+    "test": "mocha",
+    "prepublishOnly": "yarn test"
   }
 }
