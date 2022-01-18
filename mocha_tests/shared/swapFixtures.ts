@@ -30,7 +30,12 @@ export async function routerFixture(provider: Web3Provider, [wallet]: Wallet[]) 
     // TODO - Next line throws Out of Gas Error.
     // const router = await deployContract(wallet, AuraRouterV1, [factory.address, weth.address], overrides);
     // Temporary router until Out of Gas Error is fixed.
-    let router = { address: '0x90BBC489677C87e26361f665ad3e26E18b063551' };
+    const router = { address: '0x90BBC489677C87e26361f665ad3e26E18b063551' };
 
     return router;
+};
+
+export async function targetTokenFixture(provider: Web3Provider, [wallet]: Wallet[]) {
+    const targetToken = await deployContract(wallet, AuraToken, [], overrides);
+    return targetToken;
 };
