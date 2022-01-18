@@ -1,16 +1,21 @@
 import chai, {expect, use} from 'chai';
-import {Contract} from 'ethers';
-import {deployContract, MockProvider, solidity} from 'ethereum-waffle';
+import { Wallet, Contract } from 'ethers';
+import { Web3Provider} from 'ethers/providers';
+import { solidity, loadFixture, deployContract, MockProvider } from 'ethereum-waffle';
+
 import SwapFeeRewardsWithAP from '../build/contracts/SwapFeeRewardsWithAP.json';
+import { factoryFixture } from './shared/swapFixtures';
 
 use(solidity);
 
 describe('SwapFeeRewardsWithAP', () => {
+    const overrides = { gasLimit: 6500000 };
     const [wallet, walletTo] = new MockProvider().getWallets();
     let contract: Contract;
 
+    let factory;
+
     // TODO - Replace with actual contract implementations.
-    let factory = '0x7f05920CeEC09DCF249041F39Cce7AEb43E1c621';
     let router = '0x90BBC489677C87e26361f665ad3e26E18b063551';
     let targetToken = '0x4cfdC5Cf9659A57671DAa395AE3F043f8dFB9957';
     let targetAPToken = '0x8f593d9fb3adBDFffBFDb3212BEA73f3DA0d8d30';
@@ -23,12 +28,12 @@ describe('SwapFeeRewardsWithAP', () => {
     let token3 = '0xffDD40B01c56Ab043038e4b4F18677193C5321E0';
     let token4 = '0x436b98aEd76BeD7B927f7718D1143f98adaC2033';
 
-    const overrides = { gasLimit: 6500000 };
-
     beforeEach(async () => {
+        let factory = await loadFixture(factoryFixture);
+
         // Deploy new contract.
         contract = await deployContract(wallet, SwapFeeRewardsWithAP, [
-            factory, 
+            factory.address, 
             router, 
             targetToken, 
             targetAPToken, 
