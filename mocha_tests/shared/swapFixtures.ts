@@ -2,11 +2,11 @@ import { Wallet } from 'ethers';
 import { Web3Provider } from 'ethers/providers';
 import { deployContract } from 'ethereum-waffle';
 
-import AuraToken from '../../build/contracts/AuraToken.json'
 import { expandTo18Decimals } from './utilities'
 
 import AuraFactory from '../../build/contracts/AuraFactory.json';
 import AuraRouterV1 from '../../build/contracts/AuraRouterV1.json';
+import AuraToken from '../../build/contracts/AuraToken.json'
 
 /*
  * NOTE:
@@ -38,4 +38,9 @@ export async function routerFixture(provider: Web3Provider, [wallet]: Wallet[]) 
 export async function targetTokenFixture(provider: Web3Provider, [wallet]: Wallet[]) {
     const targetToken = await deployContract(wallet, AuraToken, [], overrides);
     return targetToken;
+};
+
+export async function targetAPTokenFixture(provider: Web3Provider, [wallet]: Wallet[]) {
+    const targetAPToken = { address: '0x8f593d9fb3adBDFffBFDb3212BEA73f3DA0d8d30' };
+    return targetAPToken;
 };
