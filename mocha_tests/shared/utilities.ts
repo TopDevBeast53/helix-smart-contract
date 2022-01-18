@@ -14,8 +14,11 @@ const PERMIT_TYPEHASH = keccak256(
   toUtf8Bytes('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)')
 )
 
+<<<<<<< HEAD
 export const MINIMUM_LIQUIDITY = bigNumberify(10).pow(3)
 
+=======
+>>>>>>> 62438999e5e03433d0539c28e774bfa142771247
 export function expandTo18Decimals(n: number): BigNumber {
   return bigNumberify(n).mul(bigNumberify(10).pow(18))
 }

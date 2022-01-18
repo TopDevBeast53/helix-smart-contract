@@ -191,7 +191,11 @@ describe('AuraPair', () => {
     await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
     const tx = await pair.swap(expectedOutputAmount, 0, wallet.address, '0x', overrides)
     const receipt = await tx.wait()
+<<<<<<< HEAD
     expect(receipt.gasUsed).to.eq(73708)
+=======
+    expect(receipt.gasUsed).to.eq(86705)
+>>>>>>> 62438999e5e03433d0539c28e774bfa142771247
   })
 
   it('burn', async () => {

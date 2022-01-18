@@ -4,6 +4,7 @@ import { deployContract } from 'ethereum-waffle'
 
 import { expandTo18Decimals } from './utilities'
 
+<<<<<<< HEAD
 import ERC20 from '../../build/contracts/ERC20LP.json'
 import AuraFactory from '../../build/contracts/AuraFactory.json'
 import AuraPair from '../../build/contracts/AuraPair.json'
@@ -11,6 +12,11 @@ import AuraRouterV1 from '../../build/contracts/AuraRouterV1.json'
 import TestToken from '../../build/contracts/TestToken.json'
 import WETH9 from '../../build/contracts/WETH9.json'
 import RouterEventEmitter from '../../build/contracts/RouterEventEmitter.json'
+=======
+import ERC20 from '../../build/contracts/ERC20.json'
+import AuraFactory from '../../build/contracts/AuraFactory.json'
+import AuraPair from '../../build/contracts/AuraPair.json'
+>>>>>>> 62438999e5e03433d0539c28e774bfa142771247
 
 interface FactoryFixture {
   factory: Contract
@@ -48,6 +54,7 @@ export async function pairFixture(provider: Web3Provider, [wallet]: Wallet[]): P
   const token1 = tokenA.address === token0Address ? tokenB : tokenA
 
   return { factory, token0, token1, pair }
+<<<<<<< HEAD
 }
 
 interface FullExchangeFixture {
@@ -101,4 +108,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
       pair,
       WETHPair
   }
+=======
+>>>>>>> 62438999e5e03433d0539c28e774bfa142771247
 }
