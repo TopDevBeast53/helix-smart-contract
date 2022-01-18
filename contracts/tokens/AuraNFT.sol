@@ -11,6 +11,9 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     using Strings for uint256;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    // Maximum length of tokens per request
+    uint public constant MAX_ARRAY_LENGTH_PER_REQUEST = 30;
+
     /**
      * @dev Stakers who can change attribute `isStaked` of token
      *
@@ -176,6 +179,41 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         super.approve(to, tokenId);
     }
 
+    /**
+     * @dev Public funtion to upgrade `tokensId` to the next level
+     *
+     * NOTE: Once levelup, mint new a token upgraded and burn previos tokens
+     *
+     * Requirements:
+     * - Length of `tokensId` must be not over than MAX_ARRAY_LENGTH_PER_REQUEST(default 30).
+     * - The current token level must be valid.
+     * - The token amount must be same as number needed.
+     * - The levels of tokens required must be all same level.
+     * - The current held AuraPoints amount must be sufficient.
+     *      The needed AuraPoints amount is `_levelTable[curLevel] * _auraPointsTable[curLevel]`
+     */
+    function levelUp(uint[] calldata tokensId) public nonReentrant {
+        require(tokensId.length <= MAX_ARRAY_LENGTH_PER_REQUEST, "Array length gt max");
+        uint curLevel = _tokens[tokensId[0]].level;
+        require(_levelTable[curLevel] != 0, "This level not upgradable");
+        uint neededNumbersOfToken = _levelTable[curLevel];
+        require(neededNumbersOfToken == tokensId.length, "Wrong numbers of tokens received");
+
+        uint neededAPs = neededNumbersOfToken * _auraPointsTable[curLevel];
+        uint curHeldAPs = 0;
+        for (uint i = 0; i < neededNumbersOfToken; i++) {
+            Token memory token = _tokens[tokensId[i]];
+            require(token.level == curLevel, "Token not from this level");
+            curHeldAPs += token.auraPoints;
+        }
+        if (neededAPs == curHeldAPs) {
+            _mintLevelUp((curLevel + 1), tokensId);
+        } else {
+            revert("Insufficient amount of AuraPoints");
+        }
+        emit LevelUp(msg.sender, (curLevel + 1), tokensId);
+    }
+
     //External functions --------------------------------------------------------------------------------------------
 
     /**
@@ -312,6 +350,32 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
      */
     function _remainAPToNextLevel(uint tokenId) internal view returns (uint) {
         return _auraPointsTable[uint(_tokens[tokenId].level)] - _tokens[tokenId].auraPoints;
+    }
+
+    //Private functions ---------------------------------------------------------------------------------------------
+    
+    /**
+     * @dev To mint an upgraded Token when levelling up
+     *
+     * NOTE: - Once levelup, mint new a token upgraded and burn previos tokens
+     *       - The AuraPoints amount of new token is a value added its percent with sum of previous RobiBoosts
+     *              `sumAuraPoints + (sumAuraPoints * _levelUpPercent) / 100`
+     * Requirements:
+     *      Sender must be `tokensId`'s owner
+     */
+    function _mintLevelUp(uint level, uint[] memory tokensId) private {
+        uint sumAuraPoints = 0;
+        for (uint i = 0; i < tokensId.length; i++) {
+            require(ownerOf[tokensId[i]] == msg.sender, "Not owner of token");
+            sumAuraPoints += _tokens[tokensId[i]].auraPoints;
+            _burn(tokensId[i]);
+        }
+        _lastTokenId += 1;
+        uint newTokenId = _lastTokenId;
+        _tokens[newTokenId].auraPoints = sumAuraPoints + (sumAuraPoints * _levelUpPercent) / 100;
+        _tokens[newTokenId].createTimestamp = block.timestamp;
+        _tokens[newTokenId].level = level;
+        _safeMint(msg.sender, newTokenId);
     }
 
     //Role functions for Staker --------------------------------------------------------------------------------------
