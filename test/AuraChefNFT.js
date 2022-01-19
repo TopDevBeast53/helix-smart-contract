@@ -65,7 +65,7 @@ contract('AuraChefNFT', ([AuraNFTMinter, alice, carol, dev, refFeeAddr, safuAddr
         });
         it('When an user stakes, the auraPointAmount of user should have a default amount', async () => {
             await this.auraChefNFT.stake([1, 2], { from: alice });
-            assert.equal((await this.auraChefNFT.getUserAuraPointAmount(alice)).toString(), (new BN(INITIAL_AURAPOINTS * 2)).toString());
+            assert.equal((await this.auraChefNFT.getUserAuraPointAmount(alice)).toString(), (INITIAL_AURAPOINTS * 2).toString());
         });
         it('Check token Owner', async () => {
             await expectRevert.unspecified(this.auraChefNFT.stake([1, 2], { from: carol }));//Not token owner
@@ -93,6 +93,15 @@ contract('AuraChefNFT', ([AuraNFTMinter, alice, carol, dev, refFeeAddr, safuAddr
 
             await this.auraChefNFT.withdrawRewardToken({ from: alice })// block.number is increased
             assert.equal((await this.rwt1.balanceOf(alice)).toString(), (REWARD_PER_BLOCK * (30 + 1)).toString());
+
+            startBlockNumber = parseInt((await time.latestBlock()).toString());
+            await this.auraChefNFT.stake([2], { from: alice });
+            assert.equal((await this.rwt1.balanceOf(alice)).toString(), (REWARD_PER_BLOCK * (30 + 1 + 1)).toString());//because withdrawal before stake newly
+            
+            await time.advanceBlockTo(startBlockNumber + 11);
+            assert.equal(((await this.auraChefNFT.pendingReward(alice))[1]).toString(), (REWARD_PER_BLOCK * 10).toString());
+            assert.equal((await this.auraChefNFT.getUserAuraPointAmount(alice)).toString(), (INITIAL_AURAPOINTS * 2).toString());
+            
         });
         
     });
