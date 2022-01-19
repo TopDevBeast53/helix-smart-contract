@@ -73,7 +73,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      */
     mapping(address => uint) public rewardDistribution;
 
-    mapping(address => uint) public pairOfpairIds;
+    mapping(address => uint) public pairOfPairIds;
     mapping(address => uint) public _balances;
     mapping(address => uint) public nonces;
 
@@ -130,7 +130,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         if (!whitelistContains(input) || !whitelistContains(output)) { return false; }
 
         address pair = AuraLibrary.pairFor(factory, input, output);
-        PairsList memory pool = pairsList[pairOfpairIds[pair]];
+        PairsList memory pool = pairsList[pairOfPairIds[pair]];
         if (!pool.isEnabled || pool.pair != pair) { return false; }
 
         uint swapFee = AuraLibrary.getSwapFee(factory, input, output);
@@ -218,7 +218,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      */
     function pairExists(address a, address b) public view returns(bool _pairExists) {
         address pair = AuraLibrary.pairFor(factory, a, b);
-        PairsList memory pool = pairsList[pairOfpairIds[pair]];
+        uint pairId = pairOfPairIds[pair];
+        PairsList memory pool = pairsList[pairId];
         _pairExists = (pool.pair == pair);
     }
 
@@ -257,7 +258,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     {
         uint swapFee = AuraLibrary.getSwapFee(factory, input, output); 
         address pair = AuraLibrary.pairFor(factory, input, output);
-        PairsList memory pool = pairsList[pairOfpairIds[pair]];
+        PairsList memory pool = pairsList[pairOfPairIds[pair]];
 
         if (pool.pair == pair && pool.isEnabled && whitelistContains(input) && whitelistContains(output)) {
             (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
@@ -386,7 +387,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
                 isEnabled: true
             })
         );
-        pairOfpairIds[_pair] = pairsList.length - 1;
+        pairOfPairIds[_pair] = pairsList.length - 1;
     }
 
     function setPairPercentReward(uint _pairId, uint _percentReward) external onlyOwner {
