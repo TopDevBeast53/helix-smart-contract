@@ -117,17 +117,86 @@ describe('SwapFeeRewardsWithAP', () => {
         expect(await contract.auraNFT()).to.eq(newAuraNFT.address);
     });
 
-    /*
-    it('sets oracle as owner', async () => {
-        const newOracle= await loadFixture(oracleFixture);
-        await contract.setOracle(newOracle.address);
-        expect(await contract.oracle()).to.eq(newOracle.address);
+    it('adds pair as owner', async () => {
+        const newPair = {
+            percentReward: 10,
+            pair: '0x3cf0843c147d1c9dac9b467667634cdb6e9d7dAD'
+        };
+
+        await contract.addPair(newPair.percentReward, newPair.pair);
+
+        const addedPair = await contract.pairsList(0);
+        expect(await contract.getPairsListLength()).to.eq(1);
+        expect(addedPair.pair).to.eq('0x3cf0843c147d1c9dac9b467667634cdb6e9d7dAD');
+        expect(addedPair.percentReward.toNumber()).to.eq(10);
+        expect(addedPair.isEnabled).to.be.true;
     });
 
-    it('sets oracle as owner', async () => {
-        const newOracle= await loadFixture(oracleFixture);
-        await contract.setOracle(newOracle.address);
-        expect(await contract.oracle()).to.eq(newOracle.address);
+    it('sets pair percent reward as owner', async () => {
+        // Add pair and confirm addition.
+        const newPair = {
+            percentReward: 10,
+            pair: '0x3cf0843c147d1c9dac9b467667634cdb6e9d7dAD'
+        };
+
+        await contract.addPair(newPair.percentReward, newPair.pair);
+
+        const addedPair = await contract.pairsList(0);
+        expect(await contract.getPairsListLength()).to.eq(1);
+        expect(addedPair.pair).to.eq('0x3cf0843c147d1c9dac9b467667634cdb6e9d7dAD');
+        expect(addedPair.percentReward.toNumber()).to.eq(10);
+        expect(addedPair.isEnabled).to.be.true;
+
+        // Set pair percent reward.
+        const pairId = 0;
+        const newPairReward = 11;
+
+        await contract.setPairPercentReward(pairId, newPairReward);
+
+        const updatedPair = await contract.pairsList(0);
+        expect(await contract.getPairsListLength()).to.eq(1);
+        expect(updatedPair.pair).to.eq('0x3cf0843c147d1c9dac9b467667634cdb6e9d7dAD');
+        expect(updatedPair.percentReward.toNumber()).to.eq(11);
+        expect(updatedPair.isEnabled).to.be.true;
     });
-    */
+
+    it('sets pair is enabled as owner', async () => {
+        // Add pair and confirm addition.
+        const newPair = {
+            percentReward: 10,
+            pair: '0x3cf0843c147d1c9dac9b467667634cdb6e9d7dAD'
+        };
+
+        await contract.addPair(newPair.percentReward, newPair.pair);
+
+        const addedPair = await contract.pairsList(0);
+        expect(addedPair.pair).to.eq('0x3cf0843c147d1c9dac9b467667634cdb6e9d7dAD');
+        expect(addedPair.percentReward.toNumber()).to.eq(10);
+        expect(addedPair.isEnabled).to.be.true;
+
+        // Set pair isEnabled.
+        const pairId = 0;
+        const newIsEnabled = false;
+
+        await contract.setPairIsEnabled(pairId, newIsEnabled);
+
+        const updatedPair = await contract.pairsList(0);
+        expect(await contract.getPairsListLength()).to.eq(1);
+        expect(updatedPair.pair).to.eq('0x3cf0843c147d1c9dac9b467667634cdb6e9d7dAD');
+        expect(updatedPair.percentReward.toNumber()).to.eq(10);
+        expect(updatedPair.isEnabled).to.be.false;
+    });
+
+    it('sets AP reward as owner', async () => {
+        const newAPWagerOnSwap = 10;
+        const newAPPercentMarket = 11;
+        const newAPPercentAuction = 12;
+
+        await contract.setAPReward(newAPWagerOnSwap, newAPPercentMarket, newAPPercentAuction);
+
+        expect(await contract.apWagerOnSwap()).to.eq(10);
+        expect(await contract.apPercentMarket()).to.eq(11);
+        expect(await contract.apPercentAuction()).to.eq(12);
+    });
+
 });
