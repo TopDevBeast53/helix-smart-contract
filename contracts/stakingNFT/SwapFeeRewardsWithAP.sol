@@ -57,7 +57,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     struct PairsList {
         address pair;
         uint percentReward;
-        bool enabled;
+        bool isEnabled;
     }
 
     PairsList[] public pairsList;
@@ -131,7 +131,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
 
         address pair = AuraLibrary.pairFor(factory, input, output);
         PairsList memory pool = pairsList[pairOfpairIds[pair]];
-        if (!pool.enabled || pool.pair != pair) { return false; }
+        if (!pool.isEnabled || pool.pair != pair) { return false; }
 
         uint swapFee = AuraLibrary.getSwapFee(factory, input, output);
         (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
@@ -259,7 +259,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         address pair = AuraLibrary.pairFor(factory, input, output);
         PairsList memory pool = pairsList[pairOfpairIds[pair]];
 
-        if (pool.pair == pair && pool.enabled && whitelistContains(input) && whitelistContains(output)) {
+        if (pool.pair == pair && pool.isEnabled && whitelistContains(input) && whitelistContains(output)) {
             (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
             inAURA = getQuantityOut(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
             inUSD = getQuantityOut(output, apAmount / apWagerOnSwap, targetAPToken);
@@ -383,7 +383,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
             PairsList({
                 pair: _pair,
                 percentReward: _percentReward,
-                enabled: true
+                isEnabled: true
             })
         );
         pairOfpairIds[_pair] = pairsList.length - 1;
@@ -393,8 +393,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         pairsList[_pairId].percentReward = _percentReward;
     }
 
-    function setPairEnabled(uint _pairId, bool _enabled) external onlyOwner {
-        pairsList[_pairId].enabled = _enabled;
+    function setPairIsEnabled(uint _pairId, bool _isEnabled) external onlyOwner {
+        pairsList[_pairId].isEnabled = _isEnabled;
     }
 
     function setAPReward(uint _apWagerOnSwap, uint _percentMarket, uint _percentAuction) external onlyOwner {
