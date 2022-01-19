@@ -38,6 +38,12 @@ contract('AuraChefNFT', ([AuraNFTMinter, alice, carol, dev, refFeeAddr, safuAddr
         await this.auraNFT.mint(alice, { from: AuraNFTMinter });// created tokenId will be 2.
         assert.equal((await this.auraNFT.ownerOf(2)).toString(), alice.toString());
 
+        //mint AuraNFT to `alice` by `AuraNFTMinter`
+        await this.auraNFT.mint(carol, { from: AuraNFTMinter });// created tokenId will be 3.
+        assert.equal((await this.auraNFT.ownerOf(3)).toString(), carol.toString());
+        await this.auraNFT.mint(carol, { from: AuraNFTMinter });// created tokenId will be 4.
+        assert.equal((await this.auraNFT.ownerOf(4)).toString(), carol.toString());
+
         //Create RewardToken which named 'RWT' as symbol
         this.rwt1 = await BEP20.new('RewardToken', 'RWT1', { from: deployer });
         assert.equal((await this.rwt1.preMineSupply()).toString(), '10000000000000000000000000');
@@ -101,7 +107,21 @@ contract('AuraChefNFT', ([AuraNFTMinter, alice, carol, dev, refFeeAddr, safuAddr
             await time.advanceBlockTo(startBlockNumber + 11);
             assert.equal(((await this.auraChefNFT.pendingReward(alice))[1]).toString(), (REWARD_PER_BLOCK * 10).toString());
             assert.equal((await this.auraChefNFT.getUserAuraPointAmount(alice)).toString(), (INITIAL_AURAPOINTS * 2).toString());
+        });
+        
+        it('Calc withdrawReward when 2 persons staked', async () => {
+            let res, _blockNumber;
+            await this.auraChefNFT.stake([1, 2], { from: alice });
+            await this.auraChefNFT.stake([3], { from: carol });
+
+            _blockNumber = parseInt((await time.latestBlock()).toString());
+            await time.advanceBlockTo(_blockNumber + 10);
             
+            await this.auraChefNFT.withdrawRewardToken({ from: alice })
+            assert.equal((await this.rwt1.balanceOf(alice)).toString(), '25');
+
+            await this.auraChefNFT.withdrawRewardToken({ from: carol })
+            assert.equal((await this.rwt1.balanceOf(carol)).toString(), '12');
         });
         
     });
