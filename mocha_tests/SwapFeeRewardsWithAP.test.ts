@@ -7,7 +7,8 @@ import {
     routerFixture,
     oracleFixture,
     auraNFTFixture,
-    swapFeeRewardsWithAPFixture 
+    swapFeeRewardsWithAPFixture,
+    auraLibraryFixture
 } from './shared/swapFixtures';
 
 use(solidity);
@@ -71,7 +72,7 @@ describe('SwapFeeRewardsWithAP', () => {
 
     it('sets factory as owner', async () => {
         const newFactory = await loadFixture(factoryFixture);
-        await contract.setRouter(newFactory.address);
+        await contract.setFactory(newFactory.address);
         expect(await contract.factory()).to.eq(newFactory.address);
     });
 
@@ -198,5 +199,87 @@ describe('SwapFeeRewardsWithAP', () => {
         expect(await contract.apPercentMarket()).to.eq(11);
         expect(await contract.apPercentAuction()).to.eq(12);
     });
+
+    /*
+     * EXTERNAL GETTERS
+     */
+
+    it('gets pairs list length', async () => {
+        // The list is empty to start.
+        expect(await contract.getPairsListLength()).to.eq(0);
+
+        // Add pair and confirm addition.
+        const newPair = {
+            percentReward: 10,
+            pair: '0x3cf0843c147d1c9dac9b467667634cdb6e9d7dAD'
+        };
+        await contract.addPair(newPair.percentReward, newPair.pair);
+
+        // The list now has one entry.
+        expect(await contract.getPairsListLength()).to.eq(1);
+    });
+
+    it('gets account balance', async () => {
+        const account = '0x3c1b46A41C1B32983bDFB62d77a7DEc856a836A0';
+        // The balance should be empty.
+        expect(await contract.getBalance(account)).to.eq(0);
+    });
+
+    // TODO - test getPotentialRewardQuantities - requires testing getQuantityOut
+
+    /*
+     * EXTERNAL SETTERS
+     */
+
+    // TODO - test accrueAPFromMarket - requires setting caller/msg.sender
+    // TODO - test accrueAPFromAuction - requires setting caller/msg.sender
+    // TODO - test setRewardDistribution - requires setting caller/msg.sender
+
+    /* 
+     * PUBLIC UTILS
+     */
+
+    it('gets a pair that doesnt exist when no pairs have been added', async () => {
+        let tokenA = '0xC244aa367ED76c5b986Ebe6E7A1e98CE59100Ed8';
+        let tokenB = '0xEbe1a7B5ba930e9c1A36ff9Cd836Ac50833D4c2c';
+        expect(await contract.pairExists(tokenA, tokenB)).to.be.false;
+    });
+
+    it('gets a pair that doesnt exist when pairs have been added', async () => {
+        // Add a pair.
+        let tokenA = '0xC244aa367ED76c5b986Ebe6E7A1e98CE59100Ed8';
+        let tokenB = '0xEbe1a7B5ba930e9c1A36ff9Cd836Ac50833D4c2c';
+        const newPair = {
+            percentReward: 10,
+            pair: await contract.createPair(tokenA, tokenB)
+        };
+        await contract.addPair(newPair.percentReward, newPair.pair);
+
+        let tokenC = '0x48844feE1FD833C0e41BB719Eb1c8Ae4C348f05C';
+        expect(await contract.pairExists(tokenA, tokenC)).to.be.false;
+    });
+
+    it('gets a pair that exists', async () => {
+        let tokenA = '0xC244aa367ED76c5b986Ebe6E7A1e98CE59100Ed8';
+        let tokenB = '0xEbe1a7B5ba930e9c1A36ff9Cd836Ac50833D4c2c';
+        const newPair = {
+            percentReward: 10,
+            pair: await contract.createPair(tokenA, tokenB)
+        };
+        await contract.addPair(newPair.percentReward, newPair.pair);
+
+        expect(await contract.pairExists(tokenA, tokenB)).to.be.true;
+    });
+
+    // TODO test getQuantityOut - requires oracle fixture implementation.
+
+    /*
+     * CORE
+     */
+
+    // TODO test swap - requires setting caller/msg.sender
+    //                - requires getQuantityOut
+
+    // TODO test withdraw - requires setting caller/msg.sender
 
 });
