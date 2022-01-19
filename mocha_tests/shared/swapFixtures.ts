@@ -2,11 +2,13 @@ import { Wallet } from 'ethers';
 import { Web3Provider } from 'ethers/providers';
 import { deployContract } from 'ethereum-waffle';
 
-import { expandTo18Decimals } from './utilities'
-
 import AuraFactory from '../../build/contracts/AuraFactory.json';
 import AuraRouterV1 from '../../build/contracts/AuraRouterV1.json';
 import AuraToken from '../../build/contracts/AuraToken.json'
+import WETH9 from '../../build/contracts/WETH9.json';
+import AuraLP from '../../build/contracts/AuraLP.json';
+import AuraNFT from '../../build/contracts/AuraNFT.json';
+import SwapFeeRewardsWithAP from '../../build/contracts/SwapFeeRewardsWithAP.json';
 
 /*
  * NOTE:
@@ -25,37 +27,58 @@ export async function factoryFixture(provider: Web3Provider, [wallet]: Wallet[])
 
 export async function routerFixture(provider: Web3Provider, [wallet]: Wallet[]) {
     const factory = await factoryFixture(provider, [wallet]);
-    const weth = await deployContract(wallet, AuraToken, [], overrides)
-
-    // TODO - Next line throws Out of Gas Error.
-    // const router = await deployContract(wallet, AuraRouterV1, [factory.address, weth.address], overrides);
-    // Temporary router until Out of Gas Error is fixed.
-    const router = { address: '0x90BBC489677C87e26361f665ad3e26E18b063551' };
-
+    const weth = await deployContract(wallet, WETH9, [], overrides);
+    const router = await deployContract(wallet, AuraRouterV1, [factory.address, weth.address], overrides);
     return router;
 };
 
 export async function targetTokenFixture(provider: Web3Provider, [wallet]: Wallet[]) {
+    // TODO - Confirm that the targetToken is an AuraToken.
     const targetToken = await deployContract(wallet, AuraToken, [], overrides);
     return targetToken;
 };
 
 export async function targetAPTokenFixture(provider: Web3Provider, [wallet]: Wallet[]) {
-    const targetAPToken = { address: '0x8f593d9fb3adBDFffBFDb3212BEA73f3DA0d8d30' };
+    // TODO - This function is expecting to return an AuraPoints token. 
+    //        Confirm that AuraLP == AuraPoints.
+    const targetAPToken = await deployContract(wallet, AuraLP, [], overrides);
     return targetAPToken;
 };
 
 export async function oracleFixture(provider: Web3Provider, [wallet]: Wallet[]) {
+    // TODO - Replace with an actual oracle.
     const oracle = { address: '0x6F81feD0392071FA4d71d3cB018413497af7056e' };
     return oracle;
 };
 
 export async function auraNFTFixture(provider: Web3Provider, [wallet]: Wallet[]) {
-    const auraNFT = { address: '0xeF2ab2ADaE2Df9df2E90E93f41e49f8558a2DF08' };
+    const auraNFT = await deployContract(wallet, AuraNFT, [""], overrides);
     return auraNFT;
 };
 
 export async function auraTokenFixture(provider: Web3Provider, [wallet]: Wallet[]) {
-    const auraToken = { address: '0xEC4EBFc3f793EB331f7c475F61989537FeA17c83' };
+    const auraToken = await deployContract(wallet, AuraToken, [], overrides);
     return auraToken;
+};
+
+export async function swapFeeRewardsWithAPFixture(provider: Web3Provider, [wallet]: Wallet[]) {
+    const factory = await factoryFixture(provider, [wallet]);
+    const router = await routerFixture(provider, [wallet]);
+    const targetToken = await targetTokenFixture(provider, [wallet]);
+    const targetAPToken = await targetAPTokenFixture(provider, [wallet]);
+    const oracle = await oracleFixture(provider, [wallet]);
+    const auraNFT = await auraNFTFixture(provider, [wallet]);
+    const auraToken = await auraTokenFixture(provider, [wallet]);
+
+    const swapFeeRewardsWithAP = await deployContract(wallet, SwapFeeRewardsWithAP, [
+        factory.address,
+        router.address, 
+        targetToken.address,
+        targetAPToken.address,
+        oracle.address,
+        auraNFT.address,
+        auraToken.address,
+    ], overrides);
+
+    return swapFeeRewardsWithAP;
 };
