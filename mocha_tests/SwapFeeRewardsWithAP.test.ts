@@ -1,25 +1,12 @@
-import chai, {expect, use} from 'chai';
-import { Wallet, Contract } from 'ethers';
-import { Web3Provider} from 'ethers/providers';
-import { solidity, loadFixture, deployContract, MockProvider } from 'ethereum-waffle';
-
-import SwapFeeRewardsWithAP from '../build/contracts/SwapFeeRewardsWithAP.json';
-import { factoryFixture, routerFixture, targetTokenFixture, targetAPTokenFixture, oracleFixture, auraNFTFixture, auraTokenFixture } from './shared/swapFixtures';
+import chai, { expect, use } from 'chai';
+import { Contract } from 'ethers';
+import { solidity, loadFixture } from 'ethereum-waffle';
+import { swapFeeRewardsWithAPFixture } from './shared/swapFixtures';
 
 use(solidity);
 
 describe('SwapFeeRewardsWithAP', () => {
-    const overrides = { gasLimit: 6700000 };
-    const [wallet, walletTo] = new MockProvider().getWallets();
     let contract: Contract;
-
-    let factory;
-    let router;
-    let targetToken;
-    let targetAPToken;
-    let oracle;
-    let auraNFT;
-    let auraToken;
 
     let token1 = '0xbd95eC83bd5D4f574f540506E55EE1545adb01eD';
     let token2 = '0xA2eC19555C2d625D4BD6147609033e2b71128f37';
@@ -27,24 +14,7 @@ describe('SwapFeeRewardsWithAP', () => {
     let token4 = '0x436b98aEd76BeD7B927f7718D1143f98adaC2033';
 
     beforeEach(async () => {
-        factory = await loadFixture(factoryFixture);
-        router = await loadFixture(routerFixture);
-        targetToken = await loadFixture(targetTokenFixture);
-        targetAPToken = await loadFixture(targetAPTokenFixture);
-        oracle = await loadFixture(oracleFixture);
-        auraNFT = await loadFixture(auraNFTFixture);
-        auraToken = await loadFixture(auraTokenFixture);
-
-        // Deploy new contract.
-        contract = await deployContract(wallet, SwapFeeRewardsWithAP, [
-            factory.address, 
-            router.address, 
-            targetToken.address, 
-            targetAPToken.address, 
-            oracle.address, 
-            auraNFT.address, 
-            auraToken.address
-        ], overrides);
+        contract = await loadFixture(swapFeeRewardsWithAPFixture);
     });
 
     beforeEach(async () => {
