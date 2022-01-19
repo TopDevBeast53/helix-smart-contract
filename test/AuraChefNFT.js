@@ -9,7 +9,7 @@ chai.use(chaiAsPromised).should();
 const BASE_URI_TEST = 'https://niftyroyale.mypinata.cloud/ipfs/QmQRi3cigw8rjVP5BWAQxxBWQyMjXKfy8W4LZieMKtHbzK'
 const INITIAL_AURAPOINTS = 5;
 const LEVELUPPERCENT = 10;
-const REWARD_PER_BLOCK = 1;
+const REWARD_PER_BLOCK = 3;
 
 const BEP20 = artifacts.require('BEP20');
 const AuraNFT = artifacts.require('AuraNFT');
@@ -41,6 +41,7 @@ contract('AuraChefNFT', ([AuraNFTMinter, alice, carol, dev, refFeeAddr, safuAddr
         //Create RewardToken which named 'RWT' as symbol
         this.rwt1 = await BEP20.new('RewardToken', 'RWT1', { from: deployer });
         assert.equal((await this.rwt1.preMineSupply()).toString(), '10000000000000000000000000');
+        await this.rwt1.transfer(this.auraChefNFT.address, 1000000, {from: deployer})
 
         //Add RewardToken
         //addNewRewardToken(address newToken, uint startBlock, uint rewardPerBlock)
@@ -77,18 +78,21 @@ contract('AuraChefNFT', ([AuraNFTMinter, alice, carol, dev, refFeeAddr, safuAddr
 
     describe("Calculation reward of Staking", async () => {
         it('Calc pending reward when one person staked', async () => {
-            await time.advanceBlockTo('49');
-            await this.auraChefNFT.stake([1], { from: alice });//block.number is 50 at this tx
+            let startBlockNumber = parseInt((await time.latestBlock()).toString());
+            await this.auraChefNFT.stake([1], { from: alice });// block.number is increased
             
             let res;
-            await time.advanceBlockTo('100');
-            res = await this.auraChefNFT.pendingReward(alice)
-            assert.equal((res[0]).toString(), this.rwt1.address);//check reward token address
-            assert.equal((res[1]).toString(), '50');
+            await time.advanceBlockTo(startBlockNumber + 21);
+            res = await this.auraChefNFT.pendingReward(alice)// eventually, passed 20 from start
+            assert.equal((res[0]).toString(), this.rwt1.address);// check reward token address
+            assert.equal((res[1]).toString(), (REWARD_PER_BLOCK * 20).toString());
 
-            await time.advanceBlockTo('200');
-            res = await this.auraChefNFT.pendingReward(alice)
-            assert.equal((res[1]).toString(), '150');
+            await time.advanceBlockTo(startBlockNumber + 31);
+            res = await this.auraChefNFT.pendingReward(alice)// eventually, passed 30 from start
+            assert.equal((res[1]).toString(), (REWARD_PER_BLOCK * 30).toString());
+
+            await this.auraChefNFT.withdrawRewardToken({ from: alice })// block.number is increased
+            assert.equal((await this.rwt1.balanceOf(alice)).toString(), (REWARD_PER_BLOCK * (30 + 1)).toString());
         });
         
     });
