@@ -9,6 +9,7 @@ import WETH9 from '../../build/contracts/WETH9.json';
 import AuraLP from '../../build/contracts/AuraLP.json';
 import AuraNFT from '../../build/contracts/AuraNFT.json';
 import SwapFeeRewardsWithAP from '../../build/contracts/SwapFeeRewardsWithAP.json';
+import AuraLibrary from '../../build/contracts/AuraLibrary.json';
 
 /*
  * NOTE:
@@ -82,3 +83,8 @@ export async function swapFeeRewardsWithAPFixture(provider: Web3Provider, [walle
 
     return swapFeeRewardsWithAP;
 };
+
+export async function auraLibraryFixture(provider: Web3Provider, [wallet]: Wallet[]) {
+    const auraLibraryFixture = await deployContract(wallet, AuraLibrary, [], overrides);
+    return auraLibraryFixture;
+}
