@@ -2,17 +2,12 @@
 pragma solidity >= 0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
+import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 import '@rari-capital/solmate/src/tokens/ERC20.sol';
 import "../libraries/ExtraMath.sol";
+import "../interfaces/IAuraNFT.sol";
 
-interface IAuraNFT {
-    function getInfoForStaking(uint tokenId) external view returns(address tokenOwner, bool isStaked, uint auraPoints);
-    function setIsStaked(uint tokenId, bool isStaked) external;
-    function getAuraPoints(uint tokenId) external returns(uint);
-}
-
-contract SmartChefNFT is Ownable, ReentrancyGuard {
+contract AuraChefNFT is Ownable, ReentrancyGuard {
 
     // Total Aura Points staked in Pool across all NFTs by all users.
     uint public totalAuraPoints;
