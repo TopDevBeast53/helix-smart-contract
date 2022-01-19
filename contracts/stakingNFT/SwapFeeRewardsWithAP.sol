@@ -133,7 +133,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         PairsList memory pool = pairsList[pairOfPairIds[pair]];
         if (!pool.isEnabled || pool.pair != pair) { return false; }
 
-        uint swapFee = AuraLibrary.getSwapFee(factory, input, output);
+        uint swapFee = getSwapFee(input, output);
         (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
         feeAmount = feeAmount / swapFee;
 
@@ -241,6 +241,14 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         pair = AuraFactory(factory).getPair(a, b);
     }
 
+    /**
+     * @dev Convenience wrapper of AuraLibrary.getSwapFee().
+     * @return swapFee for swapping tokens `a` and `b`.
+     */
+    function getSwapFee(address a, address b) public view returns(uint swapFee) {
+        swapFee = AuraLibrary.getSwapFee(factory, a, b);
+    }
+
     /* 
      * EXTERNAL GETTERS 
      * 
@@ -274,7 +282,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
             uint inAP
         )
     {
-        uint swapFee = AuraLibrary.getSwapFee(factory, input, output); 
+        uint swapFee = getSwapFee(input, output); 
         address pair = createPair(input, output);
         PairsList memory pool = pairsList[pairOfPairIds[pair]];
 
