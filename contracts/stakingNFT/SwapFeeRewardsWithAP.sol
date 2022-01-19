@@ -331,14 +331,10 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * These functions alter contract core data and are only available to the owner. 
      */
 
-    function setPhase(uint _phase) external onlyOwner {
-        phase = _phase;
-        emit NewPhase(_phase);
-    }
-
-    function setPhaseAP(uint _phaseAP) external onlyOwner {
-        phaseAP = _phaseAP;
-        emit NewPhaseAP(_phaseAP);
+    function setFactory(address _factory) external onlyOwner {
+        require(_factory != address(0), "Factory is the zero address.");
+        factory = _factory;
+        emit NewFactory(_factory);
     }
 
     function setRouter(address _router) external onlyOwner {
@@ -359,22 +355,26 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         emit NewAuction(_auction);
     }
 
-    function setFactory(address _factory) external onlyOwner {
-        require(_factory != address(0), "Factory is the zero address.");
-        factory = _factory;
-        emit NewFactory(_factory);
+    function setPhase(uint _phase) external onlyOwner {
+        phase = _phase;
+        emit NewPhase(_phase);
     }
 
-    function setAuraNFT(IAuraNFT _auraNFT) external onlyOwner {
-        require(address(_auraNFT) != address(0), "AuraNFT is the zero address.");
-        auraNFT = _auraNFT;
-        emit NewAuraNFT(_auraNFT);
+    function setPhaseAP(uint _phaseAP) external onlyOwner {
+        phaseAP = _phaseAP;
+        emit NewPhaseAP(_phaseAP);
     }
 
     function setOracle(IOracle _oracle) external onlyOwner {
         require(address(_oracle) != address(0), "Oracle is the zero address.");
         oracle = _oracle;
         emit NewOracle(_oracle);
+    }
+
+    function setAuraNFT(IAuraNFT _auraNFT) external onlyOwner {
+        require(address(_auraNFT) != address(0), "AuraNFT is the zero address.");
+        auraNFT = _auraNFT;
+        emit NewAuraNFT(_auraNFT);
     }
 
     function addPair(uint _percentReward, address _pair) external onlyOwner {
