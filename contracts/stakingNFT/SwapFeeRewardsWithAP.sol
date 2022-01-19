@@ -219,6 +219,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     function pairExists(address a, address b) public view returns(bool _pairExists) {
         address pair = AuraLibrary.pairFor(factory, a, b);
         uint pairId = pairOfPairIds[pair];
+        // Prevent pairID index out of bounds.
+        if (pairId >= pairsList.length) { return false; }
         PairsList memory pool = pairsList[pairId];
         _pairExists = (pool.pair == pair);
     }
