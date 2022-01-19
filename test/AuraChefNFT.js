@@ -7,7 +7,9 @@ var chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised).should();
 
 const BASE_URI_TEST = 'https://niftyroyale.mypinata.cloud/ipfs/QmQRi3cigw8rjVP5BWAQxxBWQyMjXKfy8W4LZieMKtHbzK'
-const INITIAL_AURAPOINTS = 10;
+const INITIAL_AURAPOINTS = 5;
+const LEVELUPPERCENT = 10;
+const REWARD_PER_BLOCK = 1;
 
 const BEP20 = artifacts.require('BEP20');
 const AuraNFT = artifacts.require('AuraNFT');
@@ -17,7 +19,7 @@ contract('AuraChefNFT', ([AuraNFTMinter, alice, carol, dev, refFeeAddr, safuAddr
 
     beforeEach(async () => {
         //AuraNFT's constructor(string memory baseURI, uint initialAuraPoints, uint8 levelUpPercent)
-        this.auraNFT = await AuraNFT.new(BASE_URI_TEST, 5, INITIAL_AURAPOINTS, { from: deployer });
+        this.auraNFT = await AuraNFT.new(BASE_URI_TEST, INITIAL_AURAPOINTS, LEVELUPPERCENT, { from: deployer });
 
         //AuraChefNFT's constructor(IAuraNFT _auraNFT, uint _lastRewardBlock)
         this.auraChefNFT = await AuraChefNFT.new(this.auraNFT.address, 0, { from: deployer });
@@ -42,7 +44,7 @@ contract('AuraChefNFT', ([AuraNFTMinter, alice, carol, dev, refFeeAddr, safuAddr
 
         //Add RewardToken
         //addNewRewardToken(address newToken, uint startBlock, uint rewardPerBlock)
-        await this.auraChefNFT.addNewRewardToken(this.rwt1.address, 0, 1, { from: deployer });
+        await this.auraChefNFT.addNewRewardToken(this.rwt1.address, 0, REWARD_PER_BLOCK, { from: deployer });
         let listRewardTokens = await this.auraChefNFT.getListRewardTokens();
         assert.equal(listRewardTokens[0].toString(), this.rwt1.address.toString());
     });
@@ -62,7 +64,7 @@ contract('AuraChefNFT', ([AuraNFTMinter, alice, carol, dev, refFeeAddr, safuAddr
         });
         it('When an user stakes, the auraPointAmount of user should have a default amount', async () => {
             await this.auraChefNFT.stake([1, 2], { from: alice });
-            assert.equal((await this.auraChefNFT.getUserAuraPointAmount(alice)).toString(), (new BN(10)).toString());
+            assert.equal((await this.auraChefNFT.getUserAuraPointAmount(alice)).toString(), (new BN(INITIAL_AURAPOINTS * 2)).toString());
         });
         it('Check token Owner', async () => {
             await expectRevert.unspecified(this.auraChefNFT.stake([1, 2], { from: carol }));//Not token owner
@@ -71,5 +73,23 @@ contract('AuraChefNFT', ([AuraNFTMinter, alice, carol, dev, refFeeAddr, safuAddr
             await this.auraChefNFT.stake([1], { from: alice });
             await expectRevert.unspecified(this.auraChefNFT.stake([1], { from: alice }));//Token has already been staked
         });
+    });
+
+    describe("Calculation reward of Staking", async () => {
+        it('Calc pending reward when one person staked', async () => {
+            await time.advanceBlockTo('49');
+            await this.auraChefNFT.stake([1], { from: alice });//block.number is 50 at this tx
+            
+            let res;
+            await time.advanceBlockTo('100');
+            res = await this.auraChefNFT.pendingReward(alice)
+            assert.equal((res[0]).toString(), this.rwt1.address);//check reward token address
+            assert.equal((res[1]).toString(), '50');
+
+            await time.advanceBlockTo('200');
+            res = await this.auraChefNFT.pendingReward(alice)
+            assert.equal((res[1]).toString(), '150');
+        });
+        
     });
 });
