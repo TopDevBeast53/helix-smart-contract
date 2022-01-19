@@ -188,7 +188,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
             // If the tokenIn is the same as the tokenOut, then there's no exchange quantity to compute.
             // I.e. ETH -> ETH.
             quantityOut = quantityIn;
-        } else if (AuraFactory(factory).getPair(tokenIn, tokenOut) != address(0) 
+        } else if (getPair(tokenIn, tokenOut) != address(0) 
             && pairExists(tokenIn, tokenOut)) 
         {
             // If a direct exchange pair exists, then get the exchange quantity directly.
@@ -201,8 +201,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
             uint length = whitelistLength();
             for (uint i = 0; i < length; i++) {
                 address intermediate = whitelistGet(i);
-                if (AuraFactory(factory).getPair(tokenIn, intermediate) != address(0)
-                    && AuraFactory(factory).getPair(intermediate, tokenOut) != address(0)
+                if (getPair(tokenIn, intermediate) != address(0)
+                    && getPair(intermediate, tokenOut) != address(0)
                     && pairExists(intermediate, tokenOut))
                 {
                     uint interQuantity = IOracle(oracle).consult(tokenIn, quantityIn, intermediate);
@@ -226,10 +226,19 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     }
 
     /**
+     * @dev Convenience wrapper of AuraLibrary.pairFor().
      * @return pair created by joining tokens `a` and `b`.
      */
     function createPair(address a, address b) public view returns(address pair) {
         pair = AuraLibrary.pairFor(factory, a, b);
+    }
+    
+    /**
+     * @dev Convenience wrapper of AuraFactory.getPair().
+     * @return pair of tokens `a` and `b`. 
+     */
+    function getPair(address a, address b) public view returns(address pair) {
+        pair = AuraFactory(factory).getPair(a, b);
     }
 
     /* 
