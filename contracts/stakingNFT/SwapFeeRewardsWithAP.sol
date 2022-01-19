@@ -11,7 +11,6 @@ import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // TODO - Add NatSpec comments to latter functions.
-// TODO - Set visibilities for storage variables. 
 
 /**
  * @title Convert between Swap Reward Fees to Aura Points (ap/AP)
@@ -20,30 +19,30 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet whitelist;
 
-    IOracle oracle;
-    IAuraNFT auraNFT;
-    IAuraToken auraToken;
+    IOracle public oracle;
+    IAuraNFT public auraNFT;
+    IAuraToken public auraToken;
 
-    address factory;
-    address router;
-    address market;
-    address auction;
-    address targetToken;
-    address targetAPToken;
+    address public factory;
+    address public router;
+    address public market;
+    address public auction;
+    address public targetToken;
+    address public targetAPToken;
 
-    uint maxMiningAmount = 100000000 ether;
-    uint maxMiningInPhase = 5000 ether;
-    uint maxAccruedAPInPhase = 5000 ether;
+    uint public maxMiningAmount = 100000000 ether;
+    uint public maxMiningInPhase = 5000 ether;
+    uint public maxAccruedAPInPhase = 5000 ether;
 
-    uint currentPhase = 1;
-    uint currentPhaseAP = 1; 
+    uint public currentPhase = 1;
+    uint public currentPhaseAP = 1; 
     
-    uint totalMined = 0;
-    uint totalAccruedAP = 0;
+    uint public totalMined = 0;
+    uint public totalAccruedAP = 0;
 
-    uint apWagerOnSwap = 1500;
-    uint apPercentMarket = 10000; // (div 10000)
-    uint apPercentAuction = 10000; // (div 10000)
+    uint public apWagerOnSwap = 1500;
+    uint public apPercentMarket = 10000; // (div 10000)
+    uint public apPercentAuction = 10000; // (div 10000)
 
     /*
      * Sets the upper limit of maximum AURA percentage of users' rewards.
@@ -53,7 +52,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * 100 -> Rewards are [0, 100]% AURA and [0, 100]% AP. User has full choice.
      * Invariant: must be in range [0, 100].
      */
-    uint defaultRewardDistribution = 100; 
+    uint public defaultRewardDistribution = 100; 
 
     struct PairsList {
         address pair;
@@ -61,7 +60,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         bool enabled;
     }
 
-    PairsList[] pairsList;
+    PairsList[] public pairsList;
 
     /* 
      * Fee distribution is a user setting for how that user wants their rewards distributed.
@@ -72,11 +71,11 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * More generally, low values maximize AURA while high values maximize AP.
      * Invariant: rewardDistribution[user] <= defaultRewardDistribution.
      */
-    mapping(address => uint) rewardDistribution;
+    mapping(address => uint) public rewardDistribution;
 
-    mapping(address => uint) pairOfpairIds;
-    mapping(address => uint) _balances;
-    mapping(address => uint) nonces;
+    mapping(address => uint) public pairOfpairIds;
+    mapping(address => uint) public _balances;
+    mapping(address => uint) public nonces;
 
     event NewAuraNFT(IAuraNFT auraNFT);
     event NewOracle(IOracle oracle);
