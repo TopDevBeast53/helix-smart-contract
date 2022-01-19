@@ -34,8 +34,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     uint public maxMiningInPhase = 5000 ether;
     uint public maxAccruedAPInPhase = 5000 ether;
 
-    uint public currentPhase = 1;
-    uint public currentPhaseAP = 1; 
+    uint public phase = 1;
+    uint public phaseAP = 1; 
     
     uint public totalMined = 0;
     uint public totalAccruedAP = 0;
@@ -139,7 +139,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
 
         // Gets the quantity of AURA (targetToken) equivalent in value to quantity (feeAmount) of the input token (output).
         uint quantity = getQuantityOut(output, feeAmount, targetToken);
-        if ((totalMined + quantity) <= maxMiningAmount && (totalMined + quantity) <= (currentPhase * maxMiningInPhase)) {
+        if ((totalMined + quantity) <= maxMiningAmount && (totalMined + quantity) <= (phase * maxMiningInPhase)) {
             _balances[account] += quantity;
             emit Rewarded(account, input, output, amount, quantity);
         }
@@ -157,7 +157,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         require (totalMined < maxMiningAmount, "All tokens have been mined.");
 
         uint balance = _balances[msg.sender];
-        require ((totalMined + balance) <= (currentPhase * maxMiningInPhase), "All tokens in this phase have been mined.");
+        require ((totalMined + balance) <= (phase * maxMiningInPhase), "All tokens in this phase have been mined.");
       
         // Verify the sender's signature.
         permit(msg.sender, balance, v, r, s);
@@ -310,7 +310,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         uint quantity = getQuantityOut(output, amount, targetAPToken);
         if (quantity > 0) {
             totalAccruedAP += quantity;
-            if (totalAccruedAP <= currentPhaseAP * maxAccruedAPInPhase) {
+            if (totalAccruedAP <= phaseAP * maxAccruedAPInPhase) {
                 auraNFT.accrueAP(account, quantity);
             }
         }
@@ -332,12 +332,12 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      */
 
     function setPhase(uint _phase) external onlyOwner {
-        currentPhase = _phase;
+        phase = _phase;
         emit NewPhase(_phase);
     }
 
     function setPhaseAP(uint _phaseAP) external onlyOwner {
-        currentPhaseAP = _phaseAP;
+        phaseAP = _phaseAP;
         emit NewPhaseAP(_phaseAP);
     }
 
