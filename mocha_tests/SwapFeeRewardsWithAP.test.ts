@@ -1,7 +1,14 @@
 import chai, { expect, use } from 'chai';
 import { Contract } from 'ethers';
 import { solidity, loadFixture } from 'ethereum-waffle';
-import { swapFeeRewardsWithAPFixture } from './shared/swapFixtures';
+
+import { 
+    factoryFixture,
+    routerFixture,
+    oracleFixture,
+    auraNFTFixture,
+    swapFeeRewardsWithAPFixture 
+} from './shared/swapFixtures';
 
 use(solidity);
 
@@ -18,11 +25,15 @@ describe('SwapFeeRewardsWithAP', () => {
     });
 
     beforeEach(async () => {
-        // Add tokens to contract.
+        // Add 3 tokens to contract.
         await contract.whitelistAdd(token1);
         await contract.whitelistAdd(token2);
         await contract.whitelistAdd(token3);
     });
+
+    /*
+     * WHITELIST
+     */
 
     it('adds tokens to whitelist', async () => {
         // Confirm that each token was added.
@@ -53,4 +64,70 @@ describe('SwapFeeRewardsWithAP', () => {
         // And confirm that the length is correct.
         expect(await contract.whitelistLength()).to.eq(0);
     });
+
+    /*
+     * ONLY OWNER SETTERS
+     */
+
+    it('sets factory as owner', async () => {
+        const newFactory = await loadFixture(factoryFixture);
+        await contract.setRouter(newFactory.address);
+        expect(await contract.factory()).to.eq(newFactory.address);
+    });
+
+    it('sets router as owner', async () => {
+        const newRouter = await loadFixture(routerFixture);
+        await contract.setRouter(newRouter.address);
+        expect(await contract.router()).to.eq(newRouter.address);
+    });
+
+    it('sets market as owner', async () => {
+        const newMarket = { address: '0x946f52d986428284484d2007624ad0E88dfe6184' };
+        await contract.setMarket(newMarket.address);
+        expect(await contract.market()).to.eq(newMarket.address);
+    });
+
+    it('sets auction as owner', async () => {
+        const newAuction = { address: '0x626Ef7da2f1365ed411630eDaa4D589F5BeD176e' };
+        await contract.setAuction(newAuction.address);
+        expect(await contract.auction()).to.eq(newAuction.address);
+    });
+
+    it('sets phase as owner', async () => {
+        const newPhase = 2;
+        await contract.setPhase(newPhase);
+        expect(await contract.phase()).to.eq(2);
+    });
+
+    it('sets phaseAP as owner', async () => {
+        const newPhaseAP = 3;
+        await contract.setPhaseAP(newPhaseAP);
+        expect(await contract.phaseAP()).to.eq(3);
+    });
+
+    it('sets oracle as owner', async () => {
+        const newOracle = await loadFixture(oracleFixture);
+        await contract.setOracle(newOracle.address);
+        expect(await contract.oracle()).to.eq(newOracle.address);
+    });
+
+    it('sets AuraNFT as owner', async () => {
+        const newAuraNFT = await loadFixture(auraNFTFixture);
+        await contract.setAuraNFT(newAuraNFT.address);
+        expect(await contract.auraNFT()).to.eq(newAuraNFT.address);
+    });
+
+    /*
+    it('sets oracle as owner', async () => {
+        const newOracle= await loadFixture(oracleFixture);
+        await contract.setOracle(newOracle.address);
+        expect(await contract.oracle()).to.eq(newOracle.address);
+    });
+
+    it('sets oracle as owner', async () => {
+        const newOracle= await loadFixture(oracleFixture);
+        await contract.setOracle(newOracle.address);
+        expect(await contract.oracle()).to.eq(newOracle.address);
+    });
+    */
 });
