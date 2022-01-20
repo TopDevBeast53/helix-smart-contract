@@ -24,10 +24,10 @@ describe('SwapFeeRewardsWithAP', () => {
     let auraToken: Contract;
     let swapFeeRewardsWithAP: Contract;
 
-    let token1 = '0xbd95eC83bd5D4f574f540506E55EE1545adb01eD';
-    let token2 = '0xA2eC19555C2d625D4BD6147609033e2b71128f37';
-    let token3 = '0xffDD40B01c56Ab043038e4b4F18677193C5321E0';
-    let token4 = '0x436b98aEd76BeD7B927f7718D1143f98adaC2033';
+    let tokenA = '0xC244aa367ED76c5b986Ebe6E7A1e98CE59100Ed8';
+    let tokenB = '0xEbe1a7B5ba930e9c1A36ff9Cd836Ac50833D4c2c';
+    let tokenC = '0x48844feE1FD833C0e41BB719Eb1c8Ae4C348f05C';
+    let tokenD = '0x436b98aEd76BeD7B927f7718D1143f98adaC2033';
 
     const [wallet, otherWallet] = new MockProvider().getWallets();
 
@@ -46,9 +46,9 @@ describe('SwapFeeRewardsWithAP', () => {
 
     beforeEach(async () => {
         // Add 3 tokens to contract.
-        await swapFeeRewardsWithAP.whitelistAdd(token1);
-        await swapFeeRewardsWithAP.whitelistAdd(token2);
-        await swapFeeRewardsWithAP.whitelistAdd(token3);
+        await swapFeeRewardsWithAP.whitelistAdd(tokenA);
+        await swapFeeRewardsWithAP.whitelistAdd(tokenB);
+        await swapFeeRewardsWithAP.whitelistAdd(tokenC);
     });
 
     /*
@@ -57,9 +57,9 @@ describe('SwapFeeRewardsWithAP', () => {
 
     it('adds tokens to whitelist', async () => {
         // Confirm that each token was added.
-        expect(await swapFeeRewardsWithAP.whitelistGet(0)).to.eq(token1);
-        expect(await swapFeeRewardsWithAP.whitelistGet(1)).to.eq(token2);
-        expect(await swapFeeRewardsWithAP.whitelistGet(2)).to.eq(token3);
+        expect(await swapFeeRewardsWithAP.whitelistGet(0)).to.eq(tokenA);
+        expect(await swapFeeRewardsWithAP.whitelistGet(1)).to.eq(tokenB);
+        expect(await swapFeeRewardsWithAP.whitelistGet(2)).to.eq(tokenC);
 
         // And that the the length is correct.
         expect(await swapFeeRewardsWithAP.whitelistLength()).to.eq(3);
@@ -67,19 +67,19 @@ describe('SwapFeeRewardsWithAP', () => {
 
     it('whitelist contains only the added tokens', async () => {
         // These tokens have been added. 
-        expect(await swapFeeRewardsWithAP.whitelistContains(token1)).to.be.true;
-        expect(await swapFeeRewardsWithAP.whitelistContains(token2)).to.be.true;
-        expect(await swapFeeRewardsWithAP.whitelistContains(token3)).to.be.true;
+        expect(await swapFeeRewardsWithAP.whitelistContains(tokenA)).to.be.true;
+        expect(await swapFeeRewardsWithAP.whitelistContains(tokenB)).to.be.true;
+        expect(await swapFeeRewardsWithAP.whitelistContains(tokenC)).to.be.true;
 
         // This token has not been added.
-        expect(await swapFeeRewardsWithAP.whitelistContains(token4)).to.be.false;
+        expect(await swapFeeRewardsWithAP.whitelistContains(tokenD)).to.be.false;
     });
 
     it('removes tokens from whitelist', async () => {
         // Remove each token.
-        await swapFeeRewardsWithAP.whitelistRemove(token1);
-        await swapFeeRewardsWithAP.whitelistRemove(token2);
-        await swapFeeRewardsWithAP.whitelistRemove(token3);
+        await swapFeeRewardsWithAP.whitelistRemove(tokenA);
+        await swapFeeRewardsWithAP.whitelistRemove(tokenB);
+        await swapFeeRewardsWithAP.whitelistRemove(tokenC);
 
         // And confirm that the length is correct.
         expect(await swapFeeRewardsWithAP.whitelistLength()).to.eq(0);
@@ -361,17 +361,66 @@ describe('SwapFeeRewardsWithAP', () => {
         expect(await swapFeeRewardsWithAP.getQuantityOut(tokenA, quantityIn, tokenB)).to.eq(20);
     });
 
-    /*
     it('gets quantity out in doesnt equal out and needs intermediate', async () => {
-        // add pair 1 - (a, b)
-        // add pair 2 - (b, c)
-        // where wants (a -> c)
+        // Test summary:
+        // Two token pairs exist (A, B) and (B, C).
+        // trade 10 tokenA for 30 tokenC by converting tokenA -> tokenB -> tokenC.
+    
+        // Create first pair. 
+        let tokenA = '0xC244aa367ED76c5b986Ebe6E7A1e98CE59100Ed8';
+        let tokenB = '0xEbe1a7B5ba930e9c1A36ff9Cd836Ac50833D4c2c';
+        let quantityInPair1 = 10;
+        const pair1 = {
+            percentReward: quantityInPair1,
+            pair: await swapFeeRewardsWithAP.pairFor(tokenA, tokenB)
+        };
 
-        // mock oracle
+        // Add pair1 to swapFeeRewardsWithAP.
+        await swapFeeRewardsWithAP.addPair(pair1.percentReward, pair1.pair);
 
-        // set mock oracle parameters
+        // Create pair1 in the factory.
+        await factory.createPair(tokenA, tokenB);
+
+        // And confirm that pair1 was created.
+        expect(await swapFeeRewardsWithAP.getPair(tokenA, tokenB)).to.not.eq(constants.AddressZero);
+        expect(await swapFeeRewardsWithAP.pairExists(tokenA, tokenB)).to.be.true;
+
+        // Create second pair.
+        // tokenB is already defined.
+        let tokenC = '0x48844feE1FD833C0e41BB719Eb1c8Ae4C348f05C';
+        let quantityInPair2 = 20;
+        const pair2 = {
+            percentReward: quantityInPair2,
+            pair: await swapFeeRewardsWithAP.pairFor(tokenB, tokenC)
+        };
+
+        // Add pair to swapFeeRewardsWithAP.
+        await swapFeeRewardsWithAP.addPair(pair2.percentReward, pair2.pair);
+
+        // Create the pair in the factory.
+        await factory.createPair(tokenB, tokenC);
+
+        // And confirm that pair2 was created.
+        expect(await swapFeeRewardsWithAP.getPair(tokenB, tokenC)).to.not.eq(constants.AddressZero);
+        expect(await swapFeeRewardsWithAP.pairExists(tokenB, tokenC)).to.be.true;
+
+        // Confirm that `if` condition is NOT entered.
+        expect(tokenA).to.not.eq(tokenC);
+        
+        // Confirm that the `else if` condition is NOT entered.
+        // Although both pairs (A, B) and (B, C) exist, pair (A, C) should not exist.
+        expect(await swapFeeRewardsWithAP.getPair(tokenA, tokenC)).to.eq(constants.AddressZero);
+        expect(await swapFeeRewardsWithAP.pairExists(tokenA, tokenC)).to.be.false;
+
+        // Set mock oracle parameters for pairs 1 and 2.
+        // 10 tokens A trade for 20 tokens B.
+        await mockOracle.mock.consult.withArgs(tokenA, quantityInPair1, tokenB).returns(20);
+        // 20 tokens B trade for 30 tokens C.
+        await mockOracle.mock.consult.withArgs(tokenB, quantityInPair2, tokenC).returns(30);
+
+        // Confirm that 10 tokenA swaps for 30 tokenC.
+        expect(await swapFeeRewardsWithAP.getQuantityOut(tokenA, quantityInPair1, tokenC)).to.eq(30);
     });
-    */
 
     /*
      * CORE
