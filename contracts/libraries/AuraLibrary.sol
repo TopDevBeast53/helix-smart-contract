@@ -19,7 +19,7 @@ library AuraLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'3ff52216c5ab48f67e3988dc6cc7f380ccec8763f153153ce43e741c0dff8796' // init code hash
+                hex'd9b35256579ff1901f04559c5e15fd3b5c397d5f5a7900722d7512602a987fa8' // init code hash
             )))));
     }
 
