@@ -5,8 +5,8 @@ import "../tokens/AuraLP.sol";
 import "../libraries/UQ112x112.sol";
 import "../libraries/ExtraMath.sol";
 import "../interfaces/IAuraCallee.sol";
+import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
-import "@rari-capital/solmate/src/utils/SafeTransferLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
@@ -113,7 +113,7 @@ contract AuraPair is AuraLP, ReentrancyGuard {
     }
 
     // this low-level function should be called from a contract which performs important safety checks
-    function mint(address to) external nonReentrant returns (uint liquidity) {
+    function mint(address to) public nonReentrant returns (uint liquidity) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         uint balance0 = IERC20(token0).balanceOf(address(this));
         uint balance1 = IERC20(token1).balanceOf(address(this));
@@ -151,8 +151,8 @@ contract AuraPair is AuraLP, ReentrancyGuard {
         amount1 = liquidity * balance1 / _totalSupply; // using balances ensures pro-rata distribution
         require(amount0 > 0 && amount1 > 0, 'Aura INSUFFICIENT_LIQUIDITY_BURNED');
         _burn(address(this), liquidity);
-        SafeTransferLib.safeTransfer(ERC20(_token0), to, amount0);
-        SafeTransferLib.safeTransfer(ERC20(_token1), to, amount1);
+        TransferHelper.safeTransfer(_token0, to, amount0);
+        TransferHelper.safeTransfer(_token1, to, amount1);
         balance0 = IERC20(_token0).balanceOf(address(this));
         balance1 = IERC20(_token1).balanceOf(address(this));
 
@@ -173,8 +173,8 @@ contract AuraPair is AuraLP, ReentrancyGuard {
             address _token0 = token0;
             address _token1 = token1;
             require(to != _token0 && to != _token1, 'Aura INVALID_TO');
-            if (amount0Out > 0) SafeTransferLib.safeTransfer(ERC20(_token0), to, amount0Out);
-            if (amount1Out > 0) SafeTransferLib.safeTransfer(ERC20(_token1), to, amount1Out);
+            if (amount0Out > 0) TransferHelper.safeTransfer(_token0, to, amount0Out);
+            if (amount1Out > 0) TransferHelper.safeTransfer(_token1, to, amount1Out);
             if (data.length > 0) IAuraCallee(to).AuraCall(msg.sender, amount0Out, amount1Out, data);
             balance0 = IERC20(_token0).balanceOf(address(this));
             balance1 = IERC20(_token1).balanceOf(address(this));
@@ -198,8 +198,8 @@ contract AuraPair is AuraLP, ReentrancyGuard {
     function skim(address to) external nonReentrant {
         address _token0 = token0; // gas savings
         address _token1 = token1; // gas savings
-        SafeTransferLib.safeTransfer(ERC20(_token0), to, IERC20(_token0).balanceOf(address(this)) - reserve0);
-        SafeTransferLib.safeTransfer(ERC20(_token1), to, IERC20(_token1).balanceOf(address(this)) - reserve1);
+        TransferHelper.safeTransfer(_token0, to, IERC20(_token0).balanceOf(address(this)) - reserve0);
+        TransferHelper.safeTransfer(_token1, to, IERC20(_token1).balanceOf(address(this)) - reserve1);
     }
 
     // force reserves to match balances
