@@ -19,6 +19,8 @@ import AuraLibrary from '../../build/contracts/AuraLibrary.json';
  * they are available to other tests.
  */
 
+// TODO - unify returns from `return contract;` -> `return { contract }`;
+
 const overrides = { gasLimit: 6700000 };
 
 export async function factoryFixture(provider: Web3Provider, [wallet]: Wallet[]) {
