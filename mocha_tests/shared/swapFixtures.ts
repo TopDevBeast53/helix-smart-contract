@@ -1,4 +1,4 @@
-import { Wallet } from 'ethers';
+import { Wallet, Contract } from 'ethers';
 import { Web3Provider } from 'ethers/providers';
 import { deployContract } from 'ethereum-waffle';
 
@@ -81,7 +81,16 @@ export async function swapFeeRewardsWithAPFixture(provider: Web3Provider, [walle
         auraToken.address,
     ], overrides);
 
-    return swapFeeRewardsWithAP;
+    return {
+        factory,
+        router,
+        targetToken,
+        targetAPToken,
+        oracle,
+        auraNFT,
+        auraToken,
+        swapFeeRewardsWithAP
+    };
 };
 
 export async function auraLibraryFixture(provider: Web3Provider, [wallet]: Wallet[]) {
