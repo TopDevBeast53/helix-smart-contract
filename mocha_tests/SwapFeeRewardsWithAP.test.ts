@@ -19,7 +19,7 @@ describe('SwapFeeRewardsWithAP', () => {
     let router: Contract;
     let targetToken: Contract;
     let targetAPToken: Contract;
-    let oracle: Contract;
+    let mockOracle: Contract;
     let auraNFT: Contract;
     let auraToken: Contract;
     let swapFeeRewardsWithAP: Contract;
@@ -38,6 +38,7 @@ describe('SwapFeeRewardsWithAP', () => {
         router = fixture.router;
         targetToken = fixture.targetToken;
         targetAPToken = fixture.targetAPToken;
+        mockOracle = fixture.mockOracle;
         auraNFT = fixture.auraNFT;
         auraToken = fixture.auraToken;
         swapFeeRewardsWithAP = fixture.swapFeeRewardsWithAP;
@@ -329,21 +330,27 @@ describe('SwapFeeRewardsWithAP', () => {
 
     // TODO test getQuantityOut - requires oracle fixture implementation. 
     //                          - Mocking should work
-    /*
-    it('gets quantity out in equals out', async () => {
-        //
+    it('gets quantity out when token in is same as token out', async () => {
+        const tokenA = '0xC244aa367ED76c5b986Ebe6E7A1e98CE59100Ed8';
+        const quantityIn = 10;
+        expect(await swapFeeRewardsWithAP.getQuantityOut(tokenA, quantityIn, tokenA)).to.eq(10);
     });
-    */
 
-    /*
-    it('gets quantity out in doesnt equal out but not needs intermediate', async () => {
-        // add pair
+    it('gets quantity out when token in is not token out but intermediate isnt needed', async () => {
+        // Add pair.
+        let tokenA = '0xC244aa367ED76c5b986Ebe6E7A1e98CE59100Ed8';
+        let tokenB = '0xEbe1a7B5ba930e9c1A36ff9Cd836Ac50833D4c2c';
+        const newPair = {
+            percentReward: 10,
+            pair: await swapFeeRewardsWithAP.createPair(tokenA, tokenB)
+        };
+        await swapFeeRewardsWithAP.addPair(newPair.percentReward, newPair.pair);
+        expect(await swapFeeRewardsWithAP.pairExists(tokenA, tokenB)).to.be.true;
         
         // mock oracle
 
         // set mock oracle parameters
     });
-    */
 
     /*
     it('gets quantity out in doesnt equal out and needs intermediate', async () => {
