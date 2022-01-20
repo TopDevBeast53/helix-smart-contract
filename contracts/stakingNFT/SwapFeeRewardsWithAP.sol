@@ -129,7 +129,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
 
         if (!whitelistContains(input) || !whitelistContains(output)) { return false; }
 
-        address pair = createPair(input, output);
+        address pair = pairFor(input, output);
         PairsList memory pool = pairsList[pairOfPairIds[pair]];
         if (!pool.isEnabled || pool.pair != pair) { return false; }
 
@@ -217,7 +217,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * @return _pairExists is true if this exchange swaps between tokens `a` and `b` and false otherwise.
      */
     function pairExists(address a, address b) public view returns(bool _pairExists) {
-        address pair = createPair(a, b);
+        address pair = pairFor(a, b);
         uint pairId = pairOfPairIds[pair];
         // Prevent pairID index out of bounds.
         if (pairId >= pairsList.length) { return false; }
@@ -229,7 +229,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * @dev Convenience wrapper of AuraLibrary.pairFor().
      * @return pair created by joining tokens `a` and `b`.
      */
-    function createPair(address a, address b) public view returns(address pair) {
+    function pairFor(address a, address b) public view returns(address pair) {
         pair = AuraLibrary.pairFor(factory, a, b);
     }
     
@@ -283,7 +283,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         )
     {
         uint swapFee = getSwapFee(input, output); 
-        address pair = createPair(input, output);
+        address pair = pairFor(input, output);
         PairsList memory pool = pairsList[pairOfPairIds[pair]];
 
         if (pool.pair == pair && pool.isEnabled && whitelistContains(input) && whitelistContains(output)) {
