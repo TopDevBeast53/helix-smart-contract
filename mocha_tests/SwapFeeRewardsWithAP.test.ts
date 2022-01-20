@@ -1,6 +1,6 @@
 import chai, { expect, use } from 'chai';
 import { Contract } from 'ethers';
-import { solidity, loadFixture, MockProvider } from 'ethereum-waffle';
+import { solidity, loadFixture, MockProvider, deployMockContract } from 'ethereum-waffle';
 
 import { 
     factoryFixture,
@@ -10,6 +10,7 @@ import {
     swapFeeRewardsWithAPFixture,
     auraLibraryFixture
 } from './shared/swapFixtures';
+import SwapFeeRewardsWithAP from '../build/contracts/SwapFeeRewardsWithAP.json';
 
 use(solidity);
 
@@ -37,8 +38,6 @@ describe('SwapFeeRewardsWithAP', () => {
         router = fixture.router;
         targetToken = fixture.targetToken;
         targetAPToken = fixture.targetAPToken;
-        // TODO - implement oracle fixture.
-        // oracle = fixture.oracle;
         auraNFT = fixture.auraNFT;
         auraToken = fixture.auraToken;
         swapFeeRewardsWithAP = fixture.swapFeeRewardsWithAP;
@@ -244,14 +243,47 @@ describe('SwapFeeRewardsWithAP', () => {
         expect(await swapFeeRewardsWithAP.getBalance(account)).to.eq(0);
     });
 
-    // TODO - test getPotentialRewardQuantities - requires testing getQuantityOut
+    // TODO - test getPotentialRewardQuantities 
+    /*
+    it('gets potential reward quantities', async () => {
+        // mock swap fee rewards
+
+        // set getQuantityOut for diff arguments
+
+        // confirm results
+    });
+    */
 
     /*
      * EXTERNAL SETTERS
      */
 
-    // TODO - test accrueAPFromMarket - requires setting caller/msg.sender
-    // TODO - test accrueAPFromAuction - requires setting caller/msg.sender
+    // TODO - test accrueAPFromMarket
+    /*
+    it('accrues AP from market', async () => {
+        // mock swap fee rewards
+
+        // set market == wallet.address
+
+        // mock.getQuantityOut()
+
+        // confirm auraNFT.accrueAP updated.
+    });
+    */
+
+    // TODO - test accrueAPFromAuction
+    /*
+    it('accrues AP from auction', async () => {
+        // mock swap fee rewards
+
+        // set auction== wallet.address
+
+        // mock.getQuantityOut()
+
+        // confirm auraNFT.accrueAP updated.
+    });
+    */
+
 
     it('sets the reward distribution', async () => {
         const newDistribution = 50;
@@ -295,15 +327,79 @@ describe('SwapFeeRewardsWithAP', () => {
         expect(await swapFeeRewardsWithAP.pairExists(tokenA, tokenB)).to.be.true;
     });
 
-    // TODO test getQuantityOut - requires oracle fixture implementation.
+    // TODO test getQuantityOut - requires oracle fixture implementation. 
+    //                          - Mocking should work
+    /*
+    it('gets quantity out in equals out', async () => {
+        //
+    });
+    */
+
+    /*
+    it('gets quantity out in doesnt equal out but not needs intermediate', async () => {
+        // add pair
+        
+        // mock oracle
+
+        // set mock oracle parameters
+    });
+    */
+
+    /*
+    it('gets quantity out in doesnt equal out and needs intermediate', async () => {
+        // add pair 1 - (a, b)
+        // add pair 2 - (b, c)
+        // where wants (a -> c)
+
+        // mock oracle
+
+        // set mock oracle parameters
+    });
+    */
 
     /*
      * CORE
      */
 
     // TODO test swap - requires setting caller/msg.sender
-    //                - requires getQuantityOut
+    //                - requires getQuantityOutA
+    /*
+    it('performs a successful swap', async () => {
+        // Get the router's address and call as the router.
+        // Or, set the router's address to == `wallet`.
+
+        // Create a mock of SwapFeeRewards
+
+        // Add tokens `a` and `b` to whitelist.
+
+        // createPair(a, b) 
+
+        // set mock.getSplitRewards
+        // set mock.getQuantityOut
+
+        // confirm balances ++
+        // confirm event emission
+        // confirm AP accrual
+        // confirm returns true
+    });
+    */
 
     // TODO test withdraw - requires setting caller/msg.sender
+    /*
+    it('withdraws funds to callers account', async () => {
+        // Create a mock swapFeeRewardsWithAP contract.
+        const mockSwapFeeRewardsWithAP = await deployMockContract(wallet, SwapFeeRewardsWithAP.abi);
+        //console.log("MOCK", mockSwapFeeRewardsWithAP);
 
+        // Set the balances of caller to > 0.
+        await mockSwapFeeRewardsWithAP.mock._balances.returns(1000);
+        //console.log("MOCK BALANCE", (await mockSwapFeeRewardsWithAP._balances(wallet.address)).toNumber());
+
+        // Call the contract to withdraw funds.
+        // TODO - needs to send appropriate v, r, and s.
+        //      - see ethers.transaction.{v, r, or s}
+
+        // Test that the account's balance has changed.
+    });
+    */
 });
