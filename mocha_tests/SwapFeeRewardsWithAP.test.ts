@@ -1,6 +1,6 @@
 import chai, { expect, use } from 'chai';
 import { Contract } from 'ethers';
-import { solidity, loadFixture } from 'ethereum-waffle';
+import { solidity, loadFixture, MockProvider } from 'ethereum-waffle';
 
 import { 
     factoryFixture,
@@ -27,6 +27,8 @@ describe('SwapFeeRewardsWithAP', () => {
     let token2 = '0xA2eC19555C2d625D4BD6147609033e2b71128f37';
     let token3 = '0xffDD40B01c56Ab043038e4b4F18677193C5321E0';
     let token4 = '0x436b98aEd76BeD7B927f7718D1143f98adaC2033';
+
+    const [wallet, otherWallet] = new MockProvider().getWallets();
 
     beforeEach(async () => {
         // Load all the contracts used in creating swapFeeRewardsWithAP contract.
@@ -250,7 +252,12 @@ describe('SwapFeeRewardsWithAP', () => {
 
     // TODO - test accrueAPFromMarket - requires setting caller/msg.sender
     // TODO - test accrueAPFromAuction - requires setting caller/msg.sender
-    // TODO - test setRewardDistribution - requires setting caller/msg.sender
+
+    it('sets the reward distribution', async () => {
+        const newDistribution = 50;
+        await swapFeeRewardsWithAP.setRewardDistribution(newDistribution);
+        expect(await swapFeeRewardsWithAP.rewardDistribution(wallet.address)).to.eq(50);
+    });
 
     /* 
      * PUBLIC UTILS
