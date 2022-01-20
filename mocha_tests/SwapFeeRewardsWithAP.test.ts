@@ -349,7 +349,10 @@ describe('SwapFeeRewardsWithAP', () => {
 
         // Create the pair in the factory.
         await factory.createPair(tokenA, tokenB);
-        
+
+        // Confirm that `if` condition is NOT entered.
+        expect(tokenA).to.not.eq(tokenB);
+
         // Confirm that `else if` condition in getQuantityOut is entered.
         expect(await swapFeeRewardsWithAP.getPair(tokenA, tokenB)).to.not.eq(constants.AddressZero);
         expect(await swapFeeRewardsWithAP.pairExists(tokenA, tokenB)).to.be.true;
