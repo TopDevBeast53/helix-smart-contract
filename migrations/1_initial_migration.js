@@ -3,12 +3,13 @@ const AuraRouterV1 = artifacts.require("AuraRouterV1");
 const TestToken = artifacts.require("TestToken");
 const DeflatingERC20 = artifacts.require("DeflatingERC20");
 
-const FACTORY_INIT_CODE_HASH = '0x3ff52216c5ab48f67e3988dc6cc7f380ccec8763f153153ce43e741c0dff8796';
+const FACTORY_INIT_CODE_HASH = '0xd9b35256579ff1901f04559c5e15fd3b5c397d5f5a7900722d7512602a987fa8';
+
 const WBNB = {
     'test': '0xae13d989dac2f0debff460ac112a837c89baa7cd',
 }
 const FACTORY = {
-    'test': '0x0f067e18784969ff5c206647035199a66f2bb758',
+    'test': '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',
 }
 
 async function deployAuraFactory(deployer) {
@@ -27,12 +28,6 @@ async function deployAuraRouter(deployer, env) {
 }
 
 module.exports = async function (deployer) {
-//   deployAuraFactory(deployer)
-//   deployAuraRouter(deployer, 'test')
-    await deployer.deploy(TestToken, 100500)
-    // await deployer.deploy(DeflatingERC20, 100500)
-    const tt = await TestToken.deployed();
-    // const r = await tt.allowance('0x59201fb8cb2d61118b280c8542127331dd141654', '0xc8d11f48cf07ddb9ef48dab2bb85ebb35430b37a');
-    // console.log(r.toString())
-    await tt.approve('0xc8d11f48Cf07dDb9EF48DAb2bb85eBb35430b37a', 1000)
-};
+  // deployAuraFactory(deployer)
+   deployAuraRouter(deployer, 'test')
+}
