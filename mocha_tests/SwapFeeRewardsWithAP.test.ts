@@ -1,5 +1,5 @@
 import chai, { expect, use } from 'chai';
-import { Contract } from 'ethers';
+import { Contract, constants } from 'ethers';
 import { solidity, loadFixture, MockProvider, deployMockContract } from 'ethereum-waffle';
 
 import { 
@@ -308,7 +308,7 @@ describe('SwapFeeRewardsWithAP', () => {
         let tokenB = '0xEbe1a7B5ba930e9c1A36ff9Cd836Ac50833D4c2c';
         const newPair = {
             percentReward: 10,
-            pair: await swapFeeRewardsWithAP.createPair(tokenA, tokenB)
+            pair: await swapFeeRewardsWithAP.pairFor(tokenA, tokenB)
         };
         await swapFeeRewardsWithAP.addPair(newPair.percentReward, newPair.pair);
 
@@ -321,15 +321,13 @@ describe('SwapFeeRewardsWithAP', () => {
         let tokenB = '0xEbe1a7B5ba930e9c1A36ff9Cd836Ac50833D4c2c';
         const newPair = {
             percentReward: 10,
-            pair: await swapFeeRewardsWithAP.createPair(tokenA, tokenB)
+            pair: await swapFeeRewardsWithAP.pairFor(tokenA, tokenB)
         };
         await swapFeeRewardsWithAP.addPair(newPair.percentReward, newPair.pair);
 
         expect(await swapFeeRewardsWithAP.pairExists(tokenA, tokenB)).to.be.true;
     });
 
-    // TODO test getQuantityOut - requires oracle fixture implementation. 
-    //                          - Mocking should work
     it('gets quantity out when token in is same as token out', async () => {
         const tokenA = '0xC244aa367ED76c5b986Ebe6E7A1e98CE59100Ed8';
         const quantityIn = 10;
@@ -337,19 +335,30 @@ describe('SwapFeeRewardsWithAP', () => {
     });
 
     it('gets quantity out when token in is not token out but intermediate isnt needed', async () => {
-        // Add pair.
+        // Create a pair. 
         let tokenA = '0xC244aa367ED76c5b986Ebe6E7A1e98CE59100Ed8';
         let tokenB = '0xEbe1a7B5ba930e9c1A36ff9Cd836Ac50833D4c2c';
+        let quantityIn = 10;
         const newPair = {
-            percentReward: 10,
-            pair: await swapFeeRewardsWithAP.createPair(tokenA, tokenB)
+            percentReward: quantityIn,
+            pair: await swapFeeRewardsWithAP.pairFor(tokenA, tokenB)
         };
+
+        // Add pair to swapFeeRewardsWithAP.
         await swapFeeRewardsWithAP.addPair(newPair.percentReward, newPair.pair);
+
+        // Create the pair in the factory.
+        await factory.createPair(tokenA, tokenB);
+        
+        // Confirm that `else if` condition in getQuantityOut is entered.
+        expect(await swapFeeRewardsWithAP.getPair(tokenA, tokenB)).to.not.eq(constants.AddressZero);
         expect(await swapFeeRewardsWithAP.pairExists(tokenA, tokenB)).to.be.true;
         
-        // mock oracle
+        // Set mock oracle parameters
+        await mockOracle.mock.consult.withArgs(tokenA, quantityIn, tokenB).returns(20);
 
-        // set mock oracle parameters
+        // Confirm that the correnct value is returned by getQuantityOut.
+        expect(await swapFeeRewardsWithAP.getQuantityOut(tokenA, quantityIn, tokenB)).to.eq(20);
     });
 
     /*
@@ -379,7 +388,7 @@ describe('SwapFeeRewardsWithAP', () => {
 
         // Add tokens `a` and `b` to whitelist.
 
-        // createPair(a, b) 
+        // pairFor(a, b) 
 
         // set mock.getSplitRewards
         // set mock.getQuantityOut
