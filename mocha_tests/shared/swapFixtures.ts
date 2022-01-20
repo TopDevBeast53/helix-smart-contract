@@ -55,7 +55,8 @@ export async function oracleFixture(provider: Web3Provider, [wallet]: Wallet[]) 
 };
 
 export async function auraNFTFixture(provider: Web3Provider, [wallet]: Wallet[]) {
-    const auraNFT = await deployContract(wallet, AuraNFT, [""], overrides);
+    // AuraNFT args: (string memory baseURI, uint initialAuraPoints, uint8 levelUpPercent).
+    const auraNFT = await deployContract(wallet, AuraNFT, ["", 10000, 10], overrides);
     return auraNFT;
 };
 
@@ -98,4 +99,4 @@ export async function swapFeeRewardsWithAPFixture(provider: Web3Provider, [walle
 export async function auraLibraryFixture(provider: Web3Provider, [wallet]: Wallet[]) {
     const auraLibraryFixture = await deployContract(wallet, AuraLibrary, [], overrides);
     return auraLibraryFixture;
-}
+};
