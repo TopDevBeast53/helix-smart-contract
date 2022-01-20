@@ -5,6 +5,7 @@ require('@openzeppelin/hardhat-upgrades');
 require("dotenv").config();
 
 const mnemonic = process.env.MNEMONIC;
+const bscScanApiKey = process.env.BSCSCANAPIKEY;
 
 task("accounts", "Prints the list of accounts", async () => {
   const accounts = await ethers.getSigners();
@@ -55,6 +56,9 @@ module.exports = {
       }
 
     ]
+  },
+  etherscan: {
+    apiKey: bscScanApiKey
   },
   paths: {
     sources: "./contracts",
