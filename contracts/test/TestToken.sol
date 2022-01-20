@@ -53,7 +53,7 @@ contract TestToken {
 
     function _transfer(address from, address to, uint value) private {
         balanceOf[from] = balanceOf[from] - value;
-        balanceOf[to] = balanceOf[to] - value;
+        balanceOf[to] = balanceOf[to] + value;
         emit Transfer(from, to, value);
     }
 

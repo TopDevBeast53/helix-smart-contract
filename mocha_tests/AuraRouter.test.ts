@@ -31,6 +31,7 @@ describe('AuraRouter', () => {
   let router: Contract
   let pair: Contract
   let swapFee: BigNumber
+  let factory: Contract
 
   beforeEach(async function() {
     const fixture = await loadFixture(fullExchangeFixture)
@@ -39,6 +40,7 @@ describe('AuraRouter', () => {
     router = fixture.router
     pair = fixture.pair
     swapFee = await pair.swapFee()
+    factory = fixture.factory
   })
 
   it('quote', async () => {
@@ -84,30 +86,21 @@ describe('AuraRouter', () => {
   })
 
   it('getAmountsOut', async () => {
-    console.log('hey')
     await token0.approve(router.address, MaxUint256)
-    console.log('hey1')
     await token1.approve(router.address, MaxUint256)
-    console.log('hey2')
-    try {
-        const x = await router.addLiquidity(
-            token0.address,
-            token1.address,
-            bigNumberify(1),
-            bigNumberify(1),
-            0,
-            0,
-            wallet.address,
-            MaxUint256,
-            overrides
-        )
-        console.log(x)
-    } catch (e) {
-        console.log(e)
-    }
-    console.log('hey3')
+    const x = await router.addLiquidity(
+      token0.address,
+      token1.address,
+      bigNumberify(2000),
+      bigNumberify(2000),
+      0,
+      0,
+      wallet.address,
+      MaxUint256,
+      overrides
+    )
 
-    const func = router['getAmountsOut(address,uint256,address[])'];
+    const func = router['getAmountsOut'];
     await expect(func(bigNumberify(2), [token0.address])).to.be.revertedWith(
       'AuraLibrary: INVALID_PATH'
     )
@@ -130,7 +123,7 @@ describe('AuraRouter', () => {
       overrides
     )
 
-    const func = router['getAmountsIn(address,uint256,address[])'];
+    const func = router['getAmountsIn'];
     await expect(func(bigNumberify(1), [token0.address])).to.be.revertedWith(
       'AuraLibrary: INVALID_PATH'
     )

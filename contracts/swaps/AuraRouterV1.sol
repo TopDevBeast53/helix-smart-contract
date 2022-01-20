@@ -5,8 +5,8 @@ import './AuraPair.sol';
 import '../libraries/AuraLibrary.sol';
 import '../interfaces/IAuraV2Router02.sol';
 import '../interfaces/IAuraSwapFeeReward.sol';
+import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
-import "@rari-capital/solmate/src/utils/SafeTransferLib.sol";
 import '@uniswap/v2-periphery/contracts/interfaces/IWETH.sol';
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 
@@ -71,6 +71,7 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
             }
         }
     }
+
     function addLiquidity(
         address tokenA,
         address tokenB,
@@ -83,8 +84,8 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
     ) external virtual override ensure(deadline) returns (uint amountA, uint amountB, uint liquidity) {
         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
         address pair = AuraLibrary.pairFor(_factory, tokenA, tokenB);
-        SafeTransferLib.safeTransferFrom(ERC20(tokenA), msg.sender, pair, amountA);
-        SafeTransferLib.safeTransferFrom(ERC20(tokenB), msg.sender, pair, amountB);
+        TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
+        TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
         liquidity = AuraPair(pair).mint(to);
     }
     function addLiquidityETH(
@@ -104,12 +105,12 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
             amountETHMin
         );
         address pair = AuraLibrary.pairFor(_factory, token, _WETH);
-        SafeTransferLib.safeTransferFrom(ERC20(token), msg.sender, pair, amountToken);
+        TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
         IWETH(_WETH).deposit{value: amountETH}();
         assert(IWETH(_WETH).transfer(pair, amountETH));
         liquidity = AuraPair(pair).mint(to);
         // refund dust eth, if any
-        if (msg.value > amountETH) SafeTransferLib.safeTransferETH(msg.sender, msg.value - amountETH);
+        if (msg.value > amountETH) TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
     }
 
     // **** REMOVE LIQUIDITY ****
@@ -147,9 +148,9 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
             address(this),
             deadline
         );
-        SafeTransferLib.safeTransfer(ERC20(token), to, amountToken);
+        TransferHelper.safeTransfer(token, to, amountToken);
         IWETH(_WETH).withdraw(amountETH);
-        SafeTransferLib.safeTransferETH(to, amountETH);
+        TransferHelper.safeTransferETH(to, amountETH);
     }
     function removeLiquidityWithPermit(
         address tokenA,
@@ -199,9 +200,9 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
             address(this),
             deadline
         );
-        SafeTransferLib.safeTransfer(ERC20(token), to, IERC20(token).balanceOf(address(this)));
+        TransferHelper.safeTransfer(token, to, IERC20(token).balanceOf(address(this)));
         IWETH(_WETH).withdraw(amountETH);
-        SafeTransferLib.safeTransferETH(to, amountETH);
+        TransferHelper.safeTransferETH(to, amountETH);
     }
     function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
         address token,
@@ -246,8 +247,8 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
     ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
         amounts = AuraLibrary.getAmountsOut(_factory, amountIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, 'AuraRouterV1: INSUFFICIENT_OUTPUT_AMOUNT');
-        SafeTransferLib.safeTransferFrom(
-            ERC20(path[0]), msg.sender, AuraLibrary.pairFor(_factory, path[0], path[1]), amounts[0]
+        TransferHelper.safeTransferFrom(
+            path[0], msg.sender, AuraLibrary.pairFor(_factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, to);
     }
@@ -260,8 +261,8 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
     ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
         amounts = AuraLibrary.getAmountsIn(_factory, amountOut, path);
         require(amounts[0] <= amountInMax, 'AuraRouterV1: EXCESSIVE_INPUT_AMOUNT');
-        SafeTransferLib.safeTransferFrom(
-            ERC20(path[0]), msg.sender, AuraLibrary.pairFor(_factory, path[0], path[1]), amounts[0]
+        TransferHelper.safeTransferFrom(
+            path[0], msg.sender, AuraLibrary.pairFor(_factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, to);
     }
@@ -290,12 +291,12 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
         require(path[path.length - 1] == _WETH, 'AuraRouterV1: INVALID_PATH');
         amounts = AuraLibrary.getAmountsIn(_factory, amountOut, path);
         require(amounts[0] <= amountInMax, 'AuraRouterV1: EXCESSIVE_INPUT_AMOUNT');
-        SafeTransferLib.safeTransferFrom(
-            ERC20(path[0]), msg.sender, AuraLibrary.pairFor(_factory, path[0], path[1]), amounts[0]
+        TransferHelper.safeTransferFrom(
+            path[0], msg.sender, AuraLibrary.pairFor(_factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, address(this));
         IWETH(_WETH).withdraw(amounts[amounts.length - 1]);
-        SafeTransferLib.safeTransferETH(to, amounts[amounts.length - 1]);
+        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
     function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
         external
@@ -307,12 +308,12 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
         require(path[path.length - 1] == _WETH, 'AuraRouterV1: INVALID_PATH');
         amounts = AuraLibrary.getAmountsOut(_factory, amountIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, 'AuraRouterV1: INSUFFICIENT_OUTPUT_AMOUNT');
-        SafeTransferLib.safeTransferFrom(
-            ERC20(path[0]), msg.sender, AuraLibrary.pairFor(_factory, path[0], path[1]), amounts[0]
+        TransferHelper.safeTransferFrom(
+            path[0], msg.sender, AuraLibrary.pairFor(_factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, address(this));
         IWETH(_WETH).withdraw(amounts[amounts.length - 1]);
-        SafeTransferLib.safeTransferETH(to, amounts[amounts.length - 1]);
+        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
     function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)
         external
@@ -329,7 +330,7 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
         assert(IWETH(_WETH).transfer(AuraLibrary.pairFor(_factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
         // refund dust eth, if any
-        if (msg.value > amounts[0]) SafeTransferLib.safeTransferETH(msg.sender, msg.value - amounts[0]);
+        if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
     }
 
     // **** SWAP (supporting fee-on-transfer tokens) ****
@@ -362,8 +363,8 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
         address to,
         uint deadline
     ) external virtual override ensure(deadline) {
-        SafeTransferLib.safeTransferFrom(
-            ERC20(path[0]), msg.sender, AuraLibrary.pairFor(_factory, path[0], path[1]), amountIn
+        TransferHelper.safeTransferFrom(
+            path[0], msg.sender, AuraLibrary.pairFor(_factory, path[0], path[1]), amountIn
         );
         uint balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
@@ -408,14 +409,14 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
         ensure(deadline)
     {
         require(path[path.length - 1] == _WETH, 'AuraRouterV1: INVALID_PATH');
-        SafeTransferLib.safeTransferFrom(
-            ERC20(path[0]), msg.sender, AuraLibrary.pairFor(_factory, path[0], path[1]), amountIn
+        TransferHelper.safeTransferFrom(
+            path[0], msg.sender, AuraLibrary.pairFor(_factory, path[0], path[1]), amountIn
         );
         _swapSupportingFeeOnTransferTokens(path, address(this));
         uint amountOut = IERC20(_WETH).balanceOf(address(this));
         require(amountOut >= amountOutMin, 'AuraRouterV1: INSUFFICIENT_OUTPUT_AMOUNT');
         IWETH(_WETH).withdraw(amountOut);
-        SafeTransferLib.safeTransferETH(to, amountOut);
+        TransferHelper.safeTransferETH(to, amountOut);
     }
 
     // **** LIBRARY FUNCTIONS ****
