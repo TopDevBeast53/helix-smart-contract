@@ -1,6 +1,6 @@
 import { Wallet, Contract } from 'ethers';
 import { Web3Provider } from 'ethers/providers';
-import { deployContract } from 'ethereum-waffle';
+import { deployContract, deployMockContract } from 'ethereum-waffle';
 
 import AuraFactory from '../../build/contracts/AuraFactory.json';
 import AuraRouterV1 from '../../build/contracts/AuraRouterV1.json';
@@ -10,6 +10,7 @@ import AuraLP from '../../build/contracts/AuraLP.json';
 import AuraNFT from '../../build/contracts/AuraNFT.json';
 import SwapFeeRewardsWithAP from '../../build/contracts/SwapFeeRewardsWithAP.json';
 import AuraLibrary from '../../build/contracts/AuraLibrary.json';
+import MockOracle from '../../build/contracts/MockOracle.json';
 
 /*
  * NOTE:
@@ -54,6 +55,11 @@ export async function oracleFixture(provider: Web3Provider, [wallet]: Wallet[]) 
     return oracle;
 };
 
+export async function mockOracleFixture(provider: Web3Provider, [wallet]: Wallet[]) {
+    const mockOracle = await deployMockContract(wallet, MockOracle.abi);
+    return mockOracle;
+}
+
 export async function auraNFTFixture(provider: Web3Provider, [wallet]: Wallet[]) {
     // AuraNFT args: (string memory baseURI, uint initialAuraPoints, uint8 levelUpPercent).
     const auraNFT = await deployContract(wallet, AuraNFT, ["", 10000, 10], overrides);
@@ -70,7 +76,7 @@ export async function swapFeeRewardsWithAPFixture(provider: Web3Provider, [walle
     const router = await routerFixture(provider, [wallet]);
     const targetToken = await targetTokenFixture(provider, [wallet]);
     const targetAPToken = await targetAPTokenFixture(provider, [wallet]);
-    const oracle = await oracleFixture(provider, [wallet]);
+    const mockOracle = await mockOracleFixture(provider, [wallet]);
     const auraNFT = await auraNFTFixture(provider, [wallet]);
     const auraToken = await auraTokenFixture(provider, [wallet]);
 
@@ -79,7 +85,7 @@ export async function swapFeeRewardsWithAPFixture(provider: Web3Provider, [walle
         router.address, 
         targetToken.address,
         targetAPToken.address,
-        oracle.address,
+        mockOracle.address,
         auraNFT.address,
         auraToken.address,
     ], overrides);
@@ -89,7 +95,7 @@ export async function swapFeeRewardsWithAPFixture(provider: Web3Provider, [walle
         router,
         targetToken,
         targetAPToken,
-        oracle,
+        mockOracle,
         auraNFT,
         auraToken,
         swapFeeRewardsWithAP
