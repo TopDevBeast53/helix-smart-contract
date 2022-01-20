@@ -451,12 +451,12 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
         return AuraLibrary.getAmountIn(amountOut, reserveIn, reserveOut, swapFee);
     }
 
-        function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut)
-        public
-        pure
-        virtual
-        override
-        returns (uint amountIn)
+    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut)
+    public
+    pure
+    virtual
+    override
+    returns (uint amountIn)
     {
         return AuraLibrary.getAmountIn(amountOut, reserveIn, reserveOut, /*swapFee=*/0);
     }
