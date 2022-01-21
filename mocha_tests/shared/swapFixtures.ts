@@ -66,6 +66,11 @@ export async function auraNFTFixture(provider: Web3Provider, [wallet]: Wallet[])
     return auraNFT;
 };
 
+export async function mockAuraNFTFixture(provider: Web3Provider, [wallet]: Wallet[]) {
+    const mockAuraNFT = await deployMockContract(wallet, AuraNFT.abi);
+    return mockAuraNFT;
+} 
+
 export async function auraTokenFixture(provider: Web3Provider, [wallet]: Wallet[]) {
     const auraToken = await deployContract(wallet, AuraToken, [], overrides);
     return auraToken;
