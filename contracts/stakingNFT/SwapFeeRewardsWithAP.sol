@@ -60,7 +60,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * 100 -> Rewards are [0, 100]% AURA and [0, 100]% AP. User has full choice.
      * Invariant: must be in range [0, 100].
      */
-    uint public defaultRewardDistribution = 100; 
+    uint public defaultRewardDistribution = 0; 
 
     struct PairsList {
         address pair;
