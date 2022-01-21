@@ -12,14 +12,6 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // TODO - Add NatSpec comments to latter functions.
 
-/*
- * TODO - `accrueAuraPoints` now accepts `uint tokenId` instead of `address account`.
- *        As a consequence, `swap` needs a `tokenId` parameter, deprecating `account`.
- *        This necessitaties identifying which instances of `account` must be replaced
- *        by `tokenId` in `swap` and, more broadly, suggests that other instances of
- *        `account` in this contract may also need to be replaced with `tokenId`. 
- */
-
 /**
  * @title Convert between Swap Reward Fees to Aura Points (ap/AP)
  */
@@ -132,7 +124,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     /**
      * @dev swap the `input` token for the `output` token and credit the result to `account`.
      */
-    function swap(address account, address input, address output, uint amount, uint tokenId) external returns(bool) {
+    function swap(address account, address input, address output, uint amount) external returns(bool) {
         require (msg.sender == router, "Caller is not the router.");
 
         if (!whitelistContains(input) || !whitelistContains(output)) { return false; }
@@ -153,8 +145,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         }
 
         apAmount = apAmount / apWagerOnSwap;
-        //accrueAuraPoints(account, output, apAmount);
-        accrueAuraPoints(tokenId, output, apAmount);
+        accrueAuraPoints(account, output, apAmount);
 
         return true;
     }
@@ -313,20 +304,20 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * @dev Accrue AP to AuraNFT `tokenId` equivalent in value to `quantityIn` of `tokenIn` modified
      *      by the market percent rate.
      */
-    function accrueAPFromMarket(uint tokenId, address tokenIn, uint quantityIn) external {
+    function accrueAPFromMarket(address account, address tokenIn, uint quantityIn) external {
         require(msg.sender == market, "Caller is not the market.");
         quantityIn = quantityIn * apPercentMarket / 10000;
-        accrueAuraPoints(tokenId, tokenIn, quantityIn);
+        accrueAuraPoints(account, tokenIn, quantityIn);
     }
     
     /**
      * @dev Accrue AP to AuraNFT `tokenId` equivalent in value to `quantityIn` of `tokenIn` modified
      *      by the auction percent rate.
      */
-    function accrueAPFromAuction(uint tokenId, address tokenIn, uint quantityIn) external {
+    function accrueAPFromAuction(address account, address tokenIn, uint quantityIn) external {
         require(msg.sender == auction, "Caller is not the auction.");
         quantityIn = quantityIn * apPercentAuction / 10000;
-        accrueAuraPoints(tokenId, tokenIn, quantityIn);
+        accrueAuraPoints(account, tokenIn, quantityIn);
     }
 
     function setRewardDistribution(uint _distribution) external {
@@ -353,12 +344,12 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     /**
      * @dev Accrue AP to AuraNFT `tokenId` equivalent in value to `quantityIn` of `tokenIn`.
      */
-    function accrueAuraPoints(uint tokenId, address tokenIn, uint quantityIn) private {
+    function accrueAuraPoints(address account, address tokenIn, uint quantityIn) private {
         uint quantity = getQuantityOut(tokenIn, quantityIn, targetAPToken);
         if (quantity > 0) {
             totalAccruedAP += quantity;
             if (totalAccruedAP <= phaseAP * maxAccruedAPInPhase) {
-                auraNFT.accrueAuraPoints(tokenId, quantity);
+                auraNFT.accrueAuraPoints(account, quantity);
             }
         }
     }
