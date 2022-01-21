@@ -91,6 +91,12 @@ describe('SwapFeeRewardsWithAP', () => {
      * ONLY OWNER SETTERS
      */
 
+    it('sets default reward distribution', async () => {
+        const newDefaultRewardDistribution = 100;
+        await swapFeeRewardsWithAP.setDefaultRewardDistribution(newDefaultRewardDistribution);
+        expect(await swapFeeRewardsWithAP.defaultRewardDistribution()).to.eq(100);
+    });
+
     it('sets factory as owner', async () => {
         const newFactory = await loadFixture(factoryFixture);
         await swapFeeRewardsWithAP.setFactory(newFactory.address);
@@ -309,11 +315,17 @@ describe('SwapFeeRewardsWithAP', () => {
     });
     */
 
+    it('sets reward distribution', async () => {
+        // Raise the initial default reward distribution.               
+        const newDefaultRewardDistribution = 100;
+        await swapFeeRewardsWithAP.setDefaultRewardDistribution(newDefaultRewardDistribution);
+        expect(await swapFeeRewardsWithAP.defaultRewardDistribution()).to.eq(100);
 
-    it('sets the reward distribution', async () => {
-        const newDistribution = 0;
+
+        // Change the caller's chosen reward distribution.
+        const newDistribution = 50;
         await swapFeeRewardsWithAP.setRewardDistribution(newDistribution);
-        expect(await swapFeeRewardsWithAP.rewardDistribution(wallet.address)).to.eq(0);
+        expect(await swapFeeRewardsWithAP.rewardDistribution(wallet.address)).to.eq(50);
     });
 
     /* 
