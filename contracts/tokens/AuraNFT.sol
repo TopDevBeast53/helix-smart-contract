@@ -181,6 +181,8 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         emit LevelUp(msg.sender, (curLevel + 1), tokenId);
     }
 
+    //External functions --------------------------------------------------------------------------------------------
+    
     /**
      * @dev Used by staker to accrue AuraPoints `amount` to `user`
      *
@@ -190,7 +192,7 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
      * Requirements:
      * - The counted AuraPoints amount must be not over limit by level
      */
-    function accrueAuraPoints(uint tokenId, uint amount) public onlyStaker {
+    function accrueAuraPoints(uint tokenId, uint amount) external onlyStaker {
         require(_exists(tokenId), "Token does not exist");
         Token storage token = _tokens[tokenId];
         uint newAP = token.auraPoints + amount;
@@ -198,8 +200,6 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         token.auraPoints = newAP;
         emit AccrueAuraPoints(tokenId, newAP);
     }
-
-    //External functions --------------------------------------------------------------------------------------------
 
     /**
      * @dev External function to get the information of `tokenId`
