@@ -311,9 +311,9 @@ describe('SwapFeeRewardsWithAP', () => {
 
 
     it('sets the reward distribution', async () => {
-        const newDistribution = 50;
+        const newDistribution = 0;
         await swapFeeRewardsWithAP.setRewardDistribution(newDistribution);
-        expect(await swapFeeRewardsWithAP.rewardDistribution(wallet.address)).to.eq(50);
+        expect(await swapFeeRewardsWithAP.rewardDistribution(wallet.address)).to.eq(0);
     });
 
     /* 
@@ -495,3 +495,4 @@ describe('SwapFeeRewardsWithAP', () => {
     });
     */
 });
+
