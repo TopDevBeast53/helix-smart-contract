@@ -378,6 +378,10 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * These functions alter contract core data and are only available to the owner. 
      */
 
+    function setDefaultRewardDistribution(uint _defaultRewardDistribution) external onlyOwner {
+        defaultRewardDistribution = _defaultRewardDistribution;
+    } 
+
     function setFactory(address _factory) external onlyOwner {
         require(_factory != address(0), "Factory is the zero address.");
         factory = _factory;
