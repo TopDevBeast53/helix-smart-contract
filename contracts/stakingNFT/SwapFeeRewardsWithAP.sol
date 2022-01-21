@@ -145,7 +145,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         }
 
         apAmount = apAmount / apWagerOnSwap;
-        _accrueAP(account, output, apAmount);
+        accrueAuraPoints(account, output, apAmount);
 
         return true;
     }
@@ -300,16 +300,24 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * Provide callers with functionality for setting contract state.
      */
 
-    function accrueAPFromMarket(address account, address fromToken, uint amount) external {
+    /**
+     * @dev Accrue AP to AuraNFT `tokenId` equivalent in value to `quantityIn` of `tokenIn` modified
+     *      by the market percent rate.
+     */
+    function accrueAPFromMarket(uint tokenId, address tokenIn, uint quantityIn) external {
         require(msg.sender == market, "Caller is not the market.");
-        amount = amount * apPercentMarket / 10000;
-        _accrueAP(account, fromToken, amount);
+        quantityIn = quantityIn * apPercentMarket / 10000;
+        accrueAuraPoints(tokenId, tokenIn, quantityIn);
     }
-
-    function accrueAPFromAuction(address account, address fromToken, uint amount) external {
+    
+    /**
+     * @dev Accrue AP to AuraNFT `tokenId` equivalent in value to `quantityIn` of `tokenIn` modified
+     *      by the auction percent rate.
+     */
+    function accrueAPFromAuction(uint tokenId, address tokenIn, uint quantityIn) external {
         require(msg.sender == auction, "Caller is not the auction.");
-        amount = amount * apPercentAuction / 10000;
-        _accrueAP(account, fromToken, amount);
+        quantityIn = quantityIn * apPercentAuction / 10000;
+        accrueAuraPoints(tokenId, tokenIn, quantityIn);
     }
 
     function setRewardDistribution(uint _distribution) external {
@@ -333,12 +341,15 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         require(recoveredAddress != address(0) && recoveredAddress == spender, "Invalid signature.");
     }
 
-    function _accrueAP(address account, address output, uint amount) private {
-        uint quantity = getQuantityOut(output, amount, targetAPToken);
+    /**
+     * @dev Accrue AP to AuraNFT `tokenId` equivalent in value to `quantityIn` of `tokenIn`.
+     */
+    function accrueAuraPoints(uint tokenId, address tokenIn, uint quantityIn) private {
+        uint quantity = getQuantityOut(tokenIn, quantityIn, targetAPToken);
         if (quantity > 0) {
             totalAccruedAP += quantity;
             if (totalAccruedAP <= phaseAP * maxAccruedAPInPhase) {
-                auraNFT.accrueAuraPoints(account, quantity);
+                auraNFT.accrueAuraPoints(tokenId, quantity);
             }
         }
     }
