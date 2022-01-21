@@ -2,6 +2,8 @@ import chai, { expect, use } from 'chai';
 import { Contract, constants } from 'ethers';
 import { solidity, loadFixture, MockProvider, deployMockContract } from 'ethereum-waffle';
 
+import SwapFeeRewardsWithAP from '../build/contracts/SwapFeeRewardsWithAP.json';
+
 import { 
     factoryFixture,
     routerFixture,
@@ -10,7 +12,7 @@ import {
     swapFeeRewardsWithAPFixture,
     auraLibraryFixture
 } from './shared/swapFixtures';
-import SwapFeeRewardsWithAP from '../build/contracts/SwapFeeRewardsWithAP.json';
+import { mockAuraNFTFixture } from './shared/swapFixtures';
 
 use(solidity);
 
@@ -262,13 +264,35 @@ describe('SwapFeeRewardsWithAP', () => {
     // TODO - test accrueAPFromMarket
     /*
     it('accrues AP from market', async () => {
-        // mock swap fee rewards
+        // Replace auraNFT in swapFeeRewardsWithAP contract.     
+        const mockAuraNFT = loadFixture(mockAuraNFTFixture);
+        console.log("MOCK AURA NFT", await mockAuraNFT);
+        await swapFeeRewardsWithAP.setAuraNFT((await mockAuraNFT).address);
+        expect(await swapFeeRewardsWithAP.auraNFT()).to.eq((await mockAuraNFT).address);
 
-        // set market == wallet.address
+        // Set market.
+        await swapFeeRewardsWithAP.setMarket(wallet.address);
+        expect(await swapFeeRewardsWithAP.market()).to.eq(wallet.address);
+
+        // Set AP Percent Market rate.
+        await swapFeeRewardsWithAP.setAPReward(10000, 10000, 10000);
+        expect(await swapFeeRewardsWithAP.apPercentMarket()).to.eq(10000);
+
+        // Add token pair.
+        console.log("TARGET AP", (await targetAPToken).address);
+
 
         // mock.getQuantityOut()
 
         // confirm auraNFT.accrueAP updated.
+
+        // Accrue the rewards.
+        await swapFeeRewardsWithAP.accrueAPFromMarket(wallet.address, (await targetAPToken).address, 10);
+
+        // Confirm total accrued increased.
+        expect(await swapFeeRewardsWithAP.totalAccruedAP()).to.eq(10);
+
+        // Confirm change made to AuraNFT.
     });
     */
 
