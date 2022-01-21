@@ -12,6 +12,14 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // TODO - Add NatSpec comments to latter functions.
 
+/*
+ * TODO - `accrueAuraPoints` now accepts `uint tokenId` instead of `address account`.
+ *        As a consequence, `swap` needs a `tokenId` parameter, deprecating `account`.
+ *        This necessitaties identifying which instances of `account` must be replaced
+ *        by `tokenId` in `swap` and, more broadly, suggests that other instances of
+ *        `account` in this contract may also need to be replaced with `tokenId`. 
+ */
+
 /**
  * @title Convert between Swap Reward Fees to Aura Points (ap/AP)
  */
@@ -124,7 +132,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     /**
      * @dev swap the `input` token for the `output` token and credit the result to `account`.
      */
-    function swap(address account, address input, address output, uint amount) external returns(bool) {
+    function swap(address account, address input, address output, uint amount, uint tokenId) external returns(bool) {
         require (msg.sender == router, "Caller is not the router.");
 
         if (!whitelistContains(input) || !whitelistContains(output)) { return false; }
@@ -145,7 +153,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         }
 
         apAmount = apAmount / apWagerOnSwap;
-        accrueAuraPoints(account, output, apAmount);
+        //accrueAuraPoints(account, output, apAmount);
+        accrueAuraPoints(tokenId, output, apAmount);
 
         return true;
     }
