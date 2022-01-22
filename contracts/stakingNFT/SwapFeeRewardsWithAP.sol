@@ -11,7 +11,6 @@ import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // TODO - Add NatSpec comments to latter functions.
-// TODO - Set visibilities for storage variables. 
 
 /**
  * @title Convert between Swap Reward Fees to Aura Points (ap/AP)
@@ -20,30 +19,30 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet whitelist;
 
-    IOracle oracle;
-    IAuraNFT auraNFT;
-    IAuraToken auraToken;
+    IOracle public oracle;
+    IAuraNFT public auraNFT;
+    IAuraToken public auraToken;
 
-    address factory;
-    address router;
-    address market;
-    address auction;
-    address targetToken;
-    address targetAPToken;
+    address public factory;
+    address public router;
+    address public market;
+    address public auction;
+    address public targetToken;
+    address public targetAPToken;
 
-    uint maxMiningAmount = 100000000 ether;
-    uint maxMiningInPhase = 5000 ether;
-    uint maxAccruedAPInPhase = 5000 ether;
+    uint public maxMiningAmount = 100000000 ether;
+    uint public maxMiningInPhase = 5000 ether;
+    uint public maxAccruedAPInPhase = 5000 ether;
 
-    uint currentPhase = 1;
-    uint currentPhaseAP = 1; 
+    uint public phase = 1;
+    uint public phaseAP = 1; 
     
-    uint totalMined = 0;
-    uint totalAccruedAP = 0;
+    uint public totalMined = 0;
+    uint public totalAccruedAP = 0;
 
-    uint apWagerOnSwap = 1500;
-    uint apPercentMarket = 10000; // (div 10000)
-    uint apPercentAuction = 10000; // (div 10000)
+    uint public apWagerOnSwap = 1500;
+    uint public apPercentMarket = 10000; // (div 10000)
+    uint public apPercentAuction = 10000; // (div 10000)
 
     /*
      * Sets the upper limit of maximum AURA percentage of users' rewards.
@@ -53,15 +52,15 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * 100 -> Rewards are [0, 100]% AURA and [0, 100]% AP. User has full choice.
      * Invariant: must be in range [0, 100].
      */
-    uint defaultRewardDistribution = 100; 
+    uint public defaultRewardDistribution = 0; 
 
     struct PairsList {
         address pair;
         uint percentReward;
-        bool enabled;
+        bool isEnabled;
     }
 
-    PairsList[] pairsList;
+    PairsList[] public pairsList;
 
     /* 
      * Fee distribution is a user setting for how that user wants their rewards distributed.
@@ -72,11 +71,11 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * More generally, low values maximize AURA while high values maximize AP.
      * Invariant: rewardDistribution[user] <= defaultRewardDistribution.
      */
-    mapping(address => uint) rewardDistribution;
+    mapping(address => uint) public rewardDistribution;
 
-    mapping(address => uint) pairOfpairIds;
-    mapping(address => uint) _balances;
-    mapping(address => uint) nonces;
+    mapping(address => uint) public pairOfPairIds;
+    mapping(address => uint) public _balances;
+    mapping(address => uint) public nonces;
 
     event NewAuraNFT(IAuraNFT auraNFT);
     event NewOracle(IOracle oracle);
@@ -130,23 +129,23 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
 
         if (!whitelistContains(input) || !whitelistContains(output)) { return false; }
 
-        address pair = AuraLibrary.pairFor(factory, input, output);
-        PairsList memory pool = pairsList[pairOfpairIds[pair]];
-        if (!pool.enabled || pool.pair != pair) { return false; }
+        address pair = pairFor(input, output);
+        PairsList memory pool = pairsList[pairOfPairIds[pair]];
+        if (!pool.isEnabled || pool.pair != pair) { return false; }
 
-        uint swapFee = AuraLibrary.getSwapFee(factory, input, output);
+        uint swapFee = getSwapFee(input, output);
         (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
         feeAmount = feeAmount / swapFee;
 
         // Gets the quantity of AURA (targetToken) equivalent in value to quantity (feeAmount) of the input token (output).
         uint quantity = getQuantityOut(output, feeAmount, targetToken);
-        if ((totalMined + quantity) <= maxMiningAmount && (totalMined + quantity) <= (currentPhase * maxMiningInPhase)) {
+        if ((totalMined + quantity) <= maxMiningAmount && (totalMined + quantity) <= (phase * maxMiningInPhase)) {
             _balances[account] += quantity;
             emit Rewarded(account, input, output, amount, quantity);
         }
 
         apAmount = apAmount / apWagerOnSwap;
-        _accrueAP(account, output, apAmount);
+        accrueAuraPoints(account, output, apAmount);
 
         return true;
     }
@@ -158,7 +157,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         require (totalMined < maxMiningAmount, "All tokens have been mined.");
 
         uint balance = _balances[msg.sender];
-        require ((totalMined + balance) <= (currentPhase * maxMiningInPhase), "All tokens in this phase have been mined.");
+        require ((totalMined + balance) <= (phase * maxMiningInPhase), "All tokens in this phase have been mined.");
       
         // Verify the sender's signature.
         permit(msg.sender, balance, v, r, s);
@@ -189,7 +188,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
             // If the tokenIn is the same as the tokenOut, then there's no exchange quantity to compute.
             // I.e. ETH -> ETH.
             quantityOut = quantityIn;
-        } else if (AuraFactory(factory).getPair(tokenIn, tokenOut) != address(0) 
+        } else if (getPair(tokenIn, tokenOut) != address(0) 
             && pairExists(tokenIn, tokenOut)) 
         {
             // If a direct exchange pair exists, then get the exchange quantity directly.
@@ -202,8 +201,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
             uint length = whitelistLength();
             for (uint i = 0; i < length; i++) {
                 address intermediate = whitelistGet(i);
-                if (AuraFactory(factory).getPair(tokenIn, intermediate) != address(0)
-                    && AuraFactory(factory).getPair(intermediate, tokenOut) != address(0)
+                if (getPair(tokenIn, intermediate) != address(0)
+                    && getPair(intermediate, tokenOut) != address(0)
                     && pairExists(intermediate, tokenOut))
                 {
                     uint interQuantity = IOracle(oracle).consult(tokenIn, quantityIn, intermediate);
@@ -218,9 +217,36 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * @return _pairExists is true if this exchange swaps between tokens `a` and `b` and false otherwise.
      */
     function pairExists(address a, address b) public view returns(bool _pairExists) {
-        address pair = AuraLibrary.pairFor(factory, a, b);
-        PairsList memory pool = pairsList[pairOfpairIds[pair]];
+        address pair = pairFor(a, b);
+        uint pairId = pairOfPairIds[pair];
+        // Prevent pairID index out of bounds.
+        if (pairId >= pairsList.length) { return false; }
+        PairsList memory pool = pairsList[pairId];
         _pairExists = (pool.pair == pair);
+    }
+
+    /**
+     * @dev Convenience wrapper of AuraLibrary.pairFor().
+     * @return pair created by joining tokens `a` and `b`.
+     */
+    function pairFor(address a, address b) public view returns(address pair) {
+        pair = AuraLibrary.pairFor(factory, a, b);
+    }
+    
+    /**
+     * @dev Convenience wrapper of AuraFactory.getPair().
+     * @return pair of tokens `a` and `b`. 
+     */
+    function getPair(address a, address b) public view returns(address pair) {
+        pair = AuraFactory(factory).getPair(a, b);
+    }
+
+    /**
+     * @dev Convenience wrapper of AuraLibrary.getSwapFee().
+     * @return swapFee for swapping tokens `a` and `b`.
+     */
+    function getSwapFee(address a, address b) public view returns(uint swapFee) {
+        swapFee = AuraLibrary.getSwapFee(factory, a, b);
     }
 
     /* 
@@ -256,11 +282,11 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
             uint inAP
         )
     {
-        uint swapFee = AuraLibrary.getSwapFee(factory, input, output); 
-        address pair = AuraLibrary.pairFor(factory, input, output);
-        PairsList memory pool = pairsList[pairOfpairIds[pair]];
+        uint swapFee = getSwapFee(input, output); 
+        address pair = pairFor(input, output);
+        PairsList memory pool = pairsList[pairOfPairIds[pair]];
 
-        if (pool.pair == pair && pool.enabled && whitelistContains(input) && whitelistContains(output)) {
+        if (pool.pair == pair && pool.isEnabled && whitelistContains(input) && whitelistContains(output)) {
             (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
             inAURA = getQuantityOut(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
             inUSD = getQuantityOut(output, apAmount / apWagerOnSwap, targetAPToken);
@@ -274,16 +300,24 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * Provide callers with functionality for setting contract state.
      */
 
-    function accrueAPFromMarket(address account, address fromToken, uint amount) external {
+    /**
+     * @dev Accrue AP to AuraNFT `tokenId` equivalent in value to `quantityIn` of `tokenIn` modified
+     *      by the market percent rate.
+     */
+    function accrueAPFromMarket(address account, address tokenIn, uint quantityIn) external {
         require(msg.sender == market, "Caller is not the market.");
-        amount = amount * apPercentMarket / 10000;
-        _accrueAP(account, fromToken, amount);
+        quantityIn = quantityIn * apPercentMarket / 10000;
+        accrueAuraPoints(account, tokenIn, quantityIn);
     }
-
-    function accrueAPFromAuction(address account, address fromToken, uint amount) external {
+    
+    /**
+     * @dev Accrue AP to AuraNFT `tokenId` equivalent in value to `quantityIn` of `tokenIn` modified
+     *      by the auction percent rate.
+     */
+    function accrueAPFromAuction(address account, address tokenIn, uint quantityIn) external {
         require(msg.sender == auction, "Caller is not the auction.");
-        amount = amount * apPercentAuction / 10000;
-        _accrueAP(account, fromToken, amount);
+        quantityIn = quantityIn * apPercentAuction / 10000;
+        accrueAuraPoints(account, tokenIn, quantityIn);
     }
 
     function setRewardDistribution(uint _distribution) external {
@@ -307,12 +341,15 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         require(recoveredAddress != address(0) && recoveredAddress == spender, "Invalid signature.");
     }
 
-    function _accrueAP(address account, address output, uint amount) private {
-        uint quantity = getQuantityOut(output, amount, targetAPToken);
+    /**
+     * @dev Accrue AP to AuraNFT `tokenId` equivalent in value to `quantityIn` of `tokenIn`.
+     */
+    function accrueAuraPoints(address account, address tokenIn, uint quantityIn) private {
+        uint quantity = getQuantityOut(tokenIn, quantityIn, targetAPToken);
         if (quantity > 0) {
             totalAccruedAP += quantity;
-            if (totalAccruedAP <= currentPhaseAP * maxAccruedAPInPhase) {
-                auraNFT.accruePoints(account, quantity);
+            if (totalAccruedAP <= phaseAP * maxAccruedAPInPhase) {
+                auraNFT.accrueAuraPoints(account, quantity);
             }
         }
     }
@@ -332,14 +369,14 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * These functions alter contract core data and are only available to the owner. 
      */
 
-    function setPhase(uint _phase) external onlyOwner {
-        currentPhase = _phase;
-        emit NewPhase(_phase);
-    }
+    function setDefaultRewardDistribution(uint _defaultRewardDistribution) external onlyOwner {
+        defaultRewardDistribution = _defaultRewardDistribution;
+    } 
 
-    function setPhaseAP(uint _phaseAP) external onlyOwner {
-        currentPhaseAP = _phaseAP;
-        emit NewPhaseAP(_phaseAP);
+    function setFactory(address _factory) external onlyOwner {
+        require(_factory != address(0), "Factory is the zero address.");
+        factory = _factory;
+        emit NewFactory(_factory);
     }
 
     function setRouter(address _router) external onlyOwner {
@@ -360,16 +397,14 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         emit NewAuction(_auction);
     }
 
-    function setFactory(address _factory) external onlyOwner {
-        require(_factory != address(0), "Factory is the zero address.");
-        factory = _factory;
-        emit NewFactory(_factory);
+    function setPhase(uint _phase) external onlyOwner {
+        phase = _phase;
+        emit NewPhase(_phase);
     }
 
-    function setAuraNFT(IAuraNFT _auraNFT) external onlyOwner {
-        require(address(_auraNFT) != address(0), "AuraNFT is the zero address.");
-        auraNFT = _auraNFT;
-        emit NewAuraNFT(_auraNFT);
+    function setPhaseAP(uint _phaseAP) external onlyOwner {
+        phaseAP = _phaseAP;
+        emit NewPhaseAP(_phaseAP);
     }
 
     function setOracle(IOracle _oracle) external onlyOwner {
@@ -378,24 +413,30 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         emit NewOracle(_oracle);
     }
 
+    function setAuraNFT(IAuraNFT _auraNFT) external onlyOwner {
+        require(address(_auraNFT) != address(0), "AuraNFT is the zero address.");
+        auraNFT = _auraNFT;
+        emit NewAuraNFT(_auraNFT);
+    }
+
     function addPair(uint _percentReward, address _pair) external onlyOwner {
         require(_pair != address(0), "`_pair` is the zero address.");
         pairsList.push(
             PairsList({
                 pair: _pair,
                 percentReward: _percentReward,
-                enabled: true
+                isEnabled: true
             })
         );
-        pairOfpairIds[_pair] = pairsList.length - 1;
+        pairOfPairIds[_pair] = pairsList.length - 1;
     }
 
     function setPairPercentReward(uint _pairId, uint _percentReward) external onlyOwner {
         pairsList[_pairId].percentReward = _percentReward;
     }
 
-    function setPairEnabled(uint _pairId, bool _enabled) external onlyOwner {
-        pairsList[_pairId].enabled = _enabled;
+    function setPairIsEnabled(uint _pairId, bool _isEnabled) external onlyOwner {
+        pairsList[_pairId].isEnabled = _isEnabled;
     }
 
     function setAPReward(uint _apWagerOnSwap, uint _percentMarket, uint _percentAuction) external onlyOwner {
