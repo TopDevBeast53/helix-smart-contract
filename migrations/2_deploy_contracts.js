@@ -4,6 +4,7 @@ const AuraToken = artifacts.require('AuraToken');
 const AuraLP = artifacts.require('AuraLP');
 const AuraNFT = artifacts.require('AuraNFT');
 const SwapFeeRewardsWithAP = artifacts.require('SwapFeeRewardsWithAP');
+const AuraLibrary = artifacts.require('AuraLibrary');
 
 /*
  * NOTE: This file should be merged into the other deployment file: 1_initial_migration.
@@ -24,7 +25,7 @@ const TARGET_AP_TOKEN = {
 };
 
 const AURA_NFT = {
-    'test': '0x746eD187F197f6a562ffFc0285251420E55A8060',
+    'test': '0xBa464cb9f2ff62f41288aF179F6C6F3290D4db43',
 };
 
 const AURA_TOKEN = {
@@ -34,6 +35,10 @@ const AURA_TOKEN = {
 const SWAP_FEE = {
     'test': '0x3427F78a570605003531547fC444ce4f521ac5B3',
 };
+
+const AURA_LIBRARY = {
+    'test': '0x899298Fd7fb88215fb8956bBd7321ec1299D6408',
+}
 
 // NOTE: This is a mock address and doesn't point at a deployed contract.
 const ORACLE = {
@@ -68,9 +73,14 @@ async function deploySwapFeeRewardsWithAP(deployer, env) {
     );
 };
 
+async function deployAuraLibrary(deployer) {
+    await deployer.deploy(AuraLibrary);
+}
+
 module.exports = async function (deployer) {
     //deployAuraNFT(deployer);
     //deployAuraToken(deployer);
     //deployTargetAPToken(deployer);
     //deploySwapFeeRewardsWithAP(deployer, 'test');
+    //deployAuraLibrary(deployer);
 };
