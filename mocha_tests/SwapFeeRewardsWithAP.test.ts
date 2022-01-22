@@ -10,9 +10,9 @@ import {
     oracleFixture,
     auraNFTFixture,
     swapFeeRewardsWithAPFixture,
-    auraLibraryFixture
+    auraLibraryFixture,
+    mockAuraNFTFixture,
 } from './shared/swapFixtures';
-import { mockAuraNFTFixture } from './shared/swapFixtures';
 
 use(solidity);
 
@@ -253,67 +253,13 @@ describe('SwapFeeRewardsWithAP', () => {
     });
 
     // TODO - test getPotentialRewardQuantities 
-    /*
-    it('gets potential reward quantities', async () => {
-        // mock swap fee rewards
-
-        // set getQuantityOut for diff arguments
-
-        // confirm results
-    });
-    */
 
     /*
      * EXTERNAL SETTERS
      */
 
-    // TODO - test accrueAPFromMarket - requires AuraNFT.accrueAuraPoints to accept `address account`
-    /*
-    it('accrues AP from market', async () => {
-        // Replace auraNFT in swapFeeRewardsWithAP contract.     
-        const mockAuraNFT = loadFixture(mockAuraNFTFixture);
-        console.log("MOCK AURA NFT", await mockAuraNFT);
-        await swapFeeRewardsWithAP.setAuraNFT((await mockAuraNFT).address);
-        expect(await swapFeeRewardsWithAP.auraNFT()).to.eq((await mockAuraNFT).address);
-
-        // Set market.
-        await swapFeeRewardsWithAP.setMarket(wallet.address);
-        expect(await swapFeeRewardsWithAP.market()).to.eq(wallet.address);
-
-        // Set AP Percent Market rate.
-        await swapFeeRewardsWithAP.setAPReward(10000, 10000, 10000);
-        expect(await swapFeeRewardsWithAP.apPercentMarket()).to.eq(10000);
-
-        // Add token pair.
-        console.log("TARGET AP", (await targetAPToken).address);
-
-
-        // mock.getQuantityOut()
-
-        // confirm auraNFT.accrueAP updated.
-
-        // Accrue the rewards.
-        await swapFeeRewardsWithAP.accrueAPFromMarket(wallet.address, (await targetAPToken).address, 10);
-
-        // Confirm total accrued increased.
-        expect(await swapFeeRewardsWithAP.totalAccruedAP()).to.eq(10);
-
-        // Confirm change made to AuraNFT.
-    });
-    */
-
+    // TODO - test accrueAPFromMarket 
     // TODO - test accrueAPFromAuction
-    /*
-    it('accrues AP from auction', async () => {
-        // mock swap fee rewards
-
-        // set auction== wallet.address
-
-        // mock.getQuantityOut()
-
-        // confirm auraNFT.accrueAP updated.
-    });
-    */
 
     it('sets reward distribution', async () => {
         // Raise the initial default reward distribution.               
@@ -465,46 +411,7 @@ describe('SwapFeeRewardsWithAP', () => {
      * CORE
      */
 
-    // TODO test swap - requires setting caller/msg.sender
-    //                - requires getQuantityOutA
-    /*
-    it('performs a successful swap', async () => {
-        // Get the router's address and call as the router.
-        // Or, set the router's address to == `wallet`.
-
-        // Create a mock of SwapFeeRewards
-
-        // Add tokens `a` and `b` to whitelist.
-
-        // pairFor(a, b) 
-
-        // set mock.getSplitRewards
-        // set mock.getQuantityOut
-
-        // confirm balances ++
-        // confirm event emission
-        // confirm AP accrual
-        // confirm returns true
-    });
-    */
-
-    // TODO test withdraw - requires setting caller/msg.sender
-    /*
-    it('withdraws funds to callers account', async () => {
-        // Create a mock swapFeeRewardsWithAP contract.
-        const mockSwapFeeRewardsWithAP = await deployMockContract(wallet, SwapFeeRewardsWithAP.abi);
-        //console.log("MOCK", mockSwapFeeRewardsWithAP);
-
-        // Set the balances of caller to > 0.
-        await mockSwapFeeRewardsWithAP.mock._balances.returns(1000);
-        //console.log("MOCK BALANCE", (await mockSwapFeeRewardsWithAP._balances(wallet.address)).toNumber());
-
-        // Call the contract to withdraw funds.
-        // TODO - needs to send appropriate v, r, and s.
-        //      - see ethers.transaction.{v, r, or s}
-
-        // Test that the account's balance has changed.
-    });
-    */
+    // TODO test swap
+    // TODO test withdraw
 });
 
