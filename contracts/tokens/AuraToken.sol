@@ -121,15 +121,15 @@ contract AuraToken is BEP20("Aura", "AURA") {
         address signatory = ecrecover(digest, v, r, s);
         require(
             signatory != address(0),
-            "GXO::delegateBySig: invalid signature"
+            "AURA::delegateBySig: invalid signature"
         );
         require(
             nonce == nonces[signatory]++,
-            "GXO::delegateBySig: invalid nonce"
+            "AURA::delegateBySig: invalid nonce"
         );
         require(
             block.timestamp <= expiry,
-            "GXO::delegateBySig: signature expired"
+            "AURA::delegateBySig: signature expired"
         );
         return _delegate(signatory, delegatee);
     }
@@ -159,7 +159,7 @@ contract AuraToken is BEP20("Aura", "AURA") {
     {
         require(
             blockNumber < block.number,
-            "GXO::getPriorVotes: not yet determined"
+            "AURA::getPriorVotes: not yet determined"
         );
 
         uint32 nCheckpoints = numCheckpoints[account];
@@ -196,7 +196,7 @@ contract AuraToken is BEP20("Aura", "AURA") {
     // internal function used delegate votes
     function _delegate(address delegator, address delegatee) internal {
         address currentDelegate = _delegates[delegator];
-        uint256 delegatorBalance = balanceOf(delegator); // balance of underlying GXOs (not scaled);
+        uint256 delegatorBalance = balanceOf(delegator); // balance of underlying AURAs (not scaled);
         _delegates[delegator] = delegatee;
 
         emit DelegateChanged(delegator, currentDelegate, delegatee);
@@ -241,7 +241,7 @@ contract AuraToken is BEP20("Aura", "AURA") {
     ) internal {
         uint32 blockNumber = _safe32(
             block.number,
-            "GXO::_writeCheckpoint: block number exceeds 32 bits"
+            "AURA::_writeCheckpoint: block number exceeds 32 bits"
         );
 
         if (
@@ -291,7 +291,7 @@ contract AuraToken is BEP20("Aura", "AURA") {
     function addMinter(address _addMinter) public onlyOwner returns (bool) {
         require(
             _addMinter != address(0),
-            "GXO: _addMinter is the zero address"
+            "AURA: _addMinter is the zero address"
         );
         return EnumerableSet.add(_minters, _addMinter);
     }
@@ -304,7 +304,7 @@ contract AuraToken is BEP20("Aura", "AURA") {
     function delMinter(address _delMinter) external onlyOwner returns (bool) {
         require(
             _delMinter != address(0),
-            "GXO: _delMinter is the zero address"
+            "AURA: _delMinter is the zero address"
         );
         return EnumerableSet.remove(_minters, _delMinter);
     }
@@ -336,7 +336,7 @@ contract AuraToken is BEP20("Aura", "AURA") {
         onlyOwner
         returns (address)
     {
-        require(_index <= getMinterLength() - 1, "GXO: index out of bounds");
+        require(_index <= getMinterLength() - 1, "AURA: index out of bounds");
         return EnumerableSet.at(_minters, _index);
     }
 

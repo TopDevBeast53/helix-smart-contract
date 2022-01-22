@@ -8,6 +8,8 @@ import ERC20 from '../../build/contracts/ERC20LP.json'
 import AuraFactory from '../../build/contracts/AuraFactory.json'
 import AuraPair from '../../build/contracts/AuraPair.json'
 import AuraRouterV1 from '../../build/contracts/AuraRouterV1.json'
+import MasterChef from '../../build/contracts/MasterChef.json'
+import AuraToken from '../../build/contracts/AuraToken.json'
 import TestToken from '../../build/contracts/TestToken.json'
 import WETH9 from '../../build/contracts/WETH9.json'
 import RouterEventEmitter from '../../build/contracts/RouterEventEmitter.json'
@@ -60,6 +62,8 @@ interface FullExchangeFixture {
   routerEventEmitter: Contract
   pair: Contract
   WETHPair: Contract
+  chef: Contract
+  auraToken: Contract
 }
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
@@ -82,6 +86,8 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
 
   // TODO: add migrator here once added
 
+  const auraToken = await deployContract(wallet, AuraToken, [], overrides)
+
   const token0Address = await pair.token0()
   const token0 = tokenA.address === token0Address ? tokenA : tokenB
   const token1 = tokenA.address === token0Address ? tokenB : tokenA
@@ -89,6 +95,16 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
   await factory.createPair(WETH.address, WETHPartner.address)
   const WETHPairAddress = await factory.getPair(WETH.address, WETHPartner.address)
   const WETHPair = new Contract(WETHPairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
+
+  const chef = await deployContract(wallet, MasterChef, 
+    [
+      /*aura token address=*/auraToken.address,
+      /*dev address=*/wallet.address,
+      /*aura token per block=*/'30000000000000000000',
+      /*start block=*/1,
+      /*staking percent=*/999999,
+      /*dev percent=*/1,
+    ], overrides)
 
   return {
       token0,
@@ -99,6 +115,8 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
       router,
       routerEventEmitter,
       pair,
-      WETHPair
+      WETHPair,
+      chef,
+      auraToken
   }
 }
