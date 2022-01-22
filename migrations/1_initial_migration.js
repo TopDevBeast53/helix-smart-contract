@@ -29,5 +29,5 @@ async function deployAuraRouter(deployer, env) {
 
 module.exports = async function (deployer) {
   // deployAuraFactory(deployer)
-   deployAuraRouter(deployer, 'test')
+  // deployAuraRouter(deployer, 'test')
 }
