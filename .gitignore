@@ -5,3 +5,5 @@ coverage.json
 .DS_Store
 tenderly.yaml
 .env
+artifacts/
+cache/
