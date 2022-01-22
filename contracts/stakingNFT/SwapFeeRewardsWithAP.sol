@@ -289,8 +289,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         if (pool.pair == pair && pool.isEnabled && whitelistContains(input) && whitelistContains(output)) {
             (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
             inAURA = getQuantityOut(output, feeAmount / swapFee, targetToken) * pool.percentReward / 100;
-            inUSD = getQuantityOut(output, apAmount / apWagerOnSwap, targetAPToken);
-            inAP = getQuantityOut(targetToken, inAURA, targetAPToken);
+            inUSD = getQuantityOut(targetToken, inAURA, targetAPToken);
+            inAP = getQuantityOut(output, apAmount / apWagerOnSwap, targetAPToken);
         }
     }
 
