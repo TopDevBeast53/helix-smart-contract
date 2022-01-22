@@ -267,7 +267,7 @@ describe('SwapFeeRewardsWithAP', () => {
      * EXTERNAL SETTERS
      */
 
-    // TODO - test accrueAPFromMarket
+    // TODO - test accrueAPFromMarket - requires AuraNFT.accrueAuraPoints to accept `address account`
     /*
     it('accrues AP from market', async () => {
         // Replace auraNFT in swapFeeRewardsWithAP contract.     
