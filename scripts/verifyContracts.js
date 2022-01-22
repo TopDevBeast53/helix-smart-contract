@@ -9,6 +9,7 @@
  * 
  *      1. Verify `AuraNFT` contract.
  *      2. Verify `AuraChefNFT` contract.
+ *      3. Verify `SwapFeeRewardsWithAP` contract.
  */
 
 const hre = require('hardhat');
