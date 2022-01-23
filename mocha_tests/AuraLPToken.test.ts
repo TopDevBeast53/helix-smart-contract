@@ -1,8 +1,8 @@
 import chai, { expect } from 'chai'
-import { Contract } from 'ethers'
-import { MaxUint256 } from 'ethers/constants'
-import { bigNumberify, hexlify, keccak256, defaultAbiCoder, toUtf8Bytes } from 'ethers/utils'
-import { solidity, MockProvider, deployContract } from 'ethereum-waffle'
+import { Contract } from 'legacy-ethers'
+import { MaxUint256 } from 'legacy-ethers/constants'
+import { bigNumberify, hexlify, keccak256, defaultAbiCoder, toUtf8Bytes } from 'legacy-ethers/utils'
+import { solidity, MockProvider, deployContract } from 'legacy-ethereum-waffle'
 import { ecsign } from 'ethereumjs-util'
 
 import { expandTo18Decimals, getApprovalDigest } from './shared/utilities'

@@ -1,6 +1,6 @@
-import { Wallet, Contract } from 'ethers';
-import { Web3Provider } from 'ethers/providers';
-import { deployContract, deployMockContract } from 'ethereum-waffle';
+import { Wallet, Contract } from 'legacy-ethers';
+import { Web3Provider } from 'legacy-ethers/providers';
+import { deployContract, deployMockContract } from 'legacy-ethereum-waffle';
 
 import AuraFactory from '../../build/contracts/AuraFactory.json';
 import AuraRouterV1 from '../../build/contracts/AuraRouterV1.json';

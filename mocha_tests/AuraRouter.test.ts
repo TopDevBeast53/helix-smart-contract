@@ -1,8 +1,8 @@
 import chai, { expect } from 'chai'
-import { solidity, MockProvider, createFixtureLoader, deployContract } from 'ethereum-waffle'
-import { Contract } from 'ethers'
-import { BigNumber, bigNumberify } from 'ethers/utils'
-import { MaxUint256 } from 'ethers/constants'
+import { solidity, MockProvider, createFixtureLoader, deployContract } from 'legacy-ethereum-waffle'
+import { Contract } from 'legacy-ethers'
+import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
+import { MaxUint256 } from 'legacy-ethers/constants'
 import AuraPair from '../build/contracts/AuraPair.json'
 
 import { fullExchangeFixture } from './shared/fixtures'

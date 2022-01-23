@@ -1,6 +1,6 @@
-import { Wallet, Contract } from 'ethers';
-import { Web3Provider } from 'ethers/providers'
-import { deployContract } from 'ethereum-waffle'
+import { Wallet, Contract } from 'legacy-ethers';
+import { Web3Provider } from 'legacy-ethers/providers'
+import { deployContract } from 'legacy-ethereum-waffle'
 
 import { expandTo18Decimals } from './utilities'
 

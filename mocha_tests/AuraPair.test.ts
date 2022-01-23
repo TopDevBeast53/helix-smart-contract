@@ -1,11 +1,11 @@
 import chai, { expect } from 'chai'
-import { Contract } from 'ethers'
-import { solidity, MockProvider, createFixtureLoader } from 'ethereum-waffle'
-import { BigNumber, bigNumberify } from 'ethers/utils'
+import { Contract } from 'legacy-ethers'
+import { solidity, MockProvider, createFixtureLoader } from 'legacy-ethereum-waffle'
+import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
 
 import { expandTo18Decimals, mineBlock, encodePrice } from './shared/utilities'
 import { pairFixture } from './shared/fixtures'
-import { AddressZero } from 'ethers/constants'
+import { AddressZero } from 'legacy-ethers/constants'
 
 const MINIMUM_LIQUIDITY = bigNumberify(10).pow(3)
 

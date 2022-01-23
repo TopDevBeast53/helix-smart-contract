@@ -6,6 +6,7 @@ require("dotenv").config();
 
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
+const privateKey = process.env["PRIVATE_KEY"];
 
 task("accounts", "Prints the list of accounts", async () => {
   const accounts = await ethers.getSigners();
@@ -14,6 +15,16 @@ task("accounts", "Prints the list of accounts", async () => {
     console.log(account.address);
   }
 });
+
+function resolveTestNetBSCAccounts() {
+    if (mnemonic != null) {
+        return { mnemonic };
+    }
+    if (privateKey != null) {
+        return [ privateKey ];
+    }
+    return [];
+}
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -31,7 +42,7 @@ module.exports = {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
       chainId: 97,
       gasPrice: 20000000000,
-      accounts: {mnemonic: mnemonic}
+      accounts: resolveTestNetBSCAccounts(),
     },
   },
   solidity: {
