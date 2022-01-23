@@ -25,6 +25,7 @@ const HDWalletProvider = require('@truffle/hdwallet-provider');
 
 require('dotenv').config();
 const privateKey = process.env["PRIVATE_KEY"];
+const apiKey = process.env["BSC_SCAN_API_KEY"];
 
 module.exports = {
   /**
@@ -36,6 +37,10 @@ module.exports = {
    *
    * $ truffle test --network <network-name>
    */
+
+   api_keys: {
+        bscscan: apiKey,
+   },
 
   networks: {
     // Useful for testing. The `development` name is special - truffle uses it by default
