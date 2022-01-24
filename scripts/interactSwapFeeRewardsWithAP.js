@@ -11,22 +11,27 @@ let contract;
  * @dev Initialize the contract and call functions.
  */
 async function main() {
-    const Web3 = require('web3');
-    const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
-    
-    let abi = require('../build/contracts/SwapFeeRewardsWithAP.json').abi;
-    let address = '0xe64670DDd83e50b99103db2Bc2d6Fda83a06AE6f'
-    contract = new web3.eth.Contract(abi, address);
-    // console.log("CONTRACT:", await contract);
-    
-    swap();
+    const ethers = require('ethers');
+    const rpc = 'https://data-seed-prebsc-1-s1.binance.org:8545';
+    const provider = new ethers.providers.getDefaultProvider(rpc);
+    const contract = require('../build/contracts/SwapFeeRewardsWithAP.json');
+    const abi = contract.abi;
+    const address = '0xe64670DDd83e50b99103db2Bc2d6Fda83a06AE6f';
+
+    console.log("ACCOUNT TRANSACTION COUNT\n", await provider.getTransactionCount('0x59201fb8cb2D61118B280c8542127331DD141654'));
+
+    const wallet = new ethers.Wallet('a866afe778d830c8c08cbe45e18f4508871e4f6f0920db643f1cc5978da9dc75', provider);
+    console.log("WALLET\n", wallet);
+
+    const instance = new ethers.Contract(address, abi, wallet);
+    console.log("INSTANCE\n", instance);
 };
 
-/*
 /*
  * Convenience object for getting the address associated with a given account.
  * Useful for setting msg.sender = account
  */
+/*
 const Addresses {
     'default': [defaultAddress],
     'factory': [factoryAddress],
