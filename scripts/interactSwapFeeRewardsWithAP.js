@@ -9,12 +9,15 @@
  * Convenience object. Stores the address of the account or contract.
  */
 const Address = {
+    Owner: '0x59201fb8cb2D61118B280c8542127331DD141654',
     Default: '0xfD9b80d3eC59fE49fe160E46dE93E0975b595292',
-    SwapFee: '0xBDAC56d43C7Cf9f0d64425c773cD7dAbeEED0Ca5',    // Deployed
-    Factory: '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',    // Deployed
-    Router: '0x38433227c7a606ebb9ccb0acfcd7504224659b74',     // Deployed
-    Market: '0xB69888c53b9c4b779E1bEAd3A5019a388Bc072e9',     // Fake
-    Auction: '0xdCe96794ba50b147C60F35D614e76451062fBce7',    // Fake
+    SwapFee: '0x27A7206Cc0BBe9D55709A35a6af6f794E20C6897',      // Deployed
+    Factory: '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',      // Deployed
+    Router: '0x38433227c7a606ebb9ccb0acfcd7504224659b74',       // Deployed
+    AuraToken: '0xdf2b1082ee98b48b5933378c8f58ce2f5aaff135',    // Deployed 
+    BnbToken: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',     // Deployed
+    Market: '0xB69888c53b9c4b779E1bEAd3A5019a388Bc072e9',       // Fake
+    Auction: '0xdCe96794ba50b147C60F35D614e76451062fBce7',      // Fake
 }
 
 // Load the provider and signer.
@@ -32,6 +35,7 @@ const swapFee = new ethers.Contract(Address.SwapFee, swapFeeAbi, wallet);
  */
 async function main() {
     await sampleTx();
+    await addPairs();
 };
 
 /*
@@ -46,6 +50,25 @@ async function sampleTx() {
     const tokenB = '0x1B6Bdc9a7a34a2Ae3aB0b1618BB893b59fd7FaA2';
     const pairExists = await swapFee.pairExists(tokenA, tokenB);
     console.log("PAIR EXISTS\n", pairExists);
+}
+
+/*
+ * @dev Adds the token swap pairs.
+ */
+async function addPairs() {
+    //  Create the AURA-BNB pair.
+    const auraBnb = {
+        percentReward: 10,
+        pairAddress: await swapFee.pairFor(Address.AuraToken, Address.BnbToken)
+    };
+
+    // Define the transaction parameters.
+    const overrides = {
+        from: Address.Owner,
+        gasLimit: 30000,
+    };
+    const tx = await swapFee.addPair(auraBnb.percentReward, auraBnb.pairAddress, overrides);
+    console.log("TX HASH", tx.hash);
 }
 
 /* 

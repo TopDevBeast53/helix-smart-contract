@@ -22,8 +22,10 @@ async function main() {
         auraNFTAddress,
         auraTokenAddress
     );
+    await swapFeeRewardsWithAP.deployTransaction.wait();
     console.log(`SwapFeeRewardsWithAP deployed to ${swapFeeRewardsWithAP.address}`);
-    // Deployed address = 0xBDAC56d43C7Cf9f0d64425c773cD7dAbeEED0Ca5
+    // Deployed by = 0x59201fb8cb2D61118B280c8542127331DD141654
+    // Deployed at = 0x27A7206Cc0BBe9D55709A35a6af6f794E20C6897
 }
 
 main()
