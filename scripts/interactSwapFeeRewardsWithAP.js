@@ -31,11 +31,11 @@ async function main() {
  */
 /*
 const Addresses {
-    'default': [defaultAddress],
-    'factory': [factoryAddress],
-    'router': [routerAddress],
-    'market': [marketAddress],
-    'auction': [auctionAddress],
+    'default': '0xfD9b80d3eC59fE49fe160E46dE93E0975b595292',
+    'factory': '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',    // Deployed
+    'router': '0x38433227c7a606ebb9ccb0acfcd7504224659b74',     // Deployed
+    'market': '0xB69888c53b9c4b779E1bEAd3A5019a388Bc072e9',     // Fake
+    'auction': '0xdCe96794ba50b147C60F35D614e76451062fBce7',    // Fake
 }
 */
 
