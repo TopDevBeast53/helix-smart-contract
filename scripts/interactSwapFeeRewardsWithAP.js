@@ -2,21 +2,30 @@
  * @dev Interaction script for deployed Swap Fee Rewards with AP contract.
  * 
  * Run from project root using:
- *     truffle exec scripts/interactSwapFeeRewardsWithAP.js --network bsc_testnet 
+ *     npx hardhat run scripts/interactSwapFeeRewardsWithAP.js --network testnetBSC
  */
 
-// Load the provider.
+/*
+ * Convenience object. Stores the address of the account or contract.
+ */
+const Address = {
+    Default: '0xfD9b80d3eC59fE49fe160E46dE93E0975b595292',
+    SwapFee: '0xBDAC56d43C7Cf9f0d64425c773cD7dAbeEED0Ca5',    // Deployed
+    Factory: '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',    // Deployed
+    Router: '0x38433227c7a606ebb9ccb0acfcd7504224659b74',     // Deployed
+    Market: '0xB69888c53b9c4b779E1bEAd3A5019a388Bc072e9',     // Fake
+    Auction: '0xdCe96794ba50b147C60F35D614e76451062fBce7',    // Fake
+}
+
+// Load the provider and signer.
 const rpc = 'https://data-seed-prebsc-1-s1.binance.org:8545';
 const provider = new ethers.providers.getDefaultProvider(rpc);
-
-// Load the contract details.
-const contract = require('../build/contracts/SwapFeeRewardsWithAP.json');
-const contractAbi = contract.abi;
-const contractAddress = '0xBDAC56d43C7Cf9f0d64425c773cD7dAbeEED0Ca5';
-
-// Create the contract instance.
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-const instance = new ethers.Contract(contractAddress, contractAbi, wallet);
+
+// Create the swapFee instance.
+const swapFeeJson = require('../build/contracts/SwapFeeRewardsWithAP.json');
+const swapFeeAbi = swapFeeJson.abi;
+const swapFee = new ethers.Contract(Address.SwapFee, swapFeeAbi, wallet);
 
 /*
  * @dev Initialize the contract and call functions.
@@ -26,30 +35,16 @@ async function main() {
 };
 
 /*
- * Convenience object for getting the address associated with a given account.
- * Useful for setting msg.sender = account
- */
-/*
-const Addresses {
-    'default': '0xfD9b80d3eC59fE49fe160E46dE93E0975b595292',
-    'factory': '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',    // Deployed
-    'router': '0x38433227c7a606ebb9ccb0acfcd7504224659b74',     // Deployed
-    'market': '0xB69888c53b9c4b779E1bEAd3A5019a388Bc072e9',     // Fake
-    'auction': '0xdCe96794ba50b147C60F35D614e76451062fBce7',    // Fake
-}
-*/
-
-/*
  * @dev Simple sample transactions to verify that the things are working.
  *      Intended to be removed when other transactions are working reliably.
  */
 async function sampleTx() {
-    const pairsLength = await instance.getPairsListLength();
+    const pairsLength = await swapFee.getPairsListLength();
     console.log("PAIRS LENGTH\n", pairsLength);
 
     const tokenA = '0xD4ae13353581139e897758a2CaE7dd5068AA138d';
     const tokenB = '0x1B6Bdc9a7a34a2Ae3aB0b1618BB893b59fd7FaA2';
-    const pairExists = await instance.functions.pairExists(tokenA, tokenB);
+    const pairExists = await swapFee.pairExists(tokenA, tokenB);
     console.log("PAIR EXISTS\n", pairExists);
 }
 
