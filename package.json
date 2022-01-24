@@ -18,6 +18,8 @@
     "ethers": "^5.4.5",
     "ganache-cli": "^6.12.2",
     "hardhat": "^2.6.1",
+    "legacy-ethereum-waffle": "npm:ethereum-waffle@^2.4.0",
+    "legacy-ethers": "npm:ethers@^4.0.49",
     "prettier": "^1.19.1",
     "solidity-coverage": "^0.7.17",
     "truffle": "^5.4.26",

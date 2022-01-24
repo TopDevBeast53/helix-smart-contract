@@ -1,6 +1,6 @@
 import chai, { expect, use } from 'chai';
-import { Contract, constants } from 'ethers';
-import { solidity, loadFixture, MockProvider, deployMockContract } from 'ethereum-waffle';
+import { Contract, constants } from 'legacy-ethers';
+import { solidity, loadFixture, MockProvider, deployMockContract } from 'legacy-ethereum-waffle';
 
 import SwapFeeRewardsWithAP from '../build/contracts/SwapFeeRewardsWithAP.json';
 

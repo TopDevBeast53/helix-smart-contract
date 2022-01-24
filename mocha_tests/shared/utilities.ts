@@ -1,5 +1,5 @@
-import { Contract } from 'ethers'
-import { Web3Provider } from 'ethers/providers'
+import { Contract } from 'legacy-ethers'
+import { Web3Provider } from 'legacy-ethers/providers'
 import {
   BigNumber,
   bigNumberify,
@@ -8,7 +8,7 @@ import {
   defaultAbiCoder,
   toUtf8Bytes,
   solidityPack
-} from 'ethers/utils'
+} from 'legacy-ethers/utils'
 
 const PERMIT_TYPEHASH = keccak256(
   toUtf8Bytes('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)')
@@ -94,6 +94,12 @@ export async function mineBlock(provider: Web3Provider, timestamp: number): Prom
       }
     )
   })
+}
+
+export async function mineBlocks(blocks: number, provider: Web3Provider): Promise<void> {
+    for (let i = 0; i < blocks; i++) {
+        await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1);
+    }
 }
 
 export function encodePrice(reserve0: BigNumber, reserve1: BigNumber) {
