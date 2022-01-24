@@ -5,26 +5,24 @@
  *     truffle exec scripts/interactSwapFeeRewardsWithAP.js --network bsc_testnet 
  */
 
-let contract;
+// Load the provider.
+const rpc = 'https://data-seed-prebsc-1-s1.binance.org:8545';
+const provider = new ethers.providers.getDefaultProvider(rpc);
+
+// Load the contract details.
+const contract = require('../build/contracts/SwapFeeRewardsWithAP.json');
+const contractAbi = contract.abi;
+const contractAddress = '0xBDAC56d43C7Cf9f0d64425c773cD7dAbeEED0Ca5';
+
+// Create the contract instance.
+const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+const instance = new ethers.Contract(contractAddress, contractAbi, wallet);
 
 /*
  * @dev Initialize the contract and call functions.
  */
 async function main() {
-    const ethers = require('ethers');
-    const rpc = 'https://data-seed-prebsc-1-s1.binance.org:8545';
-    const provider = new ethers.providers.getDefaultProvider(rpc);
-    const contract = require('../build/contracts/SwapFeeRewardsWithAP.json');
-    const abi = contract.abi;
-    const address = '0xe64670DDd83e50b99103db2Bc2d6Fda83a06AE6f';
-
-    console.log("ACCOUNT TRANSACTION COUNT\n", await provider.getTransactionCount('0x59201fb8cb2D61118B280c8542127331DD141654'));
-
-    const wallet = new ethers.Wallet('a866afe778d830c8c08cbe45e18f4508871e4f6f0920db643f1cc5978da9dc75', provider);
-    console.log("WALLET\n", wallet);
-
-    const instance = new ethers.Contract(address, abi, wallet);
-    console.log("INSTANCE\n", instance);
+    await sampleTx();
 };
 
 /*
@@ -40,6 +38,20 @@ const Addresses {
     'auction': [auctionAddress],
 }
 */
+
+/*
+ * @dev Simple sample transactions to verify that the things are working.
+ *      Intended to be removed when other transactions are working reliably.
+ */
+async function sampleTx() {
+    const pairsLength = await instance.getPairsListLength();
+    console.log("PAIRS LENGTH\n", pairsLength);
+
+    const tokenA = '0xD4ae13353581139e897758a2CaE7dd5068AA138d';
+    const tokenB = '0x1B6Bdc9a7a34a2Ae3aB0b1618BB893b59fd7FaA2';
+    const pairExists = await instance.functions.pairExists(tokenA, tokenB);
+    console.log("PAIR EXISTS\n", pairExists);
+}
 
 /* 
  * @dev Perform a token swap.
