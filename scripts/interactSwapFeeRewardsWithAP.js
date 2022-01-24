@@ -35,7 +35,7 @@ const swapFee = new ethers.Contract(Address.SwapFee, swapFeeAbi, wallet);
  */
 async function main() {
     await sampleTx();
-    await addPairs();
+    //await addPairs();
 };
 
 /*
@@ -46,9 +46,7 @@ async function sampleTx() {
     const pairsLength = await swapFee.getPairsListLength();
     console.log("PAIRS LENGTH\n", pairsLength);
 
-    const tokenA = '0xD4ae13353581139e897758a2CaE7dd5068AA138d';
-    const tokenB = '0x1B6Bdc9a7a34a2Ae3aB0b1618BB893b59fd7FaA2';
-    const pairExists = await swapFee.pairExists(tokenA, tokenB);
+    const pairExists = await swapFee.pairExists(Address.AuraToken, Address.BnbToken);
     console.log("PAIR EXISTS\n", pairExists);
 }
 
@@ -61,14 +59,17 @@ async function addPairs() {
         percentReward: 10,
         pairAddress: await swapFee.pairFor(Address.AuraToken, Address.BnbToken)
     };
+    console.log("AURA BNB PAIR ADDRESS", auraBnb.pairAddress);
+    // Pair address: 0x046c1E7Dc3C06502195E014E55BC492079731650
 
     // Define the transaction parameters.
     const overrides = {
         from: Address.Owner,
-        gasLimit: 30000,
+        gasLimit: 6721975,
     };
-    const tx = await swapFee.addPair(auraBnb.percentReward, auraBnb.pairAddress, overrides);
-    console.log("TX HASH", tx.hash);
+    //const addPairTx = await swapFee.addPair(auraBnb.percentReward, auraBnb.pairAddress, overrides);
+    //console.log("ADD PAIR TX HASH", addPairTx.hash);
+    // Add pair tx hash: 0xdc9c1d57010ff28191f687eb98485a2f75731b67936c33ec3007d58e7e4f3469
 }
 
 /* 
