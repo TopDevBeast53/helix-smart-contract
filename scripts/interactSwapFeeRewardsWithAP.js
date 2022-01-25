@@ -5,6 +5,8 @@
  *     npx hardhat run scripts/interactSwapFeeRewardsWithAP.js --network testnetBSC
  */
 
+const verbose = true;
+
 /*
  * Convenience object. Stores the address of the account or contract.
  */
@@ -30,46 +32,85 @@ const swapFeeJson = require('../build/contracts/SwapFeeRewardsWithAP.json');
 const swapFeeAbi = swapFeeJson.abi;
 const swapFee = new ethers.Contract(Address.SwapFee, swapFeeAbi, wallet);
 
-/*
+// Define the transaction parameters for the owner.
+let overrides = {
+    from: Address.Owner,
+    gasLimit: 6721975,
+};
+
+/**
  * @dev Initialize the contract and call functions.
  */
 async function main() {
-    await sampleTx();
-    //await addPairs();
+    let tokenA = Address.AuraToken;
+    let tokenB = Address.BnbToken;
+   
+    // Add the (tokenA, tokenB) pair if necessary.
+    let pairExists = await getPairExists(tokenA, tokenB);
+    if (!pairExists) {
+        const percentReward = 10
+        await addPair(tokenA, tokenB, percentReward);
+    }
+   
+    // Add tokenA to the whitelist if necessary.
+    let whitelistContainsA = await whitelistContains(tokenA);
+    if(!whitelistContainsA) {
+        await whitelistAdd(tokenA); 
+    }
+
+    // Add tokenB to the whitelist if necessary.
+    let whitelistContainsB = await whitelistContains(tokenB);
+    if(!whitelistContainsB) {
+        await whitelistAdd(tokenB); 
+    }
 };
 
-/*
- * @dev Simple sample transactions to verify that the things are working.
- *      Intended to be removed when other transactions are working reliably.
+/**
+ * @dev Returns true if the pair exists and false otherwise.
  */
-async function sampleTx() {
-    const pairsLength = await swapFee.getPairsListLength();
-    console.log("PAIRS LENGTH\n", pairsLength);
-
-    const pairExists = await swapFee.pairExists(Address.AuraToken, Address.BnbToken);
-    console.log("PAIR EXISTS\n", pairExists);
+async function getPairExists(tokenA, tokenB) {
+    const pairExists = await swapFee.pairExists(tokenA, tokenB);
+    if (verbose) { 
+        console.log(`(${tokenA}, ${tokenB}) pair exists: ${pairExists}`);
+    }
+    return pairExists;
 }
 
-/*
- * @dev Adds the token swap pairs.
+/**
+ * @dev Adds the (tokenA, tokenB) swap pair.
  */
-async function addPairs() {
-    //  Create the AURA-BNB pair.
-    const auraBnb = {
-        percentReward: 10,
-        pairAddress: await swapFee.pairFor(Address.AuraToken, Address.BnbToken)
-    };
-    console.log("AURA BNB PAIR ADDRESS", auraBnb.pairAddress);
-    // Pair address: 0x046c1E7Dc3C06502195E014E55BC492079731650
+async function addPair(tokenA, tokenB, percentReward) {
+    const pairAddress = await swapFee.pairFor(tokenA, tokenB)
+    const addPairTx = await swapFee.addPair(percentReward, pairAddress, ownerOverrides);
 
-    // Define the transaction parameters.
-    const overrides = {
-        from: Address.Owner,
-        gasLimit: 6721975,
-    };
-    //const addPairTx = await swapFee.addPair(auraBnb.percentReward, auraBnb.pairAddress, overrides);
-    //console.log("ADD PAIR TX HASH", addPairTx.hash);
-    // Add pair tx hash: 0xdc9c1d57010ff28191f687eb98485a2f75731b67936c33ec3007d58e7e4f3469
+    if (verbose) {
+        console.log(`(${tokenA}, ${tokenB}) pair address: ${pairAddress}`);
+        console.log(`(${tokenA}, ${tokenB}) add pair tx hash: ${addPairTx.hash}`);
+    }
+
+    // Aura-Bnb pair address: 0x046c1E7Dc3C06502195E014E55BC492079731650
+    // Aura-Bnb add pair tx hash: 0xdc9c1d57010ff28191f687eb98485a2f75731b67936c33ec3007d58e7e4f3469
+}
+
+/**
+ * @dev Returns true if the token is in the whitelist and false otherwise.
+ */
+async function whitelistContains(token) {
+    const contains = await swapFee.whitelistContains(token);
+    if (verbose) {
+        console.log(`whitelist contains ${token}: ${contains}`);
+    }
+    return contains;
+}
+
+/**
+ * @dev Add the token to the whitelist.
+ */
+async function whitelistAdd(token) {
+    const wasAdded = await swapFee.whitelistAdd(token, ownerOverrides);
+    if (verbose) { 
+        console.log(`${token} was added to whitelist`); 
+    }
 }
 
 /* 
@@ -80,8 +121,6 @@ async function swap() {
 
     // Whitelist tokens with whitelistAdd()
     
-    // Add the token pair with addPair()
-
     // Set msg.sender == router
 
     // Call swap()
