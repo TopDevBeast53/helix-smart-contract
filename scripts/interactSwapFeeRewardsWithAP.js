@@ -44,7 +44,25 @@ let overrides = {
 async function main() {
     let tokenA = Address.AuraToken;
     let tokenB = Address.BnbToken;
+    
+    // Prepare the token pair for swapping.
+    await preparePair(tokenA, tokenB); 
    
+    // Swap the tokens.
+    let account = Address.Default;
+    let amount = 100;
+    await swap(account, tokenA, tokenB, amount);
+};
+
+/**
+ * @dev Prepare the token pair for swapping (tokenA, tokenB) by making 
+ *      sure that they're added the pair exists and is whitelisted.
+ */
+async function preparePair(tokenA, tokenB) {
+    if (verbose) {
+        console.log('Prepare tokens for swap');
+    } 
+
     // Add the (tokenA, tokenB) pair if necessary.
     let pairExists = await getPairExists(tokenA, tokenB);
     if (!pairExists) {
@@ -63,7 +81,7 @@ async function main() {
     if(!whitelistContainsB) {
         await whitelistAdd(tokenB); 
     }
-};
+}
 
 /**
  * @dev Returns true if the pair exists and false otherwise.
@@ -71,7 +89,7 @@ async function main() {
 async function getPairExists(tokenA, tokenB) {
     const pairExists = await swapFee.pairExists(tokenA, tokenB);
     if (verbose) { 
-        console.log(`(${tokenA}, ${tokenB}) pair exists: ${pairExists}`);
+        console.log(`(${short(tokenA)}, ${short(tokenB)}) pair exists: ${pairExists}`);
     }
     return pairExists;
 }
@@ -84,8 +102,8 @@ async function addPair(tokenA, tokenB, percentReward) {
     const addPairTx = await swapFee.addPair(percentReward, pairAddress, ownerOverrides);
 
     if (verbose) {
-        console.log(`(${tokenA}, ${tokenB}) pair address: ${pairAddress}`);
-        console.log(`(${tokenA}, ${tokenB}) add pair tx hash: ${addPairTx.hash}`);
+        console.log(`(${short(tokenA)}, ${short(tokenB)}) pair address: ${pairAddress}`);
+        console.log(`(${short(tokenA)}, ${short(tokenB)}) add pair tx hash: ${addPairTx.hash}`);
     }
 
     // Aura-Bnb pair address: 0x046c1E7Dc3C06502195E014E55BC492079731650
@@ -98,7 +116,7 @@ async function addPair(tokenA, tokenB, percentReward) {
 async function whitelistContains(token) {
     const contains = await swapFee.whitelistContains(token);
     if (verbose) {
-        console.log(`whitelist contains ${token}: ${contains}`);
+        console.log(`whitelist contains ${short(token)}: ${contains}`);
     }
     return contains;
 }
@@ -109,29 +127,53 @@ async function whitelistContains(token) {
 async function whitelistAdd(token) {
     const wasAdded = await swapFee.whitelistAdd(token, ownerOverrides);
     if (verbose) { 
-        console.log(`${token} was added to whitelist`); 
+        console.log(`${short(token)} was added to whitelist`); 
     }
 }
 
-/* 
+/**
+ * @dev Shorten the given string to the first and last n characters.
+ */
+function short(str, n=4) {
+    const first = str.slice(2, n+2);
+    const last = str.slice(str.length-n, str.length);
+    const newStr = `${first}...${last}`;
+    return newStr;
+}
+
+/**
  * @dev Perform a token swap.
  */
-async function swap() {
-    // Define args: account, input, output, amount
-
-    // Whitelist tokens with whitelistAdd()
-    
+async function swap(account, input, output, amount) {
+    if (verbose) {
+        console.log(`Swap ${amount} of ${short(input)} for ${short(output)} and credit ${short(account)}.`);
+    }
     // Set msg.sender == router
+    overrides.from = Address.Router;
 
     // Call swap()
+    const result = swapFee.swap(account, input, output, amount);
+    //const result = true;
 
-    // Check that balance[account] increased
-    
-    // Check that Rewarded event emitted
+    let event;
+    swapFee.on("Rewarded", (_event) => { _event = event; });
+   
+    // Swap was successful.
+    if (verbose) {
+        if (result && event != undefined) {
+            // Check that balance[account] increased
+            const balance = await swapFee.getBalance(account); 
+            console.log(`balance: ${balance}`);
+            
+            // Check that Rewarded event emitted
+            console.log(`event: ${event}`);
 
-    // Check that AuraNFT AP accrued
+            // Check that AuraNFT AP accrued
 
-    // Check that returns true
+        } else {
+            console.log('Swap failed');        
+        }
+    }
 }
 
 /*
