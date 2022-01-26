@@ -66,7 +66,7 @@ contract AuraMigrator is IAuraMigrator {
     function migrate(address token, address to, uint tokenAmountMin, uint ethAmountMin, uint deadline) external override {
         IAuraExchange exchange = IAuraExchange(factory.getExchange(token));
         uint liquidity = exchange.liquidityOf(msg.sender);
-        require(exchange.transferFrom(msg.sender, address(this), liquidity), 'Migrator: Transfer failed');
+        require(exchange.transferFrom(msg.sender, address(this), liquidity), 'Migrator: Liquidity transfer failed');
 
         (uint ethAmount1, uint tokenAmount1) = exchange.removeLiquidity(liquidity, 1, 1, type(uint).max);
         TransferHelper.safeApprove(token, address(router), tokenAmount1);
