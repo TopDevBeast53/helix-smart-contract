@@ -29,13 +29,6 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     EnumerableSet.AddressSet private _minters;
 
     /**
-     * @dev Accruers who can accrue AuraPoints to users
-     *
-     * NOTE : Accruers would be SwapFeeRewardsWithAP contract
-     */
-    EnumerableSet.AddressSet private _accruers;
-
-    /**
      * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
      * token will be the concatenation of the `baseURI` and the `tokenId`.
      */
@@ -89,11 +82,9 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
 
     // map token info by token ID : TokenId => Token
     mapping(uint256 => Token) private _tokens;
-    // map accrued AuraPoints by user address : userAddress => accumulated AuraPoints amount
-    mapping(address => uint) private _accumulatedAP;
 
     // event when any tokenId gain AuraPoints 
-    event AccrueAuraPoints(address indexed tokenId, uint amount);
+    event AccrueAuraPoints(uint indexed tokenId, uint newAP);
     // event when an user level up from which tokenId
     event LevelUp(address indexed user, uint indexed newLevel, uint tokenId);
     event Initialize(string baseURI, uint initialAuraPoints);
@@ -166,9 +157,8 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         super.approve(to, tokenId);
     }
 
-    //External functions --------------------------------------------------------------------------------------------
     /**
-     * @dev External funtion to upgrade `tokenId` to the next level
+     * @dev Public funtion to upgrade `tokenId` to the next level
      *
      * NOTE: When level up, it's added a `_levelUpPercent` percentage of your previous AuraPoints
      *
@@ -176,7 +166,7 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
      * - The current token level must be valid.
      * - The current held AuraPoints amount must be sufficient.
      */
-    function levelUp(uint tokenId) external onlyStaker {
+    function levelUp(uint tokenId) public nonReentrant {
 
         require(ownerOf[tokenId] == msg.sender, "Not owner of token");
         Token storage token = _tokens[tokenId];
@@ -190,41 +180,27 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
 
         emit LevelUp(msg.sender, (curLevel + 1), tokenId);
     }
+
+    //External functions --------------------------------------------------------------------------------------------
     
     /**
-     * @dev Returns (AuraPoints amount to upgrade to the next level - current AP amount)
-     */
-    function remainAPToNextLevel(uint tokenId) external view returns (uint) {
-        return _auraPointsTable[uint(_tokens[tokenId].level)] - _tokens[tokenId].auraPoints;
-    }
-
-    /**
-     * @dev See accumulated AuraPoints amount by `user`
-     */
-    function getAccumulatedAP(address user) external view returns (uint) {
-        return _accumulatedAP[user];
-    }
-
-    /**
-     * @dev Set accumulated AuraPoints amount of `user`
-     */
-    function setAccumulatedAP(address user, uint amount) external onlyStaker {
-        require(amount >= 0, "Wrong number of amount");
-        _accumulatedAP[user] = amount;
-    }
-
-    /**
-     * @dev Used by accruer to accrue AuraPoints `amount` to `user`
+     * @dev Used by staker to accrue AuraPoints `amount` to `user`
      *
-     * NOTE: It would be called by swap contract(accruer).
-     *       An user can accumulate AuraPoints as a reward when Swapping
+     * NOTE: It would be called by swap contract(staker).
+     *       An user can receive AuraPoints as a reward when Swapping
+     *
+     * Requirements:
+     * - The counted AuraPoints amount must be not over limit by level
      */
-    function accruePoints(address user, uint amount) external onlyAccruer {
-        require(amount > 0, "Wrong number of amount");
-        _accumulatedAP[user] += amount;
-        emit AccrueAuraPoints(user, amount);
+    function accrueAuraPoints(uint tokenId, uint amount) external onlyStaker {
+        require(_exists(tokenId), "Token does not exist");
+        Token storage token = _tokens[tokenId];
+        uint newAP = token.auraPoints + amount;
+        require(newAP <= _auraPointsTable[token.level], "Counted auraPoints value over limit by level");
+        token.auraPoints = newAP;
+        emit AccrueAuraPoints(tokenId, newAP);
     }
-    
+
     /**
      * @dev External function to get the information of `tokenId`
      */
@@ -236,6 +212,7 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
             uint auraPoints,
             bool isStaked,
             uint createTimestamp,
+            uint remainAPToNextLevel,
             string memory uri
         )
     {
@@ -247,6 +224,7 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         auraPoints = token.auraPoints;
         isStaked = token.isStaked;
         createTimestamp = token.createTimestamp;
+        remainAPToNextLevel = _remainAPToNextLevel(_tokenId);
         uri = tokenURI(_tokenId);
     }
 
@@ -255,14 +233,6 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
      */
     function getAuraPoints(uint tokenId) external view returns (uint) {
         return _tokens[tokenId].auraPoints;
-    }
-
-    /**
-     * @dev External function to set auraPoints by `tokenId`
-     */
-    function setAuraPoints(uint tokenId, uint amount) external onlyStaker {
-        require(amount > 0, "Wrong number of amount");
-        _tokens[tokenId].auraPoints = amount;
     }
 
     /**
@@ -341,6 +311,13 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
      */
     function _exists(uint256 tokenId) internal view virtual returns (bool) {
         return ownerOf[tokenId] != address(0);
+    }
+
+    /**
+     * @dev Returns (AuraPoints amount to upgrade to the next level - current AP amount)
+     */
+    function _remainAPToNextLevel(uint tokenId) internal view returns (uint) {
+        return _auraPointsTable[uint(_tokens[tokenId].level)] - _tokens[tokenId].auraPoints;
     }
 
     //Private functions ---------------------------------------------------------------------------------------------
@@ -428,7 +405,7 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev used by owner to delete minter
+     * @dev used by owner to delete minter who changes `isStaked` of token
      * @param _delMinter address of minter to be deleted.
      * @return true if successful.
      */
@@ -457,9 +434,9 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Get the minter at n location
+     * @dev Get the staker at n location
      * @param _index index of address set
-     * @return address of minter at index.
+     * @return address of staker at index.
      */
     function getMinter(uint256 _index)
         external
@@ -468,71 +445,14 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         returns (address)
     {
         require(_index <= getMinterLength() - 1, "AuraNFT: index out of bounds");
-        return EnumerableSet.at(_minters, _index);
+        return EnumerableSet.at(_stakers, _index);
     }
 
     /**
-     * @dev Modifier
+     * @dev Modifier for changing `isStaked` of token
      */
     modifier onlyMinter() {
-        require(isMinter(msg.sender), "caller is not the minter");
-        _;
-    }
-
-    //Role functions for Accruer --------------------------------------------------------------------------------------
-
-    /**
-     * @dev used by owner to add accruer who can accrue AuraPoint to users
-     * @param _addAccruer address of accruer to be added.
-     * @return true if successful.
-     */
-    function addAccruer(address _addAccruer) public onlyOwner returns (bool) {
-        require(_addAccruer != address(0), "AuraNFT: _addAccruer is the zero address");
-        return EnumerableSet.add(_accruers, _addAccruer);
-    }
-
-    /**
-     * @dev used by owner to delete accruer who can accrue AuraPoint to users
-     * @param _delAccruer address of accruer to be deleted.
-     * @return true if successful.
-     */
-    function delAccruer(address _delAccruer) external onlyOwner returns (bool) {
-        require( _delAccruer != address(0), "AuraNFT: _delAccruer is the zero address");
-        return EnumerableSet.remove(_accruers, _delAccruer);
-    }
-
-    /**
-     * @dev See the number of accruers
-     * @return number of accruers.
-     */
-    function getAccruerLength() public view returns (uint256) {
-        return EnumerableSet.length(_accruers);
-    }
-
-    /**
-     * @dev Check if an address is a accruer
-     * @return true or false based on accruer status.
-     */
-    function isAccruer(address account) public view returns (bool) {
-        return EnumerableSet.contains(_accruers, account);
-    }
-
-    /**
-     * @dev Get the accruer at n location
-     * @param _index index of address set
-     * @return address of accruer at index.
-     */
-    function getAccruer(uint256 _index) external view onlyOwner returns (address)
-    {
-        require(_index <= getAccruerLength() - 1, "AuraNFT: index out of bounds");
-        return EnumerableSet.at(_accruers, _index);
-    }
-
-    /**
-     * @dev Modifier
-     */
-    modifier onlyAccruer() {
-        require(isAccruer(msg.sender), "caller is not the accruer");
+        require(isMinter(msg.sender), "caller is not the staker");
         _;
     }
 }
