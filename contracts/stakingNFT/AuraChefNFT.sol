@@ -14,7 +14,7 @@ contract AuraChefNFT is Ownable, ReentrancyGuard {
     // Last block that rewards were calculated.
     uint public lastRewardBlock;
     // instance of AuraNFT
-    IAuraNFT public auraNFT;
+    IAuraNFT private auraNFT;
 
     // Here is a main formula to stake. Basically, any point in time, the amount of rewards entitled to a user but is pending to be distributed is:
     //
@@ -60,6 +60,7 @@ contract AuraChefNFT is Ownable, ReentrancyGuard {
     event ChangeRewardToken(address indexed token, uint rewardPerBlock);
     event StakeTokens(address indexed user, uint amountRB, uint[] tokensId);
     event UnstakeToken(address indexed user, uint amountRB, uint[] tokensId);
+    event BoostAuraNFT(uint indexed tokenId, uint boostedAP);
 
     constructor(IAuraNFT _auraNFT, uint _lastRewardBlock) {
         auraNFT = _auraNFT;
@@ -94,100 +95,6 @@ contract AuraChefNFT is Ownable, ReentrancyGuard {
                 rewardTokens[_tokenAddress].accTokenPerShare += (curRewardToken.rewardPerBlock * curMultiplier * 1e12) / _totalAuraPoints;
             }
         }
-    }
-    
-    /**
-     * @dev Withdraw rewardToken from AuraChefNFT.
-     *
-     * NOTE: 1. updatePool()
-     *       2. User receives the pending reward sent to user's address.
-     *       3. User's `rewardDebt` gets updated.
-     */
-    function withdrawRewardToken() public {
-        updatePool();// -----1
-        UserInfo memory user = users[msg.sender];
-        address[] memory _rewardTokenAddresses = rewardTokenAddresses;
-        if(user.auraPointAmount == 0){
-            return;
-        }
-        for(uint i = 0; i < _rewardTokenAddresses.length; i++){
-            RewardToken memory curRewardToken = rewardTokens[_rewardTokenAddresses[i]];
-            uint pending = user.auraPointAmount * curRewardToken.accTokenPerShare / 1e12 - rewardDebt[msg.sender][_rewardTokenAddresses[i]];
-            if(pending > 0){
-                ERC20(_rewardTokenAddresses[i]).transfer(address(msg.sender), pending);// ------2
-                rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.auraPointAmount * curRewardToken.accTokenPerShare / 1e12;// -----3
-            }
-        }
-    }
-
-    /**
-     * @dev staking
-     *
-     * NOTE: 1. UpdatePool and User receives the pending reward sent to user's address.
-     *       2. Push new NFT to be staked
-     *       3. User's `auraPointAmount`(and `totalAuraPoints`) gets updated.
-     *       4. User's `rewardDebt` gets updated.
-     *
-     * Requirements:
-     *
-     * - `tokensId`'s owner must be sender
-     * - `tokensId` must be unstaked
-     */
-    function stake(uint[] calldata tokensId) public nonReentrant {
-        
-        withdrawRewardToken();// --------1
-        
-        UserInfo storage user = users[msg.sender];
-        uint depositedAPs = 0;
-        for(uint i = 0; i < tokensId.length; i++){
-            (address tokenOwner, bool isStaked, uint auraPoints) = auraNFT.getInfoForStaking(tokensId[i]);
-            require(tokenOwner == msg.sender, "Not token owner");
-            require(isStaked == false, "Token has already been staked");
-            auraNFT.setIsStaked(tokensId[i], true);
-            depositedAPs += auraPoints;
-            user.stakedNFTsId.push(tokensId[i]);// --------2
-        }
-        if(depositedAPs > 0){
-            user.auraPointAmount += depositedAPs;// --------3
-            totalAuraPoints += depositedAPs;
-        }
-        _updateRewardDebt(msg.sender);// --------4
-        emit StakeTokens(msg.sender, depositedAPs, tokensId);
-    }
-
-    /**
-     * @dev unstaking
-     *
-     * NOTE: 1. UpdatePool and User receives the pending reward sent to user's address.
-     *       2. Remove NFTs to be unstaked
-     *       3. User's `auraPointAmount`(and `totalAuraPoints`) gets updated.
-     *       4. User's `rewardDebt` gets updated.
-     *
-     * Requirements:
-     *
-     * - `tokensId`'s owner must be sender
-     * - `tokensId` must be staked
-     */
-    function unstake(uint[] calldata tokensId) public nonReentrant {
-        
-        withdrawRewardToken();// --------1
-        
-        UserInfo storage user = users[msg.sender];
-        uint withdrawalAPs = 0;
-        for(uint i = 0; i < tokensId.length; i++){
-            (address tokenOwner, bool isStaked, uint auraPoints) = auraNFT.getInfoForStaking(tokensId[i]);
-            require(tokenOwner == msg.sender, "Not token owner");
-            require(isStaked == true, "Token has already been unstaked");
-            auraNFT.setIsStaked(tokensId[i], false);
-            withdrawalAPs += auraPoints;
-            removeTokenIdFromUsers(tokensId[i], msg.sender);// --------2
-        }
-        if(withdrawalAPs > 0){
-            user.auraPointAmount -= withdrawalAPs;// --------3
-            totalAuraPoints -= withdrawalAPs;
-        }
-        _updateRewardDebt(msg.sender);// --------4
-        emit UnstakeToken(msg.sender, withdrawalAPs, tokensId);
     }
 
     /**
@@ -269,8 +176,120 @@ contract AuraChefNFT is Ownable, ReentrancyGuard {
         updatePool();
     }
 
+    /**
+     * @dev staking
+     *
+     * NOTE: 1. UpdatePool and User receives the pending reward sent to user's address.
+     *       2. Push new NFT to be staked
+     *       3. User's `auraPointAmount`(and `totalAuraPoints`) gets updated.
+     *       4. User's `rewardDebt` gets updated.
+     *
+     * Requirements:
+     *
+     * - `tokensId`'s owner must be sender
+     * - `tokensId` must be unstaked
+     */
+    function stake(uint[] memory tokensId) public nonReentrant {
+        
+        _withdrawRewardToken();// --------1
+        
+        UserInfo storage user = users[msg.sender];
+        uint depositedAPs = 0;
+        for(uint i = 0; i < tokensId.length; i++){
+            (address tokenOwner, bool isStaked, uint auraPoints) = auraNFT.getInfoForStaking(tokensId[i]);
+            require(tokenOwner == msg.sender, "Not token owner");
+            require(isStaked == false, "Token has already been staked");
+            auraNFT.setIsStaked(tokensId[i], true);
+            depositedAPs += auraPoints;
+            user.stakedNFTsId.push(tokensId[i]);// --------2
+        }
+        if(depositedAPs > 0){
+            user.auraPointAmount += depositedAPs;// --------3
+            totalAuraPoints += depositedAPs;
+        }
+        _updateRewardDebt(msg.sender);// --------4
+        emit StakeTokens(msg.sender, depositedAPs, tokensId);
+    }
+
+    /**
+     * @dev unstaking
+     *
+     * NOTE: 1. UpdatePool and User receives the pending reward sent to user's address.
+     *       2. Remove NFTs to be unstaked
+     *       3. User's `auraPointAmount`(and `totalAuraPoints`) gets updated.
+     *       4. User's `rewardDebt` gets updated.
+     *
+     * Requirements:
+     *
+     * - `tokensId`'s owner must be sender
+     * - `tokensId` must be staked
+     */
+    function unstake(uint[] memory tokensId) public nonReentrant {
+        
+        _withdrawRewardToken();// --------1
+        
+        UserInfo storage user = users[msg.sender];
+        uint withdrawalAPs = 0;
+        for(uint i = 0; i < tokensId.length; i++){
+            (address tokenOwner, bool isStaked, uint auraPoints) = auraNFT.getInfoForStaking(tokensId[i]);
+            require(tokenOwner == msg.sender, "Not token owner");
+            require(isStaked == true, "Token has already been unstaked");
+            auraNFT.setIsStaked(tokensId[i], false);
+            withdrawalAPs += auraPoints;
+            removeTokenIdFromUsers(tokensId[i], msg.sender);// --------2
+        }
+        if(withdrawalAPs > 0){
+            user.auraPointAmount -= withdrawalAPs;// --------3
+            totalAuraPoints -= withdrawalAPs;
+        }
+        _updateRewardDebt(msg.sender);// --------4
+        emit UnstakeToken(msg.sender, withdrawalAPs, tokensId);
+    }
+
     //External functions -----------------------------------------------------
     
+    /**
+     * @dev To withdraw reward token
+     */
+    function withdrawRewardToken() external {
+        _withdrawRewardToken();
+    }
+
+    /**
+     * @dev Boost auraNFT `tokenId` with accumulated AuraPoints `amount` by an user
+     * @param tokenId uint ID of the token to be boosted
+     * @param amount uint amount of AuraPoints to boost for the token
+     *
+     * Requirements:
+     *      - sender must be an owner of token to be boosted.
+     *      - The current held AuraPoints amount must be sufficient.
+     *      - The counted auraPoints amount must be not over limit by level.
+     */
+    function boostAuraNFT(uint tokenId, uint amount) external {
+        (address tokenOwner, bool isStaked, uint auraPoints) = auraNFT.getInfoForStaking(tokenId);
+        require(tokenOwner == msg.sender, "Not token owner");
+        uint _accumulatedAP = auraNFT.getAccumulatedAP(msg.sender);
+        require(amount <= _accumulatedAP, "Insufficient amount of AuraPoints");
+        uint _remainAP = auraNFT.remainAPToNextLevel(tokenId);
+        uint _amount = ExtraMath.min(amount, _remainAP);
+
+        uint[] memory tokensId = new uint[](1);
+        tokensId[0] = tokenId;
+        if (isStaked) {
+            unstake(tokensId);
+        }
+        auraNFT.setAccumulatedAP(msg.sender, _accumulatedAP - _amount);
+        uint newAP = auraPoints + _amount;
+        auraNFT.setAuraPoints(tokenId, newAP);
+        if (_amount == _remainAP) {
+            auraNFT.levelUp(tokenId);
+        }
+        if (isStaked) {
+            stake(tokensId);
+        }
+        emit BoostAuraNFT(tokenId, newAP);
+    }
+
     /**
      * @dev See the list of the NFT ids that `_user` has staked
      */
@@ -324,6 +343,30 @@ contract AuraChefNFT is Ownable, ReentrancyGuard {
     }
 
     //internal functions -----------------------------------------------------
+
+    /**
+     * @dev Withdraw rewardToken from AuraChefNFT.
+     *
+     * NOTE: 1. updatePool()
+     *       2. User receives the pending reward sent to user's address.
+     *       3. User's `rewardDebt` gets updated.
+     */
+    function _withdrawRewardToken() internal {
+        updatePool();// -----1
+        UserInfo memory user = users[msg.sender];
+        address[] memory _rewardTokenAddresses = rewardTokenAddresses;
+        if(user.auraPointAmount == 0){
+            return;
+        }
+        for(uint i = 0; i < _rewardTokenAddresses.length; i++){
+            RewardToken memory curRewardToken = rewardTokens[_rewardTokenAddresses[i]];
+            uint pending = user.auraPointAmount * curRewardToken.accTokenPerShare / 1e12 - rewardDebt[msg.sender][_rewardTokenAddresses[i]];
+            if(pending > 0){
+                ERC20(_rewardTokenAddresses[i]).transfer(address(msg.sender), pending);// ------2
+                rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.auraPointAmount * curRewardToken.accTokenPerShare / 1e12;// -----3
+            }
+        }
+    }
 
     /**
      * @dev check if `token` is RewardToken
