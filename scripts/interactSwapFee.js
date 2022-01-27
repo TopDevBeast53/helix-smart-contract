@@ -5,68 +5,93 @@
  *     npx hardhat run scripts/interactSwapFeeRewardsWithAP.js --network testnetBSC
  */
 
+require ('dotenv').config();
+
 const verbose = true;
 
-/*
- * Convenience object. Stores the address of the account or contract.
- */
-const Address = {
-    Owner: '0x59201fb8cb2D61118B280c8542127331DD141654',
-    Default: '0xfD9b80d3eC59fE49fe160E46dE93E0975b595292',
-    SwapFee: '0x380D2a5Cc9E5e980EdeC79bD5bee9C7c0c8E50da',      // Deployed
-    Factory: '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',      // Deployed
-    Router: '0x38433227c7a606ebb9ccb0acfcd7504224659b74',       // Deployed
-    AuraToken: '0xdf2b1082ee98b48b5933378c8f58ce2f5aaff135',    // Deployed 
-    BnbToken: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',     // Deployed
-    AuraNFT: '0xA4bc4Cda3c72c9fEF8af239370BAA7f4Ba38826f',      // Deployed
-    Market: '0xB69888c53b9c4b779E1bEAd3A5019a388Bc072e9',       // Fake
-    Auction: '0xdCe96794ba50b147C60F35D614e76451062fBce7',      // Fake
-}
-
-// Load the provider and signer.
-const rpc = 'https://data-seed-prebsc-1-s1.binance.org:8545';
-const provider = new ethers.providers.getDefaultProvider(rpc);
-const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-
-// Create the swapFee instance.
-const swapFeeJson = require('../build/contracts/SwapFeeRewardsWithAP.json');
-const swapFeeAbi = swapFeeJson.abi;
-const swapFee = new ethers.Contract(Address.SwapFee, swapFeeAbi, wallet);
-
-// Enable changing the contract's caller.
-const routerSigner = provider.getSigner(0);
-const swapFeeAsRouter = swapFee.connect(routerSigner);
-
-// Define the transaction parameters for the owner.
-let overrides = {
-    from: Address.Owner,
-    gasLimit: 6721975,
-};
+let Address, overrides;
+let owner, user;
+let router, market, auction;
+let tokenA, tokenB;
+let ISwapFee, swapFee;
+let tx;
 
 /**
  * @dev Initialize the contract and call functions.
  */
 async function main() {
-    let tokenA = Address.AuraToken;
-    let tokenB = Address.BnbToken;
-    
+    // Initialize the script's variables.
+    await init(); 
+   
     // Prepare the token pair for swapping.
     //await preparePair(tokenA, tokenB); 
    
     // Swap the tokens.
-    let account = Address.Default;
+    let account = await user.getAddress();
+    tokenA = Address.AuraNFT;
+    tokenB = Address.BnbToken;
     let amount = 100;
     await swap(account, tokenA, tokenB, amount);
+
+    //await accrueAPFromMarket(account, tokenA, amount);
 
     // Withdraw tokens.
     //await withdraw();
 };
 
 /**
+ * @dev Initialize the script variables.
+ */
+async function init() {
+    // Convenience object for getting the addresses of accounts and contracts.
+    Address = {
+        Owner: '0x59201fb8cb2D61118B280c8542127331DD141654',
+        User: '0x697419d2B31844ad7Fa4646499f8B81de79D2eB1',
+        SwapFee: '0x380D2a5Cc9E5e980EdeC79bD5bee9C7c0c8E50da',      // Deployed
+        Factory: '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',      // Deployed
+        Router: '0x38433227c7a606ebb9ccb0acfcd7504224659b74',       // Deployed
+        AuraToken: '0xdf2b1082ee98b48b5933378c8f58ce2f5aaff135',    // Deployed 
+        BnbToken: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',     // Deployed
+        AuraNFT: '0x6f567929bac6e7db604795fC2b4756Cc27C0e020',      // Deployed
+        Market: '0xB69888c53b9c4b779E1bEAd3A5019a388Bc072e9',       // Fake
+        Auction: '0xdCe96794ba50b147C60F35D614e76451062fBce7',      // Fake
+    }
+
+    // Load the provider.
+    const rpc = 'https://data-seed-prebsc-1-s1.binance.org:8545';
+    const provider = new ethers.providers.getDefaultProvider(rpc);
+
+    // Load the wallets.
+    owner = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+    user = new ethers.Wallet(process.env.USER_PRIVATE_KEY, provider);
+
+    router = provider.getSigner(Address.Router);
+    //router = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+    market = provider.getSigner(Address.Market);
+    auction = provider.getSigner(Address.Auction);
+
+    // Create the swapFee instance.
+    const swapFeeJson = require('../build/contracts/SwapFeeRewardsWithAP.json');
+    const swapFeeAbi = swapFeeJson.abi;
+    ISwapFee = await ethers.getContractFactory('SwapFeeRewardsWithAP');
+
+    // Define the transaction parameters for the owner.
+    overrides = {
+        gasLimit: 6721975,
+    };
+
+    // Set the tokens to test.
+    tokenA = Address.AuraToken;
+    tokenB = Address.BnbToken;
+}
+
+/**
  * @dev Prepare the token pair for swapping (tokenA, tokenB) by making 
  *      sure that they're added the pair exists and is whitelisted.
  */
 async function preparePair(tokenA, tokenB) {
+    swapFee = ISwapFee.attach(Address.SwapFee).connect(owner);
+
     if (verbose) {
         console.log('Prepare tokens for swap');
     } 
@@ -157,29 +182,12 @@ async function swap(account, input, output, amount) {
         console.log(`Swap ${amount} of ${short(input)} for ${short(output)} and credit ${short(account)}.`);
     }
 
-    /*
-    swapFeeAsRouter.swap(account, input, output, amount).then((tx) => {
-        return tx.wait().then((receipt) => {
-                console.log(`RECEIPT: ${receipt}`);
-            }, (error) => {
-                console.log(`ERROR: ${error}`);
-            });
-    });
-    */
-
-    const result = await swapFeeAsRouter.swap(account, input, output, amount);
-    console.log("RESULT: ", result);
+    swapFee = await ISwapFee.attach(Address.SwapFee).connect(router);
+    
+    tx = await swapFee.swap(account, input, output, amount, { gasLimit: 6721975 });
+    await tx.wait();
     
     /*
-    // Set msg.sender == router
-    overrides.from = Address.Router;
-
-    // Call swap()
-    const result = swapFee.swap(account, input, output, amount, overrides);
-
-    let event;
-    swapFee.on("Rewarded", (_event) => { event = _event; });
-   
     // Swap was successful.
     if (verbose) {
         if (result && event != undefined) {
@@ -240,6 +248,41 @@ async function withdraw() {
     // Check that Withdraw event emitted
 
     // Check that returns true
+}
+
+async function accrueAPFromMarket(account, tokenIn, quantityIn) {
+    swapFee = ISwapFee.attach(Address.SwapFee).connect(market);
+
+    // If necessary, set the market.
+    let marketAddress = await swapFee.market();
+    if (marketAddress == ethers.constants.AddressZero) {
+        if (verbose) {
+            console.log('Market address was zero.');
+        }
+        await setMarket(swapFee, market.getAddress());
+    }
+
+    let prevAccruedAP = (await swapFee.totalAccruedAP()).toNumber();
+
+    // Call the fuction.
+    // Fails with "unknown account" 
+    tx = await swapFee.accrueAPFromMarket(account, tokenIn, quantityIn, { gasLimit: overrides.gasLimit });
+    await tx.wait();
+
+    // Check whether the accrued AP increased.
+    let accruedAP = await swapFee.totalAccruedAP();
+    
+    if (verbose) {
+        console.log(`Total accrued AP is: ${accruedAP}`);
+    }
+}
+
+async function setMarket(_contract, address) {
+    if (verbose) {
+        console.log(`Setting market address to ${short(address)}`);
+    }
+    tx = await _contract.setMarket(address);
+    await tx.wait();
 }
 
 main()
