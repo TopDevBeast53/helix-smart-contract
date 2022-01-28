@@ -12,8 +12,9 @@ const verbose = true;
 let Address, overrides;
 let owner, user;
 let router, market, auction;
-let tokenA, tokenB;
+let tokenA, tokenB, tokenC;
 let ISwapFee, swapFee;
+let IAuraNFT, auraNFT;
 let tx, nonce;
 let gasLimit;
 
@@ -25,15 +26,18 @@ async function main() {
     await init(); 
    
     // Prepare the token pair for swapping.
-    await preparePair(tokenA, tokenB); 
+    //await preparePair(tokenA, tokenB); 
    
     // Swap the tokens.
     // Note that tokenA and tokenB are already assigned.
+    // Note that tokenA is passed twice on purpose to simplify output estimates. 
     let account = await user.getAddress();
-    let amount = 100;
-    await swap(account, tokenA, tokenB, amount);
+    let amount = 100000;
+    //await swap(account, tokenA, tokenB, amount);
 
-    //await accrueAPFromMarket(account, tokenA, amount);
+    tokenC = Address.TargetAPToken;
+    await accrueAPFromMarket(account, tokenC, amount);
+    await accrueAPFromAuction(account, tokenC, amount);
 
     // Withdraw tokens.
     //await withdraw();
@@ -76,6 +80,23 @@ async function init() {
     const swapFeeAbi = swapFeeJson.abi;
     ISwapFee = await ethers.getContractFactory('SwapFeeRewardsWithAP');
 
+    // Create the auraNFT instance and add an accruer.
+    IAuraNFT = await ethers.getContractFactory('AuraNFT');
+    auraNFT = await IAuraNFT.attach(Address.AuraNFT).connect(owner);
+    let accruer = Address.SwapFee;
+    let isAccruer = await auraNFT.isAccruer(accruer);
+    if (!isAccruer) {
+        if (verbose) {
+            console.log(`Adding ${short(accruer)} as an AuraNFT accruer`);
+        }
+        tx = await auraNFT.addAccruer(accruer);
+        await tx.wait();
+    }
+    isAccruer = await auraNFT.isAccruer(accruer);
+    if (verbose) {
+        console.log(`${short(accruer)} is an accruer: ${isAccruer}`);
+    }
+    
     gasLimit = 6721975;
 
     // Set the tokens to test.
@@ -102,14 +123,15 @@ async function init() {
     if (verbose) {
         console.log(`Factory address is ${factoryAddress}`);
     } 
-  
+ 
     // Set the router.
-    let routerAddress = await swapFee.router();
-    if (routerAddress == ethers.constants.AddressZero) {
+    let routerAddress = Address.Owner;
+    let prevRouterAddress = await swapFee.router();
+    if (prevRouterAddress != routerAddress) {
         if (verbose) {
-            console.log(`Set router address to ${Address.Router}`);
+            console.log(`Set router address to ${routerAddress}`);
         }
-        tx = await swapFee.setRouter(Address.Router);
+        tx = await swapFee.setRouter(routerAddress);
         await tx.wait();
     }
     routerAddress = await swapFee.router();
@@ -160,12 +182,13 @@ async function init() {
     } 
 
     // Set the aura NFT
-    let auraNFTAddress = await swapFee.auraNFT();
-    if (auraNFTAddress == ethers.constants.AddressZero) {
+    let auraNFTAddress = await auraNFT.address;
+    let prevAuraNFTAddress = await swapFee.auraNFT();
+    if (prevAuraNFTAddress != auraNFTAddress) {
         if (verbose) {
-            console.log(`Set aura NFT address to ${Address.AuraNFT}`);
+            console.log(`Set aura NFT address to ${auraNFTAddress}`);
         }
-        tx = await swapFee.setAuraNFT(Address.AuraNFT);
+        tx = await swapFee.setAuraNFT(auraNFTAddress);
         await tx.wait();
     }
     auraNFTAddress = await swapFee.auraNFT();
@@ -174,12 +197,13 @@ async function init() {
     } 
 
     // Set the market
-    let marketAddress = await swapFee.market();
-    if (marketAddress == ethers.constants.AddressZero) {
+    let marketAddress = Address.Owner;
+    let prevMarketAddress = await swapFee.market();
+    if (prevMarketAddress != marketAddress) {
         if (verbose) {
-            console.log(`Set market address to ${Address.Market}`);
+            console.log(`Set market address to ${marketAddress}`);
         }
-        tx = await swapFee.setMarket(Address.Market);
+        tx = await swapFee.setMarket(marketAddress);
         await tx.wait();
     }
     marketAddress = await swapFee.market();
@@ -188,18 +212,34 @@ async function init() {
     } 
 
     // Set the auction
-    let auctionAddress = await swapFee.auction();
-    if (auctionAddress == ethers.constants.AddressZero) {
+    let auctionAddress = Address.Owner;
+    let prevAuctionAddress = await swapFee.auction();
+    if (prevAuctionAddress != auctionAddress) {
         if (verbose) {
-            console.log(`Set auction address to ${Address.Auction}`);
+            console.log(`Set auction address to ${auctionAddress}`);
         }
-        tx = await swapFee.setAuction(Address.Auction);
+        tx = await swapFee.setAuction(auctionAddress);
         await tx.wait();
     }
     auctionAddress = await swapFee.auction();
     if (verbose) {
         console.log(`Auction address is ${auctionAddress}`);
     } 
+
+    // Set the users default reward distribution
+    let rewardDistribution = 0;
+    let prevRewardDistribution = await swapFee.rewardDistribution[Address.User];
+    if (rewardDistribution != 0 && prevRewardDistribution != rewardDistribution) {
+        if (verbose) {
+            console.log(`Set user reward distribution to ${rewardDistribution}`);
+        }
+        tx = await swapFee.setRewardDistribution(rewardDistribution);
+        await tx.wait();
+    }
+    rewardDistribtuion = await swapFee.rewardDistribution[Address.User];
+    if (verbose) {
+        console.log(`User reward distribution is ${rewardDistribution}`);
+    }
 }
 
 /**
@@ -299,34 +339,22 @@ async function swap(account, input, output, amount) {
         console.log(`Swap ${amount} of ${short(input)} for ${short(output)} and credit ${short(account)}.`);
     }
 
-    swapFee = await ISwapFee.attach(Address.SwapFee).connect(router);
+    swapFee = await ISwapFee.attach(Address.SwapFee);
 
-    // Fails because msg.sender == owner.
-    // Possible solutions are impersonating router using hardhat_impersonateAccount
-    // or writing a wrapper contract to mimic router.
-    // https://ethereum.stackexchange.com/questions/107190/impersonating-a-contract-when-calling-another-in-tests-using-ether-js
+    // Fails after or on line 112, pairFor call
     tx = await swapFee.swap(account, input, output, amount, { gasLimit: 6721975 });
     await tx.wait();
     
-    /*
     // Swap was successful.
     if (verbose) {
-        if (result && event != undefined) {
+        if (tx) {
             // Check that balance[account] increased
             const balance = await swapFee.getBalance(account); 
             console.log(`balance: ${balance}`);
-            
-            // Check that Rewarded event emitted
-            console.log(`event: ${event}`);
-
-            // Check that AuraNFT AP accrued
-            // TODO - depends on updated AuraNFT
-
         } else {
             console.log('Swap failed');        
         }
     }
-    */
 }
 
 /*
@@ -371,39 +399,50 @@ async function withdraw() {
     // Check that returns true
 }
 
+/**
+ * @dev Calls accrueAPFromMarket and checks the output.
+ */
 async function accrueAPFromMarket(account, tokenIn, quantityIn) {
-    swapFee = ISwapFee.attach(Address.SwapFee).connect(market);
-
-    // If necessary, set the market.
-    let marketAddress = await swapFee.market();
-    if (marketAddress == ethers.constants.AddressZero) {
-        if (verbose) {
-            console.log('Market address was zero.');
-        }
-        await setMarket(swapFee, market.getAddress());
+    if (verbose) {
+        console.log(`Accrue AP in ${quantityIn} of token ${short(tokenIn)} for account ${short(account)} from market`);
     }
-
+    
+    swapFee = ISwapFee.attach(Address.SwapFee).connect(owner);
+    
     let prevAccruedAP = (await swapFee.totalAccruedAP()).toNumber();
 
-    // Call the fuction.
-    // Fails with "unknown account" 
-    tx = await swapFee.accrueAPFromMarket(account, tokenIn, quantityIn, { gasLimit: overrides.gasLimit });
+    tx = await swapFee.accrueAPFromMarket(account, tokenIn, quantityIn, { gasLimit: gasLimit });
     await tx.wait();
 
     // Check whether the accrued AP increased.
     let accruedAP = await swapFee.totalAccruedAP();
-    
     if (verbose) {
-        console.log(`Total accrued AP is: ${accruedAP}`);
+        console.log(`Total accrued AP was: ${prevAccruedAP}`);
+        console.log(`Total accrued AP is now: ${accruedAP}`);
     }
 }
 
-async function setMarket(_contract, address) {
+/**
+ * @dev Calls accrueAPFromAuction and checks the output.
+ */
+async function accrueAPFromAuction(account, tokenIn, quantityIn) {
     if (verbose) {
-        console.log(`Setting market address to ${short(address)}`);
+        console.log(`Accrue AP in ${quantityIn} of token ${short(tokenIn)} for account ${short(account)} from auction`);
     }
-    tx = await _contract.setMarket(address);
+    
+    swapFee = ISwapFee.attach(Address.SwapFee).connect(owner);
+    
+    let prevAccruedAP = (await swapFee.totalAccruedAP()).toNumber();
+
+    tx = await swapFee.accrueAPFromAuction(account, tokenIn, quantityIn, { gasLimit: gasLimit });
     await tx.wait();
+
+    // Check whether the accrued AP increased.
+    let accruedAP = await swapFee.totalAccruedAP();
+    if (verbose) {
+        console.log(`Total accrued AP was: ${prevAccruedAP}`);
+        console.log(`Total accrued AP is now: ${accruedAP}`);
+    }
 }
 
 main()
