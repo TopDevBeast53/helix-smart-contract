@@ -166,7 +166,25 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         super.approve(to, tokenId);
     }
 
+    /**
+     * @dev Override funtion to avoid the transfer of the staked token
+     */
+    function transferFrom(address from, address to, uint256 tokenId) public override {
+        if (_tokens[tokenId].isStaked == true) {
+            revert("ERC721: Token is staked");
+        }
+        super.transferFrom(from, to, tokenId);
+    }
+
     //External functions --------------------------------------------------------------------------------------------
+
+    /**
+     * @dev To get the last token Id
+     */
+    function getLastTokenId() external view returns (uint) {
+        return _lastTokenId;
+    }
+
     /**
      * @dev External funtion to upgrade `tokenId` to the next level
      *
@@ -177,8 +195,6 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
      * - The current held AuraPoints amount must be sufficient.
      */
     function levelUp(uint tokenId) external onlyStaker {
-
-        require(ownerOf[tokenId] == msg.sender, "Not owner of token");
         Token storage token = _tokens[tokenId];
         uint curLevel = token.level;
         require(curLevel > 0 && curLevel < 7, "Token level is not valid");

@@ -18,8 +18,8 @@ function expandTo18Decimals(n) {
     return (new BigNumber.from(n)).mul((new BigNumber.from(10)).pow(18))
 }
 
-const AuraNFTAddress = `0xBa464cb9f2ff62f41288aF179F6C6F3290D4db43`;
-const AuraChefNFTAddress = '0x27534C9242B048496d9F654B2B57FB6a70e053e8';
+const AuraNFTAddress = '0x6f567929bac6e7db604795fC2b4756Cc27C0e020';
+const AuraChefNFTAddress = '0xa6BB6Aefa4c93FF9D9787f98C2A623c368a27781';
 
 const initialAuraPoints = expandTo18Decimals(1); // AuraNFT's _initialAuraPoints
 const levelUpPercent = 10; // AuraNFT's _levelUpPercent
