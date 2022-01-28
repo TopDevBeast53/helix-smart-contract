@@ -23,21 +23,27 @@ let gasLimit;
  */
 async function main() {
     // Initialize the script's variables.
-    await init(); 
+    await initScript(); 
+
+    // Initialize the AuraNFT and it's variables.
+    //await initAuraNFT();
+
+    // Initialize the SwapFee and it's variables.
+    //await initContract();
    
     // Prepare the token pair for swapping.
-    //await preparePair(tokenA, tokenB); 
+    //await preparePair(tokenA, tokenC); 
    
     // Swap the tokens.
     // Note that tokenA and tokenB are already assigned.
     // Note that tokenA is passed twice on purpose to simplify output estimates. 
     let account = await user.getAddress();
-    let amount = 100000;
-    //await swap(account, tokenA, tokenB, amount);
+    let amount = 15000000;
+    await swap(account, tokenB, tokenA, amount);
 
-    tokenC = Address.TargetAPToken;
-    await accrueAPFromMarket(account, tokenC, amount);
-    await accrueAPFromAuction(account, tokenC, amount);
+    amount = 10000;
+    //await accrueAPFromMarket(account, tokenC, amount);
+    //await accrueAPFromAuction(account, tokenC, amount);
 
     // Withdraw tokens.
     //await withdraw();
@@ -46,7 +52,7 @@ async function main() {
 /**
  * @dev Initialize the script variables.
  */
-async function init() {
+async function initScript() {
     // Convenience object for getting the addresses of accounts and contracts.
     Address = {
         Owner: '0x59201fb8cb2D61118B280c8542127331DD141654',
@@ -55,7 +61,7 @@ async function init() {
         Factory: '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',          // Deployed
         Router: '0x38433227c7a606ebb9ccb0acfcd7504224659b74',           // Deployed
         AuraToken: '0xdf2b1082ee98b48b5933378c8f58ce2f5aaff135',        // Deployed - Also used for TargetToken
-        BnbToken: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',         // Deployed
+        WbnbToken: '0xae13d989dac2f0debff460ac112a837c89baa7cd',         // Deployed
         AuraNFT: '0x6f567929bac6e7db604795fC2b4756Cc27C0e020',          // Deployed
         TargetAPToken: '0x9903Ee9e2a67D82A2Ba37D087CC8663F9592716E',    // Deployed
         Market: '0xB69888c53b9c4b779E1bEAd3A5019a388Bc072e9',           // Fake
@@ -75,15 +81,29 @@ async function init() {
     market = provider.getSigner(Address.Market);
     auction = provider.getSigner(Address.Auction);
 
+   
+    gasLimit = 6721975;
+
+    // Set the tokens to test.
+    tokenA = Address.AuraToken;
+    tokenB = Address.WbnbToken;
+    tokenC = Address.TargetAPToken;
+
+    // Create the auraNFT instance and add an accruer.
+    IAuraNFT = await ethers.getContractFactory('AuraNFT');
+    auraNFT = await IAuraNFT.attach(Address.AuraNFT).connect(owner);
+
     // Create the swapFee instance.
     const swapFeeJson = require('../build/contracts/SwapFeeRewardsWithAP.json');
     const swapFeeAbi = swapFeeJson.abi;
     ISwapFee = await ethers.getContractFactory('SwapFeeRewardsWithAP');
 
-    // Create the auraNFT instance and add an accruer.
-    IAuraNFT = await ethers.getContractFactory('AuraNFT');
-    auraNFT = await IAuraNFT.attach(Address.AuraNFT).connect(owner);
-    let accruer = Address.SwapFee;
+    // Set the contract's dependents.
+    swapFee = await ISwapFee.attach(Address.SwapFee).connect(owner);
+}
+
+async function initAuraNFT() {
+        let accruer = Address.SwapFee;
     let isAccruer = await auraNFT.isAccruer(accruer);
     if (!isAccruer) {
         if (verbose) {
@@ -96,17 +116,9 @@ async function init() {
     if (verbose) {
         console.log(`${short(accruer)} is an accruer: ${isAccruer}`);
     }
-    
-    gasLimit = 6721975;
+}
 
-    // Set the tokens to test.
-    tokenA = Address.AuraToken;
-    tokenB = Address.BnbToken;
-
-    // Set the contract's dependents.
-    swapFee = await ISwapFee.attach(Address.SwapFee).connect(owner);
-    nonce = await network.provider.send('eth_getTransactionCount', [Address.Owner, "latest"]);
-
+async function initSwapFee() {
     // NOTE - These function-worthy blocks fail when wrapped into functions.
     // Appears to be a result of asynchronous execution.
 
@@ -339,18 +351,33 @@ async function swap(account, input, output, amount) {
         console.log(`Swap ${amount} of ${short(input)} for ${short(output)} and credit ${short(account)}.`);
     }
 
-    swapFee = await ISwapFee.attach(Address.SwapFee);
+    swapFee = await ISwapFee.attach(Address.SwapFee).connect(owner);
+    auraNFT = await IAuraNFT.attach(Address.AuraNFT).connect(owner);
 
-    // Fails after or on line 112, pairFor call
+    let prevBalance = await swapFee.getBalance(account);
+    let prevAP = await auraNFT.getAccumulatedAP(account);
+    let prevAccruedAP = (await swapFee.totalAccruedAP()).toNumber();
+
     tx = await swapFee.swap(account, input, output, amount, { gasLimit: 6721975 });
     await tx.wait();
     
-    // Swap was successful.
     if (verbose) {
+        // Swap was successful.
         if (tx) {
-            // Check that balance[account] increased
+            // Check the change in balance
+            console.log(`Account ${short(account)} previous balance: ${prevBalance}`);
             const balance = await swapFee.getBalance(account); 
-            console.log(`balance: ${balance}`);
+            console.log(`Account ${short(account)} new balance: ${balance}`);
+
+            // Check the change in AP
+            console.log(`Account ${short(account)} previous AP: ${prevAP}`);
+            const ap = await auraNFT.getAccumulatedAP(account);
+            console.log(`Account ${short(account)} new balance: ${ap}`);
+
+            // Check the change in total AP
+            let accruedAP = await swapFee.totalAccruedAP();
+            console.log(`Total accrued AP was: ${prevAccruedAP}`);
+            console.log(`Total accrued AP is now: ${accruedAP}`);
         } else {
             console.log('Swap failed');        
         }
