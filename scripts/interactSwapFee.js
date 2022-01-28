@@ -28,11 +28,10 @@ async function main() {
     await preparePair(tokenA, tokenB); 
    
     // Swap the tokens.
+    // Note that tokenA and tokenB are already assigned.
     let account = await user.getAddress();
-    tokenA = Address.AuraNFT;
-    tokenB = Address.BnbToken;
     let amount = 100;
-    //await swap(account, tokenA, tokenB, amount);
+    await swap(account, tokenA, tokenB, amount);
 
     //await accrueAPFromMarket(account, tokenA, amount);
 
@@ -67,8 +66,8 @@ async function init() {
     owner = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
     user = new ethers.Wallet(process.env.USER_PRIVATE_KEY, provider);
 
-    router = provider.getSigner(Address.Router);
-    //router = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+    //router = provider.getSigner(Address.Router);
+    router = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
     market = provider.getSigner(Address.Market);
     auction = provider.getSigner(Address.Auction);
 
@@ -86,6 +85,9 @@ async function init() {
     // Set the contract's dependents.
     swapFee = await ISwapFee.attach(Address.SwapFee).connect(owner);
     nonce = await network.provider.send('eth_getTransactionCount', [Address.Owner, "latest"]);
+
+    // NOTE - These function-worthy blocks fail when wrapped into functions.
+    // Appears to be a result of asynchronous execution.
 
     // Set the factory.
     let factoryAddress = await swapFee.factory();
@@ -298,7 +300,11 @@ async function swap(account, input, output, amount) {
     }
 
     swapFee = await ISwapFee.attach(Address.SwapFee).connect(router);
-    
+
+    // Fails because msg.sender == owner.
+    // Possible solutions are impersonating router using hardhat_impersonateAccount
+    // or writing a wrapper contract to mimic router.
+    // https://ethereum.stackexchange.com/questions/107190/impersonating-a-contract-when-calling-another-in-tests-using-ether-js
     tx = await swapFee.swap(account, input, output, amount, { gasLimit: 6721975 });
     await tx.wait();
     
