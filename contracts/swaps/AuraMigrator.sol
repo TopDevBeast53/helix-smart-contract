@@ -39,7 +39,7 @@ contract AuraMigrator is IAuraMigrator {
 
     /**
      * @dev Calls the router's function of the same name.
-     *      Avoids 'Stack too deep' error by passing structs.
+     *      Structs are used to avoid "Stack Too Deep" error.
      */
     function addLiquidityETH(
         AddressPair memory addressPair, 
