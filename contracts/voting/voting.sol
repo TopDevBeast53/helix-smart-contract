@@ -3,104 +3,98 @@ pragma solidity >=0.8.0;
 
 import '@rari-capital/solmate/src/tokens/ERC20.sol';
 import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
+import "../interfaces/IAuraToken.sol";
 
 contract Voting is ReentrancyGuard{
     
-    // structure for a voter
-    struct Voter {
-        bool hasRight;  // if true, that person has a right so he/she can do voting
-        bool voted;     // if true, that person already voted
-        uint vote;      // index of the voted proposal
-    }
+    IAuraToken private auraToken;
 
     // structure for a single proposal.
     struct Proposal {
-        bytes32 name;       // short name (up to 32 bytes)
-        uint voteAmount;    // number of accumulated amount
+        bytes32 name;                           // proposal short name
+        address creator;                        // creator's address
+        uint blockNum;                          // when the proposal was created
+        mapping(address => uint8) decisions;   // decisions[voterAddr] == 1 -> YES, decisions[voterAddr] == 2 -> NO
+        address[] voters;                       // array of voters
+        mapping(address => uint) balance;       // balance of deposited aura token for each voter into the given proposal
     }
+    
+    // number of proposals
+    uint public numProposals;
+    // map for proposals by index
+    mapping (uint => Proposal) public proposals;
 
-    // address of chair
-    address public chairAddress;
-    // map that stores a `Voter` struct for each user address.
-    mapping(address => Voter) public voters;
-    // dynamically-sized array of `Proposal` structs.
-    Proposal[] public proposals;
-    // count voteAmount with this token balanced of voter, e.g. AuraToken
-    address public countToken;
+    event CreateProposal(bytes32 proposalName);
 
     // constructor that create a new Voting to choose one of `proposalNames`.
-    constructor(bytes32[] memory proposalNames, address _countToken) {
-        chairAddress = msg.sender;
-
-        // For each of the provided proposal names, create a new proposal object and add it to the end of the array.
-        for (uint i = 0; i < proposalNames.length; i++) {
-            proposals.push(Proposal({
-                name: proposalNames[i],
-                voteAmount: 0
-            }));
-        }
-        countToken = _countToken;
+    constructor(IAuraToken _auraToken) {
+        auraToken = _auraToken;
     }
 
     //External functions --------------------------------------------------------------------------------------------
     
     /**
-     * @dev Give `voter` the right to vote, only by `chairAddress`.
-     *
-     * Requirements:
-     * - Only chair person can give right to vote.
-     * - The voter must be not voted.
-     * - The voter must have no right.
+     * @dev Create proposal
      */
-    function giveRightToVote(address voter) external {
-        require(msg.sender == chairAddress, "Only chairAddress can give right to vote.");
-        require(!voters[voter].voted, "The voter already voted.");
-        require(!voters[voter].hasRight, "The voter already has a right.");
-        voters[voter].hasRight = true;
+    function createProposal(bytes32 proposalName) external {
+        Proposal storage p = proposals[numProposals++];
+        p.name = proposalName;
+        p.creator = msg.sender;
+        p.blockNum = block.number;
+
+        emit CreateProposal(proposalName);
     }
 
     /**
-     * @dev Vote with proposal index by voter
+     * @dev Voting
      *
      * Requirements:
-     * - The choosed proposal index must be valid.
-     * - The voter must have a right.
-     * - The voter must be not voted.
-     * - The voter must have some balance of token to count.
+     * - Check that add msg.sender twice for the same proposalId.
+     * - Decision can be value of 1(Yes) or 2(No)
      */
-    function vote(uint proposal) external nonReentrant {
-        require(proposal < proposals.length, "Wrong proposal index");
-        Voter storage sender = voters[msg.sender];
-        require(sender.hasRight, "Has no right to vote");
-        require(!sender.voted, "Already voted.");
-        uint256 _balance = ERC20(countToken).balanceOf(msg.sender);
-        require(_balance > 0, "The voter has not any balance of token to count.");
-        sender.voted = true;
-        sender.vote = proposal;
-        proposals[proposal].voteAmount += _balance;
+    function vote(uint proposalId, uint withTokenAmount, uint8 decision) external nonReentrant {
+        address voter = msg.sender;
+        Proposal storage _proposal = proposals[proposalId];
+        require(_proposal.decisions[voter] > 0, "Already voted");
+        require(decision < 3, "Wrong decision number");
+        
+        if (withTokenAmount > 0) { 
+            ERC20(address(auraToken)).transferFrom(voter, address(this), withTokenAmount);
+        }
+        _proposal.voters.push(voter);
+        _proposal.balance[voter] += withTokenAmount;
+        _proposal.decisions[voter] = decision;
     }
 
     /**
-     * @dev returns the name of the winner
+     * @dev Calculating the result of voting
      */
-    function winnerName() external view returns (bytes32 winnerName_)
+    function resultProposal(uint proposalId) external view returns (uint, uint)
     {
-        winnerName_ = proposals[winningProposal()].name;
+        uint numVoters = proposals[proposalId].voters.length;
+        uint yesVotes = 0;
+        uint noVotes = 0;
+        for (uint i = 0; i < numVoters; i++) {
+            address voterAddr = proposals[proposalId].voters[i];
+            uint votes = getNumberOfVotes(voterAddr, proposalId);
+            uint decision = proposals[proposalId].decisions[voterAddr];
+            if (decision == 1) {
+                yesVotes += votes;
+            } else {
+                noVotes += votes;
+            }
+        }
+        return (yesVotes, noVotes);
     }
 
     //Public functions --------------------------------------------------------------------------------------------
 
     /**
-     * @dev returns winningProposal's Index
+     * @dev Get the number of votes by `voter`
+     *
+     * NOTE: AuraToken's PriorVotes + deposited balance to proposal
      */
-    function winningProposal() public view returns (uint winningProposalIndex)
-    {
-        uint winningvoteAmount = 0;
-        for (uint p = 0; p < proposals.length; p++) {
-            if (proposals[p].voteAmount > winningvoteAmount) {
-                winningvoteAmount = proposals[p].voteAmount;
-                winningProposalIndex = p;
-            }
-        }
+    function getNumberOfVotes(address voter, uint proposalId) public view returns (uint) {
+        return auraToken.getPriorVotes(voter, proposals[proposalId].blockNum) + proposals[proposalId].balance[voter];
     }
 }
