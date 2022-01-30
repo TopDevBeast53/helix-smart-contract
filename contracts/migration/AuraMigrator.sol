@@ -1,86 +1,87 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '../interfaces/IAuraMigrator.sol';
 import '../interfaces/IAuraFactory.sol';
 import '../interfaces/IAuraV2Router02.sol';
-import '../interfaces/IAuraExchange.sol';
 
 contract AuraMigrator is IAuraMigrator {
-    IAuraFactory immutable factory;
-    IAuraV2Router02 immutable router;
+    IAuraFactory public factory; 
+    IAuraV2Router02 public router;
 
-    /**
-     * @dev Used in calling addLiquidityETH.
-     */
-    struct AddressPair {
-        address token;
-        address to;
+    modifier addressNotZero(address _address) {
+        require(_address != address(0), 'AuraMigrator: Address is Zero');
+        _;
     }
 
-    /**
-     * @dev Used in calling addLiquidityETH.
-     */
-    struct UintPair {
-        uint amount;
-        uint amountMin;
+    constructor(IAuraFactory _factory, IAuraV2Router02 _router) {
+        setFactory(_factory);
+        setRouter(_router);
     }
 
-    constructor(address _factory, address _router) {
-        factory = IAuraFactory(_factory);
-        router = IAuraV2Router02(_router);
-    }
-
-    /**
-     * @dev Handle ETH acceptance from exchange or router.
+    /** 
+     * @dev Migrate liquidity from external DEX to this DEX.
      */
-    receive() external payable {}
+    function migrateLiquidity(address tokenA, address tokenB, address lpToken, address externalRouter) external {
+        // Transfer the caller's LP balance to this contract.
+        uint amount = IERC20(lpToken).balanceOf(msg.sender);
+        IERC(lpToken).transferFrom(msg.sender, address(this), amount);
 
-    /**
-     * @dev Calls the router's function of the same name.
-     *      Structs are used to avoid "Stack Too Deep" error.
-     */
-    function addLiquidityETH(
-        AddressPair memory addressPair, 
-        UintPair memory tokenPair,
-        UintPair memory ethPair,
-        uint deadline
-    ) 
-        private 
-        returns(uint ethAmount, uint tokenAmount)
-    {
-        (ethAmount, tokenAmount, ) = router.addLiquidityETH{value: ethPair.amount}(
-            addressPair.token,
-            tokenPair.amount,
-            tokenPair.amountMin,
-            ethPair.amountMin,
-            addressPair.to,
-            deadline
+        uint prevBalanceTokenA = IERC20(tokenA).balanceOf(address(this));
+        uint prevBalanceTokenB = IERC20(tokenB).balanceOf(address(this));
+
+        // Approve removing amount of lpToken on caller's behalf. 
+        IERC20(lpToken).approve(externalRouter, amount);
+
+        // And remove the liquidity from the external router.
+        IRouter(externalRouter).removeLiquidity(
+            tokenA,             // address of tokenA
+            tokenB,             // address of tokenB
+            amount,             // liquidity amount to remove
+            0,                  // minimum amount of A
+            0,                  // minimum amount of B
+            address(this),      // recipient of underlying assets
+            block.timestamp     // deadline until tx revert
         );
+
+        uint balanceTokenA = IERC20(tokenA).balanceOf(address(this)) - prevBalanceTokenA;
+        uint balanceTokenB = IERC20(tokenB).balanceOf(address(this)) - prevBalanceTokenB;
+
+        // Add this pair to the factory if it's not already there.
+        address auraPair = factory.getPair(tokenA, tokenB);
+        if (auraPair == address(0)) {
+            factory.createPair(tokenA, tokenB);
+        }
+
+        // Approve adding tokens A and B on caller's behalf.
+        IERC20(tokenA).approve(address(router), balanceTokenA);
+        IERC20(tokenB).approve(address(router), balanceTokenB);
+
+        // And add the tokens to aura router.
+        router.addLiquidity(
+            tokenA,             // address of token A
+            tokenB,             // address of token B
+            balanceTokenA,      // desired amount of A
+            balanceTokenB,      // desired amount of B
+            0,                  // minimum amount of A
+            0,                  // minimum amount of B
+            msg.sender,         // liquidity tokens recipient
+            block.timeStamp     // deadline until tx revert
+        ); 
     }
 
     /**
-     * @dev Used to migrate `token`.
+     * @dev Changes the factory address.
      */
-    function migrate(address token, address to, uint tokenAmountMin, uint ethAmountMin, uint deadline) external override {
-        IAuraExchange exchange = IAuraExchange(factory.getExchange(token));
-        uint liquidity = exchange.liquidityOf(msg.sender);
-        require(exchange.transferFrom(msg.sender, address(this), liquidity), 'Migrator: Liquidity transfer failed');
+    function setFactory(address _factory) external onlyOwner addressNotZero(_factory) {
+        factory = IAuraFactory(_factory); 
+    }
 
-        (uint ethAmount1, uint tokenAmount1) = exchange.removeLiquidity(liquidity, 1, 1, type(uint).max);
-        TransferHelper.safeApprove(token, address(router), tokenAmount1);
-
-        AddressPair memory addressPair = AddressPair(token, to);
-        UintPair memory tokenPair = UintPair(tokenAmount1, tokenAmountMin);
-        UintPair memory ethPair = UintPair(ethAmount1, ethAmountMin);
-        (uint ethAmount2, uint tokenAmount2) = addLiquidityETH(addressPair, tokenPair, ethPair, deadline);
-
-        if (tokenAmount1 > tokenAmount2) {
-            TransferHelper.safeApprove(token, address(router), 0);
-            TransferHelper.safeTransfer(token, msg.sender, tokenAmount1 - tokenAmount2);
-        } else if (ethAmount1 > ethAmount2) {
-            TransferHelper.safeTransferETH(msg.sender, ethAmount1 - ethAmount2);
-        }
+    /**
+     * @dev Changes the router address.
+     */
+    function setRouter(address _router) external onlyOwner addressNotZero(_router) {
+        router = IAuraV2Router02(_router);
     }
 }
