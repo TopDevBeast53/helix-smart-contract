@@ -26,27 +26,29 @@ async function main() {
     await initScript(); 
 
     // Initialize the AuraNFT and it's variables.
-    //await initAuraNFT();
+    await initAuraNFT();
 
     // Initialize the SwapFee and it's variables.
-    //await initContract();
+    await initSwapFee();
    
     // Prepare the token pair for swapping.
-    //await preparePair(tokenA, tokenC); 
+    await preparePair(tokenA, tokenB); 
+    await preparePair(tokenA, tokenC); 
+    await preparePair(tokenB, tokenC); 
    
     // Swap the tokens.
     // Note that tokenA and tokenB are already assigned.
     // Note that tokenA is passed twice on purpose to simplify output estimates. 
     let account = await user.getAddress();
     let amount = 15000000;
-    await swap(account, tokenB, tokenA, amount);
+    await swap(account, tokenA, tokenB, amount);
 
     amount = 10000;
-    //await accrueAPFromMarket(account, tokenC, amount);
-    //await accrueAPFromAuction(account, tokenC, amount);
+    await accrueAPFromMarket(account, tokenC, amount);
+    await accrueAPFromAuction(account, tokenC, amount);
 
     // Withdraw tokens.
-    //await withdraw();
+    await withdraw();
 };
 
 /**
@@ -57,7 +59,7 @@ async function initScript() {
     Address = {
         Owner: '0x59201fb8cb2D61118B280c8542127331DD141654',
         User: '0x697419d2B31844ad7Fa4646499f8B81de79D2eB1',
-        SwapFee: '0xAd34Cac48cAC8e8dD0b46134f796F983ACd10bb6',          // Deployed
+        SwapFee: '0xC06a683871fe5B8Bcd098416Cfa5915835440107',          // Deployed
         Factory: '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',          // Deployed
         Router: '0x38433227c7a606ebb9ccb0acfcd7504224659b74',           // Deployed
         AuraToken: '0xdf2b1082ee98b48b5933378c8f58ce2f5aaff135',        // Deployed - Also used for TargetToken
@@ -76,12 +78,6 @@ async function initScript() {
     owner = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
     user = new ethers.Wallet(process.env.USER_PRIVATE_KEY, provider);
 
-    //router = provider.getSigner(Address.Router);
-    router = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-    market = provider.getSigner(Address.Market);
-    auction = provider.getSigner(Address.Auction);
-
-   
     gasLimit = 6721975;
 
     // Set the tokens to test.
@@ -103,7 +99,7 @@ async function initScript() {
 }
 
 async function initAuraNFT() {
-        let accruer = Address.SwapFee;
+    let accruer = Address.SwapFee;
     let isAccruer = await auraNFT.isAccruer(accruer);
     if (!isAccruer) {
         if (verbose) {
@@ -121,6 +117,7 @@ async function initAuraNFT() {
 async function initSwapFee() {
     // NOTE - These function-worthy blocks fail when wrapped into functions.
     // Appears to be a result of asynchronous execution.
+    // Simple solution is to keep them all in single function.
 
     // Set the factory.
     let factoryAddress = await swapFee.factory();
@@ -238,17 +235,36 @@ async function initSwapFee() {
         console.log(`Auction address is ${auctionAddress}`);
     } 
 
+    // Set the contract default reward distribution
+    // If this == 0, then the user can't gain a balance and there will be nothing to withdraw. 
+    // Hence, this enables testing that withdraw works.
+    let defaultRewardDistribution = 50;
+    prevDefaultRewardDistribution = await swapFee.defaultRewardDistribution();
+    if (prevDefaultRewardDistribution != defaultRewardDistribution) {
+        if (verbose) {
+            console.log(`Set default reward distribution to ${defaultRewardDistribution}`);
+        }
+        tx = await swapFee.setDefaultRewardDistribution(defaultRewardDistribution);
+        await tx.wait();
+    }
+    defaultRewardDistribution = await swapFee.defaultRewardDistribution();
+    if (verbose) {
+        console.log(`Contract default reward distribution is ${defaultRewardDistribution}`);
+    }
+
     // Set the users default reward distribution
-    let rewardDistribution = 0;
+    // If this == 0, then the user can't gain a balance and there will be nothing to withdraw. 
+    // Hence, this enables testing that withdraw works.
+    let rewardDistribution = 20;
     let prevRewardDistribution = await swapFee.rewardDistribution[Address.User];
     if (rewardDistribution != 0 && prevRewardDistribution != rewardDistribution) {
         if (verbose) {
             console.log(`Set user reward distribution to ${rewardDistribution}`);
         }
-        tx = await swapFee.setRewardDistribution(rewardDistribution);
+        tx = await swapFee.setUserDefaultDistribution(rewardDistribution);
         await tx.wait();
     }
-    rewardDistribtuion = await swapFee.rewardDistribution[Address.User];
+    rewardDistribution = await swapFee.rewardDistribution[Address.User];
     if (verbose) {
         console.log(`User reward distribution is ${rewardDistribution}`);
     }
@@ -259,8 +275,6 @@ async function initSwapFee() {
  *      sure that they're added the pair exists and is whitelisted.
  */
 async function preparePair(tokenA, tokenB) {
-    swapFee = ISwapFee.attach(Address.SwapFee).connect(owner);
-
     if (verbose) {
         console.log('Prepare tokens for swap');
     } 
@@ -291,7 +305,7 @@ async function preparePair(tokenA, tokenB) {
 async function getPairExists(tokenA, tokenB) {
     const pairExists = await swapFee.pairExists(tokenA, tokenB);
     if (verbose) { 
-        console.log(`(${short(tokenA)}, ${short(tokenB)}) pair exists: ${pairExists}`);
+        console.log(`Token pair (${short(tokenA)}, ${short(tokenB)}) exists: ${pairExists}`);
     }
     return pairExists;
 }
@@ -304,8 +318,8 @@ async function addPair(tokenA, tokenB, percentReward) {
     const addPairTx = await swapFee.addPair(percentReward, pairAddress);
 
     if (verbose) {
-        console.log(`(${short(tokenA)}, ${short(tokenB)}) pair address: ${pairAddress}`);
-        console.log(`(${short(tokenA)}, ${short(tokenB)}) add pair tx hash: ${addPairTx.hash}`);
+        console.log(`Token pair (${short(tokenA)}, ${short(tokenB)}) address: ${pairAddress}`);
+        console.log(`Added token pair (${short(tokenA)}, ${short(tokenB)}) tx hash: ${addPairTx.hash}`);
     }
 
     // Aura-Bnb pair address: 0x046c1E7Dc3C06502195E014E55BC492079731650
@@ -318,7 +332,7 @@ async function addPair(tokenA, tokenB, percentReward) {
 async function whitelistContains(token) {
     const contains = await swapFee.whitelistContains(token);
     if (verbose) {
-        console.log(`whitelist contains ${short(token)}: ${contains}`);
+        console.log(`Whitelist contains token ${short(token)}: ${contains}`);
     }
     return contains;
 }
@@ -327,9 +341,9 @@ async function whitelistContains(token) {
  * @dev Add the token to the whitelist.
  */
 async function whitelistAdd(token) {
-    const wasAdded = await swapFee.whitelistAdd(token, overrides);
+    const wasAdded = await swapFee.whitelistAdd(token);
     if (verbose) { 
-        console.log(`${short(token)} was added to whitelist`); 
+        console.log(`Token ${short(token)} was added to whitelist`); 
     }
 }
 
@@ -348,11 +362,8 @@ function short(str, n=4) {
  */
 async function swap(account, input, output, amount) {
     if (verbose) {
-        console.log(`Swap ${amount} of ${short(input)} for ${short(output)} and credit ${short(account)}.`);
+        console.log(`Swap ${amount} of token ${short(input)} for token ${short(output)} and credit account ${short(account)}.`);
     }
-
-    swapFee = await ISwapFee.attach(Address.SwapFee).connect(owner);
-    auraNFT = await IAuraNFT.attach(Address.AuraNFT).connect(owner);
 
     let prevBalance = await swapFee.getBalance(account);
     let prevAP = await auraNFT.getAccumulatedAP(account);
@@ -388,42 +399,30 @@ async function swap(account, input, output, amount) {
  * @dev Perform a withdrawl.
  */
 async function withdraw() {
-    // Get args: v, r, s
-    /*
-    const tx = {
-        to: Address.SwapFee,
-        value: ethers.utils.parseEther('0'),
-        gasLimit: 6721975,
-        maxPriorityFeePerGas: ethers.utils.parseUnits('5', 'gwei'),
-        maxFeePerGas: ethers.utils.parseUnits('20', 'gwei'),
-        nonce: await wallet.getTransactionCount(),
-        type: 2,
-    };
+    swapFee = await ISwapFee.attach(Address.SwapFee).connect(user);
 
-    const walletTx = await wallet.sendTransaction(tx);
-    console.log("WALLET TX", walletTx);
-    */
-
-    const v = 1;
-    const r = '0x50ac64934255ccc57dd63f965cc503861e725840c8e5abea231debb886f7660b';
-    const s = '0x767070b3011a9b91690e9d1f23b30ff6ba37cc574e772a05e453d5bc3b7824e5';
-
-    // Set msg.sender == default
-    overrides.from = Address.Default;
+    let prevBalance = await swapFee.getBalance(Address.User);
+    let prevTotalMined = await swapFee.totalMined();
 
     // Call withdraw()
-    const result = await swapFee.withdraw(v, r, s, overrides);
-    console.log("RESULT", result);
+    tx = await swapFee.withdraw();
+    await tx.wait();
 
-    // Check that balance[account1] == 0
+    if (verbose) {
+        if (tx) {
+            // Check the change in balance
+            console.log(`Account ${short(Address.User)} previous balance: ${prevBalance}`);
+            const balance = await swapFee.getBalance(Address.User); 
+            console.log(`Account ${short(Address.User)} new balance: ${balance}`);
 
-    // Check that totalMined increased
-
-    // Check that msg.sender account increased
-
-    // Check that Withdraw event emitted
-
-    // Check that returns true
+            // Check the change in total mined
+            console.log(`Previous total mined was: ${prevTotalMined}`);
+            const totalMined = await swapFee.totalMined();
+            console.log(`Total mined is: ${totalMined}`);
+        } else {
+            console.log('Withdraw failed');
+        }
+    }
 }
 
 /**

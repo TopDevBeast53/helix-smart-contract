@@ -12,7 +12,7 @@ async function main() {
     await swapFee.deployTransaction.wait();
     console.log(`SwapFeeRewardsWithAP deployed to ${swapFee.address}`);
     // Deployed by = 0x59201fb8cb2D61118B280c8542127331DD141654
-    // Deployed at = 0xAd34Cac48cAC8e8dD0b46134f796F983ACd10bb6
+    // Deployed at = 0xC06a683871fe5B8Bcd098416Cfa5915835440107
 }
 
 main()
