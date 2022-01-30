@@ -133,15 +133,12 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     /**
      * @dev Withdraw AURA from the caller's contract balance to the caller's address.
      */
-    function withdraw(uint8 v, bytes32 r, bytes32 s) external nonReentrant returns(bool) {
+    function withdraw() external nonReentrant returns(bool) {
         require (totalMined < maxMiningAmount, "All tokens have been mined.");
 
         uint balance = _balances[msg.sender];
         require ((totalMined + balance) <= (phase * maxMiningInPhase), "All tokens in this phase have been mined.");
       
-        // Verify the sender's signature.
-        permit(msg.sender, balance, v, r, s);
-
         if (balance > 0) {
             _balances[msg.sender] -= balance;
             totalMined += balance;
@@ -300,7 +297,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         accrueAuraPoints(account, tokenIn, quantityIn);
     }
 
-    function setRewardDistribution(uint _distribution) external {
+    function setUserDefaultDistribution(uint _distribution) external {
         require(_distribution <= defaultRewardDistribution, "Invalid fee distribution.");
         rewardDistribution[msg.sender] = _distribution;
     }
@@ -311,15 +308,6 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * These functions are used within this contract but would be unsafe or useless
      * if exposed to callers.
      */
-
-    /**
-     * @dev verifies the spenders signature.
-     */
-    function permit(address spender, uint value, uint8 v, bytes32 r, bytes32 s) private {
-        bytes32 message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(spender, value, nonces[spender]++))));
-        address recoveredAddress = ecrecover(message, v, r, s);
-        require(recoveredAddress != address(0) && recoveredAddress == spender, "Invalid signature.");
-    }
 
     /**
      * @dev Accrue AP to AuraNFT `tokenId` equivalent in value to `quantityIn` of `tokenIn`.
@@ -350,6 +338,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      */
 
     function setDefaultRewardDistribution(uint _defaultRewardDistribution) external onlyOwner {
+        require(_defaultRewardDistribution <= 100, "Invalid distribution, can't be greater than 100.");
         defaultRewardDistribution = _defaultRewardDistribution;
     } 
 
