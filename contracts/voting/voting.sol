@@ -1,22 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import '@rari-capital/solmate/src/tokens/ERC20.sol';
 import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
-import "../interfaces/IAuraToken.sol";
+import "../tokens/AuraToken.sol";
 
 contract Voting is ReentrancyGuard{
     
-    IAuraToken private auraToken;
+    AuraToken private auraToken;
 
     // structure for a single proposal.
     struct Proposal {
         bytes32 name;                           // proposal short name
         address creator;                        // creator's address
         uint blockNum;                          // when the proposal was created
-        mapping(address => uint8) decisions;   // decisions[voterAddr] == 1 -> YES, decisions[voterAddr] == 2 -> NO
+        uint endTimestamp;                      // a timestamp for when the voting ends 
+        mapping(address => uint8) decisions;    // decisions[voterAddr] == 1 -> YES, decisions[voterAddr] == 2 -> NO
         address[] voters;                       // array of voters
         mapping(address => uint) balance;       // balance of deposited aura token for each voter into the given proposal
+        mapping(address => uint) withdrawAfterEnd;// withdraw amount for each voter after end of voting
     }
     
     // number of proposals
@@ -27,7 +28,7 @@ contract Voting is ReentrancyGuard{
     event CreateProposal(bytes32 proposalName);
 
     // constructor that create a new Voting to choose one of `proposalNames`.
-    constructor(IAuraToken _auraToken) {
+    constructor(AuraToken _auraToken) {
         auraToken = _auraToken;
     }
 
@@ -35,8 +36,12 @@ contract Voting is ReentrancyGuard{
     
     /**
      * @dev Create proposal
+     *
+     * Requirements:
+     * - EndTimestamp should be later from now.
      */
-    function createProposal(bytes32 proposalName) external {
+    function createProposal(bytes32 proposalName, uint endTimestamp) external {
+        require(endTimestamp > block.timestamp, "Input wrong timestamp");
         Proposal storage p = proposals[numProposals++];
         p.name = proposalName;
         p.creator = msg.sender;
@@ -55,14 +60,15 @@ contract Voting is ReentrancyGuard{
     function vote(uint proposalId, uint withTokenAmount, uint8 decision) external nonReentrant {
         address voter = msg.sender;
         Proposal storage _proposal = proposals[proposalId];
-        require(_proposal.decisions[voter] > 0, "Already voted");
-        require(decision < 3, "Wrong decision number");
+        require(block.timestamp < _proposal.endTimestamp, "Voting is over");
+        require(_proposal.decisions[voter] == 0, "Already voted");
+        require(decision > 0 && decision < 3, "Wrong decision number");
         
         if (withTokenAmount > 0) { 
-            ERC20(address(auraToken)).transferFrom(voter, address(this), withTokenAmount);
+            auraToken.transferFrom(voter, address(this), withTokenAmount);
+            _proposal.balance[voter] += withTokenAmount;
         }
         _proposal.voters.push(voter);
-        _proposal.balance[voter] += withTokenAmount;
         _proposal.decisions[voter] = decision;
     }
 
@@ -85,6 +91,26 @@ contract Voting is ReentrancyGuard{
             }
         }
         return (yesVotes, noVotes);
+    }
+
+    /**
+     * @dev withdraw for each voter from the given proposal
+     *
+     * Requirements:
+     * - Check if voter can withdraw with amount.
+     *     The amount should be less than balance - withdrawAfterEnd which sums up when user withdraw after end of voting.
+     *     So withdrawAfterEnd before end of voting is 0.
+     */
+    function withdraw(uint proposalId, uint amount) external {
+        address voter = msg.sender;
+        Proposal storage _proposal = proposals[proposalId];
+        require(amount > 0 && _proposal.balance[voter] - _proposal.withdrawAfterEnd[voter] >= amount, "Wrong withdraw amount");
+        auraToken.transferFrom(address(this), voter, amount);
+        if (block.timestamp < _proposal.endTimestamp) {
+            _proposal.balance[voter] -= amount;
+        } else {
+            _proposal.withdrawAfterEnd[voter] += amount;
+        }
     }
 
     //Public functions --------------------------------------------------------------------------------------------
