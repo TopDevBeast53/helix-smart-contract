@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 import "../tokens/AuraToken.sol";
+import "../interfaces/IMasterChef.sol";
 import "../interfaces/IMigratorChef.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -14,7 +15,7 @@ import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 // distributed and the community can show to govern itself.
 //
 // Have fun reading it. Hopefully it's bug-free. God bless.
-contract MasterChef is Ownable {
+contract MasterChef is Ownable, IMasterChef {
     // using SafeBEP20 for IBEP20;
 
     // Info of each user.
