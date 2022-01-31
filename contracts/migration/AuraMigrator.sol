@@ -14,7 +14,7 @@ contract AuraMigrator is IAuraMigrator, Ownable {
     }
 
     /** 
-     * @dev Migrate liquidity pair (tokenA, tokeB) from external DEX to this DEX.
+     * @notice Migrate liquidity pair (tokenA, tokeB) from external DEX to this DEX.
      */
     function migrateLiquidity(address tokenA, address tokenB, address lpToken, address externalRouter) external {
         // Transfer the caller's external liquidity balance to this contract.
@@ -28,7 +28,7 @@ contract AuraMigrator is IAuraMigrator, Ownable {
         (uint exBalanceTokenA, uint exBalanceTokenB) = IAuraV2Router02(externalRouter).removeLiquidity(
             tokenA,             // address of tokenA
             tokenB,             // address of tokenB
-            exLiquidity,          // amount of liquidity to remove
+            exLiquidity,        // amount of liquidity to remove
             0,                  // minimum amount of A
             0,                  // minimum amount of B
             address(this),      // recipient of underlying assets
@@ -44,31 +44,28 @@ contract AuraMigrator is IAuraMigrator, Ownable {
         (uint balanceTokenA, uint balanceTokenB, uint liquidity) = router.addLiquidity(
             tokenA,             // address of token A
             tokenB,             // address of token B
-            exBalanceTokenA,      // desired amount of A
-            exBalanceTokenB,      // desired amount of B
+            exBalanceTokenA,    // desired amount of A
+            exBalanceTokenB,    // desired amount of B
             0,                  // minimum amount of A
             0,                  // minimum amount of B
             msg.sender,         // liquidity tokens recipient
             block.timestamp     // deadline until tx revert
         ); 
 
-        // Return any dust to the caller.
+        // Return any left over funds to the caller.
         if (exBalanceTokenA > balanceTokenA) {
-            uint dustTokenA = exBalanceTokenA - balanceTokenA;
-            IERC20(tokenA).transfer(msg.sender, dustTokenA);
+            IERC20(tokenA).transfer(msg.sender, exBalanceTokenA - balanceTokenA);
         }
         if (exBalanceTokenB > balanceTokenB) {
-            uint dustTokenB = exBalanceTokenB - balanceTokenB;
-            IERC20(tokenB).transfer(msg.sender, dustTokenB);
+            IERC20(tokenB).transfer(msg.sender, exBalanceTokenB - balanceTokenB);
         }
         if (exLiquidity > liquidity) {
-            uint dustLiquidity = exLiquidity - liquidity;
-            IERC20(lpToken).transfer(msg.sender, dustLiquidity);
+            IERC20(lpToken).transfer(msg.sender, exLiquidity - liquidity);
         }
     }
 
     /**
-     * @dev Sets the router address.
+     * @notice Sets the router address.
      */
     function setRouter(address _router) public onlyOwner {
         require(_router != address(0), 'AuraMigrator: Router address is Zero');
