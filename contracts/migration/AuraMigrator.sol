@@ -2,12 +2,13 @@
 pragma solidity >=0.8.0;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 import '../interfaces/IAuraMigrator.sol';
-import '../interfaces/IAuraFactory.sol';
+import '../swaps/AuraFactory.sol';
 import '../interfaces/IAuraV2Router02.sol';
 
-contract AuraMigrator is IAuraMigrator {
-    IAuraFactory public factory; 
+contract AuraMigrator is IAuraMigrator, Ownable {
+    AuraFactory public factory; 
     IAuraV2Router02 public router;
 
     modifier addressNotZero(address _address) {
@@ -15,7 +16,7 @@ contract AuraMigrator is IAuraMigrator {
         _;
     }
 
-    constructor(IAuraFactory _factory, IAuraV2Router02 _router) {
+    constructor(address _factory, address _router) {
         setFactory(_factory);
         setRouter(_router);
     }
@@ -26,7 +27,7 @@ contract AuraMigrator is IAuraMigrator {
     function migrateLiquidity(address tokenA, address tokenB, address lpToken, address externalRouter) external {
         // Transfer the caller's LP balance to this contract.
         uint amount = IERC20(lpToken).balanceOf(msg.sender);
-        IERC(lpToken).transferFrom(msg.sender, address(this), amount);
+        IERC20(lpToken).transferFrom(msg.sender, address(this), amount);
 
         uint prevBalanceTokenA = IERC20(tokenA).balanceOf(address(this));
         uint prevBalanceTokenB = IERC20(tokenB).balanceOf(address(this));
@@ -35,7 +36,7 @@ contract AuraMigrator is IAuraMigrator {
         IERC20(lpToken).approve(externalRouter, amount);
 
         // And remove the liquidity from the external router.
-        IRouter(externalRouter).removeLiquidity(
+        IAuraV2Router02(externalRouter).removeLiquidity(
             tokenA,             // address of tokenA
             tokenB,             // address of tokenB
             amount,             // liquidity amount to remove
@@ -67,21 +68,21 @@ contract AuraMigrator is IAuraMigrator {
             0,                  // minimum amount of A
             0,                  // minimum amount of B
             msg.sender,         // liquidity tokens recipient
-            block.timeStamp     // deadline until tx revert
+            block.timestamp     // deadline until tx revert
         ); 
     }
 
     /**
      * @dev Changes the factory address.
      */
-    function setFactory(address _factory) external onlyOwner addressNotZero(_factory) {
-        factory = IAuraFactory(_factory); 
+    function setFactory(address _factory) public onlyOwner addressNotZero(_factory) {
+        factory = AuraFactory(_factory); 
     }
 
     /**
      * @dev Changes the router address.
      */
-    function setRouter(address _router) external onlyOwner addressNotZero(_router) {
+    function setRouter(address _router) public onlyOwner addressNotZero(_router) {
         router = IAuraV2Router02(_router);
     }
 }
