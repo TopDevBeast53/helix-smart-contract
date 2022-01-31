@@ -7,6 +7,8 @@ import '../interfaces/IAuraMigrator.sol';
 import '../interfaces/IAuraV2Router02.sol';
 
 contract AuraMigrator is IAuraMigrator, Ownable {
+    IAuraV2Router02 router;
+
     constructor(address _router) {
         setRouter(_router);
     }
@@ -15,18 +17,18 @@ contract AuraMigrator is IAuraMigrator, Ownable {
      * @dev Migrate liquidity pair (tokenA, tokeB) from external DEX to this DEX.
      */
     function migrateLiquidity(address tokenA, address tokenB, address lpToken, address externalRouter) external {
-        // Transfer the caller's liquidity balance to this contract.
-        uint liquidity = IERC20(lpToken).balanceOf(msg.sender);
-        IERC20(lpToken).transferFrom(msg.sender, address(this), liquidity);
+        // Transfer the caller's external liquidity balance to this contract.
+        uint exLiquidity = IERC20(lpToken).balanceOf(msg.sender);
+        IERC20(lpToken).transferFrom(msg.sender, address(this), exLiquidity);
 
-        // Approve external router to spend up to `liquidity` amount of the liquidity.
-        IERC20(lpToken).approve(externalRouter, liquidity);
+        // Approve external router to spend up to `exLiquidity` amount of the liquidity.
+        IERC20(lpToken).approve(externalRouter, exLiquidity);
 
         // Remove the token balances from the external exchange.
         (uint exBalanceTokenA, uint exBalanceTokenB) = IAuraV2Router02(externalRouter).removeLiquidity(
             tokenA,             // address of tokenA
             tokenB,             // address of tokenB
-            liquidity,          // amount of liquidity to remove
+            exLiquidity,          // amount of liquidity to remove
             0,                  // minimum amount of A
             0,                  // minimum amount of B
             address(this),      // recipient of underlying assets
@@ -42,8 +44,8 @@ contract AuraMigrator is IAuraMigrator, Ownable {
         (uint balanceTokenA, uint balanceTokenB, uint liquidity) = router.addLiquidity(
             tokenA,             // address of token A
             tokenB,             // address of token B
-            balanceTokenA,      // desired amount of A
-            balanceTokenB,      // desired amount of B
+            exBalanceTokenA,      // desired amount of A
+            exBalanceTokenB,      // desired amount of B
             0,                  // minimum amount of A
             0,                  // minimum amount of B
             msg.sender,         // liquidity tokens recipient
@@ -59,16 +61,17 @@ contract AuraMigrator is IAuraMigrator, Ownable {
             uint dustTokenB = exBalanceTokenB - balanceTokenB;
             IERC20(tokenB).transfer(msg.sender, dustTokenB);
         }
-        if (liquidity > 0) {
-            IERC20(liquidity).transfer(msg.sender, liquidity);
+        if (exLiquidity > liquidity) {
+            uint dustLiquidity = exLiquidity - liquidity;
+            IERC20(lpToken).transfer(msg.sender, dustLiquidity);
         }
     }
 
     /**
      * @dev Sets the router address.
      */
-    function setRouter(address _router) public onlyOwner addressNotZero(_router) {
-        require(_address != address(0), 'AuraMigrator: Router address is Zero');
+    function setRouter(address _router) public onlyOwner {
+        require(_router != address(0), 'AuraMigrator: Router address is Zero');
         router = IAuraV2Router02(_router);
     }
 }
