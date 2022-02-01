@@ -19,7 +19,7 @@
  const AuraTokenAddress = '0xdf2b1082ee98b48b5933378c8f58ce2f5aaff135';
  const DeveloperAddress = '0x59201fb8cb2D61118B280c8542127331DD141654';
  const TreasuryAddress = '0x59201fb8cb2D61118B280c8542127331DD141654';
- const MasterChefAddress = ''; // <- update me
+ const MasterChefAddress = '0x3E54EdDd13b2909A4047188A1C7b2e4BAF7b656c'; // <- update me
  
  async function main() {
  
