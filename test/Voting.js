@@ -1,6 +1,5 @@
-const { time } = require('@openzeppelin/test-helpers');
+const { expectRevert, time } = require('@openzeppelin/test-helpers');
 const {BigNumber, utils} = require("ethers");
-
 var chai = require('chai');
 var assert = chai.assert;
 var chaiAsPromised = require('chai-as-promised');
@@ -47,5 +46,41 @@ contract('Voting', ([alice, bob, carol, deployer]) => {
             assert.equal((await this.voting.proposals(1)).creator.toString(), bob.toString());
         });
     });
+    describe("Voting", async () => {
+        it('vote on a proposal by `alice`', async () => {
+            let nowTimestamp = parseInt((await time.latest()).toString());
+            await this.voting.createProposal(utils.formatBytes32String("proposal_0"), nowTimestamp+100, {from: alice});
+            
+            //Wrong decision value
+            await expectRevert.unspecified(this.voting.vote(0, expandTo18Decimals(500), 0, {from: alice}));
+            
+            await this.auraToken.approve(this.voting.address, expandTo18Decimals(500), { from: alice });
+            //vote with `YES`
+            await this.voting.vote(0, expandTo18Decimals(500), 1, {from: alice});
+            //check the left balance of alice once voted with deposit AuraToken
+            assert.equal((await this.auraToken.balanceOf(alice)).toString(), expandTo18Decimals(500).toString());
+            assert.equal((await this.voting.getDecision(0, alice)).toString(), "1");
 
+            //Avoid voting twice for one proposal
+            await expectRevert.unspecified(this.voting.vote(0, expandTo18Decimals(200), 1, {from: alice}));
+        });
+        it('result proposal', async () => {
+            let nowTimestamp = parseInt((await time.latest()).toString());
+            await this.voting.createProposal(utils.formatBytes32String("proposal_0"), nowTimestamp+100, {from: alice});
+            
+            //alice votes 'YES' with 800 tokens
+            await this.auraToken.approve(this.voting.address, expandTo18Decimals(800), { from: alice });
+            await this.voting.vote(0, expandTo18Decimals(800), 1, {from: alice});
+            //bob votes 'YES' with 500 tokens
+            await this.auraToken.approve(this.voting.address, expandTo18Decimals(500), { from: bob });
+            await this.voting.vote(0, expandTo18Decimals(500), 1, {from: bob});
+            //carol votes 'NO' with 900 tokens
+            await this.auraToken.approve(this.voting.address, expandTo18Decimals(900), { from: carol });
+            await this.voting.vote(0, expandTo18Decimals(900), 2, {from: carol});
+            
+            let ret = await this.voting.resultProposal(0);
+            assert.equal(ret[0].toString(), expandTo18Decimals(1300).toString());
+            assert.equal(ret[1].toString(), expandTo18Decimals(900).toString());
+        });
+    });
 });

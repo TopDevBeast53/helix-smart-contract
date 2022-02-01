@@ -113,6 +113,21 @@ contract Voting is ReentrancyGuard{
         }
     }
 
+    /**
+     * @dev See decision by `proposalId` & `voter`
+     * NOTE: return value is 0 => `not voted yet1, 1 => `YES`, 2 => `NO`
+     */
+    function getDecision(uint proposalId, address voter) external view returns (uint8) {
+        return proposals[proposalId].decisions[voter];
+    }
+
+    /**
+     * @dev See voters by `proposalId`
+     */
+    function voters(uint proposalId) external view returns (address[] memory) {
+        return proposals[proposalId].voters;
+    }
+    
     //Public functions --------------------------------------------------------------------------------------------
 
     /**
