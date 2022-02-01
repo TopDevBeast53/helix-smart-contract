@@ -5,6 +5,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '../interfaces/IAuraMigrator.sol';
 import '../interfaces/IAuraV2Router02.sol';
+import '../interfaces/IExternalRouter.sol';
 
 contract AuraMigrator is IAuraMigrator, Ownable {
     IAuraV2Router02 router;
@@ -25,7 +26,7 @@ contract AuraMigrator is IAuraMigrator, Ownable {
         IERC20(lpToken).approve(externalRouter, exLiquidity);
 
         // Remove the token balances from the external exchange.
-        (uint exBalanceTokenA, uint exBalanceTokenB) = IAuraV2Router02(externalRouter).removeLiquidity(
+        (uint exBalanceTokenA, uint exBalanceTokenB) = IExternalRouter(externalRouter).removeLiquidity(
             tokenA,             // address of tokenA
             tokenB,             // address of tokenB
             exLiquidity,        // amount of liquidity to remove
