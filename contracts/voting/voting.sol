@@ -46,7 +46,7 @@ contract Voting is ReentrancyGuard{
         p.name = proposalName;
         p.creator = msg.sender;
         p.blockNum = block.number;
-
+        p.endTimestamp = endTimestamp;
         emit CreateProposal(proposalName);
     }
 
@@ -101,10 +101,10 @@ contract Voting is ReentrancyGuard{
      *     The amount should be less than balance - withdrawAfterEnd which sums up when user withdraw after end of voting.
      *     So withdrawAfterEnd before end of voting is 0.
      */
-    function withdraw(uint proposalId, uint amount) external {
+    function withdraw(uint proposalId, uint amount) external nonReentrant {
         address voter = msg.sender;
         Proposal storage _proposal = proposals[proposalId];
-        require(amount > 0 && _proposal.balance[voter] - _proposal.withdrawAfterEnd[voter] >= amount, "Wrong withdraw amount");
+        require(amount > 0 && _proposal.balance[voter] >= _proposal.withdrawAfterEnd[voter] + amount, "Wrong withdraw amount");
         auraToken.transferFrom(address(this), voter, amount);
         if (block.timestamp < _proposal.endTimestamp) {
             _proposal.balance[voter] -= amount;
