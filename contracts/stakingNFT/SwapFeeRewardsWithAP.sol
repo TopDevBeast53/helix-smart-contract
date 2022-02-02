@@ -77,43 +77,23 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     mapping(address => uint) public _balances;
     mapping(address => uint) public nonces;
 
-    event NewAuraNFT(IAuraNFT auraNFT);
-    event NewOracle(IOracle oracle);
-
     event Rewarded(address account, address input, address output, uint amount, uint quantity);
     event Withdraw(address user, uint amount);
 
-    event NewPhase(uint phase);
-    event NewPhaseAP(uint phaseAP);
+    event NewFactory(address factory);
     event NewRouter(address router);
+    event NewTargetToken(address targetToken);
+    event NewTargetAPToken(address targetAPToken);
+
+    event NewOracle(IOracle oracle);
+    event NewAuraNFT(IAuraNFT auraNFT);
+    event NewAuraToken(IAuraToken auraToken);
+
     event NewMarket(address market);
     event NewAuction(address auction);
-    event NewFactory(address factory);
 
-    constructor(
-        address _factory,
-        address _router, 
-        address _targetToken,
-        address _targetAPToken,
-        IOracle _oracle,
-        IAuraNFT _auraNFT,
-        IAuraToken _auraToken
-    ) {
-        require(
-            _factory != address(0)
-            && _router != address(0)
-            && _targetToken != address(0)
-            && _targetAPToken != address(0),
-            "Address cannot be zero."
-        );
-        factory = _factory;
-        router = _router;
-        targetToken = _targetToken;
-        targetAPToken = _targetAPToken;
-        oracle = _oracle;
-        auraNFT = _auraNFT;
-        auraToken = _auraToken;
-    }
+    event NewPhase(uint phase);
+    event NewPhaseAP(uint phaseAP);
 
     /* 
      * EXTERNAL CORE 
@@ -153,15 +133,12 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     /**
      * @dev Withdraw AURA from the caller's contract balance to the caller's address.
      */
-    function withdraw(uint8 v, bytes32 r, bytes32 s) external nonReentrant returns(bool) {
+    function withdraw() external nonReentrant returns(bool) {
         require (totalMined < maxMiningAmount, "All tokens have been mined.");
 
         uint balance = _balances[msg.sender];
         require ((totalMined + balance) <= (phase * maxMiningInPhase), "All tokens in this phase have been mined.");
       
-        // Verify the sender's signature.
-        permit(msg.sender, balance, v, r, s);
-
         if (balance > 0) {
             _balances[msg.sender] -= balance;
             totalMined += balance;
@@ -320,7 +297,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         accrueAuraPoints(account, tokenIn, quantityIn);
     }
 
-    function setRewardDistribution(uint _distribution) external {
+    function setUserDefaultDistribution(uint _distribution) external {
         require(_distribution <= defaultRewardDistribution, "Invalid fee distribution.");
         rewardDistribution[msg.sender] = _distribution;
     }
@@ -333,15 +310,6 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      */
 
     /**
-     * @dev verifies the spenders signature.
-     */
-    function permit(address spender, uint value, uint8 v, bytes32 r, bytes32 s) private {
-        bytes32 message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(spender, value, nonces[spender]++))));
-        address recoveredAddress = ecrecover(message, v, r, s);
-        require(recoveredAddress != address(0) && recoveredAddress == spender, "Invalid signature.");
-    }
-
-    /**
      * @dev Accrue AP to AuraNFT `tokenId` equivalent in value to `quantityIn` of `tokenIn`.
      */
     function accrueAuraPoints(address account, address tokenIn, uint quantityIn) private {
@@ -349,7 +317,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         if (quantity > 0) {
             totalAccruedAP += quantity;
             if (totalAccruedAP <= phaseAP * maxAccruedAPInPhase) {
-                auraNFT.accrueAuraPoints(account, quantity);
+                auraNFT.accruePoints(account, quantity);
             }
         }
     }
@@ -370,6 +338,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      */
 
     function setDefaultRewardDistribution(uint _defaultRewardDistribution) external onlyOwner {
+        require(_defaultRewardDistribution <= 100, "Invalid distribution, can't be greater than 100.");
         defaultRewardDistribution = _defaultRewardDistribution;
     } 
 
@@ -383,6 +352,36 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         require(_router != address(0), "Router is the zero address.");
         router = _router;
         emit NewRouter(_router);
+    }
+
+    function setTargetToken(address _targetToken) external onlyOwner {
+        require(_targetToken != address(0), "TargetToken is the zero address.");
+        targetToken = _targetToken;
+        emit NewTargetToken(_targetToken);
+    }
+
+    function setTargetAPToken(address _targetAPToken) external onlyOwner {
+        require(_targetAPToken != address(0), "TargetAPToken is the zero address.");
+        targetAPToken = _targetAPToken;
+        emit NewTargetAPToken(_targetAPToken);
+    }
+
+    function setOracle(IOracle _oracle) external onlyOwner {
+        require(address(_oracle) != address(0), "Oracle is the zero address.");
+        oracle = _oracle;
+        emit NewOracle(_oracle);
+    }
+
+    function setAuraNFT(IAuraNFT _auraNFT) external onlyOwner {
+        require(address(_auraNFT) != address(0), "AuraNFT is the zero address.");
+        auraNFT = _auraNFT;
+        emit NewAuraNFT(_auraNFT);
+    }
+
+    function setAuraToken(IAuraToken _auraToken) external onlyOwner {
+        require(address(_auraToken) != address(0), "AuraToken is the zero address.");
+        auraToken = _auraToken;
+        emit NewAuraToken(_auraToken);
     }
 
     function setMarket(address _market) external onlyOwner {
@@ -405,18 +404,6 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     function setPhaseAP(uint _phaseAP) external onlyOwner {
         phaseAP = _phaseAP;
         emit NewPhaseAP(_phaseAP);
-    }
-
-    function setOracle(IOracle _oracle) external onlyOwner {
-        require(address(_oracle) != address(0), "Oracle is the zero address.");
-        oracle = _oracle;
-        emit NewOracle(_oracle);
-    }
-
-    function setAuraNFT(IAuraNFT _auraNFT) external onlyOwner {
-        require(address(_auraNFT) != address(0), "AuraNFT is the zero address.");
-        auraNFT = _auraNFT;
-        emit NewAuraNFT(_auraNFT);
     }
 
     function addPair(uint _percentReward, address _pair) external onlyOwner {

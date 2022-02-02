@@ -85,6 +85,9 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         bool isStaked;
         // Timestamp the token is minted(block's timestamp)
         uint createTimestamp;
+
+        // ID of the bridged NFT.
+        string externalTokenID;
     }
 
     // map token info by token ID : TokenId => Token
@@ -152,6 +155,18 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         _safeMint(to, tokenId);
     }
 
+    // Mints external NFT
+    function mintExternal(address to, string calldata externalTokenID) public onlyMinter nonReentrant {
+        require(to != address(0), "Address can not be zero");
+        _lastTokenId += 1;
+        uint tokenId = _lastTokenId;
+        _tokens[tokenId].auraPoints = _initialAuraPoints;
+        _tokens[tokenId].createTimestamp = block.timestamp;
+        _tokens[tokenId].level = 1;
+        _tokens[tokenId].externalTokenID = externalTokenID;
+        _safeMint(to, tokenId);
+    }
+
     function burn(uint256 tokenId) public nonReentrant {
         _burn(tokenId);
     }
@@ -166,7 +181,25 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         super.approve(to, tokenId);
     }
 
+    /**
+     * @dev Override funtion to avoid the transfer of the staked token
+     */
+    function transferFrom(address from, address to, uint256 tokenId) public override {
+        if (_tokens[tokenId].isStaked == true) {
+            revert("ERC721: Token is staked");
+        }
+        super.transferFrom(from, to, tokenId);
+    }
+
     //External functions --------------------------------------------------------------------------------------------
+
+    /**
+     * @dev To get the last token Id
+     */
+    function getLastTokenId() external view returns (uint) {
+        return _lastTokenId;
+    }
+
     /**
      * @dev External funtion to upgrade `tokenId` to the next level
      *
@@ -177,8 +210,6 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
      * - The current held AuraPoints amount must be sufficient.
      */
     function levelUp(uint tokenId) external onlyStaker {
-
-        require(ownerOf[tokenId] == msg.sender, "Not owner of token");
         Token storage token = _tokens[tokenId];
         uint curLevel = token.level;
         require(curLevel > 0 && curLevel < 7, "Token level is not valid");
