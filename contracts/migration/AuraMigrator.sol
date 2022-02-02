@@ -14,19 +14,26 @@ contract AuraMigrator is IAuraMigrator, Ownable {
         setRouter(_router);
     }
 
+    uint public exBalanceTokenA;
+    uint public exBalanceTokenB;
+    uint public balanceTokenA;
+    uint public balanceTokenB;
+    uint public liquidity;
+
     /** 
      * @notice Migrate liquidity pair (tokenA, tokeB) from external DEX to this DEX.
      */
     function migrateLiquidity(address tokenA, address tokenB, address lpToken, address externalRouter) external {
         // Transfer the caller's external liquidity balance to this contract.
         uint exLiquidity = IERC20(lpToken).balanceOf(msg.sender);
-        IERC20(lpToken).transferFrom(msg.sender, address(this), exLiquidity);
+        require(exLiquidity == 99000, 'exLiquidity != 99000');
+        require(IERC20(lpToken).transferFrom(msg.sender, address(this), exLiquidity), 'lp transfer from failed');
 
         // Approve external router to spend up to `exLiquidity` amount of the liquidity.
-        IERC20(lpToken).approve(externalRouter, exLiquidity);
+        require(IERC20(lpToken).approve(externalRouter, exLiquidity), 'lp approve ex liquidity failed');
 
         // Remove the token balances from the external exchange.
-        (uint exBalanceTokenA, uint exBalanceTokenB) = IExternalRouter(externalRouter).removeLiquidity(
+        (exBalanceTokenA, exBalanceTokenB) = IExternalRouter(externalRouter).removeLiquidity(
             tokenA,             // address of tokenA
             tokenB,             // address of tokenB
             exLiquidity,        // amount of liquidity to remove
@@ -37,12 +44,12 @@ contract AuraMigrator is IAuraMigrator, Ownable {
         );
 
         // Approve this router to spend up to the external token balances.
-        IERC20(tokenA).approve(address(router), exBalanceTokenA);
-        IERC20(tokenB).approve(address(router), exBalanceTokenB);
+        require(IERC20(tokenA).approve(address(router), exBalanceTokenA), 'token A approve router failed');
+        require(IERC20(tokenB).approve(address(router), exBalanceTokenB), 'token B approve router failed');
 
         // Add the external token balances to this exchange.
         // Note: addLiquidity handles adding token pair to factory.
-        (uint balanceTokenA, uint balanceTokenB, uint liquidity) = router.addLiquidity(
+        (balanceTokenA, balanceTokenB, liquidity) = router.addLiquidity(
             tokenA,             // address of token A
             tokenB,             // address of token B
             exBalanceTokenA,    // desired amount of A
