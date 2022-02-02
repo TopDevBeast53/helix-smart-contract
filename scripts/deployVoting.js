@@ -8,11 +8,7 @@
  * Workflow:
  * 
  *      1. Deploy `Voting` contract.
- *      2. Deploy `AuraChefNFT` contract.
- *         - Set `AuraNFT` address deployed to `IAuraNFT` of `AuraChefNFT`.
- *         - Set `AuraChefNFT` contract to staker of `AuraNFT`.
- *         - Set `deployer` to minter of `AuraNFT`, Owner(deployer) can add another man later.
- *         - Add RewardToken of `AuraChefNFT` with WBNB
+ *         - Set `AuraToken` address to `auraToken` of `AuraChefNFT`.
  */
  const { ethers, network } = require(`hardhat`);
  
