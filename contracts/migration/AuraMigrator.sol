@@ -8,32 +8,37 @@ import '../interfaces/IAuraV2Router02.sol';
 import '../interfaces/IExternalRouter.sol';
 
 contract AuraMigrator is IAuraMigrator, Ownable {
-    IAuraV2Router02 router;
+    IAuraV2Router02 public router;
 
     constructor(address _router) {
         setRouter(_router);
     }
 
-    uint public exBalanceTokenA;
-    uint public exBalanceTokenB;
-    uint public balanceTokenA;
-    uint public balanceTokenB;
-    uint public liquidity;
+    event MigrateLiquidity(
+        address indexed sender,             // Migrate liquidity function caller
+        address indexed externalRouter,     // External DEX's router
+        uint exLiquidity,                   // Liquidity in external DEX
+        uint exBalanceTokenA,               // Token A balance in external DEX
+        uint exBalanceTokenB,               // Token B balance in external DEX
+        uint liquidity,                     // Liquidity moved to DEX
+        uint balanceTokenA,                 // Token A balance moved to DEX
+        uint balanceTokenB                  // Token B balance moved to DEX
+    );
 
     /** 
-     * @notice Migrate liquidity pair (tokenA, tokeB) from external DEX to this DEX.
+     * @notice Migrate liquidity pair (tokenA, tokenB) from external DEX to this DEX.
      */
     function migrateLiquidity(address tokenA, address tokenB, address lpToken, address externalRouter) external {
         // Transfer the caller's external liquidity balance to this contract.
         uint exLiquidity = IERC20(lpToken).balanceOf(msg.sender);
-        require(exLiquidity == 99000, 'exLiquidity != 99000');
-        require(IERC20(lpToken).transferFrom(msg.sender, address(this), exLiquidity), 'lp transfer from failed');
+        require(exLiquidity > 0, 'migrateLiquidity: caller has no lp balance');
+        require(IERC20(lpToken).transferFrom(msg.sender, address(this), exLiquidity), 'migrateLiquidity: lp transfer from failed');
 
         // Approve external router to spend up to `exLiquidity` amount of the liquidity.
-        require(IERC20(lpToken).approve(externalRouter, exLiquidity), 'lp approve ex liquidity failed');
+        require(IERC20(lpToken).approve(externalRouter, exLiquidity), 'migrateLiquidity: external lp approval failed');
 
         // Remove the token balances from the external exchange.
-        (exBalanceTokenA, exBalanceTokenB) = IExternalRouter(externalRouter).removeLiquidity(
+        (uint exBalanceTokenA, uint exBalanceTokenB) = IExternalRouter(externalRouter).removeLiquidity(
             tokenA,             // address of tokenA
             tokenB,             // address of tokenB
             exLiquidity,        // amount of liquidity to remove
@@ -44,12 +49,12 @@ contract AuraMigrator is IAuraMigrator, Ownable {
         );
 
         // Approve this router to spend up to the external token balances.
-        require(IERC20(tokenA).approve(address(router), exBalanceTokenA), 'token A approve router failed');
-        require(IERC20(tokenB).approve(address(router), exBalanceTokenB), 'token B approve router failed');
+        require(IERC20(tokenA).approve(address(router), exBalanceTokenA), 'migrateLiquidity: token A router approval failed');
+        require(IERC20(tokenB).approve(address(router), exBalanceTokenB), 'migrateLiquidity: token B router approval failed');
 
-        // Add the external token balances to this exchange.
+        // Move the external token balances to this exchange.
         // Note: addLiquidity handles adding token pair to factory.
-        (balanceTokenA, balanceTokenB, liquidity) = router.addLiquidity(
+        (uint balanceTokenA, uint balanceTokenB, uint liquidity) = router.addLiquidity(
             tokenA,             // address of token A
             tokenB,             // address of token B
             exBalanceTokenA,    // desired amount of A
@@ -62,18 +67,30 @@ contract AuraMigrator is IAuraMigrator, Ownable {
 
         // Return any left over funds to the caller.
         if (exBalanceTokenA > balanceTokenA) {
-            IERC20(tokenA).transfer(msg.sender, exBalanceTokenA - balanceTokenA);
+            require(IERC20(tokenA).transfer(msg.sender, exBalanceTokenA - balanceTokenA), 'migrateLiquidity: transfer tokenA failed');
         }
         if (exBalanceTokenB > balanceTokenB) {
-            IERC20(tokenB).transfer(msg.sender, exBalanceTokenB - balanceTokenB);
+            require(IERC20(tokenB).transfer(msg.sender, exBalanceTokenB - balanceTokenB), 'migrateLiquidity: transfer tokenB failed');
         }
         if (exLiquidity > liquidity) {
-            IERC20(lpToken).transfer(msg.sender, exLiquidity - liquidity);
+            require(IERC20(lpToken).transfer(msg.sender, exLiquidity - liquidity), 'migrateLiquidity: transfer liquidity failed');
         }
+
+        // Log relevant migration details.
+        emit MigrateLiquidity(
+            msg.sender,
+            externalRouter,
+            exLiquidity,
+            exBalanceTokenA,
+            exBalanceTokenB,
+            liquidity,
+            balanceTokenA,
+            balanceTokenB
+        );
     }
 
     /**
-     * @notice Sets the router address.
+     * @notice Set the router address.
      */
     function setRouter(address _router) public onlyOwner {
         require(_router != address(0), 'AuraMigrator: Router address is Zero');
