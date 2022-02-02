@@ -85,6 +85,9 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         bool isStaked;
         // Timestamp the token is minted(block's timestamp)
         uint createTimestamp;
+
+        // ID of the bridged NFT.
+        string externalTokenID;
     }
 
     // map token info by token ID : TokenId => Token
@@ -149,6 +152,18 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         _tokens[tokenId].auraPoints = _initialAuraPoints;
         _tokens[tokenId].createTimestamp = block.timestamp;
         _tokens[tokenId].level = 1;
+        _safeMint(to, tokenId);
+    }
+
+    // Mints external NFT
+    function mintExternal(address to, string calldata externalTokenID) public onlyMinter nonReentrant {
+        require(to != address(0), "Address can not be zero");
+        _lastTokenId += 1;
+        uint tokenId = _lastTokenId;
+        _tokens[tokenId].auraPoints = _initialAuraPoints;
+        _tokens[tokenId].createTimestamp = block.timestamp;
+        _tokens[tokenId].level = 1;
+        _tokens[tokenId].externalTokenID = externalTokenID;
         _safeMint(to, tokenId);
     }
 
