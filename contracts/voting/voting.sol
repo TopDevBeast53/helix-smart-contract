@@ -105,7 +105,7 @@ contract Voting is ReentrancyGuard{
         address voter = msg.sender;
         Proposal storage _proposal = proposals[proposalId];
         require(amount > 0 && _proposal.balance[voter] >= _proposal.withdrawAfterEnd[voter] + amount, "Wrong withdraw amount");
-        auraToken.transferFrom(address(this), voter, amount);
+        auraToken.transfer(voter, amount);
         if (block.timestamp < _proposal.endTimestamp) {
             _proposal.balance[voter] -= amount;
         } else {

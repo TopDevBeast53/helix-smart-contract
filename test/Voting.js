@@ -79,8 +79,44 @@ contract('Voting', ([alice, bob, carol, deployer]) => {
             await this.voting.vote(0, expandTo18Decimals(900), 2, {from: carol});
             
             let ret = await this.voting.resultProposal(0);
-            assert.equal(ret[0].toString(), expandTo18Decimals(1300).toString());
-            assert.equal(ret[1].toString(), expandTo18Decimals(900).toString());
+            assert.equal(ret[0].toString(), expandTo18Decimals(1300).toString());//YES votes
+            assert.equal(ret[1].toString(), expandTo18Decimals(900).toString());//NO votes
+        });
+    });
+    describe("Withdrawal by holder", async () => {
+        it('if an user withdraw before end of voting, number of votes will be changed', async () => {
+            let nowTimestamp = parseInt((await time.latest()).toString());
+            await this.voting.createProposal(utils.formatBytes32String("proposal_0"), nowTimestamp+100, {from: alice});
+            
+            await this.auraToken.approve(this.voting.address, expandTo18Decimals(500), { from: alice });
+            await this.voting.vote(0, expandTo18Decimals(500), 1, {from: alice});//vote with YES
+            assert.equal((await this.auraToken.balanceOf(this.voting.address)).toString(), expandTo18Decimals(500).toString());
+
+            let ret = await this.voting.resultProposal(0);
+            assert.equal(ret[0].toString(), expandTo18Decimals(500).toString());//YES votes
+
+            await this.voting.withdraw(0, expandTo18Decimals(400), {from: alice})
+            ret = await this.voting.resultProposal(0);
+            assert.equal(ret[0].toString(), expandTo18Decimals(100).toString());//YES votes changed
+
+            //Avoid withdraw extra amount
+            await expectRevert.unspecified(this.voting.withdraw(0, expandTo18Decimals(400), {from: alice}));
+        });
+        it('if an user withdraw after end of voting, number of votes will be not changed', async () => {
+            let nowTimestamp = parseInt((await time.latest()).toString());
+            await this.voting.createProposal(utils.formatBytes32String("proposal_0"), nowTimestamp+3, {from: alice});
+            
+            await this.auraToken.approve(this.voting.address, expandTo18Decimals(500), { from: alice });
+            await this.voting.vote(0, expandTo18Decimals(500), 1, {from: alice});//vote with YES
+            assert.equal((await this.auraToken.balanceOf(this.voting.address)).toString(), expandTo18Decimals(500).toString());
+
+            let ret = await this.voting.resultProposal(0);
+            assert.equal(ret[0].toString(), expandTo18Decimals(500).toString());//YES votes
+            //Time is overed to endTimestamp
+            await time.increaseTo(nowTimestamp+4);
+            await this.voting.withdraw(0, expandTo18Decimals(400), {from: alice})
+            ret = await this.voting.resultProposal(0);
+            assert.equal(ret[0].toString(), expandTo18Decimals(500).toString());//YES votes not changed
         });
     });
 });
