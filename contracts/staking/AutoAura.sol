@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
-contract AuraAura is Ownable, Pausable {
+contract AutoAura is Ownable, Pausable {
 
     struct UserInfo {
         uint256 shares; // number of shares for a user
