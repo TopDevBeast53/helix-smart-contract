@@ -1,4 +1,5 @@
-import { expect, use } from 'chai'; import { solidity, MockProvider, createFixtureLoader, deployContract } from 'legacy-ethereum-waffle';
+import { expect, use } from 'chai'; 
+import { solidity, MockProvider, createFixtureLoader, deployContract } from 'legacy-ethereum-waffle';
 import { Contract } from 'legacy-ethers';
 import { MaxUint256 } from 'legacy-ethers/constants';
 import { BigNumber, bigNumberify } from 'legacy-ethers/utils';
@@ -60,18 +61,34 @@ describe('AuraMigrator', () => {
 
         const balanceOfPair = await pair.balanceOf(wallet.address);
         expect(balanceOfPair).to.eq(99000);
-    
-        await migrator.migrateLiquidity(
-            token0.address,
-            token1.address,
-            pair.address,
-            externalRouter.address
-        );
 
-        console.log("EX BAL TOKEN A", (await migrator.exBalanceTokenA()).toString());
-        console.log("EX BAL TOKEN B", (await migrator.exBalanceTokenB()).toString());
-        console.log("BAL TOKEN A", (await migrator.balanceTokenA()).toString());
-        console.log("BAL TOKEN B", (await migrator.balanceTokenB()).toString());
-        console.log("LIQUIDITY", (await migrator.liquidity()).toString());
+        // Assert that the MigrateLiquidity event is emitted.
+        await expect(migrator.migrateLiquidity(
+            token0.address,                 // tokenA
+            token1.address,                 // tokenB
+            pair.address,                   // lpToken
+            externalRouter.address          // externalRouter
+        ))
+            .to.emit(migrator, "MigrateLiquidity")
+            .withArgs(
+                wallet.address,             // Migrate liquidity function caller 
+                externalRouter.address,     // External DEX's router 
+                99000,                      // Liquidity in external DEX
+                99000,                      // Token A balance in external DEX
+                99000,                      // Token B balance in external DEX
+                99000,                      // Liquidity moved to DEX
+                99000,                      // Token A balance moved to DEX
+                99000,                      // Token B balance moved to DEX
+            );
+    });
+
+    it('migrator: set the router', async () => {
+        const prevRouter = await migrator.router();
+        const newRouter = '0xEDAAd9a587E8887685f69a698F4929E01A6A5854';    // Arbitrary address.
+
+        await migrator.setRouter(newRouter);
+
+        expect(await migrator.router()).to.not.eq(prevRouter);
+        expect(await migrator.router()).to.eq(newRouter);
     });
 });
