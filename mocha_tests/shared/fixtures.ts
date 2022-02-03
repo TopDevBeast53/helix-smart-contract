@@ -66,8 +66,10 @@ interface FullExchangeFixture {
   chef: Contract
   auraToken: Contract
   migrator: Contract
+  externalFactory: Contract
   externalRouter: Contract
 }
+
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
   // deploy tokens
@@ -87,9 +89,12 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
   const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
   const pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
 
-  // Add migrator and an external exchange.
+  // Add migrator.
   const migrator = await deployContract(wallet, AuraMigrator, [router.address], overrides);
-  const externalRouter = await deployContract(wallet, AuraRouterV1, [factory.address, WETH.address], overrides)
+
+  // Add external DEX components for migrator to use.
+  const externalFactory = await deployContract(wallet, AuraFactory, [wallet.address], overrides);
+  const externalRouter = await deployContract(wallet, AuraRouterV1, [externalFactory.address, WETH.address], overrides);
 
   const auraToken = await deployContract(wallet, AuraToken, [], overrides)
 
@@ -124,6 +129,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
       chef,
       auraToken,
       migrator, 
+      externalFactory,
       externalRouter,
   }
 }
