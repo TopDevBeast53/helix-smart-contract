@@ -28,7 +28,7 @@ contract AuraMigrator is IAuraMigrator, Ownable {
     /** 
      * @notice Migrate liquidity pair (tokenA, tokenB) from external DEX to this DEX.
      */
-    function migrateLiquidity(address tokenA, address tokenB, address lpToken, address externalRouter) external {
+    function migrateLiquidity(address tokenA, address tokenB, address lpToken, address externalRouter) external returns(bool) {
         // Transfer the caller's external liquidity balance to this contract.
         uint exLiquidity = IERC20(lpToken).balanceOf(msg.sender);
         require(exLiquidity > 0, 'migrateLiquidity: caller has no lp balance');
@@ -65,17 +65,6 @@ contract AuraMigrator is IAuraMigrator, Ownable {
             block.timestamp     // deadline until tx revert
         ); 
 
-        // Return any left over funds to the caller.
-        if (exBalanceTokenA > balanceTokenA) {
-            require(IERC20(tokenA).transfer(msg.sender, exBalanceTokenA - balanceTokenA), 'migrateLiquidity: transfer tokenA failed');
-        }
-        if (exBalanceTokenB > balanceTokenB) {
-            require(IERC20(tokenB).transfer(msg.sender, exBalanceTokenB - balanceTokenB), 'migrateLiquidity: transfer tokenB failed');
-        }
-        if (exLiquidity > liquidity) {
-            require(IERC20(lpToken).transfer(msg.sender, exLiquidity - liquidity), 'migrateLiquidity: transfer liquidity failed');
-        }
-
         // Log relevant migration details.
         emit MigrateLiquidity(
             msg.sender,
@@ -87,6 +76,8 @@ contract AuraMigrator is IAuraMigrator, Ownable {
             balanceTokenA,
             balanceTokenB
         );
+
+        return true;
     }
 
     /**
