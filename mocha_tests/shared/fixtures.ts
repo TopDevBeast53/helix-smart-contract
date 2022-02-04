@@ -13,6 +13,7 @@ import AuraToken from '../../build/contracts/AuraToken.json'
 import TestToken from '../../build/contracts/TestToken.json'
 import WETH9 from '../../build/contracts/WETH9.json'
 import RouterEventEmitter from '../../build/contracts/RouterEventEmitter.json'
+import AuraMigrator from '../../build/contracts/AuraMigrator.json'
 
 interface FactoryFixture {
   factory: Contract
@@ -64,7 +65,11 @@ interface FullExchangeFixture {
   WETHPair: Contract
   chef: Contract
   auraToken: Contract
+  migrator: Contract
+  externalFactory: Contract
+  externalRouter: Contract
 }
+
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
   // deploy tokens
@@ -84,7 +89,12 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
   const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
   const pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
 
-  // TODO: add migrator here once added
+  // Add migrator.
+  const migrator = await deployContract(wallet, AuraMigrator, [router.address], overrides);
+
+  // Add external DEX components for migrator to use.
+  const externalFactory = await deployContract(wallet, AuraFactory, [wallet.address], overrides);
+  const externalRouter = await deployContract(wallet, AuraRouterV1, [externalFactory.address, WETH.address], overrides);
 
   const auraToken = await deployContract(wallet, AuraToken, [], overrides)
 
@@ -117,6 +127,9 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
       pair,
       WETHPair,
       chef,
-      auraToken
+      auraToken,
+      migrator, 
+      externalFactory,
+      externalRouter,
   }
 }
