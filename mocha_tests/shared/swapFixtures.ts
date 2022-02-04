@@ -85,15 +85,7 @@ export async function swapFeeRewardsWithAPFixture(provider: Web3Provider, [walle
     const auraNFT = await auraNFTFixture(provider, [wallet]);
     const auraToken = await auraTokenFixture(provider, [wallet]);
 
-    const swapFeeRewardsWithAP = await deployContract(wallet, SwapFeeRewardsWithAP, [
-        factory.address,
-        router.address, 
-        targetToken.address,
-        targetAPToken.address,
-        mockOracle.address,
-        auraNFT.address,
-        auraToken.address,
-    ], overrides);
+    const swapFeeRewardsWithAP = await deployContract(wallet, SwapFeeRewardsWithAP, [], overrides);
 
     return {
         factory,
