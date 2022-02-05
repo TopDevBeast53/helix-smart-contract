@@ -45,6 +45,7 @@ contract AuraNFTBridge is Ownable {
     struct BridgeToSolana {
         string externalTokenID;
         string externalOwnerID;
+        uint256 timestamp;
     }
     BridgeToSolana[] private _bridgeEvents;
 
@@ -119,7 +120,8 @@ contract AuraNFTBridge is Ownable {
 
         _bridgeEvents.push(BridgeToSolana({
             externalTokenID: externalTokenID,
-            externalOwnerID: externalOwnerAddress
+            externalOwnerID: externalOwnerAddress,
+            timestamp: block.timestamp
         }));
     }
 
