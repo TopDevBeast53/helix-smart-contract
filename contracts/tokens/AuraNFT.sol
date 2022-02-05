@@ -281,6 +281,11 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         uri = tokenURI(_tokenId);
     }
 
+    function getExternalTokenID(uint _tokenId) external view returns (string memory) {
+        require(_exists(_tokenId), "ERC721: token does not exist");
+        return _tokens[_tokenId].externalTokenID;
+    }
+
     /**
      * @dev External function to get auraPoints by `tokenId`
      */
