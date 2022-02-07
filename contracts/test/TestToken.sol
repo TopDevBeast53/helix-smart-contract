@@ -2,8 +2,8 @@
 pragma solidity >=0.8.0;
 
 contract TestToken {
-    string public constant name = 'Test Token';
-    string public constant symbol = 'TT';
+    string public constant name = 'SECOND TEST TOKEN';
+    string public constant symbol = 'STT';
     uint8 public constant decimals = 18;
     uint  public totalSupply;
     mapping(address => uint) public balanceOf;

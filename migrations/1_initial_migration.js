@@ -9,7 +9,8 @@ const WBNB = {
     'test': '0xae13d989dac2f0debff460ac112a837c89baa7cd',
 }
 const FACTORY = {
-    'test': '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',
+    // 'test': '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',
+    'test': '0xee3d4d589D7af30259283A5Cd57C25A6661A362b',
 }
 
 async function deployAuraFactory(deployer) {
@@ -28,6 +29,6 @@ async function deployAuraRouter(deployer, env) {
 }
 
 module.exports = async function (deployer) {
-  // deployAuraFactory(deployer)
-  // deployAuraRouter(deployer, 'test')
+//   deployAuraFactory(deployer)
+  deployAuraRouter(deployer, 'test')
 }
