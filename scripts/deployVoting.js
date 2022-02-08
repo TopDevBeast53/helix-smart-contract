@@ -11,12 +11,8 @@
  *         - Set `AuraToken` address to `auraToken` of `AuraChefNFT`.
  */
  const { ethers, network } = require(`hardhat`);
- 
- const env = 'test';
- 
- const AURA = {
-     'test': '0xdf2b1082ee98b48b5933378c8f58ce2f5aaff135',
- }
+ const contracts = require("./constants/contracts")
+ const env = require("./constants/env")
  
  async function main() {
  
@@ -27,7 +23,7 @@
      
      console.log(`------ Start deploying Voting contract ---------`);
      const Voting = await ethers.getContractFactory(`Voting`);
-     const _voting = await Voting.deploy(AURA[env], {nonce: nonce});
+     const _voting = await Voting.deploy(contracts.auraToken[env.network], {nonce: nonce});
      await _voting.deployTransaction.wait();
      console.log(`Voting deployed to ${_voting.address}`);
  }

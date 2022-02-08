@@ -10,22 +10,15 @@
  */
 
 const hre = require('hardhat');
+const contracts = require("./constants/contracts")
+const env = require("./constants/env")
 
-const env = 'test';
-
-const AURA = {
-    'test': '0xdf2b1082ee98b48b5933378c8f58ce2f5aaff135',
-}
-
-const VOTING = {
-    'test': '0xC3A5dc2D9eC0e8CC6603F81FDc0Fd7aB53E389b3',
-}
 async function main() {
 
     console.log(`Verify Voting contract`);
     let res = await hre.run("verify:verify", {
-        address: VOTING[env],
-        constructorArguments: [AURA[env]]
+        address: contracts.voting[env.network],
+        constructorArguments: [contracts.auraToken[env.network]]
     })
     console.log(res);
 }

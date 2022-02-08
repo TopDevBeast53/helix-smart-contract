@@ -16,15 +16,9 @@
  */
 const { ethers, network } = require(`hardhat`);
 const {BigNumber} = require("ethers");
+const contracts = require("./constants/contracts")
+const env = require("./constants/env")
 
-const env = 'test';
-
-const WBNB = {
-    'test': '0xae13d989dac2f0debff460ac112a837c89baa7cd',
-}
-const AURA = {
-    'test': '0xdf2b1082ee98b48b5933378c8f58ce2f5aaff135',
-}
 const initialAuraPoints = expandTo18Decimals(1); // AuraNFT's _initialAuraPoints
 const levelUpPercent = 10; // AuraNFT's _levelUpPercent
 const startBlock = 0; // AuraChetNFT's RewardToken attribute `startBlock`
@@ -37,7 +31,6 @@ function expandTo18Decimals(n) {
 let auraNft, auraChefNft;
 
 async function main() {
-
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${ deployer.address}`);
     
@@ -65,7 +58,7 @@ async function main() {
     await tx.wait();
 
     //Add RewardToken with AURA
-    tx = await auraChefNft.addNewRewardToken(AURA[env], startBlock, rewardPerBlock, {nonce: ++nonce, gasLimit: 3000000});
+    tx = await auraChefNft.addNewRewardToken(contracts.auraToken[env.network], startBlock, rewardPerBlock, {nonce: ++nonce, gasLimit: 3000000});
     await tx.wait();
 
 }

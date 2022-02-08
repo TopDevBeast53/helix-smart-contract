@@ -18,13 +18,10 @@
 
 const { ethers, network } = require(`hardhat`);
 const {BigNumber} = require("ethers");
-
+const contracts = require("./constants/contracts")
+const env = require("./constants/env")
+ 
 require("dotenv").config();
-
-const RPC_URL = "https://data-seed-prebsc-1-s1.binance.org:8545";
-const AuraNFTAddress = '0x6f567929bac6e7db604795fC2b4756Cc27C0e020';
-const AuraChefNFTAddress = '0xa6BB6Aefa4c93FF9D9787f98C2A623c368a27781';
-const AuraTokenAddress = '0xdf2b1082ee98b48b5933378c8f58ce2f5aaff135';
 
 let IAuraChefNFT, IAuraNFT, IAuraToken;
 let rpc, minter, user;
@@ -35,7 +32,7 @@ function expandTo18Decimals(n) {
 }
 
 async function init() {
-    rpc =  new ethers.providers.JsonRpcProvider(RPC_URL) ;
+    rpc =  new ethers.providers.JsonRpcProvider(env.rpcURL) ;
     minter = new ethers.Wallet( process.env.PRIVATE_KEY, rpc);
     user = new ethers.Wallet( process.env.USER_PRIVATE_KEY, rpc);
     IAuraChefNFT = await ethers.getContractFactory("AuraChefNFT");
@@ -47,7 +44,7 @@ async function init() {
 }
 
 async function getAuraTokenBalanceOf(address){
-    const AuraToken = IAuraToken.attach(AuraTokenAddress).connect(user);
+    const AuraToken = IAuraToken.attach(contracts.auraToken[env.network]).connect(user);
     let ret = await AuraToken.balanceOf(address);
     return ret;
 }
@@ -55,7 +52,7 @@ async function getAuraTokenBalanceOf(address){
 async function mintToUserByMinter() {
     console.log('-- Now minting --');
 
-    const AuraNFT = IAuraNFT.attach(AuraNFTAddress).connect(minter);
+    const AuraNFT = IAuraNFT.attach(contracts.auraNFT[env.network]).connect(minter);
 
     tx = await AuraNFT.mint(user.address, {nonce: nonce_minter, gasLimit: 3000000});//
     await tx.wait();
@@ -70,8 +67,8 @@ async function stake() {
     let prev = await getAuraTokenBalanceOf(user.address);
     console.log('Previous `AURA` Balance of `user` is', prev.toString());
 
-    const AuraNFT = IAuraNFT.attach(AuraNFTAddress).connect(user);
-    const AuraChefNFT = IAuraChefNFT.attach(AuraChefNFTAddress).connect(user);
+    const AuraNFT = IAuraNFT.attach(contracts.auraNFT[env.network]).connect(user);
+    const AuraChefNFT = IAuraChefNFT.attach(contracts.auraNFTChef[env.network]).connect(user);
     
     const lastTokenId = await AuraNFT.getLastTokenId();
 
@@ -92,7 +89,7 @@ async function stake() {
 
 async function withdrawReward() {
     console.log('-- Now withdraw --')
-    const AuraChefNFT = IAuraChefNFT.attach(AuraChefNFTAddress).connect(user);
+    const AuraChefNFT = IAuraChefNFT.attach(contracts.auraNFTChef[env.network]).connect(user);
     
     let prev = await getAuraTokenBalanceOf(user.address);
     console.log('Previous `AURA` Balance of `user` is ', prev.toString());
@@ -106,7 +103,7 @@ async function withdrawReward() {
 
 async function accrueAuraPoints() {
 
-    const AuraNFT = IAuraNFT.attach(AuraNFTAddress).connect(minter);
+    const AuraNFT = IAuraNFT.attach(contracts.auraNFT[env.network]).connect(minter);
 
     console.log('-- Adding accruer --');
     const _isAccruer = await AuraNFT.isAccruer(minter.address);
@@ -136,8 +133,8 @@ async function boostNFT(tokenId) {
 
     console.log('-- Now boosting NFT --');
 
-    const AuraChefNFT = IAuraChefNFT.attach(AuraChefNFTAddress).connect(user);
-    const AuraNFT = IAuraNFT.attach(AuraNFTAddress).connect(user);
+    const AuraChefNFT = IAuraChefNFT.attach(contracts.auraNFTChef[env.network]).connect(user);
+    const AuraNFT = IAuraNFT.attach(contracts.auraNFT[env.network]).connect(user);
 
     const prevAP = await AuraNFT.getAccumulatedAP(user.address);
     console.log('Previous AuraPoints balance of `user` is', prevAP.toString());
@@ -167,7 +164,7 @@ async function main() {
     nonce_minter = await network.provider.send(`eth_getTransactionCount`, [minter.address, "latest"]);
 
     // check how many `AURA` tokens `AuraChefNFT` has
-    let ret = await getAuraTokenBalanceOf(AuraChefNFTAddress);
+    let ret = await getAuraTokenBalanceOf(contracts.auraNFTChef[env.network]);
     if (parseInt(ret.toString()) < 100000) {
         console.log('AuraChefNFT has not enough `AURA` tokens, now balance is', ret.toString());
         console.log('You should send `AURA` more than 100000 wei to AuraChefNFT address');

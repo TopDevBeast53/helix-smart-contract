@@ -14,13 +14,12 @@
 
 const hre = require('hardhat');
 const {BigNumber} = require("ethers");
+const contracts = require("./constants/contracts")
+const env = require("./constants/env")
 
 function expandTo18Decimals(n) {
     return (new BigNumber.from(n)).mul((new BigNumber.from(10)).pow(18))
 }
-
-const AuraNFTAddress = '0x6f567929bac6e7db604795fC2b4756Cc27C0e020';
-const AuraChefNFTAddress = '0xa6BB6Aefa4c93FF9D9787f98C2A623c368a27781';
 
 const initialAuraPoints = expandTo18Decimals(1); // AuraNFT's _initialAuraPoints
 const levelUpPercent = 10; // AuraNFT's _levelUpPercent
@@ -29,15 +28,15 @@ async function main() {
 
     console.log(`Verify AuraNFT contract`);
     let res = await hre.run("verify:verify", {
-        address: AuraNFTAddress,
+        address: contracts.auraNFT[env.network],
         constructorArguments: ["", initialAuraPoints, levelUpPercent]
     })
     console.log(res);
     
     console.log(`Verify contract AuraChefNFT`);
     res = await hre.run("verify:verify", {
-        address: AuraChefNFTAddress,
-        constructorArguments: [AuraNFTAddress, 0]
+        address: contracts.auraNFTChef[env.network],
+        constructorArguments: [contracts.auraNFT[env.network], 0]
     })
     console.log(res);
 }
