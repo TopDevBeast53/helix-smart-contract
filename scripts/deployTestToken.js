@@ -5,7 +5,6 @@
  *     npx hardhat run scripts/deployTestToken.js --network testnetBSC
  */
 
-
 // Deployed by = 0x59201fb8cb2D61118B280c8542127331DD141654
 // Deployed at = 0xE80Bed05c18Cf4c491a82742A507D831B8aC1C0b
 // Deployed at = 0x4cf6e39860B875dEeb8c577a88438f1Bb84C455A
