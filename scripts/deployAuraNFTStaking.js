@@ -14,7 +14,7 @@
  *         - Set `deployer` to minter of `AuraNFT`, Owner(deployer) can add another man later.
  *         - Add RewardToken of `AuraChefNFT` with WBNB
  */
-const { ethers, network } = require(`hardhat`);
+const { ethers, network, upgrades } = require(`hardhat`);
 const {BigNumber} = require("ethers");
 const contracts = require("./constants/contracts")
 const env = require("./constants/env")
@@ -38,7 +38,7 @@ async function main() {
     
     console.log(`------ Start deploying Aura NFT contract ---------`);
     const AuraNFT = await ethers.getContractFactory(`AuraNFT`);
-    auraNft = await AuraNFT.deploy(``, initialAuraPoints, levelUpPercent, {nonce: nonce});
+    auraNft = await upgrades.deployProxy(AuraNFT, [``, initialAuraPoints, levelUpPercent], {nonce: nonce});
     await auraNft.deployTransaction.wait();
     console.log(`Aura NFT deployed to ${auraNft.address}`);
 
@@ -61,6 +61,7 @@ async function main() {
     tx = await auraChefNft.addNewRewardToken(contracts.auraToken[env.network], startBlock, rewardPerBlock, {nonce: ++nonce, gasLimit: 3000000});
     await tx.wait();
 
+    console.log('done!')
 }
 
 main()

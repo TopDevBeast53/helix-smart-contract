@@ -57,7 +57,9 @@ async function mintToUserByMinter() {
     tx = await AuraNFT.mint(user.address, {nonce: nonce_minter, gasLimit: 3000000});//
     await tx.wait();
 
+    tx = await AuraNFT.getTokenIdsOfOwner(user.address);
     console.log('-- Successful to mint to user --');
+    console.log('tokenids:', tx);
 }
 
 async function stake() {
