@@ -4,6 +4,7 @@ pragma solidity >=0.8.0;
 import "../tokens/AuraToken.sol";
 import "../interfaces/IMasterChef.sol";
 import "../interfaces/IMigratorChef.sol";
+import "../referrals/ReferralRegister.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
@@ -59,6 +60,8 @@ contract MasterChef is Ownable, IMasterChef {
     uint256 public BONUS_MULTIPLIER = 1;
     // The migrator contract. It has a lot of power. Can only be set through governance (owner).
     IMigratorChef public migrator;
+    // Referral Register contract
+    ReferralRegister public refRegister;
     // Info of each pool.
     PoolInfo[] public poolInfo;
     // Info of each user that stakes LP tokens.
@@ -84,7 +87,8 @@ contract MasterChef is Ownable, IMasterChef {
         uint256 _AuraTokenPerBlock,
         uint256 _startBlock,
         uint256 _stakingPercent,
-        uint256 _devPercent
+        uint256 _devPercent,
+        ReferralRegister _referralRegister
     ) {
         auraToken = _AuraToken;
         devaddr = _devaddr;
@@ -93,6 +97,7 @@ contract MasterChef is Ownable, IMasterChef {
         stakingPercent = _stakingPercent;
         devPercent = _devPercent;
         lastBlockDevWithdraw = _startBlock;
+        refRegister = _referralRegister;
         
         // staking pool
         poolInfo.push(PoolInfo({
@@ -170,6 +175,11 @@ contract MasterChef is Ownable, IMasterChef {
          return (_to - _from) * (BONUS_MULTIPLIER);
     }
 
+    // Set ReferralRegister address
+    function setReferralRegister(address _address) public onlyOwner {
+        refRegister = ReferralRegister(_address);
+    }
+
     // View function to see pending AuraTokens on frontend.
     function pendingAuraToken(uint256 _pid, address _user) external view returns (uint256){
         PoolInfo storage pool = poolInfo[_pid];
@@ -179,12 +189,15 @@ contract MasterChef is Ownable, IMasterChef {
         if (_pid == 0){
             lpSupply = depositedAura;
         }
+
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
             uint256 AuraTokenReward = multiplier * (AuraTokenPerBlock) * (pool.allocPoint) / (totalAllocPoint) * (stakingPercent) / (percentDec);
             accAuraTokenPerShare = accAuraTokenPerShare + (AuraTokenReward * (1e12) / (lpSupply));
         }
-        return user.amount * (accAuraTokenPerShare) / (1e12) - (user.rewardDebt);
+
+        uint256 pending = user.amount * (accAuraTokenPerShare) / (1e12) - (user.rewardDebt);
+        return pending;
     }
 
     // Update reward vairables for all pools. Be careful of gas spending!
@@ -248,6 +261,7 @@ contract MasterChef is Ownable, IMasterChef {
         user.amount = user.amount - (_amount);
         user.rewardDebt = user.amount * (pool.accAuraTokenPerShare) / (1e12);
         TransferHelper.safeTransfer(address(pool.lpToken), address(msg.sender), _amount);
+        refRegister.recordStakingRewardWithdrawal(msg.sender, pending);
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
@@ -280,6 +294,7 @@ contract MasterChef is Ownable, IMasterChef {
         uint256 pending = user.amount * (pool.accAuraTokenPerShare) / (1e12) - (user.rewardDebt);
         if(pending > 0) {
             safeAuraTokenTransfer(msg.sender, pending);
+            refRegister.recordStakingRewardWithdrawal(msg.sender, pending);
         }
         if(_amount > 0) {
             user.amount = user.amount - (_amount);

@@ -18,6 +18,7 @@
  const DeveloperAddress = '0x59201fb8cb2D61118B280c8542127331DD141654';
  const StartBlock = 0;
  const AuraTokenRewardPerBlock = '10000000000000000'; 
+ const ReferralRegister = ''; // <- update me
  const StakingPercent = 999995;
  const DevPercent = 5;
  
@@ -41,7 +42,9 @@
         /*aura token per block=*/AuraTokenRewardPerBlock,
         /*start block=*/StartBlock,
         /*staking percent=*/StakingPercent,
-        /*dev percent=*/DevPercent, {nonce: nonce});
+        /*dev percent=*/DevPercent,
+        /*ref=*/ ReferralRegister, 
+        {nonce: nonce});
      await chef.deployTransaction.wait();
      console.log(`Master Chef deployed to ${chef.address}`);
  

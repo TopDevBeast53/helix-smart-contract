@@ -6,6 +6,7 @@ import "../interfaces/IOracle.sol";
 import "../interfaces/IAuraNFT.sol";
 import "../interfaces/IAuraToken.sol";
 import "../swaps/AuraFactory.sol";
+import "../referrals/ReferralRegister.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -43,6 +44,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     uint public apWagerOnSwap = 1500;
     uint public apPercentMarket = 10000; // (div 10000)
     uint public apPercentAuction = 10000; // (div 10000)
+
+    ReferralRegister public refReg;
 
     /*
      * Sets the upper limit of maximum AURA percentage of users' rewards.
@@ -116,6 +119,9 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         uint swapFee = getSwapFee(input, output);
         (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
         feeAmount = feeAmount / swapFee;
+
+        // Record swap referral reward
+        refReg.recordSwapReward(account, getQuantityOut(output, amount, targetToken) * swapFee / 1000);
 
         // Gets the quantity of AURA (targetToken) equivalent in value to quantity (feeAmount) of the input token (output).
         uint quantity = getQuantityOut(output, feeAmount, targetToken);
@@ -370,6 +376,11 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         require(address(_oracle) != address(0), "Oracle is the zero address.");
         oracle = _oracle;
         emit NewOracle(_oracle);
+    }
+
+    function setRefReg(ReferralRegister _refreg) external onlyOwner {
+        require(address(_refreg) != address(0), "ReferralRegister is the zero address.");
+        refReg = _refreg;
     }
 
     function setAuraNFT(IAuraNFT _auraNFT) external onlyOwner {
