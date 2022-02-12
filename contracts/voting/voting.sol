@@ -1,15 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
 import "../tokens/AuraToken.sol";
+import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-contract Voting is ReentrancyGuard{
+contract Voting is ReentrancyGuard, Ownable {
     
     AuraToken private auraToken;
 
+    EnumerableSet.AddressSet private _CoreMembers;
+
     // structure for a single proposal.
     struct Proposal {
+        bool isCore;
         bytes32 name;                           // proposal short name
         address creator;                        // creator's address
         uint blockNum;                          // when the proposal was created
@@ -47,6 +52,7 @@ contract Voting is ReentrancyGuard{
         p.creator = msg.sender;
         p.blockNum = block.number;
         p.endTimestamp = endTimestamp;
+        p.isCore = isCoreMember(msg.sender);
         emit CreateProposal(proposalName);
     }
 
@@ -137,5 +143,63 @@ contract Voting is ReentrancyGuard{
      */
     function getNumberOfVotes(address voter, uint proposalId) public view returns (uint) {
         return auraToken.getPriorVotes(voter, proposals[proposalId].blockNum) + proposals[proposalId].balance[voter];
+    }
+
+     /**
+     * @dev used by owner to add a CoreMembers
+     * @param _CoreMember address of CoreMember to be added.
+     * @return true if successful.
+     */
+    function addCoreMember(address _CoreMember) public onlyOwner returns (bool) {
+        require(
+            _CoreMember != address(0),
+            "AuraVoting: _CoreMember is the zero address"
+        );
+        return EnumerableSet.add(_CoreMembers, _CoreMember);
+    }
+
+    /**
+     * @dev used by owner to delete CoreMember
+     * @param _CoreMember address of CoreMember to be deleted.
+     * @return true if successful.
+     */
+    function delCoreMember(address _CoreMember) external onlyOwner returns (bool) {
+        require(
+            _CoreMember != address(0),
+            "AuraVoting: _CoreMember is the zero address"
+        );
+        return EnumerableSet.remove(_CoreMembers, _CoreMember);
+    }
+
+
+    /**
+     * @dev See the number of CoreMembers
+     * @return number of members.
+     */
+    function getCoreMembersLength() public view returns (uint256) {
+        return EnumerableSet.length(_CoreMembers);
+    }
+
+    /**
+     * @dev Check if an address is a CoreMember
+     * @return true or false based on CoreMember status.
+     */
+    function isCoreMember(address account) public view returns (bool) {
+        return EnumerableSet.contains(_CoreMembers, account);
+    }
+
+    /**
+     * @dev Get the core member at n location
+     * @param _index index of address set
+     * @return address of member at index.
+     */
+    function getCoreMember(uint256 _index)
+        external
+        view
+        onlyOwner
+        returns (address)
+    {
+        require(_index <= getCoreMembersLength() - 1, "AuraVoting: index out of bounds");
+        return EnumerableSet.at(_CoreMembers, _index);
     }
 }

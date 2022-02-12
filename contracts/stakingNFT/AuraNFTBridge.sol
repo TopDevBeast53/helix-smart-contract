@@ -143,7 +143,7 @@ contract AuraNFTBridge is Ownable {
      * @param _bridger address of bridger to be deleted.
      * @return true if successful.
      */
-    function delStaker(address _bridger) external onlyOwner returns (bool) {
+    function delBridger(address _bridger) external onlyOwner returns (bool) {
         require(
             _bridger != address(0),
             "AuraNFTBridge: _bridger is the zero address"
