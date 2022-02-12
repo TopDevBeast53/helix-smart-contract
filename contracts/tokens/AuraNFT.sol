@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "@rari-capital/solmate/src/tokens/ERC721.sol";
-import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
+contract AuraNFT is ERC721EnumerableUpgradeable {
     using Strings for uint256;
     using EnumerableSet for EnumerableSet.AddressSet;
+
+    address private _owner;
+    uint256 private _reentrancyStatus;
 
     // Maximum length of tokens per request
     uint public constant MAX_ARRAY_LENGTH_PER_REQUEST = 30;
@@ -106,12 +108,17 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
-    constructor (
+    function initialize(
         string memory baseURI,
         uint initialAuraPoints,
         uint8 levelUpPercent
-    ) ERC721(/*name=*/'Aura NFT', /*symbol=*/'AURA-NFT') {
-        
+    ) public initializer {
+        _owner = msg.sender;
+        _reentrancyStatus = 1;
+
+        __ERC721_init("Aura NFT", "AURA-NFT");
+        __ERC721Enumerable_init();
+
         _internalBaseURI = baseURI;
         _initialAuraPoints = initialAuraPoints;
         _levelUpPercent = levelUpPercent;
@@ -192,6 +199,19 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     }
 
     //External functions --------------------------------------------------------------------------------------------
+    
+    /**
+     * @dev To get token IDs of user by address
+     */
+    function getTokenIdsOfOwner(address user) external view returns (uint[] memory) {
+        uint balance = ERC721Upgradeable.balanceOf(user);
+        require(balance > 0, "Nothing is balance of you!");
+        uint[] memory tokenIds = new uint[](balance);
+        for (uint256 index = 0; index < balance; index++) {
+            tokenIds[index] = tokenOfOwnerByIndex(user, index);
+        }
+        return tokenIds;
+    }
 
     /**
      * @dev To get the last token Id
@@ -273,7 +293,7 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         require(_exists(_tokenId), "ERC721: token does not exist");
         Token memory token = _tokens[_tokenId];
         tokenId = _tokenId;
-        tokenOwner = ownerOf[_tokenId];
+        tokenOwner = ownerOf(_tokenId);
         level = token.level;
         auraPoints = token.auraPoints;
         isStaked = token.isStaked;
@@ -309,7 +329,7 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     function getInfoForStaking(uint tokenId) external view returns (address tokenOwner, bool isStaked, uint auraPoints) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
 
-        tokenOwner = ownerOf[tokenId];
+        tokenOwner = ownerOf(tokenId);
         isStaked = _tokens[tokenId].isStaked;
         auraPoints = _tokens[tokenId].auraPoints;
     }
@@ -336,7 +356,7 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
 
         if (isStaked == true) {
             // Clear approval for not to transfer when staked token 
-            getApproved[tokenId] = address(0);
+            _approve(address(0), tokenId);
         }
         _tokens[tokenId].isStaked = isStaked;
     }
@@ -365,22 +385,6 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
         _levelUpPercent = percent;
     }
 
-    //Internal functions --------------------------------------------------------------------------------------------
-
-    /**
-     * @dev Returns whether `tokenId` exists.
-     *
-     * Tokens can be managed by their owner or approved accounts via {approve} or {setApprovalForAll}.
-     *
-     * Tokens start existing when they are minted (`_mint`),
-     * and stop existing when they are burned (`_burn`).
-     */
-    function _exists(uint256 tokenId) internal view virtual returns (bool) {
-        return ownerOf[tokenId] != address(0);
-    }
-
-    //Private functions ---------------------------------------------------------------------------------------------
-    
     //Role functions for Staker --------------------------------------------------------------------------------------
 
     /**
@@ -570,5 +574,40 @@ contract AuraNFT is ERC721, Ownable, ReentrancyGuard {
     modifier onlyAccruer() {
         require(isAccruer(msg.sender), "caller is not the accruer");
         _;
+    }
+
+    // Ownable Class ---------------------------------------------------------------
+    
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view virtual returns (address) {
+        return _owner;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(owner() == msg.sender, "Ownable: caller is not the owner");
+        _;
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        _owner = newOwner;
+    }
+
+    // ReentrancyGuard ---------------------------------------------------------------
+
+    modifier nonReentrant() {
+        require(_reentrancyStatus == 1, "REENTRANCY");
+        _reentrancyStatus = 2;
+        _;
+        _reentrancyStatus = 1;
     }
 }
