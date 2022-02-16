@@ -47,7 +47,7 @@ async function accrueAuraPoints(val) {
     console.log('-- Adding accruer --');
     const _isAccruer = await AuraNFT.isAccruer(minter.address);
     if (!_isAccruer) {
-        tx = await AuraNFT.addAccruer(minter.address, {nonce: ++nonce_minter, gasLimit: 3000000});
+        tx = await AuraNFT.addAccruer(minter.address, {nonce: nonce_minter++, gasLimit: 3000000});
         const ret = await tx.wait();
         if(ret)
             console.log('Added accruer:', minter.address);
@@ -60,8 +60,8 @@ async function accrueAuraPoints(val) {
     const prevAP = await AuraNFT.getAccumulatedAP(user.address);
     console.log('Previous AccumulatedAP balance of `user` is', prevAP.toString());
 
-    console.log('- Adding AuraPoints 15 ether to `user` -');
-    tx = await AuraNFT.accruePoints(user.address, expandTo18Decimals(val), {nonce: ++nonce_minter, gasLimit: 3000000});//
+    console.log('- Adding AuraPoints', val, 'ether to `user` -');
+    tx = await AuraNFT.accruePoints(user.address, expandTo18Decimals(val), {nonce: nonce_minter++, gasLimit: 3000000});//
     await tx.wait();
 
     const curAP = await AuraNFT.getAccumulatedAP(user.address);

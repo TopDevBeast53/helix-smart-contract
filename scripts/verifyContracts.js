@@ -17,19 +17,12 @@ const {BigNumber} = require("ethers");
 const contracts = require("./constants/contracts")
 const env = require("./constants/env")
 
-function expandTo18Decimals(n) {
-    return (new BigNumber.from(n)).mul((new BigNumber.from(10)).pow(18))
-}
-
-const initialAuraPoints = expandTo18Decimals(1); // AuraNFT's _initialAuraPoints
-const levelUpPercent = 10; // AuraNFT's _levelUpPercent
-
 async function main() {
 
     console.log(`Verify AuraNFT contract`);
     let res = await hre.run("verify:verify", {
-        address: contracts.auraNFT[env.network],
-        constructorArguments: ["", initialAuraPoints, levelUpPercent]
+        address: contracts.auraNFTImpl[env.network],
+        constructorArguments: []
     })
     console.log(res);
     

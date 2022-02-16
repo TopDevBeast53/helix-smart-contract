@@ -251,7 +251,7 @@ contract AuraChefNFT is Ownable, ReentrancyGuard {
     /**
      * @dev To withdraw reward token
      */
-    function withdrawRewardToken() external {
+    function withdrawRewardToken() external nonReentrant {
         _withdrawRewardToken();
     }
 

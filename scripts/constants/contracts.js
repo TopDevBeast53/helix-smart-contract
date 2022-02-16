@@ -5,11 +5,15 @@ module.exports = {
     },
     auraNFT: {
         'main': '',
-        'test': '0x8eBa31009b1C9dc192eb4b7E15075341CB094a2D',
+        'test': '0x3e7947282fc0B6389349833550f3ad70d09E9802',
+    },
+    auraNFTImpl: {
+        'main': '',
+        'test': '0x3efc7776d8cb99e3325607064c59a858ef1b1526',
     },
     auraNFTChef: {
         'main': '',
-        'test': '0x965DF98BA52287c56f1954223A35366f40C0d44a',
+        'test': '0xa658eCB873aa6d8e09426BE80A3Ace5BAeB4Bffd',
     },
     voting: {
         'main': '',
