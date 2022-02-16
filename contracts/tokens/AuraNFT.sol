@@ -246,7 +246,7 @@ contract AuraNFT is ERC721EnumerableUpgradeable {
      * @dev Returns (AuraPoints amount to upgrade to the next level - current AP amount)
      */
     function remainAPToNextLevel(uint tokenId) external view returns (uint) {
-        return _auraPointsTable[uint(_tokens[tokenId].level)] - _tokens[tokenId].auraPoints;
+        return _remainAPToNextLevel(tokenId);
     }
 
     /**
@@ -285,6 +285,7 @@ contract AuraNFT is ERC721EnumerableUpgradeable {
             address tokenOwner,
             uint level,
             uint auraPoints,
+            uint remainAPToNextLvl,
             bool isStaked,
             uint createTimestamp,
             string memory uri
@@ -296,6 +297,7 @@ contract AuraNFT is ERC721EnumerableUpgradeable {
         tokenOwner = ownerOf(_tokenId);
         level = token.level;
         auraPoints = token.auraPoints;
+        remainAPToNextLvl = _remainAPToNextLevel(_tokenId);
         isStaked = token.isStaked;
         createTimestamp = token.createTimestamp;
         uri = tokenURI(_tokenId);
@@ -383,6 +385,13 @@ contract AuraNFT is ERC721EnumerableUpgradeable {
     function setLevelUpPercent(uint8 percent) external onlyOwner {
         require(percent > 0, "Wrong percent value");
         _levelUpPercent = percent;
+    }
+
+    /**
+     * @dev Returns (AuraPoints amount to upgrade to the next level - current AP amount)
+     */
+    function _remainAPToNextLevel(uint tokenId) internal view returns (uint) {
+        return _auraPointsTable[uint(_tokens[tokenId].level)] - _tokens[tokenId].auraPoints;
     }
 
     //Role functions for Staker --------------------------------------------------------------------------------------
