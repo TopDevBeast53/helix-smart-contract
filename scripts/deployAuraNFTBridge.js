@@ -13,7 +13,7 @@
  */
 const { ethers, network } = require(`hardhat`);
  
-const AuraNFTAddress = '0x6f567929bac6e7db604795fC2b4756Cc27C0e020'; // <- update me
+const AuraNFTAddress = '0x5C8181A056b2107B17FbCdaE3f9707C9024DfdF8'; // <- update me
  
 async function addBridger(bridgeAddress, bridgerAddress) {
     const [deployer] = await ethers.getSigners();

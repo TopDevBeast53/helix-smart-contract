@@ -26,6 +26,8 @@ contract AuraNFTBridge is Ownable {
      */
     mapping(string => address) private _bridgedExternalTokenIDsPickUp;
 
+    mapping(string => string) private _externalIDToURI;
+
     /**
      * @dev Stores the mapping between external token IDs and addresses of the actual
      * minted AuraNFTs.
@@ -61,7 +63,7 @@ contract AuraNFTBridge is Ownable {
     /**
      * @dev This function is called ONLY by bridgers to bridge the token to BSC
      */
-    function bridgeFromSolana(string calldata externalTokenID, address owner) onlyBridger external {
+    function bridgeFromSolana(string calldata externalTokenID, address owner, string calldata uri) onlyBridger external {
         require(!_bridgedExternalTokenIDs[externalTokenID], "AuraNFTBridge: The token is already bridged");
         _bridgedExternalTokenIDs[externalTokenID] = true;
         _bridgedExternalTokenIDsPickUp[externalTokenID] = owner;
@@ -69,6 +71,8 @@ contract AuraNFTBridge is Ownable {
         // If the token is already minted, we could send it directly to the user's wallet
         if (_minted[externalTokenID] > 0) {
             auraNFT.transferFrom(address(this), owner, _minted[externalTokenID]);
+        } else {
+            _externalIDToURI[externalTokenID] = uri;
         }
     }
 
@@ -79,7 +83,7 @@ contract AuraNFTBridge is Ownable {
         require(_bridgedExternalTokenIDs[externalTokenID], "AuraNFTBridge: not available");
         require(_bridgedExternalTokenIDsPickUp[externalTokenID] == msg.sender, "AuraNFTBridge: pick up not allowed");
 
-        auraNFT.mintExternal(msg.sender, externalTokenID);
+        auraNFT.mintExternal(msg.sender, externalTokenID, _externalIDToURI[externalTokenID]);
 
         _minted[externalTokenID] = auraNFT.getLastTokenId();
     }

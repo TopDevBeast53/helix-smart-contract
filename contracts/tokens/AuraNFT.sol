@@ -90,6 +90,9 @@ contract AuraNFT is ERC721EnumerableUpgradeable {
 
         // ID of the bridged NFT.
         string externalTokenID;
+
+        // External token URI to use.
+        string tokenURI;
     }
 
     // map token info by token ID : TokenId => Token
@@ -142,7 +145,7 @@ contract AuraNFT is ERC721EnumerableUpgradeable {
     function tokenURI(uint256 id) public view override returns (string memory) {
         require(_exists(id), "ERC721Metadata: URI query for nonexistent token");
 
-        return bytes(_internalBaseURI).length > 0 ? string(abi.encodePacked(_internalBaseURI, "/", id.toString())) : "";
+        return string(abi.encodePacked(_tokens[id].tokenURI));
     }
 
     /**
@@ -163,7 +166,7 @@ contract AuraNFT is ERC721EnumerableUpgradeable {
     }
 
     // Mints external NFT
-    function mintExternal(address to, string calldata externalTokenID) public onlyMinter nonReentrant {
+    function mintExternal(address to, string calldata externalTokenID, string calldata uri) public onlyMinter nonReentrant {
         require(to != address(0), "Address can not be zero");
         _lastTokenId += 1;
         uint tokenId = _lastTokenId;
@@ -171,6 +174,7 @@ contract AuraNFT is ERC721EnumerableUpgradeable {
         _tokens[tokenId].createTimestamp = block.timestamp;
         _tokens[tokenId].level = 1;
         _tokens[tokenId].externalTokenID = externalTokenID;
+        _tokens[tokenId].tokenURI = uri;
         _safeMint(to, tokenId);
     }
 

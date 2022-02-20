@@ -13,7 +13,7 @@
 
  const env = 'test';
 
- const AuraToken = ''; // <-- update me
+ const AuraTokenAddress = '0xC5e5A2ca4A41aF3B01289c2071E35346c7f7C89E'; // <-- update me
  const StakingFeePercent = 30;
  const SwapFeePercent = 50;
 
@@ -27,12 +27,18 @@
      console.log(`------ Start deploying Referral Register contract ---------`);
      const ReferralRegister = await ethers.getContractFactory(`ReferralRegister`);
      ref = await ReferralRegister.deploy(
-         /*aura=*/AuraToken,
+         /*aura=*/AuraTokenAddress,
         /*staking percent=*/StakingFeePercent,
         /*swap percent*/SwapFeePercent);
      await ref.deployTransaction.wait();
      console.log(`Referral Register deployed to ${ref.address}`);
 
+     console.log(`------ Add Referral Register as Minter to AuraToken ---------`);
+     const AuraToken = await ethers.getContractFactory(`AuraToken`);
+     const auraToken = AuraToken.attach(AuraTokenAddress);
+
+     let tx = await auraToken.addMinter(ref.address, {nonce: ++nonce, gasLimit: 3000000});
+     await tx.wait();
  }
 
  main()

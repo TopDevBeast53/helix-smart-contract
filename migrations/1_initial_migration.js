@@ -10,13 +10,17 @@ const WBNB = {
 }
 const FACTORY = {
     // 'test': '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',
-    'test': '0xee3d4d589D7af30259283A5Cd57C25A6661A362b',
+    'test': '0xf15a0717bB14bB82d838AA1EE1e494c3489C35E3',
+    // Add production deployed factory address here
 }
 
+const ADDRESS_OF_WHO_CAN_SET_FEES_ON_PAIR_SWAPS = '0x38606aEE8c5E713f91688D41ad6a7ab3B923F34b';
+const ADDRESS_OF_WHO_WILL_RECEIVE_TRADING_FEES = '0x7167a81a3a158Fc0383124Bd7e4d4e43f2b728b8';
+
 async function deployAuraFactory(deployer) {
-    await deployer.deploy(AuraFactory, '0x59201fb8cb2D61118B280c8542127331DD141654');
+    await deployer.deploy(AuraFactory, ADDRESS_OF_WHO_CAN_SET_FEES_ON_PAIR_SWAPS);
     let instance = await AuraFactory.deployed();
-    await instance.setFeeTo("0x59201fb8cb2D61118B280c8542127331DD141654");
+    await instance.setFeeTo(ADDRESS_OF_WHO_WILL_RECEIVE_TRADING_FEES);
     let res = await instance.feeTo.call();
     console.log('fee - ', res)
   
@@ -29,6 +33,6 @@ async function deployAuraRouter(deployer, env) {
 }
 
 module.exports = async function (deployer) {
-//   deployAuraFactory(deployer)
+    // deployAuraFactory(deployer)
   deployAuraRouter(deployer, 'test')
 }

@@ -14,13 +14,13 @@
  
  const env = 'test';
  
- const AuraTokenAddress = '0xdf2b1082ee98b48b5933378c8f58ce2f5aaff135';
- const DeveloperAddress = '0x59201fb8cb2D61118B280c8542127331DD141654';
+ const AuraTokenAddress = '0xC5e5A2ca4A41aF3B01289c2071E35346c7f7C89E'; // <- update me
+ const DeveloperAddress = '0x7167a81a3a158Fc0383124Bd7e4d4e43f2b728b8'; // <- update me
  const StartBlock = 0;
- const AuraTokenRewardPerBlock = '10000000000000000'; 
- const ReferralRegister = ''; // <- update me
- const StakingPercent = 999995;
- const DevPercent = 5;
+ const AuraTokenRewardPerBlock = '40000000000000000000'; // 40 * 10e18 -> 40 aura tokens per block 
+ const ReferralRegister = '0xd634B871381ad12A8DEAEd0d88084744143a678B'; // <- update me
+ const StakingPercent = 999000; // -> 99.9% of all farm rewards will go the users
+ const DevPercent = 1000; // -> 0.1% of all farm rewards will go to dev address
  
  async function main() {
  
@@ -53,7 +53,7 @@
      const auraToken = AuraToken.attach(AuraTokenAddress);
 
      let tx = await auraToken.addMinter(chef.address, {nonce: ++nonce, gasLimit: 3000000});
-     console.log(tx);
+    //  console.log(tx);
      await tx.wait();
  }
  

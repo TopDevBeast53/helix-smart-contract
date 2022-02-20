@@ -331,8 +331,8 @@ contract MasterChef is Ownable, IMasterChef {
     }
 
     function updateAuraPerBlock(uint256 newAmount) public onlyOwner {
-        require(newAmount <= 30 * 1e18, 'Max per block 30 AuraToken');
-        require(newAmount >= 1 * 1e18, 'Min per block 1 AuraToken');
+        require(newAmount <= 40 * 1e18, 'Max per block 40 AuraToken');
+        require(newAmount >= 1e17, 'Min per block 0.1 AuraToken');
         AuraTokenPerBlock = newAmount;
     }
 }
