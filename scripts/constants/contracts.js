@@ -21,7 +21,7 @@ module.exports = {
     },
     voting: {
         'main': '',
-        'test': '0xC3A5dc2D9eC0e8CC6603F81FDc0Fd7aB53E389b3',
+        'test': '0x96eD842d0B95aa2Cd749f4042F565F153Fd4C8C0',
     },
     router: {
         'main': '',

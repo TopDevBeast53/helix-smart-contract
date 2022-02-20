@@ -12,13 +12,14 @@ contract Voting is ReentrancyGuard, Ownable {
 
     EnumerableSet.AddressSet private _CoreMembers;
 
-    // structure for a single proposal.
+    // structure of a single proposal.
     struct Proposal {
         bool isCore;
-        bytes32 name;                           // proposal short name
+        string name;                            // IPFS CID pointing to proposal title and body text
         address creator;                        // creator's address
         uint blockNum;                          // when the proposal was created
-        uint endTimestamp;                      // a timestamp for when the voting ends 
+        uint startTimestamp;                    // a timestamp of when the voting starts 
+        uint endTimestamp;                      // a timestamp of when the voting ends 
         mapping(address => uint8) decisions;    // decisions[voterAddr] == 1 -> YES, decisions[voterAddr] == 2 -> NO
         address[] voters;                       // array of voters
         mapping(address => uint) balance;       // balance of deposited aura token for each voter into the given proposal
@@ -27,10 +28,15 @@ contract Voting is ReentrancyGuard, Ownable {
     
     // number of proposals
     uint public numProposals;
-    // map for proposals by index
-    mapping (uint => Proposal) public proposals;
 
-    event CreateProposal(bytes32 proposalName);
+    // Used for accessing proposals by their index, i.e. creation order
+    mapping (uint => Proposal) public proposalsByIndex;
+
+    // Used for accessing Proposals by their name, i.e. hash
+    // via string name -> uint index -> Proposal
+    mapping (string => uint) public proposalIndexById;
+
+    event CreateProposal(string proposalName);
 
     // constructor that create a new Voting to choose one of `proposalNames`.
     constructor(AuraToken _auraToken) {
@@ -38,21 +44,24 @@ contract Voting is ReentrancyGuard, Ownable {
     }
 
     //External functions --------------------------------------------------------------------------------------------
-    
+
     /**
      * @dev Create proposal
      *
      * Requirements:
      * - EndTimestamp should be later from now.
      */
-    function createProposal(bytes32 proposalName, uint endTimestamp) external {
-        require(endTimestamp > block.timestamp, "Input wrong timestamp");
-        Proposal storage p = proposals[numProposals++];
+    function createProposal(string calldata proposalName, uint endTimestamp) external {
+        require(endTimestamp > block.timestamp, "endTimestamp must be a time in the future");
+        proposalIndexById[proposalName] = numProposals;
+        Proposal storage p = proposalsByIndex[numProposals++];
+        p.isCore = isCoreMember(msg.sender);
         p.name = proposalName;
         p.creator = msg.sender;
         p.blockNum = block.number;
+        p.startTimestamp = block.timestamp;
         p.endTimestamp = endTimestamp;
-        p.isCore = isCoreMember(msg.sender);
+
         emit CreateProposal(proposalName);
     }
 
@@ -65,8 +74,8 @@ contract Voting is ReentrancyGuard, Ownable {
      */
     function vote(uint proposalId, uint withTokenAmount, uint8 decision) external nonReentrant {
         address voter = msg.sender;
-        Proposal storage _proposal = proposals[proposalId];
-        require(block.timestamp < _proposal.endTimestamp, "Voting is over");
+        Proposal storage _proposal = proposalsByIndex[proposalId];
+        require(isActive(proposalId), "Voting is over");
         require(_proposal.decisions[voter] == 0, "Already voted");
         require(decision > 0 && decision < 3, "Wrong decision number");
         
@@ -83,13 +92,13 @@ contract Voting is ReentrancyGuard, Ownable {
      */
     function resultProposal(uint proposalId) external view returns (uint, uint)
     {
-        uint numVoters = proposals[proposalId].voters.length;
+        uint numVoters = proposalsByIndex[proposalId].voters.length;
         uint yesVotes = 0;
         uint noVotes = 0;
         for (uint i = 0; i < numVoters; i++) {
-            address voterAddr = proposals[proposalId].voters[i];
+            address voterAddr = proposalsByIndex[proposalId].voters[i];
             uint votes = getNumberOfVotes(voterAddr, proposalId);
-            uint decision = proposals[proposalId].decisions[voterAddr];
+            uint decision = proposalsByIndex[proposalId].decisions[voterAddr];
             if (decision == 1) {
                 yesVotes += votes;
             } else {
@@ -109,10 +118,10 @@ contract Voting is ReentrancyGuard, Ownable {
      */
     function withdraw(uint proposalId, uint amount) external nonReentrant {
         address voter = msg.sender;
-        Proposal storage _proposal = proposals[proposalId];
+        Proposal storage _proposal = proposalsByIndex[proposalId];
         require(amount > 0 && _proposal.balance[voter] >= _proposal.withdrawAfterEnd[voter] + amount, "Wrong withdraw amount");
         auraToken.transfer(voter, amount);
-        if (block.timestamp < _proposal.endTimestamp) {
+        if (isActive(proposalId)) {
             _proposal.balance[voter] -= amount;
         } else {
             _proposal.withdrawAfterEnd[voter] += amount;
@@ -124,17 +133,24 @@ contract Voting is ReentrancyGuard, Ownable {
      * NOTE: return value is 0 => `not voted yet1, 1 => `YES`, 2 => `NO`
      */
     function getDecision(uint proposalId, address voter) external view returns (uint8) {
-        return proposals[proposalId].decisions[voter];
+        return proposalsByIndex[proposalId].decisions[voter];
     }
 
     /**
      * @dev See voters by `proposalId`
      */
     function voters(uint proposalId) external view returns (address[] memory) {
-        return proposals[proposalId].voters;
+        return proposalsByIndex[proposalId].voters;
     }
     
     //Public functions --------------------------------------------------------------------------------------------
+
+    /**
+     * @dev Returns true if this proposal can still be voted on and false otherwise.
+     */
+    function isActive(uint proposalIndex) public view returns(bool) {
+        return block.timestamp < proposalsByIndex[proposalIndex].endTimestamp;
+    }
 
     /**
      * @dev Get the number of votes by `voter`
@@ -142,7 +158,7 @@ contract Voting is ReentrancyGuard, Ownable {
      * NOTE: AuraToken's PriorVotes + deposited balance to proposal
      */
     function getNumberOfVotes(address voter, uint proposalId) public view returns (uint) {
-        return auraToken.getPriorVotes(voter, proposals[proposalId].blockNum) + proposals[proposalId].balance[voter];
+        return auraToken.getPriorVotes(voter, proposalsByIndex[proposalId].blockNum) + proposalsByIndex[proposalId].balance[voter];
     }
 
      /**

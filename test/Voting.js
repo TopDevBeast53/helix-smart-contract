@@ -32,7 +32,7 @@ contract('Voting', ([alice, bob, carol, deployer]) => {
         it('create a proposal by `alice`', async () => {
             let nowTimestamp = parseInt((await time.latest()).toString());
             await this.voting.createProposal(utils.formatBytes32String("proposal_0"), nowTimestamp+100, {from: alice});
-            let p = await this.voting.proposals(0);
+            let p = await this.voting.proposalsByIndex(0);
             assert.equal(p.endTimestamp.toString(), (nowTimestamp+100).toString());
             assert.equal(p.creator.toString(), alice.toString());
             assert.equal(utils.parseBytes32String(p.name), "proposal_0");
@@ -42,8 +42,8 @@ contract('Voting', ([alice, bob, carol, deployer]) => {
             
             await this.voting.createProposal(utils.formatBytes32String("proposal_0"), nowTimestamp+100, {from: alice});
             await this.voting.createProposal(utils.formatBytes32String("proposal_1"), nowTimestamp+200, {from: bob});
-            assert.equal((await this.voting.proposals(0)).creator.toString(), alice.toString());
-            assert.equal((await this.voting.proposals(1)).creator.toString(), bob.toString());
+            assert.equal((await this.voting.proposalsByIndex(0)).creator.toString(), alice.toString());
+            assert.equal((await this.voting.proposalsByIndex(1)).creator.toString(), bob.toString());
         });
     });
     describe("Voting", async () => {
