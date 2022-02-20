@@ -12,8 +12,10 @@
  *      2. Optionally add bridger accounts
  */
 const { ethers, network } = require(`hardhat`);
- 
-const AuraNFTAddress = '0x5C8181A056b2107B17FbCdaE3f9707C9024DfdF8'; // <- update me
+const contracts = require("./constants/contracts")
+const env = require("./constants/env")
+
+const AuraNFTAddress = contracts.auraNFT[env.network];
  
 async function addBridger(bridgeAddress, bridgerAddress) {
     const [deployer] = await ethers.getSigners();

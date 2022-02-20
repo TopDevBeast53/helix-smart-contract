@@ -15,10 +15,24 @@ module.exports = {
         'main': '',
         'test': '0xa658eCB873aa6d8e09426BE80A3Ace5BAeB4Bffd',
     },
+    swapFee: {
+        'main': '',
+        'test': '0xC06a683871fe5B8Bcd098416Cfa5915835440107',
+    },
     voting: {
         'main': '',
         'test': '0xC3A5dc2D9eC0e8CC6603F81FDc0Fd7aB53E389b3',
     },
-    
+    router: {
+        'main': '',
+        'test': '0x38433227c7a606ebb9ccb0acfcd7504224659b74',
+    },
+    WBNB: {
+        'main': '',
+        'test': '0xae13d989dac2f0debff460ac112a837c89baa7cd',
+    },
+    factory: {
+        'main': '',
+        'test': '0xd224E4f3342f2e4000A2479Ecc7A8Db87896853f',
+    },
 }
-  

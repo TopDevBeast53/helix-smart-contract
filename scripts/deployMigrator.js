@@ -9,18 +9,14 @@
 // Deployed at = 0x6D237B35cCa79f367Ecac7743555C3f3213fA77f
 
 const {ethers} = require('hardhat');
-
-const ENV = 'test';
-
-const ROUTER = {
-    'test': '0x38433227c7a606ebb9ccb0acfcd7504224659b74',
-}
+const contracts = require("./constants/contracts")
+const env = require("./constants/env")
 
 async function main() {
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${deployer.address}`);
 
-    const routerAddress = ROUTER[ENV];
+    const routerAddress = contracts.router[env.network];
     console.log(`AuraRouter deployed at: ${routerAddress}`);
 
     console.log('Deploy AuraMigrator');

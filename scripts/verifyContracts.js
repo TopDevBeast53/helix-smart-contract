@@ -13,7 +13,6 @@
  */
 
 const hre = require('hardhat');
-const {BigNumber} = require("ethers");
 const contracts = require("./constants/contracts")
 const env = require("./constants/env")
 
@@ -30,6 +29,20 @@ async function main() {
     res = await hre.run("verify:verify", {
         address: contracts.auraNFTChef[env.network],
         constructorArguments: [contracts.auraNFT[env.network], 0]
+    })
+    console.log(res);
+
+    console.log('Verify swap fee rewards with AP contract');
+    let res = await hre.run("verify:verify", { 
+        address: contracts.swapFee[env.network],
+        constructorArguments: []
+    });
+    console.log(res);
+
+    console.log(`Verify Voting contract`);
+    let res = await hre.run("verify:verify", {
+        address: contracts.voting[env.network],
+        constructorArguments: [contracts.auraToken[env.network]]
     })
     console.log(res);
 }

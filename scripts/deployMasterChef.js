@@ -11,10 +11,10 @@
  *      2. Add `MasterChef` as minter to `AuraToken`
  */
  const { ethers, network } = require(`hardhat`);
+ const contracts = require("./constants/contracts")
+ const env = require("./constants/env")
  
- const env = 'test';
- 
- const AuraTokenAddress = '0xC5e5A2ca4A41aF3B01289c2071E35346c7f7C89E'; // <- update me
+ const AuraTokenAddress = contracts.auraToken[env.network];
  const DeveloperAddress = '0x7167a81a3a158Fc0383124Bd7e4d4e43f2b728b8'; // <- update me
  const StartBlock = 0;
  const AuraTokenRewardPerBlock = '40000000000000000000'; // 40 * 10e18 -> 40 aura tokens per block 

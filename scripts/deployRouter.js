@@ -11,26 +11,19 @@
 // @cryptoBilly on Feb 7: deployed at = 0xa04af40A2A27D744b72Cd8F5aD39Fc62083F64FE
 
 const { ethers } = require(`hardhat`);
-
-const ENV = 'test';
-
-const WBNB = {
-    'test': '0xae13d989dac2f0debff460ac112a837c89baa7cd',
-}
-const FACTORY = {
-    'test': '0xd224E4f3342f2e4000A2479Ecc7A8Db87896853f',
-}
+const contracts = require("./constants/contracts")
+const env = require("./constants/env")
 
 async function main() {
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${deployer.address}`);
     
-    const factoryAddress = FACTORY[ENV];
+    const factoryAddress = contracts.factory[env.network];
     console.log(`Factory deployed at ${factoryAddress}`);
 
     console.log(`Deploy Aura Router V1`);
     const Router = await ethers.getContractFactory('AuraRouterV1');
-    const router = await Router.deploy(factoryAddress, WBNB[ENV]);
+    const router = await Router.deploy(factoryAddress, contracts.WBNB[env.network]);
     await router.deployTransaction.wait();
     console.log(`Aura Router V1 deployed to ${router.address}`);
 }

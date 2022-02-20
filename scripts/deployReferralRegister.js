@@ -10,10 +10,10 @@
  *      1. Deploy `ReferralRegister` contract.
  */
  const { ethers, network } = require(`hardhat`);
+ const contracts = require("./constants/contracts")
+ const env = require("./constants/env")
 
- const env = 'test';
-
- const AuraTokenAddress = '0xC5e5A2ca4A41aF3B01289c2071E35346c7f7C89E'; // <-- update me
+ const AuraTokenAddress = contracts.auraToken[env.network];
  const StakingFeePercent = 30;
  const SwapFeePercent = 50;
 
