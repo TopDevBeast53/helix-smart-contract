@@ -61,8 +61,7 @@ export async function mockOracleFixture(provider: Web3Provider, [wallet]: Wallet
 }
 
 export async function auraNFTFixture(provider: Web3Provider, [wallet]: Wallet[]) {
-    // AuraNFT args: (string memory baseURI, uint initialAuraPoints, uint8 levelUpPercent).
-    const auraNFT = await deployContract(wallet, AuraNFT, ["", 10000, 10], overrides);
+    const auraNFT = await deployContract(wallet, AuraNFT, [], overrides);
     return auraNFT;
 };
 
@@ -85,7 +84,15 @@ export async function swapFeeRewardsWithAPFixture(provider: Web3Provider, [walle
     const auraNFT = await auraNFTFixture(provider, [wallet]);
     const auraToken = await auraTokenFixture(provider, [wallet]);
 
-    const swapFeeRewardsWithAP = await deployContract(wallet, SwapFeeRewardsWithAP, [], overrides);
+    const swapFeeRewardsWithAP = await deployContract(wallet, SwapFeeRewardsWithAP, [
+        factory.address,
+        router.address,
+        targetToken.address,
+        targetAPToken.address,
+        mockOracle.address,
+        auraToken.address,
+        auraNFT.address
+    ], overrides);
 
     return {
         factory,

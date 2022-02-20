@@ -57,7 +57,6 @@ describe('SwapFeeRewardsWithAP', () => {
         await tx.wait();
         tx = await swapFeeRewardsWithAP.setOracle(mockOracle.address);
         await tx.wait();
-
     });
 
     /*
@@ -114,18 +113,6 @@ describe('SwapFeeRewardsWithAP', () => {
         const newRouter = await loadFixture(routerFixture);
         await swapFeeRewardsWithAP.setRouter(newRouter.address);
         expect(await swapFeeRewardsWithAP.router()).to.eq(newRouter.address);
-    });
-
-    it('swapFee: sets market as owner', async () => {
-        const newMarket = { address: '0x946f52d986428284484d2007624ad0E88dfe6184' };
-        await swapFeeRewardsWithAP.setMarket(newMarket.address);
-        expect(await swapFeeRewardsWithAP.market()).to.eq(newMarket.address);
-    });
-
-    it('swapFee: sets auction as owner', async () => {
-        const newAuction = { address: '0x626Ef7da2f1365ed411630eDaa4D589F5BeD176e' };
-        await swapFeeRewardsWithAP.setAuction(newAuction.address);
-        expect(await swapFeeRewardsWithAP.auction()).to.eq(newAuction.address);
     });
 
     it('swapFee: sets phase as owner', async () => {
@@ -224,14 +211,8 @@ describe('SwapFeeRewardsWithAP', () => {
 
     it('swapFee: sets AP reward as owner', async () => {
         const newAPWagerOnSwap = 10;
-        const newAPPercentMarket = 11;
-        const newAPPercentAuction = 12;
-
-        await swapFeeRewardsWithAP.setAPReward(newAPWagerOnSwap, newAPPercentMarket, newAPPercentAuction);
-
+        await swapFeeRewardsWithAP.setAPReward(newAPWagerOnSwap);
         expect(await swapFeeRewardsWithAP.apWagerOnSwap()).to.eq(10);
-        expect(await swapFeeRewardsWithAP.apPercentMarket()).to.eq(11);
-        expect(await swapFeeRewardsWithAP.apPercentAuction()).to.eq(12);
     });
 
     /*
@@ -264,9 +245,6 @@ describe('SwapFeeRewardsWithAP', () => {
     /*
      * EXTERNAL SETTERS
      */
-
-    // TODO - test accrueAPFromMarket 
-    // TODO - test accrueAPFromAuction
 
     it('swapFee: sets reward distribution', async () => {
         // Raise the initial default reward distribution.               
@@ -414,12 +392,5 @@ describe('SwapFeeRewardsWithAP', () => {
         // Confirm that 10 tokenA swaps for 30 tokenC.
         expect(await swapFeeRewardsWithAP.getQuantityOut(tokenA, quantityInPair1, tokenC)).to.eq(30);
     });
-
-    /*
-     * CORE
-     */
-
-    // TODO test swap
-    // TODO test withdraw
 });
 
