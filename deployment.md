@@ -98,15 +98,38 @@ Open `constants` folder and the files in it.
 
 Run `npx hardhat run scripts/deployAuraNFTStaking.js --network testnetBSC` (or main)
 
-THIS WILL DO THE FOLLOWING:
-* ...
-* ...
-* ...
-* ...
-* ...
+Here will be deployed contracts `AuraNFT`, `AuraChefNFT`, `SwapFeeRewardsWithAP`
+1. Deploy `AuraNFT` contract.
+2. Deploy `AuraChefNFT` contract.
+ * Set deployed `AuraNFT` address as instance of `AuraChefNFT`.
+3. Deploy `SwapFeeRewardsWithAP` contract
+4. Set all roles of `AuraNFT`
+ * Set `AuraChefNFT` address as a staker of `AuraNFT`.
+ * Set `deployer` as a minter of `AuraNFT`.
+ * Set `SwapFeeRewardsWithAP` address as accruer of `AuraNFT`.
+5. Add RewardToken of `AuraChefNFT` with `AURA` token.
 
-ERIC ^ TO FILL THIS IN AND EXPLAIN WHAT IT WILL DO. ALSO, HOW TO CONNECT THIS TO THE SWAP FEE REWARDS WITH AP.
+Here are the initial variables.
+1. `AuraNFT`
+  - `initialAuraPoints` : A AuraNFT has AuraPoints amount initially when it is minted.
+  	NOTE: Users can only earn AuraPoints through Swap trade.
+  		  `SwapFeeRewardsWithAP` calls the function.
+  - `levelUpPercent` : When level up, add a percentage(`levelUpPercent`) of your previous AuraPoints.
+    e.g. let's say that current level is 2 and current AuraPoints is 50 and `levelUpPercent` is 10.
+         When upgrade to 3 Level, new AuraPoints will be `50 * (1 + 10/100)` => `55`
 
+2. `AuraChefNFT
+  - `lastRewardBlock` : will set as block number when contract is deployed but you can set on your mind.
+  - `startBlock` : the param of the `addNewRewardToken` function that indicates when the block number will be rewarded.
+  	If set 0, it will be set as current block number of when executed this function.
+  - `rewardPerBlock` : reward will be accrued per block, must not be zero.
+
+  NOTE: Reward is calculated `min(lastRewardBlock-currentBlock, startBlock-currentBlock) * rewardPerBlock` .
+  		e.g. let's say that current Block is 100, and startBlock is 200.
+  		User can't get any reward until current block is 200.
+  
+  	Accumulated Tokens per share = `rewardPerBlock * diffBlockNums`. diffBlockNums: diff from startRewardBlock to now
+  	So, AuraChefNFT should have AuraToken amount to sufficient as above formula
 
 ## Aura NFT Bridge
 
