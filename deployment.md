@@ -118,7 +118,7 @@ Here are the initial variables.
     e.g. let's say that current level is 2 and current AuraPoints is 50 and `levelUpPercent` is 10.
          When upgrade to 3 Level, new AuraPoints will be `50 * (1 + 10/100)` => `55`
 
-2. `AuraChefNFT
+2. `AuraChefNFT`
   - `lastRewardBlock` : will set as block number when contract is deployed but you can set on your mind.
   - `startBlock` : the param of the `addNewRewardToken` function that indicates when the block number will be rewarded.
   	If set 0, it will be set as current block number of when executed this function.
