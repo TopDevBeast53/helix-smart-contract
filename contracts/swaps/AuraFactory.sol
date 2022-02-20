@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 import './AuraPair.sol';
+import '../interfaces/IOracle.sol';
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 
 contract AuraFactory is IUniswapV2Factory {
@@ -11,6 +12,9 @@ contract AuraFactory is IUniswapV2Factory {
 
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
+
+    address public oracle;
+    mapping(address => bool) public oracleEnabled;
 
     constructor(address _feeToSetter) {
         feeToSetter = _feeToSetter;
@@ -56,5 +60,27 @@ contract AuraFactory is IUniswapV2Factory {
     function setSwapFee(address _pair, uint32 _swapFee) external {
         require(msg.sender == feeToSetter, 'Aura: FORBIDDEN');
         AuraPair(_pair).setSwapFee(_swapFee);
+    }
+
+    function setOracle(address _oracle) external {
+        require(msg.sender == feeToSetter, 'Aura: FORBIDDEN');
+        oracle = _oracle;
+    }
+
+    function enablePair(address p) external {
+        require(msg.sender == feeToSetter, 'Aura: FORBIDDEN');
+        oracleEnabled[p] = true;
+    }
+
+    function disablePair(address p) external {
+        require(msg.sender == feeToSetter, 'Aura: FORBIDDEN');
+        oracleEnabled[p] = false;
+    }
+
+    function updateOracle(address pair) external {
+        if (oracleEnabled[pair]) {
+            AuraPair p = AuraPair(pair);
+            IOracle(oracle).update(p.token0(), p.token1());
+        }
     }
 }

@@ -89,14 +89,14 @@ describe('MasterChef', () => {
       const auraBalanceBefore = await auraToken.balanceOf(wallet.address);
       const previousBalanceOfLp = await lpToken.balanceOf(wallet.address);
       expect(previousBalanceOfLp).to.eq(0);
-      expect(auraBalanceBefore).to.eq("10000000000000000000000000");
+      expect(auraBalanceBefore).to.eq("100000000000000000000000000");
 
       await chef.withdraw(1, 99000);
 
       const newAuraBalance = await auraToken.balanceOf(wallet.address);
       const newBalanceOfLp = await lpToken.balanceOf(wallet.address);
       expect(newBalanceOfLp).to.eq(99000);
-      expect(newAuraBalance).to.eq("10002019997980000000000000");
+      expect(newAuraBalance).to.eq("100002019997980000000000000");
     });
 
     it('stake aura', async () => {
@@ -109,11 +109,11 @@ describe('MasterChef', () => {
       // Stake
       await chef.enterStaking("1000000000000000000000000");
       const userBalanceAfterStaking = await auraToken.balanceOf(wallet.address);
-      expect(userBalanceAfterStaking).to.eq("9000000000000000000000000");
+      expect(userBalanceAfterStaking).to.eq("99000000000000000000000000");
 
       // Unstake
       await chef.leaveStaking("1000000000000000000000000");
       const userBalanceAfterUnStaking = await auraToken.balanceOf(wallet.address);
-      expect(userBalanceAfterUnStaking).to.eq("10000029999970000000000000");
+      expect(userBalanceAfterUnStaking).to.eq("100000029999970000000000000");
     });
 })

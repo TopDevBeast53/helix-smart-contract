@@ -18,7 +18,7 @@
  const DeveloperAddress = '0x7167a81a3a158Fc0383124Bd7e4d4e43f2b728b8'; // <- update me
  const StartBlock = 0;
  const AuraTokenRewardPerBlock = '40000000000000000000'; // 40 * 10e18 -> 40 aura tokens per block 
- const ReferralRegister = '0xd634B871381ad12A8DEAEd0d88084744143a678B'; // <- update me
+ const ReferralRegister = '0xC8AeFE4648E709e8326045Ca1896295f6057F38C'; // <- update me
  const StakingPercent = 999000; // -> 99.9% of all farm rewards will go the users
  const DevPercent = 1000; // -> 0.1% of all farm rewards will go to dev address
  

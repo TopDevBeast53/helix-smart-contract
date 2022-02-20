@@ -10,7 +10,7 @@ const WBNB = {
 }
 const FACTORY = {
     // 'test': '0xe1cf8d44bb47b8915a70ea494254164f19b7080d',
-    'test': '0xf15a0717bB14bB82d838AA1EE1e494c3489C35E3',
+    'test': '0x84f22547020f582Deef1eb1B57b3b213D5997471',
     // Add production deployed factory address here
 }
 

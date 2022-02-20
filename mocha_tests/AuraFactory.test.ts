@@ -68,7 +68,7 @@ describe('AuraFactory', () => {
   it('createPair:gas', async () => {
     const tx = await factory.createPair(...TEST_ADDRESSES)
     const receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(2250037)
+    expect(receipt.gasUsed).to.eq(2268692)
   })
 
   it('setFeeTo', async () => {

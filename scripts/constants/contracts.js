@@ -1,7 +1,7 @@
 module.exports = {
     auraToken: {
         'main': '',
-        'test': '0xC5e5A2ca4A41aF3B01289c2071E35346c7f7C89E',
+        'test': '0x5521AeF8AE919f63f32137dAc6ac63AdB0324B98',
     },
     auraNFT: {
         'main': '',
@@ -33,7 +33,11 @@ module.exports = {
     },
     factory: {
         'main': '',
-        'test': '0xd224E4f3342f2e4000A2479Ecc7A8Db87896853f',
+        'test': '0x84f22547020f582Deef1eb1B57b3b213D5997471',
+    },
+    oracle: {
+        'main': '',
+        'test': '0xFC7EF377E976cC45c1D647d7060a8e4C1Fa26e4c',
     },
     oracle: {
         'main': '',

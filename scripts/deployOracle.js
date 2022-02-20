@@ -9,17 +9,27 @@
 
 const { ethers } = require(`hardhat`);
 
+const FactoryAddress = '0x84f22547020f582Deef1eb1B57b3b213D5997471';
+
 async function main() {
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${deployer.address}`);
 
     console.log(`Deploy Oracle`);
     const ContractFactory = await ethers.getContractFactory('Oracle');
-    const contract = await ContractFactory.deploy();     
+    const contract = await ContractFactory.deploy(FactoryAddress, 48, 24);     
     await contract.deployTransaction.wait();
     
     console.log(`Oracle deployed to ${contract.address}`);
     console.log('Done');
+
+    console.log(`------ Add Oracle to Factory ---------`);
+     const AuraFactory = await ethers.getContractFactory(`AuraFactory`);
+     const f = AuraFactory.attach(FactoryAddress);
+
+     let tx = await f.setOracle(contract.address, {gasLimit: 3000000});
+     await tx.wait();
+
 }
 
 main()
