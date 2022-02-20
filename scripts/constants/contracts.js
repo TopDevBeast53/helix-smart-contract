@@ -35,4 +35,9 @@ module.exports = {
         'main': '',
         'test': '0xd224E4f3342f2e4000A2479Ecc7A8Db87896853f',
     },
+    oracle: {
+        'main': '',
+        'test': '0xB8dF9dbf268E18026705757e91fAeEbb1B5b916E',
+    },
 }
+  
