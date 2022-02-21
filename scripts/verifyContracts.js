@@ -33,14 +33,14 @@ async function main() {
     console.log(res);
 
     console.log('Verify swap fee rewards with AP contract');
-    let res = await hre.run("verify:verify", { 
+    res = await hre.run("verify:verify", { 
         address: contracts.swapFee[env.network],
         constructorArguments: []
     });
     console.log(res);
 
     console.log(`Verify Voting contract`);
-    let res = await hre.run("verify:verify", {
+    res = await hre.run("verify:verify", {
         address: contracts.voting[env.network],
         constructorArguments: [contracts.auraToken[env.network]]
     })

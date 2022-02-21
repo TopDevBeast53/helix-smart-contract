@@ -195,11 +195,15 @@ contract AuraNFT is ERC721EnumerableUpgradeable {
     /**
      * @dev Override funtion to avoid the transfer of the staked token
      */
-    function transferFrom(address from, address to, uint256 tokenId) public override {
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal virtual override(ERC721EnumerableUpgradeable) {
         if (_tokens[tokenId].isStaked == true) {
             revert("ERC721: Token is staked");
         }
-        super.transferFrom(from, to, tokenId);
+        super._beforeTokenTransfer(from, to, tokenId);
     }
 
     //External functions --------------------------------------------------------------------------------------------

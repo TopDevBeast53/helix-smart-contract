@@ -1,23 +1,23 @@
 module.exports = {
     auraToken: {
         'main': '',
-        'test': '0x5521AeF8AE919f63f32137dAc6ac63AdB0324B98',
+        'test': '0xdf2b1082eE98b48B5933378c8F58cE2f5AaFF135',
     },
     auraNFT: {
         'main': '',
-        'test': '0x3e7947282fc0B6389349833550f3ad70d09E9802',
+        'test': '0x8b2b085339D11DcF0FA0aaD985C30f82eb49a880',
     },
     auraNFTImpl: {
         'main': '',
-        'test': '0x3efc7776d8cb99e3325607064c59a858ef1b1526',
+        'test': '0x1a90de3849072ff46eca70cf714eac45e7a27304',
     },
     auraNFTChef: {
         'main': '',
-        'test': '0xa658eCB873aa6d8e09426BE80A3Ace5BAeB4Bffd',
+        'test': '0x6C57410c639c6A10208185853b8990d32dcF6d14',
     },
     swapFee: {
         'main': '',
-        'test': '0xC06a683871fe5B8Bcd098416Cfa5915835440107',
+        'test': '0xE8e028c186B91321dAC7d97aC4c18c9CF3efE7b1',
     },
     voting: {
         'main': '',
