@@ -13,8 +13,8 @@ contract('AuraToken', ([alice, bob, carol, dev, refFeeAddr, safuAddr, minter]) =
     beforeEach(async () => {
         //deploy token contract
         this.gxo = await AuraToken.new({ from: minter });
-        assert.equal((await this.gxo.maxSupply()).toString(), "700000000000000000000000000");
-        assert.equal((await this.gxo.preMineSupply()).toString(), "10000000000000000000000000");
+        assert.equal((await this.gxo.maxSupply()).toString(), "1000000000000000000000000000");
+        assert.equal((await this.gxo.preMineSupply()).toString(), "100000000000000000000000000");
         assert.equal((await this.gxo.decimals()).toString(), "18");
     });
 
