@@ -11,8 +11,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-// TODO - Add NatSpec comments to latter functions.
-
 /**
  * @title Convert between Swap Reward Fees to Aura Points (ap/AP)
  */
@@ -26,8 +24,6 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
 
     address public factory;
     address public router;
-    address public market;
-    address public auction;
     address public targetToken;
     address public targetAPToken;
 
@@ -42,8 +38,6 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     uint public totalAccruedAP = 0;
 
     uint public apWagerOnSwap = 1500;
-    uint public apPercentMarket = 10000; // (div 10000)
-    uint public apPercentAuction = 10000; // (div 10000)
 
     ReferralRegister public refReg;
 
@@ -92,11 +86,26 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     event NewAuraNFT(IAuraNFT auraNFT);
     event NewAuraToken(IAuraToken auraToken);
 
-    event NewMarket(address market);
-    event NewAuction(address auction);
-
     event NewPhase(uint phase);
     event NewPhaseAP(uint phaseAP);
+
+    constructor(
+        address _factory, 
+        address _router, 
+        address _targetToken, 
+        address _targetAPToken,
+        IOracle _oracle,
+        IAuraToken _auraToken,
+        IAuraNFT _auraNFT
+    ) {
+        setFactory(_factory);
+        setRouter(_router);
+        setTargetToken(_targetToken);
+        setTargetAPToken(_targetAPToken);
+        setOracle(_oracle);
+        setAuraToken(_auraToken);
+        setAuraNFT(_auraNFT);
+    }
 
     /* 
      * EXTERNAL CORE 
@@ -283,26 +292,6 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * Provide callers with functionality for setting contract state.
      */
 
-    /**
-     * @dev Accrue AP to AuraNFT `tokenId` equivalent in value to `quantityIn` of `tokenIn` modified
-     *      by the market percent rate.
-     */
-    function accrueAPFromMarket(address account, address tokenIn, uint quantityIn) external {
-        require(msg.sender == market, "Caller is not the market.");
-        quantityIn = quantityIn * apPercentMarket / 10000;
-        accrueAuraPoints(account, tokenIn, quantityIn);
-    }
-    
-    /**
-     * @dev Accrue AP to AuraNFT `tokenId` equivalent in value to `quantityIn` of `tokenIn` modified
-     *      by the auction percent rate.
-     */
-    function accrueAPFromAuction(address account, address tokenIn, uint quantityIn) external {
-        require(msg.sender == auction, "Caller is not the auction.");
-        quantityIn = quantityIn * apPercentAuction / 10000;
-        accrueAuraPoints(account, tokenIn, quantityIn);
-    }
-
     function setUserDefaultDistribution(uint _distribution) external {
         require(_distribution <= defaultRewardDistribution, "Invalid fee distribution.");
         rewardDistribution[msg.sender] = _distribution;
@@ -348,31 +337,31 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         defaultRewardDistribution = _defaultRewardDistribution;
     } 
 
-    function setFactory(address _factory) external onlyOwner {
+    function setFactory(address _factory) public onlyOwner {
         require(_factory != address(0), "Factory is the zero address.");
         factory = _factory;
         emit NewFactory(_factory);
     }
 
-    function setRouter(address _router) external onlyOwner {
+    function setRouter(address _router) public onlyOwner {
         require(_router != address(0), "Router is the zero address.");
         router = _router;
         emit NewRouter(_router);
     }
 
-    function setTargetToken(address _targetToken) external onlyOwner {
+    function setTargetToken(address _targetToken) public onlyOwner {
         require(_targetToken != address(0), "TargetToken is the zero address.");
         targetToken = _targetToken;
         emit NewTargetToken(_targetToken);
     }
 
-    function setTargetAPToken(address _targetAPToken) external onlyOwner {
+    function setTargetAPToken(address _targetAPToken) public onlyOwner {
         require(_targetAPToken != address(0), "TargetAPToken is the zero address.");
         targetAPToken = _targetAPToken;
         emit NewTargetAPToken(_targetAPToken);
     }
 
-    function setOracle(IOracle _oracle) external onlyOwner {
+    function setOracle(IOracle _oracle) public onlyOwner {
         require(address(_oracle) != address(0), "Oracle is the zero address.");
         oracle = _oracle;
         emit NewOracle(_oracle);
@@ -383,28 +372,16 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         refReg = _refreg;
     }
 
-    function setAuraNFT(IAuraNFT _auraNFT) external onlyOwner {
+    function setAuraNFT(IAuraNFT _auraNFT) public onlyOwner {
         require(address(_auraNFT) != address(0), "AuraNFT is the zero address.");
         auraNFT = _auraNFT;
         emit NewAuraNFT(_auraNFT);
     }
 
-    function setAuraToken(IAuraToken _auraToken) external onlyOwner {
+    function setAuraToken(IAuraToken _auraToken) public onlyOwner {
         require(address(_auraToken) != address(0), "AuraToken is the zero address.");
         auraToken = _auraToken;
         emit NewAuraToken(_auraToken);
-    }
-
-    function setMarket(address _market) external onlyOwner {
-        require(_market != address(0), "Market is the zero address.");
-        market = _market;
-        emit NewMarket(_market);
-    }
-
-    function setAuction(address _auction) external onlyOwner {
-        require(_auction!= address(0), "Auction is the zero address.");
-        auction = _auction;
-        emit NewAuction(_auction);
     }
 
     function setPhase(uint _phase) external onlyOwner {
@@ -437,10 +414,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         pairsList[_pairId].isEnabled = _isEnabled;
     }
 
-    function setAPReward(uint _apWagerOnSwap, uint _percentMarket, uint _percentAuction) external onlyOwner {
+    function setAPReward(uint _apWagerOnSwap) external onlyOwner {
         apWagerOnSwap = _apWagerOnSwap;
-        apPercentMarket = _percentMarket;
-        apPercentAuction = _percentAuction;
     }
 
     /* 

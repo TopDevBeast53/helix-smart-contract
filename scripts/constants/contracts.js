@@ -7,6 +7,10 @@ module.exports = {
         'main': '',
         'test': '0x8b2b085339D11DcF0FA0aaD985C30f82eb49a880',
     },
+    auraLP: {
+        'main': '',
+        'test': '0x529cce4dd9c2234be9ca724a4158b8f675b22778',
+    },
     auraNFTImpl: {
         'main': '',
         'test': '0x1a90de3849072ff46eca70cf714eac45e7a27304',
@@ -42,6 +46,10 @@ module.exports = {
     oracle: {
         'main': '',
         'test': '0xB8dF9dbf268E18026705757e91fAeEbb1B5b916E',
+    },
+    swapFee: {
+        'main': '',
+        'test': '0x165b018e5f9aC93f011069969B9f852B7eDA94dD',
     },
 }
   
