@@ -49,7 +49,7 @@ module.exports = {
     },
     swapFee: {
         'main': '',
-        'test': '0x165b018e5f9aC93f011069969B9f852B7eDA94dD',
+        'test': '0xe91f6720347c7dA5E23665d85EAFB17E47F89BB7',
     },
 }
   
