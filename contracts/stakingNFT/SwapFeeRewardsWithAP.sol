@@ -96,7 +96,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         address _targetAPToken,
         IOracle _oracle,
         IAuraToken _auraToken,
-        IAuraNFT _auraNFT
+        IAuraNFT _auraNFT,
+        ReferralRegister _refReg
     ) {
         setFactory(_factory);
         setRouter(_router);
@@ -105,6 +106,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         setOracle(_oracle);
         setAuraToken(_auraToken);
         setAuraNFT(_auraNFT);
+        setRefReg(_refReg);
     }
 
     /* 
@@ -124,7 +126,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         address pair = pairFor(input, output);
         PairsList memory pool = pairsList[pairOfPairIds[pair]];
         if (!pool.isEnabled || pool.pair != pair) { return false; }
-
+       
         uint swapFee = getSwapFee(input, output);
         (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
         feeAmount = feeAmount / swapFee;
@@ -367,7 +369,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         emit NewOracle(_oracle);
     }
 
-    function setRefReg(ReferralRegister _refreg) external onlyOwner {
+    function setRefReg(ReferralRegister _refreg) public onlyOwner {
         require(address(_refreg) != address(0), "ReferralRegister is the zero address.");
         refReg = _refreg;
     }
