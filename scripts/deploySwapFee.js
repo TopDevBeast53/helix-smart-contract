@@ -6,7 +6,8 @@
  *
  * Workflow:
  *      1. Deploy `SwapFeeRewardsWithAP` contract.                                                                                         
- *      2. Call 'setSwapFeeReward' on Router with deployed swapFee contract address.
+ *      2. Register swapFee contract address with the Router.
+ *      3. Register swapFee contract address with the AuraNFT as an accruer.
  */
 const { ethers } = require(`hardhat`);
 const contracts = require('./constants/contracts');
@@ -43,11 +44,17 @@ async function main() {
     await swapFee.deployTransaction.wait();
     console.log(`SwapFeeRewardsWithAP deployed to ${swapFee.address}`);
 
-    // 2. Call 'setSwapFeeReward' on Router with swapFee contract address.
+    // 2. Register swapFee contract with the Router.
     const Router = await ethers.getContractFactory('AuraRouterV1');
     const router = Router.attach(routerAddress);
     let tx = await router.setSwapFeeReward(swapFee.address);
-    console.log(`Set Swap Fee Reward on Router transaction results: ${tx}`);
+    console.log(`Register Swap Fee address with Router, transaction results: ${tx}`);
+
+    // 3. Register swapFee contract with the exchange's auraNFT as an accruer.
+    const AuraNFT = await ethers.getContractFactory('AuraNFT');
+    const auraNFT = AuraNFT.attach(auraNFTAddress);
+    tx = await auraNFT.addAccruer(swapFee.address);
+    console.log(`Register Swap Fee with AuraNFT as accruer, transaction results: ${tx}`);
 }
 
 main()
