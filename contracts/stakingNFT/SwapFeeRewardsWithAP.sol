@@ -34,8 +34,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     uint public phase = 1;
     uint public phaseAP = 1; 
     
-    uint public totalMined = 0;
-    uint public totalAccruedAP = 0;
+    uint public totalMined;
+    uint public totalAccruedAP;
 
     uint public apWagerOnSwap = 1500;
 
@@ -49,7 +49,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * 100 -> Rewards are [0, 100]% AURA and [0, 100]% AP. User has full choice.
      * Invariant: must be in range [0, 100].
      */
-    uint public defaultRewardDistribution = 0; 
+    uint public defaultRewardDistribution; 
 
     struct PairsList {
         address pair;
