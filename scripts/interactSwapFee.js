@@ -19,6 +19,8 @@ const auraTokenAddress = contracts.auraToken[env.network];
 const auraNFTAddress = contracts.auraNFT[env.network];
 const swapFeeAddress = contracts.swapFee[env.network];
 const wbnbTokenAddress = contracts.WBNB[env.network];
+const testTokenAAddress = contracts.testTokenA[env.network];
+const testTokenBAddress = contracts.testTokenB[env.network];
 
 const verbose = true;
 
@@ -26,10 +28,9 @@ const ownerAddress = process.env.ADDRESS;
 const userAddress = process.env.USER_ADDRESS;
 
 const defaultRewardDistribution = 50;
-const userRewardDistribution = 20;
+const userRewardDistribution = 50;
 
 let owner, user;
-let tokenA, tokenB, tokenC;
 let ISwapFee, swapFee;
 let IAuraNFT, auraNFT;
 let IRouter, router;
@@ -55,29 +56,25 @@ async function main() {
     if (verbose) {
         console.log('prepare token pairs for swap');
     }
-    await preparePair(tokenA, tokenB); 
-    await preparePair(tokenA, tokenC); 
-    await preparePair(tokenB, tokenC); 
-  
-    // Swap the tokens.
-    // Note that tokenA and tokenB are already assigned.
-    let account = await user.getAddress();
-    let amount = 15000000;
-    await swap(account, tokenA, tokenB, amount);
+    await preparePair(auraTokenAddress, wbnbTokenAddress); 
+    await preparePair(auraTokenAddress, targetAPTokenAddress); 
+    await preparePair(wbnbTokenAddress, targetAPTokenAddress); 
+    await preparePair(testTokenAAddress, testTokenBAddress); 
 
+    // Swap the tokens.
+    let amount = 1000000;
+    await swap(user.address, testTokenAAddress, testTokenBAddress, amount);
+
+    /*
     // Withdraw tokens.
     await withdraw();
+    */
 };
 
 /**
  * @dev Initialize the script variables.
  */
 async function initScript() {
-    // Set the tokens to test.
-    tokenA = auraTokenAddress;
-    tokenB = wbnbTokenAddress;
-    tokenC = targetAPTokenAddress;
-    
     // Load the provider.
     const rpc = 'https://data-seed-prebsc-1-s1.binance.org:8545';
     const provider = new ethers.providers.getDefaultProvider(rpc);
@@ -102,19 +99,6 @@ async function initSwapFee() {
     const swapFeeAbi = swapFeeJson.abi;
     ISwapFee = await ethers.getContractFactory('SwapFeeRewardsWithAP');
     swapFee = await ISwapFee.attach(swapFeeAddress).connect(owner);
-
-    console.log("TOKEN A", tokenA);
-    console.log("TOKEN B", tokenB);
-    const pair = await swapFee.pairFor(tokenA, tokenB);
-    console.log("PAIR", pair);
-    const pairId = await swapFee.pairOfPairIds(pair);
-    console.log("PAIR ID", pairId);
-    const pool = await swapFee.pairsList(pairId);
-    console.log("POOL", pool);
-    const localFactoryAddress = await swapFee.factory();
-    console.log("FACTORY", localFactoryAddress);
-    const swapFeeAmount = await swapFee.getSwapFee(tokenA, tokenB);
-    console.log("SWAP FEE AMOUNT", swapFeeAmount);
 
     // Use the owner account as though it's the router for testing swapFee in isolation.
     const prevRouterAddress = await swapFee.router();
@@ -220,37 +204,37 @@ async function registerWithNFT() {
 }
 
 /**
- * @dev Prepare the token pair for swapping (tokenA, tokenB) by making 
+ * @dev Prepare the token pair for swapping (auraTokenAddress, wbnbTokenAddress) by making 
  *      sure that they're added the pair exists and is whitelisted.
  */
-async function preparePair(tokenA, tokenB) {
-    // Add the (tokenA, tokenB) pair if necessary.
-    let pairExists = await getPairExists(tokenA, tokenB);
+async function preparePair(auraTokenAddress, wbnbTokenAddress) {
+    // Add the (auraTokenAddress, wbnbTokenAddress) pair if necessary.
+    let pairExists = await getPairExists(auraTokenAddress, wbnbTokenAddress);
     if (!pairExists) {
         const percentReward = 10
-        await addPair(tokenA, tokenB, percentReward);
+        await addPair(auraTokenAddress, wbnbTokenAddress, percentReward);
     }
    
-    // Add tokenA to the whitelist if necessary.
-    let whitelistContainsA = await whitelistContains(tokenA);
+    // Add auraTokenAddress to the whitelist if necessary.
+    let whitelistContainsA = await whitelistContains(auraTokenAddress);
     if(!whitelistContainsA) {
-        await whitelistAdd(tokenA); 
+        await whitelistAdd(auraTokenAddress); 
     }
 
-    // Add tokenB to the whitelist if necessary.
-    let whitelistContainsB = await whitelistContains(tokenB);
+    // Add wbnbTokenAddress to the whitelist if necessary.
+    let whitelistContainsB = await whitelistContains(wbnbTokenAddress);
     if(!whitelistContainsB) {
-        await whitelistAdd(tokenB); 
+        await whitelistAdd(wbnbTokenAddress); 
     }
 }
 
 /**
  * @dev Returns true if the pair exists and false otherwise.
  */
-async function getPairExists(tokenA, tokenB) {
-    const pairExists = await swapFee.pairExists(tokenA, tokenB);
+async function getPairExists(auraTokenAddress, wbnbTokenAddress) {
+    const pairExists = await swapFee.pairExists(auraTokenAddress, wbnbTokenAddress);
     if (verbose) { 
-        console.log(`token pair (${short(tokenA)}, ${short(tokenB)}) exists: ${pairExists}`);
+        console.log(`token pair (${short(auraTokenAddress)}, ${short(wbnbTokenAddress)}) exists: ${pairExists}`);
     }
     return pairExists;
 }
@@ -307,6 +291,7 @@ async function swap(account, input, output, amount) {
         console.log(`swap ${amount} of token ${short(input)} for token ${short(output)} and credit account ${short(account)}.`);
     }
 
+    console.log("ACCOUNT", account);
     let prevBalance = await swapFee.getBalance(account);
     let prevAP = await auraNFT.getAccumulatedAP(account);
     let prevAccruedAP = (await swapFee.totalAccruedAP()).toNumber();
