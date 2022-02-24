@@ -20,6 +20,7 @@ const targetAPTokenAddress = contracts.auraLP[env.network];
 const oracleAddress = contracts.oracle[env.network];
 const auraTokenAddress = contracts.auraToken[env.network];
 const auraNFTAddress = contracts.auraNFT[env.network];
+const refRegAddress = contracts.refReg[env.network];
 
 async function main() {
     const [deployer] = await ethers.getSigners();
@@ -39,6 +40,7 @@ async function main() {
         oracleAddress,
         auraTokenAddress,
         auraNFTAddress,
+        refRegAddress,
         { nonce: nonce },
     );
     await swapFee.deployTransaction.wait();
