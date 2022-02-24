@@ -126,8 +126,36 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         address pair = pairFor(input, output);
         PairsList memory pool = pairsList[pairOfPairIds[pair]];
         if (!pool.isEnabled || pool.pair != pair) { return false; }
-       
+   
         uint swapFee = getSwapFee(input, output);
+        (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
+        feeAmount = feeAmount / swapFee;
+
+        // Record swap referral reward
+        refReg.recordSwapReward(account, getQuantityOut(output, amount, targetToken) * swapFee / 1000);
+
+        // Gets the quantity of AURA (targetToken) equivalent in value to quantity (feeAmount) of the input token (output).
+        uint quantity = getQuantityOut(output, feeAmount, targetToken);
+        if ((totalMined + quantity) <= maxMiningAmount && (totalMined + quantity) <= (phase * maxMiningInPhase)) {
+            _balances[account] += quantity;
+            emit Rewarded(account, input, output, amount, quantity);
+        }
+
+        apAmount = apAmount / apWagerOnSwap;
+        accrueAuraPoints(account, output, apAmount);
+
+        return true;
+    }
+
+    function swap2(address account, address input, address output, uint amount, uint swapFee) external returns(bool) {
+        require (msg.sender == router, "Caller is not the router.");
+
+        if (!whitelistContains(input) || !whitelistContains(output)) { return false; }
+
+        address pair = pairFor(input, output);
+        PairsList memory pool = pairsList[pairOfPairIds[pair]];
+        if (!pool.isEnabled || pool.pair != pair) { return false; }
+   
         (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
         feeAmount = feeAmount / swapFee;
 
