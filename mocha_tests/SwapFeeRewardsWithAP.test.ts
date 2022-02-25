@@ -59,10 +59,6 @@ describe('SwapFeeRewardsWithAP', () => {
     });
 
     beforeEach(async () => {
-        await swapFee.setRouter(owner.address);
-    });
-
-    beforeEach(async () => {
         // Add 3 tokens to contract.
         await swapFee.whitelistAdd(tokenA.address);
         await swapFee.whitelistAdd(tokenB.address);
@@ -70,18 +66,26 @@ describe('SwapFeeRewardsWithAP', () => {
     });
 
     beforeEach(async () => {
-        // Register the token pair with swapFee.
-        //const tokenABPairAddress = '0x953169bA1588CEed370D365605a9D0Ca5c03f5ce';
-        const tokenABPairAddress = '0x78D6451cE843a69839405D3887872Cb3cd2EA249';
+        // set the contract reward distribution so that user has maximum choice
+        await swapFee.setDefaultRewardDistribution(100);
+        expect(await swapFee.defaultRewardDistribution()).to.eq(100);
 
-        const pairAddress = await swapFee.pairFor(tokenA.address, tokenB.address);
-        expect(pairAddress).to.eq(tokenABPairAddress);
+        // set the caller distribution so they get an even payout (50/50) of AP and AURA tokens
+        // NOTE - userRewardDistribution <= defaultRewardDistribution
+        await swapFee.setUserDefaultDistribution(50); 
+        expect(await swapFee.rewardDistribution(owner.address)).to.eq(50);
+    });
+
+    beforeEach(async () => {
+        // Register the token pair with factory.
+        await factory.createPair(tokenA.address, tokenB.address);
 
         // Register the oracle with the factory.
         await factory.setOracle(oracle.address);
         expect(await factory.oracle()).to.eq(oracle.address);
 
         // Enable the pair with the oracle
+        const pairAddress = await swapFee.pairFor(tokenA.address, tokenB.address);
         await factory.enablePair(pairAddress);
         expect(await factory.oracleEnabled(pairAddress)).to.be.true;
 
@@ -89,12 +93,14 @@ describe('SwapFeeRewardsWithAP', () => {
         expect(await oracle.factory()).to.eq(factory.address);
 
         // Update the pair with the oracle
-        // Throws revert on calling p.token0 in oracle.update
-        // await factory.updateOracle(pairAddress);
+        // TODO - call to oracle fails, 
+        //await factory.updateOracle(pairAddress);
     });
 
-    it('swapFee: factory init code hash', async () => {
-        console.log('INIT CODE HASH', await factory.INIT_CODE_HASH());
+    it('swapFee: factory and library INIT_CODE_HASH matches', async () => {
+        const initCodeHash = await factory.INIT_CODE_HASH();
+        console.log('INIT CODE HASH', initCodeHash);
+        expect(initCodeHash).to.eq('0x979267a2f0b1e67d2a14aa2d846f0e5aad34e16494c7f6043c0b6cd541effc59');
     });
 
     it('swapFee: factory fee to setter is owner', async () => {
@@ -107,30 +113,92 @@ describe('SwapFeeRewardsWithAP', () => {
         expect(oracleAddress).to.eq(oracle.address);
     });
 
-    it('swapFee: swap tokens with hard coded swapFee', async () => {
+    it('swapFee: check oracle settings', async () => {
+        expect(await oracle.periodSize()).to.be.above(0);
+        expect(await oracle.observationIndexOf(Date.now())).to.be.above(0);
+    });
+
+    it('swapFee: gets the quantity out for swap call to accrue aura points', async () => {
+        // Setup
+        // so that getPair call succeeds
+        await factory.createPair(tokenB.address, targetAPToken.address);
+        // so that pairExists call succeeds
+        const pairAddress = await swapFee.pairFor(tokenB.address, targetAPToken.address);
+        await swapFee.addPair(10, pairAddress);
+
+        // check that getQuantityOut "if else" conditional succeeds
+        expect(await swapFee.getPair(tokenB.address, targetAPToken.address)).to.not.eq(constants.AddressZero);
+        expect(await swapFee.pairExists(tokenB.address, targetAPToken.address)).to.be.true;
+
+        // define the parameters
+        const tokenIn = tokenB.address;
+        const quantityIn = 500000000;
+
+        /*
+        // TODO - call to getQuantityOut fails until call to oracle succeeds, see line 96
+        const quantityOut = await swapFee.getQuantityOut(tokenIn, quantityIn, targetAPToken.address);
+        console.log("QUANTITY OUT", quantityOut.toNumber());
+        */
+    });
+
+    it('swapFee: swap tokens', async () => {
+        const account = owner.address;
+
+        // Mimic the owner as the router
+        await swapFee.setRouter(account);
+
+        // Check that the user has a starting balance in tokens:
+        const balanceTokenA = await tokenA.balanceOf(account);
+        expect(balanceTokenA).to.eq(1000000000000);
+        const balanceTargetToken = await targetToken.balanceOf(account);
+        expect(balanceTokenA).to.eq(1000000000000);
+
+        // Add the pair and confirm it's addition.
         const pairAddress = await swapFee.pairFor(tokenA.address, tokenB.address);
         await swapFee.addPair(10, pairAddress);
         expect(await swapFee.pairExists(tokenA.address, tokenB.address)).to.be.true;
 
-        // Use a hard coded swap fee value
-        const swapFeeAmount = 2;  
+        // Confirm that pairs match across factory and swapFee contracts
+        // where getPair checks the factory for the pair.
+        expect(await swapFee.getPair(tokenA.address, tokenB.address)).to.eq(pairAddress);
 
-        // Where swap2 function is a dummy function that takes a swapFeeAmount argument
-        const result = await swapFee.swap2(user.address, tokenA.address, tokenB.address, 100000, swapFeeAmount);
-        expect(result).to.not.be.false;
-    });
-
-    it('swapFee: swap tokens with called swapFee', async () => {
+        // Confirm that the swap fee can be gotten.
+        const defaultSwapFeeAmount = 2;
         const swapFeeAmount = await swapFee.getSwapFee(tokenA.address, tokenB.address);
+        expect(swapFeeAmount).to.eq(defaultSwapFeeAmount);
 
-        // Where swap2 function is a dummy function that takes a swapFeeAmount argument
-        const result = await swapFee.swap2(user.address, tokenA.address, tokenB.address, 100000, swapFeeAmount);  
+        // Store the previous values of interest before swap 
+        // expect the account's balance targetToken to increase
+        const prevBalance = await swapFee.getBalance(account);                                                                            
+        // expect the account's balance of AP to increase
+        const prevAP = await auraNFT.getAccumulatedAP(account);
+        // expect the swapFee contract to register an increase in AP
+        const prevAccruedAP = (await swapFee.totalAccruedAP()).toNumber();
+   
+        // TODO - call to swap doesn't actually swap until call to oracle succeeds, see line 96
+        // Swap A for B and collect rewards
+        const result = await swapFee.swap(account, tokenA.address, tokenB.address, 1000000000);
         expect(result).to.not.be.false;
-    });
 
-    it('swapFee: swap tokens', async () => {
-        const result = await swapFee.swap(user.address, tokenA.address, tokenB.address, 100000);  
-        expect(result).to.not.be.false;
+        /*
+        if (result !== false) {
+            const newBalance = await swapFee.getBalance(account);                                                                            
+            const newAP = await auraNFT.getAccumulatedAP(account);
+            const newAccruedAP = (await swapFee.totalAccruedAP()).toNumber();
+
+            // Check the change in balance
+            console.log(`previous balance was ${prevBalance}`);
+            console.log(`new balance is now ${newBalance}`);
+
+            // Check the change in AP
+            console.log(`previous AP was ${prevAP}`);
+            console.log(`new balance is now ${newAP}`);
+
+            // Check the change in total AP
+            console.log(`total accrued AP was: ${prevAccruedAP}`);
+            console.log(`total accrued AP is now: ${newAccruedAP}`);
+        }
+        */
     });
 
     /*
