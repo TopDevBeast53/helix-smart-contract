@@ -25,7 +25,8 @@ module.exports = {
     },
     router: {
         'main': '',
-        'test': '0x38433227c7a606ebb9ccb0acfcd7504224659b74',
+        //'test': '0x38433227c7a606ebb9ccb0acfcd7504224659b74',
+        'test': '0x277781dAf4376A4e2fD39920c9154ed3232cE4F7', // Deployed by @iirikr on Feb 24
     },
     WBNB: {
         'main': '',
@@ -33,7 +34,8 @@ module.exports = {
     },
     factory: {
         'main': '',
-        'test': '0x84f22547020f582Deef1eb1B57b3b213D5997471',
+        //'test': '0x84f22547020f582Deef1eb1B57b3b213D5997471',
+        'test': '0x1f7f33a6270A0780D21a9d8C5DF4E9ac56b69417',  // Deployed by @iirikr on Feb 24
     },
     oracle: {
         'main': '',
@@ -41,7 +43,8 @@ module.exports = {
     },
     swapFee: {
         'main': '',
-        'test': '0x178AA574944B3F3c4c89A1Ed4448F157aC041aFE',
+        //'test': '0x178AA574944B3F3c4c89A1Ed4448F157aC041aFE',
+        'test': '0x68A42Ba9a5db73E4F4Bda3E1206508b9fB6C9bD6', // throws PANIC error on getQuantityOut call
     },
     testTokenA: {
         'main': '',

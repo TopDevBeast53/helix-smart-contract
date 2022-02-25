@@ -27,8 +27,11 @@ const verbose = true;
 const ownerAddress = process.env.ADDRESS;
 const userAddress = process.env.USER_ADDRESS;
 
-const defaultRewardDistribution = 50;
+const defaultRewardDistribution = 100;
 const userRewardDistribution = 50;
+
+const gasLimit = 9999999;
+const addressZero = '0x0000000000000000000000000000000000000000';
 
 let owner, user;
 let ISwapFee, swapFee;
@@ -46,30 +49,66 @@ async function main() {
     // Initialize the SwapFee and it's variables.
     await initSwapFee();
 
+    // Initialize the factory and display it's INIT_CODE_HASH
+    await initFactory();
+
     // Initialize the Router and register swapFee.
     await registerWithRouter();
 
     // Initialize the AuraNFT and register swapFee.
     await registerWithNFT();
-      
+
     // Prepare the token pairs for swapping.
     if (verbose) {
         console.log('prepare token pairs for swap');
     }
-    await preparePair(auraTokenAddress, wbnbTokenAddress); 
-    await preparePair(auraTokenAddress, targetAPTokenAddress); 
-    await preparePair(wbnbTokenAddress, targetAPTokenAddress); 
-    await preparePair(testTokenAAddress, testTokenBAddress); 
+    // Caller will swap token A for B
+    await preparePair(testTokenAAddress, testTokenBAddress, 10); 
+    // Caller will accrue AP based on tokenB
+    await preparePair(testTokenBAddress, targetAPTokenAddress, 10); 
+    // Caller will accrue Aura based on tokenB
+    await preparePair(testTokenBAddress, targetTokenAddress, 10);
+
+    await preswapCheck();
 
     // Swap the tokens.
     let amount = 1000000;
-    await swap(user.address, testTokenAAddress, testTokenBAddress, amount);
+    // use the owner because they'll already have tokens minted into their address
+    await swap(owner.address, testTokenAAddress, testTokenBAddress, amount);
 
     /*
     // Withdraw tokens.
     await withdraw();
     */
 };
+
+/**
+ * @display a series of values to confirm swap is ready to be run
+ */
+async function preswapCheck() {
+    if (verbose) {
+        console.log('preswap check');
+        console.log(`token A token B pair added to swapFee: ${await swapFee.pairExists(testTokenAAddress, testTokenBAddress)}`);
+        console.log(`token B target token pair added to swapFee: ${await swapFee.pairExists(testTokenBAddress, targetTokenAddress)}`);
+        console.log(`token B target AP token  pair added to swapFee: ${await swapFee.pairExists(testTokenBAddress, targetAPTokenAddress)}`);
+        console.log(`token A token B pair created in factory : ${await swapFee.getPair(testTokenAAddress, testTokenBAddress)}`);
+        console.log(`token B target token pair created in factory: ${await swapFee.getPair(testTokenBAddress, targetTokenAddress)}`);
+        console.log(`token B target AP token  pair created in factory: ${await swapFee.getPair(testTokenBAddress, targetAPTokenAddress)}`);
+        console.log(`msg sender is router: ${ownerAddress == (await swapFee.router())}`);
+        console.log(`whitelist contains tokenA: ${await swapFee.whitelistContains(testTokenAAddress)}`);
+        console.log(`whitelist contains tokenB: ${await swapFee.whitelistContains(testTokenBAddress)}`);
+        const pairFor = await swapFee.pairFor(testTokenAAddress, testTokenBAddress)
+        console.log(`pairFor is working: ${pairFor}`);
+        const pairId = await swapFee.pairOfPairIds(pairFor);
+        console.log(`pairOfPairIds is working: ${pairId}`);
+        const pool = await swapFee.pairsList(pairId);
+        console.log(`pool is enabled: ${pool.isEnabled}`);
+        console.log(`pool percent reward is set: ${pool.percentReward}`);
+        console.log(`pool.pair == pair: ${pool.pair == pairFor}`);
+        console.log(`refReg is set: ${await swapFee.refReg()}`);
+        console.log(`quantityOut is working: ${await swapFee.getQuantityOut(testTokenBAddress, 2500000, targetTokenAddress)}`);
+    }
+}
 
 /**
  * @dev Initialize the script variables.
@@ -114,8 +153,7 @@ async function initSwapFee() {
     }
 
     // Set the contract default reward distribution
-    // If this == 0, then the user can't gain a balance and there will be nothing to withdraw. 
-    // Hence, this enables testing that withdraw works.
+    // Give the user full range of distributions to choose from, i.e. defaultRewardDistribution == 100
     const prevDefaultRewardDistribution = await swapFee.defaultRewardDistribution();
     if (prevDefaultRewardDistribution != defaultRewardDistribution) {
         if (verbose) {
@@ -130,8 +168,7 @@ async function initSwapFee() {
     }
 
     // Set the users default reward distribution
-    // If this == 0, then the user can't gain a balance and there will be nothing to withdraw. 
-    // Hence, this enables testing that withdraw works.
+    // Take a 50/50 split of AURA and AP, i.e. userRewardDistribution == 50
     const prevRewardDistribution = await swapFee.rewardDistribution(user.address);
     if (prevRewardDistribution != userRewardDistribution) {
             if (verbose) {
@@ -146,6 +183,58 @@ async function initSwapFee() {
     const newRewardDistribution = await swapFee.rewardDistribution(user.address);
     if (verbose) {
         console.log(`user reward distribution is ${newRewardDistribution}`);
+    }
+}
+
+/** 
+ * @dev Confirm that the correct factory is set.
+ */
+async function initFactory() {
+    if (verbose) {
+        console.log('initialize factory and output INIT CODE HASH');
+    }
+
+    IFactory = await ethers.getContractFactory('AuraFactory');
+    factory = await IFactory.attach(factoryAddress).connect(owner);
+
+    const prevFactory = await swapFee.factory();
+    if (prevFactory != factoryAddress) {
+        if (verbose) {
+            console.log(`set swapFee factory to ${short(factoryAddress)}`);
+        }
+        tx = await swapFee.setFactory(factoryAddress);
+        await tx.wait();
+    }
+
+    const prevOracle = await factory.oracle();
+    if (prevOracle != oracleAddress) {
+        if (verbose) {
+            console.log(`set factory oracle to ${short(oracleAddress)}`);
+        }
+        tx = await factory.setOracle(oracleAddress);
+        await tx.wait();
+    }
+
+    // make sure factory oracle == swapfee oracle
+    const swapFeeOracle = await swapFee.oracle();
+    const factoryOracle = await factory.oracle();
+    if (factoryOracle != swapFeeOracle) {
+        if (verbose) {
+            console.log(`set swapFee oracle to factory oracle`);
+        }
+        await swapFee.setOracle(factoryOracle);
+    }
+
+    if (verbose) {
+        const newFactoryAddress = await swapFee.factory();
+        const newOracleAddress = await factory.oracle();
+        initCodeHash = await factory.INIT_CODE_HASH();
+        console.log(`factory feeToSetter is ${short(await factory.feeToSetter())}`);
+        console.log(`swapFee factory address is ${short(newFactoryAddress)}`);
+        console.log('CONFIRM THIS MATCHES THE INIT CODE HASH IN AURA LIBRARY');
+        console.log(`factory INIT CODE HASH is ${initCodeHash}`);
+        console.log(`factory oracle address is ${short(newOracleAddress)}`);
+        console.log(`swap fee oracle ${short(await swapFee.oracle())} equals factory oracle ${short(await factory.oracle())}`);
     }
 }
 
@@ -207,34 +296,38 @@ async function registerWithNFT() {
  * @dev Prepare the token pair for swapping (auraTokenAddress, wbnbTokenAddress) by making 
  *      sure that they're added the pair exists and is whitelisted.
  */
-async function preparePair(auraTokenAddress, wbnbTokenAddress) {
-    // Add the (auraTokenAddress, wbnbTokenAddress) pair if necessary.
-    let pairExists = await getPairExists(auraTokenAddress, wbnbTokenAddress);
+async function preparePair(tokenAAddress, tokenBAddress, percentReward) {
+    // Add the token pair if necessary.
+    let pairExists = await getPairExists(tokenAAddress, tokenBAddress);
     if (!pairExists) {
-        const percentReward = 10
-        await addPair(auraTokenAddress, wbnbTokenAddress, percentReward);
-    }
-   
-    // Add auraTokenAddress to the whitelist if necessary.
-    let whitelistContainsA = await whitelistContains(auraTokenAddress);
-    if(!whitelistContainsA) {
-        await whitelistAdd(auraTokenAddress); 
+        await addPair(tokenAAddress, tokenBAddress, percentReward);
     }
 
-    // Add wbnbTokenAddress to the whitelist if necessary.
-    let whitelistContainsB = await whitelistContains(wbnbTokenAddress);
+    const pairCreated = await swapFee.getPair(tokenAAddress, tokenBAddress);
+    if (pairCreated == addressZero) {
+        await createPair(tokenAAddress, tokenBAddress); 
+    }
+   
+    // Add tokenA to the whitelist if necessary.
+    let whitelistContainsA = await whitelistContains(tokenAAddress);
+    if(!whitelistContainsA) {
+        await whitelistAdd(tokenAAddress); 
+    }
+
+    // Add tokenB to the whitelist if necessary.
+    let whitelistContainsB = await whitelistContains(tokenBAddress);
     if(!whitelistContainsB) {
-        await whitelistAdd(wbnbTokenAddress); 
+        await whitelistAdd(tokenBAddress); 
     }
 }
 
 /**
  * @dev Returns true if the pair exists and false otherwise.
  */
-async function getPairExists(auraTokenAddress, wbnbTokenAddress) {
-    const pairExists = await swapFee.pairExists(auraTokenAddress, wbnbTokenAddress);
+async function getPairExists(tokenAAddress, tokenBAddress) {
+    const pairExists = await swapFee.pairExists(tokenAAddress, tokenBAddress);
     if (verbose) { 
-        console.log(`token pair (${short(auraTokenAddress)}, ${short(wbnbTokenAddress)}) exists: ${pairExists}`);
+        console.log(`token pair (${short(tokenAAddress)}, ${short(tokenBAddress)}) exists: ${pairExists}`);
     }
     return pairExists;
 }
@@ -244,6 +337,9 @@ async function getPairExists(auraTokenAddress, wbnbTokenAddress) {
  */
 async function addPair(tokenA, tokenB, percentReward) {
     const pairAddress = await swapFee.pairFor(tokenA, tokenB)
+
+    // register the pair with the swapFee
+    if (verbose) { console.log('add pair'); }
     const addPairTx = await swapFee.addPair(percentReward, pairAddress);
 
     if (verbose) {
@@ -251,6 +347,18 @@ async function addPair(tokenA, tokenB, percentReward) {
         console.log(`added token pair (${short(tokenA)}, ${short(tokenB)}) tx hash: ${addPairTx.hash}`);
     }
 }
+
+async function createPair(tokenA, tokenB) {
+    // register the pair with the factory
+    if (verbose) { console.log(`create pair`); }
+    pairAddress = await factory.createPair(tokenA, tokenB, { gasLimit });
+
+    if (verbose) {
+        console.log(`create token pair (${short(tokenA)}, ${short(tokenB)}) address ${short(pairAddress)}`);
+    }
+}
+
+
 
 /**
  * @dev Returns true if the token is in the whitelist and false otherwise.
@@ -299,7 +407,7 @@ async function swap(account, input, output, amount) {
     console.log("PREV AP     ", prevAP);
     console.log("PREV ACCR AP", prevAccruedAP);
 
-    tx = await swapFee.swap(account, input, output, amount, { gasLimit: 9999999 });
+    tx = await swapFee.swap(account, input, output, amount, { gasLimit });
     await tx.wait();
     
     if (verbose) {
