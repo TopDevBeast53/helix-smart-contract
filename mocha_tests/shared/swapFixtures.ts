@@ -21,7 +21,7 @@ export async function swapFeeFixture(provider: Web3Provider, [wallet]: Wallet[])
     const weth = await deployContract(wallet, WETH9, [], overrides);
     const router = await deployContract(wallet, AuraRouterV1, [factory.address, weth.address], overrides);
     const targetToken = await deployContract(wallet, AuraToken, [], overrides);
-    const targetAPToken = await deployContract(wallet, AuraLP, [], overrides);
+    const targetAPToken = await deployContract(wallet, TestToken, [1000000000], overrides);  // Use test token so token is BEP20 and not ERC20
     const oracle = await deployContract(wallet, Oracle, [factory.address, 48, 24], overrides);
     const auraNFT = await deployContract(wallet, AuraNFT, [], overrides);
     const auraToken = await deployContract(wallet, AuraToken, [], overrides);
