@@ -22,6 +22,7 @@ library AuraLibrary {
                 hex'ef26689277ecbc19c2c971e6328183dfe2ee30d3713c7d1e4f48aa73a3d70ce6' // init code hash 
                 //hex'979267a2f0b1e67d2a14aa2d846f0e5aad34e16494c7f6043c0b6cd541effc59' // init code hash 
                 //hex'7fadeb0bb941d0f8784d7556090bb7cfd3f3f2b400b32b9d90e01353098c64eb' // init code hash 
+                //hex'20594688eaa9127419d2119d4ef3d04cf8e2fb9f471ec87092a4920b77f12a3f' // init code hash 
             )))));
     }
 
