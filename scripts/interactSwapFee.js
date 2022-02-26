@@ -13,7 +13,7 @@ const env = require('./constants/env');
 const factoryAddress = contracts.factory[env.network];
 const routerAddress = contracts.router[env.network];
 const targetTokenAddress = contracts.auraToken[env.network];    // Note that targetTokenAddress == auraTokenAddress
-const targetAPTokenAddress = contracts.auraLP[env.network];
+const targetAPTokenAddress = contracts.auraLP[env.network];     // Note that targetAPTokenAddress == testTokenCAddress
 const oracleAddress = contracts.oracle[env.network];
 const auraTokenAddress = contracts.auraToken[env.network];
 const auraNFTAddress = contracts.auraNFT[env.network];
@@ -74,7 +74,7 @@ async function main() {
     // Swap the tokens.
     let amount = 1000000;
     // use the owner because they'll already have tokens minted into their address
-    await swap(owner.address, testTokenAAddress, testTokenBAddress, amount);
+    //await swap(owner.address, testTokenAAddress, testTokenBAddress, amount);
 
     /*
     // Withdraw tokens.
@@ -88,23 +88,34 @@ async function main() {
 async function preswapCheck() {
     if (verbose) {
         console.log('preswap check');
+
         console.log(`token A token B pair added to swapFee: ${await swapFee.pairExists(testTokenAAddress, testTokenBAddress)}`);
         console.log(`token B target token pair added to swapFee: ${await swapFee.pairExists(testTokenBAddress, targetTokenAddress)}`);
         console.log(`token B target AP token  pair added to swapFee: ${await swapFee.pairExists(testTokenBAddress, targetAPTokenAddress)}`);
+
         console.log(`token A token B pair created in factory : ${await swapFee.getPair(testTokenAAddress, testTokenBAddress)}`);
         console.log(`token B target token pair created in factory: ${await swapFee.getPair(testTokenBAddress, targetTokenAddress)}`);
         console.log(`token B target AP token  pair created in factory: ${await swapFee.getPair(testTokenBAddress, targetAPTokenAddress)}`);
+        
+        console.log(`token A token B pair is factory enabled: ${await factory.oracleEnabled(swapFee.getPair(testTokenAAddress, testTokenBAddress))}`);
+        console.log(`token B target token pair is factory enabled: ${await factory.oracleEnabled(swapFee.getPair(testTokenBAddress, targetTokenAddress))}`);
+        console.log(`token B target AP token pair is factory enabled: ${await factory.oracleEnabled(swapFee.getPair(testTokenBAddress, targetAPTokenAddress))}`);
+
         console.log(`msg sender is router: ${ownerAddress == (await swapFee.router())}`);
+
         console.log(`whitelist contains tokenA: ${await swapFee.whitelistContains(testTokenAAddress)}`);
         console.log(`whitelist contains tokenB: ${await swapFee.whitelistContains(testTokenBAddress)}`);
+
         const pairFor = await swapFee.pairFor(testTokenAAddress, testTokenBAddress)
         console.log(`pairFor is working: ${pairFor}`);
         const pairId = await swapFee.pairOfPairIds(pairFor);
         console.log(`pairOfPairIds is working: ${pairId}`);
+
         const pool = await swapFee.pairsList(pairId);
         console.log(`pool is enabled: ${pool.isEnabled}`);
         console.log(`pool percent reward is set: ${pool.percentReward}`);
         console.log(`pool.pair == pair: ${pool.pair == pairFor}`);
+
         console.log(`refReg is set: ${await swapFee.refReg()}`);
         console.log(`quantityOut is working: ${await swapFee.getQuantityOut(testTokenBAddress, 2500000, targetTokenAddress)}`);
     }
@@ -304,10 +315,47 @@ async function preparePair(tokenAAddress, tokenBAddress, percentReward) {
     }
 
     const pairCreated = await swapFee.getPair(tokenAAddress, tokenBAddress);
+    console.log("PAIR CREATED", pairCreated);
     if (pairCreated == addressZero) {
         await createPair(tokenAAddress, tokenBAddress); 
     }
+    
+    // Use the factory created pair to search
+    let pairEnabled = await factory.oracleEnabled(pairCreated);
+    if (!pairEnabled) {
+        enablePair(pairCreated);    
+    }
+
+    // Instantiate token contracts for their transfer functions
+    console.log("load token contracts");
+    const IToken = await ethers.getContractFactory('TestToken');
+    const tokenA = await IToken.attach(tokenAAddress).connect(owner);
+    const tokenB = await IToken.attach(tokenAAddress).connect(owner);
+
+    // Send each token to pair using factory createPair address
+    // Assumes the caller has a sufficient balance
+    console.log('transfer funds to pair');
+    const transferAmount = '50000000000000000';
+    await tokenA.transfer(pairCreated, transferAmount);
+    await tokenB.transfer(pairCreated, transferAmount);
+    
+    // Instantiate the pair contract for it's mint function
+    // which is used to move the funds from the pair contract's balance into it's reserves
+    console.log('load pair contract');
+    const IPair = await ethers.getContractFactory('AuraPair');
+    const pair = await IPair.attach(pairCreated).connect(owner);
    
+    // Call mint to move funds into pair contract's reserves by implicitly calling pair.update
+    console.log('mint to owner address');
+    await pair.mint(ownerAddress, { gasLimit });
+   
+    // Now that the pair has positive reserves we can update the pair in the oracle
+    console.log('enable pair with oracle');
+    pairEnabled = await factory.oracleEnabled(pairCreated);
+    if (pairEnabled) {
+        updateOracle(pairCreated);
+    }
+    
     // Add tokenA to the whitelist if necessary.
     let whitelistContainsA = await whitelistContains(tokenAAddress);
     if(!whitelistContainsA) {
@@ -319,6 +367,20 @@ async function preparePair(tokenAAddress, tokenBAddress, percentReward) {
     if(!whitelistContainsB) {
         await whitelistAdd(tokenBAddress); 
     }
+}
+
+async function enablePair(pair) {
+    if (verbose) {
+        console.log(`enable pair`);
+    }
+    await factory.enablePair(pair);
+}
+
+async function updateOracle(pair) {
+    if (verbose) {
+        console.log(`update pair with oracle`);
+    }
+    await factory.updateOracle(pair, { gasLimit });
 }
 
 /**
