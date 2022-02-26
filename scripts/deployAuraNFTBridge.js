@@ -29,6 +29,19 @@ async function addBridger(bridgeAddress, bridgerAddress) {
     await tx.wait();
 }
 
+async function addMinterToAuraNFT(bridgeAddress) {
+    const [deployer] = await ethers.getSigners();
+    console.log(`------ Adding ${bridgerAddress} as Minter to AuraNFT ---------`);
+    let nonce = await network.provider.send(`eth_getTransactionCount`, [deployer.address, "latest"]);
+
+    const IAuraNFT = await ethers.getContractFactory("AuraNFT");
+    const AuraNFT = IAuraNFT.attach(contracts.auraNFT[env.network]);
+
+    let tx = await AuraNFT.addMinter(bridgerAddress, {nonce: nonce, gasLimit: 3000000});
+    await tx.wait();
+    console.log(`------ Added ${bridgerAddress} as Minter to AuraNFT ---------`);
+}
+
 async function main() {
  
     const [deployer] = await ethers.getSigners();
@@ -45,6 +58,8 @@ async function main() {
     console.log(`AuraNFTBridge deployed to ${bridge.address}`);
 
     await addBridger(bridge.address, deployer.address);
+
+    await addMinterToAuraNFT(bridge.address);
 }
 
 // To add a bridger, comment out main() and uncomment addBridger with proper arguments
