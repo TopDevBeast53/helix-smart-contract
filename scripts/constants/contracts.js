@@ -19,6 +19,10 @@ module.exports = {
         'main': '',
         'test': '0x6C57410c639c6A10208185853b8990d32dcF6d14',
     },
+    swapFee: {
+        'main': '',
+        'test': '0xE8e028c186B91321dAC7d97aC4c18c9CF3efE7b1',
+    },
     voting: {
         'main': '',
         'test': '0x96eD842d0B95aa2Cd749f4042F565F153Fd4C8C0',
@@ -39,21 +43,13 @@ module.exports = {
         'main': '',
         'test': '0xFC7EF377E976cC45c1D647d7060a8e4C1Fa26e4c',
     },
+    oracle: {
+        'main': '',
+        'test': '0xB8dF9dbf268E18026705757e91fAeEbb1B5b916E',
+    },
     swapFee: {
         'main': '',
-        'test': '0x178AA574944B3F3c4c89A1Ed4448F157aC041aFE',
+        'test': '0x165b018e5f9aC93f011069969B9f852B7eDA94dD',
     },
-    testTokenA: {
-        'main': '',
-        'test': '0x360f6135472195caabEA67c7C6b83E3767F96762',
-    },
-    testTokenB: {
-        'main': '',
-        'test': '0xd239560c0d8Ae7EB66c5f691F32a7D7857cEDc58',
-    },
-    refReg: {
-        'main': '',
-        'test': '0xEA21873f722d211F25C9378A2ECfe2B5C8B47507',
-    }
 }
   
