@@ -7,7 +7,7 @@
 
 require ('dotenv').config();
 
-const contracts = require('./constants/contracts');
+const contracts = require('./constants/interactSwapFeeContracts');
 const env = require('./constants/env');
 
 const factoryAddress = contracts.factory[env.network];
