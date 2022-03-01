@@ -12,6 +12,28 @@ Now, we've deployed router and factory.
 
 NOTE: We will still come back to set the SwapFeeReward contract address.
 
+## Oracle
+
+The oracle is queried for token pair price information via the consult function.
+
+The oracle can be deployed any time after the factory is deployed. 
+It's passed 3 parameters, all of which are immutable: 
+
+1. a factory address
+The factory address is automatically retrieved from the src/scripts/constants/contracts.js file
+and is dependent on the env.network setting (test or main) in src/scripts/constants/env.js.
+
+2. an unsigned integer windowSize
+windowSize determines the total duration between which updates must occur for price data to remain up to date
+and small windowSize or insufficiently frequent calls to update trigger MISSING_HISTORICAL_OBSERVATION error. 
+Note that windowSize is in unix timestamp units, i.e. a windowSize of 24 does not equal 24 hours! 
+
+3. an unsigned int8 granularity. 
+granularity is the number of observations made in the given windowSize.
+
+To deploy, run:
+`npx hardhat run scripts/deployOracle.js --network testnetBSC` (mainnet if needed)
+
 ## Aura Token
 
 Open BEP20.sol and see preMineSupply and maxSupply. PreMine is mined directly to your wallet after the token is deployed. Max Supply is max that can be minted over time. e.g. by Staking chefs. Currently, Max Supply is set to be 1B, and PreMind to 100M. Change if needed.
@@ -35,7 +57,6 @@ Open `deployReferralRegister.js` and update `AuraTokenAddress`. Then run the bel
 `npx hardhat run scripts/deployReferralRegister.js --network testnetBSC`
 
 It would deploy the referral register and add it as a minter to Aura token. Mints are done on withdrawal.
-
 
 ## Master Chef
 
@@ -140,3 +161,47 @@ Open `deployAuraNFTBridge.js` and update `AuraNFTAddress` with the address of th
 After that, run
 
 `npx hardhat run scripts/deployAuraNFTBridge.js --network testnetBSC`
+
+## SwapFeeRewardsWithAP
+
+It's called by the router when the user performs a token swap and will credit targetToken/targetAPToken to the user's balance.
+It's called by users to withdraw credited funds their calling address.
+
+SwapFeeRewardsWithAP can be deployed after the following have been deployed:
+factory
+router
+targetToken
+targetAPToken
+oracle
+auraToken
+auraNFT
+referralRegister
+
+The deployment script reads these addressess from src/scripts/constants/contracts.js
+and is dependent on the selected network (test or main) in src/scripts/constants/env.js
+
+To deploy, run:
+`npx hardhat run scripts/deploySwapFee.js --network testnetBSC` (or mainnet)
+
+## Token Tools
+
+Intended to be used by the frontend for making efficient queries about LP token pairs and their holders
+e.g. getStakedTokenPairs which returns all the token pairs in which a given address has a positive balance,
+including the token addresses in that pair, their balances, and their symbols.
+
+Is not dependent on any other contracts, has no constructor, and maintains no state.
+
+To deploy, run:
+`npx hardhat run scripts/TokenTools.js --network testnetBSC` (or mainnet)
+
+## AuraMigrator
+
+Migrates liquidity an external routers to MigrateLiquidity's set router via a single migrateLiquidity function.
+
+Can be deployed after a router is deployed.
+
+The deployment script reads the router address from src/scripts/constants/contracts.js
+and is dependent on the selected network (test or main) in src/scripts/constants/env.js
+
+To deploy, run:
+`npx hardhat run scripts/deployMigrator.js --network testnetBSC` (or mainnet)
