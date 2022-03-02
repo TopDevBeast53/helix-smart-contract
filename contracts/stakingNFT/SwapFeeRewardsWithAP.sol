@@ -34,8 +34,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     uint public phase = 1;
     uint public phaseAP = 1; 
     
-    uint public totalMined = 0;
-    uint public totalAccruedAP = 0;
+    uint public totalMined;
+    uint public totalAccruedAP;
 
     uint public apWagerOnSwap = 1500;
 
@@ -49,7 +49,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * 100 -> Rewards are [0, 100]% AURA and [0, 100]% AP. User has full choice.
      * Invariant: must be in range [0, 100].
      */
-    uint public defaultRewardDistribution = 0; 
+    uint public defaultRewardDistribution; 
 
     struct PairsList {
         address pair;
@@ -96,7 +96,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         address _targetAPToken,
         IOracle _oracle,
         IAuraToken _auraToken,
-        IAuraNFT _auraNFT
+        IAuraNFT _auraNFT,
+        ReferralRegister _refReg
     ) {
         setFactory(_factory);
         setRouter(_router);
@@ -105,6 +106,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         setOracle(_oracle);
         setAuraToken(_auraToken);
         setAuraNFT(_auraNFT);
+        setRefReg(_refReg);
     }
 
     /* 
@@ -117,30 +119,30 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * @dev swap the `input` token for the `output` token and credit the result to `account`.
      */
     function swap(address account, address input, address output, uint amount) external returns(bool) {
-        require (msg.sender == router, "Caller is not the router.");
+        require (msg.sender == router, "SwapFee: Caller is not the router.");
 
         if (!whitelistContains(input) || !whitelistContains(output)) { return false; }
 
         address pair = pairFor(input, output);
         PairsList memory pool = pairsList[pairOfPairIds[pair]];
         if (!pool.isEnabled || pool.pair != pair) { return false; }
-
+   
         uint swapFee = getSwapFee(input, output);
         (uint feeAmount, uint apAmount) = getSplitRewardAmounts(amount, account);
         feeAmount = feeAmount / swapFee;
+        apAmount = apAmount / apWagerOnSwap;
+        accrueAuraPoints(account, output, apAmount);
 
         // Record swap referral reward
         refReg.recordSwapReward(account, getQuantityOut(output, amount, targetToken) * swapFee / 1000);
 
         // Gets the quantity of AURA (targetToken) equivalent in value to quantity (feeAmount) of the input token (output).
         uint quantity = getQuantityOut(output, feeAmount, targetToken);
+        quantity = quantity * pool.percentReward / 100;
         if ((totalMined + quantity) <= maxMiningAmount && (totalMined + quantity) <= (phase * maxMiningInPhase)) {
             _balances[account] += quantity;
             emit Rewarded(account, input, output, amount, quantity);
         }
-
-        apAmount = apAmount / apWagerOnSwap;
-        accrueAuraPoints(account, output, apAmount);
 
         return true;
     }
@@ -149,10 +151,10 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * @dev Withdraw AURA from the caller's contract balance to the caller's address.
      */
     function withdraw() external nonReentrant returns(bool) {
-        require (totalMined < maxMiningAmount, "All tokens have been mined.");
+        require (totalMined < maxMiningAmount, "SwapFee: All tokens have been mined.");
 
         uint balance = _balances[msg.sender];
-        require ((totalMined + balance) <= (phase * maxMiningInPhase), "All tokens in this phase have been mined.");
+        require ((totalMined + balance) <= (phase * maxMiningInPhase), "SwapFee: All tokens in this phase have been mined.");
       
         if (balance > 0) {
             _balances[msg.sender] -= balance;
@@ -293,7 +295,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      */
 
     function setUserDefaultDistribution(uint _distribution) external {
-        require(_distribution <= defaultRewardDistribution, "Invalid fee distribution.");
+        require(_distribution <= defaultRewardDistribution, "SwapFee: Invalid fee distribution.");
         rewardDistribution[msg.sender] = _distribution;
     }
 
@@ -333,53 +335,53 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      */
 
     function setDefaultRewardDistribution(uint _defaultRewardDistribution) external onlyOwner {
-        require(_defaultRewardDistribution <= 100, "Invalid distribution, can't be greater than 100.");
+        require(_defaultRewardDistribution <= 100, "SwapFee: Invalid distribution, can't be greater than 100.");
         defaultRewardDistribution = _defaultRewardDistribution;
     } 
 
     function setFactory(address _factory) public onlyOwner {
-        require(_factory != address(0), "Factory is the zero address.");
+        require(_factory != address(0), "SwapFee: Factory is the zero address.");
         factory = _factory;
         emit NewFactory(_factory);
     }
 
     function setRouter(address _router) public onlyOwner {
-        require(_router != address(0), "Router is the zero address.");
+        require(_router != address(0), "SwapFee: Router is the zero address.");
         router = _router;
         emit NewRouter(_router);
     }
 
     function setTargetToken(address _targetToken) public onlyOwner {
-        require(_targetToken != address(0), "TargetToken is the zero address.");
+        require(_targetToken != address(0), "SwapFee: TargetToken is the zero address.");
         targetToken = _targetToken;
         emit NewTargetToken(_targetToken);
     }
 
     function setTargetAPToken(address _targetAPToken) public onlyOwner {
-        require(_targetAPToken != address(0), "TargetAPToken is the zero address.");
+        require(_targetAPToken != address(0), "SwapFee: TargetAPToken is the zero address.");
         targetAPToken = _targetAPToken;
         emit NewTargetAPToken(_targetAPToken);
     }
 
     function setOracle(IOracle _oracle) public onlyOwner {
-        require(address(_oracle) != address(0), "Oracle is the zero address.");
+        require(address(_oracle) != address(0), "SwapFee: Oracle is the zero address.");
         oracle = _oracle;
         emit NewOracle(_oracle);
     }
 
-    function setRefReg(ReferralRegister _refreg) external onlyOwner {
-        require(address(_refreg) != address(0), "ReferralRegister is the zero address.");
+    function setRefReg(ReferralRegister _refreg) public onlyOwner {
+        require(address(_refreg) != address(0), "SwapFee: ReferralRegister is the zero address.");
         refReg = _refreg;
     }
 
     function setAuraNFT(IAuraNFT _auraNFT) public onlyOwner {
-        require(address(_auraNFT) != address(0), "AuraNFT is the zero address.");
+        require(address(_auraNFT) != address(0), "SwapFee: AuraNFT is the zero address.");
         auraNFT = _auraNFT;
         emit NewAuraNFT(_auraNFT);
     }
 
     function setAuraToken(IAuraToken _auraToken) public onlyOwner {
-        require(address(_auraToken) != address(0), "AuraToken is the zero address.");
+        require(address(_auraToken) != address(0), "SwapFee: AuraToken is the zero address.");
         auraToken = _auraToken;
         emit NewAuraToken(_auraToken);
     }
@@ -395,7 +397,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
     }
 
     function addPair(uint _percentReward, address _pair) external onlyOwner {
-        require(_pair != address(0), "`_pair` is the zero address.");
+        require(_pair != address(0), "SwapFee: `_pair` is the zero address.");
         pairsList.push(
             PairsList({
                 pair: _pair,
@@ -428,7 +430,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * @dev Add `token` to the whitelist.
      */
     function whitelistAdd(address token) public onlyOwner returns(bool) {
-        require(token != address(0), "Zero address is invalid.");
+        require(token != address(0), "SwapFee: Zero address is invalid.");
         return EnumerableSet.add(whitelist, token);
     }
 
@@ -436,7 +438,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
      * @dev Remove `token` from the whitelist.
      */
     function whitelistRemove(address token) public onlyOwner returns(bool) {
-        require(token != address(0), "Zero address is invalid.");
+        require(token != address(0), "SwapFee: Zero address is invalid.");
         return EnumerableSet.remove(whitelist, token);
     }
 
