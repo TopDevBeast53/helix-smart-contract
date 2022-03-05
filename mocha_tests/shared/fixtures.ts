@@ -66,7 +66,7 @@ interface FullExchangeFixture {
   WETHPair: Contract
   chef: Contract
   auraToken: Contract
-  ref: Contract
+  refReg: Contract
   migrator: Contract
   externalFactory: Contract
   externalRouter: Contract
@@ -108,7 +108,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
   const WETHPairAddress = await factory.getPair(WETH.address, WETHPartner.address)
   const WETHPair = new Contract(WETHPairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
 
-  const ref = await deployContract(wallet, ReferralRegister,
+  const refReg = await deployContract(wallet, ReferralRegister,
     [
       auraToken.address,
       50, 
@@ -117,13 +117,13 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
 
   const chef = await deployContract(wallet, MasterChef, 
     [
-      /*aura token address=*/auraToken.address,
-      /*dev address=*/wallet.address,
-      /*aura token per block=*/'30000000000000000000',
-      /*start block=*/1,
-      /*staking percent=*/999999,
-      /*dev percent=*/1,
-      /*ref=*/ref.address,
+      auraToken.address,        // aura token address
+      wallet.address,           // dev address
+      '30000000000000000000',   // aura token per block
+      1,                        // start block
+      999999,                   // staking percent
+      1,                        // dev percent
+      refReg.address,           // referral register
     ], overrides)
 
   return {
@@ -137,7 +137,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
       pair,
       WETHPair,
       chef,
-      ref,
+      refReg,
       auraToken,
       migrator, 
       externalFactory,
