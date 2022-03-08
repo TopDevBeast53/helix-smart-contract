@@ -2,35 +2,33 @@
  * @dev Deployment script for Oracle contract.
  *
  * Run from project root using:
- *     npx hardhat run scripts/deployOracle.js --network testnetBSC
+ *     npx hardhat run scripts/3_deployOracle.js --network testnetBSC
  */
-
-// Deployed by = 0x59201fb8cb2D61118B280c8542127331DD141654
 
 const { ethers } = require(`hardhat`);
 
 const contracts = require('./constants/contracts');
+const initials = require('./constants/initials');
 const env = require('./constants/env');
 
-// const FactoryAddress = '0x84f22547020f582Deef1eb1B57b3b213D5997471';
 const FactoryAddress = contracts.factory[env.network];
+const ORACLE_WINDOW_SIZE = initials.ORACLE_WINDOW_SIZE[env.network];
+const ORACLE_GRANULARITY = initials.ORACLE_GRANULARITY[env.network];
 
 async function main() {
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${deployer.address}`);
 
-    console.log(`Deploy Oracle`);
+    console.log(`------ Start deploying Oracle -------`);
     const ContractFactory = await ethers.getContractFactory('Oracle');
-    const contract = await ContractFactory.deploy(FactoryAddress, 48, 24, { gasLimit: 3000000 });
+    const contract = await ContractFactory.deploy(FactoryAddress, ORACLE_WINDOW_SIZE, ORACLE_GRANULARITY, { gasLimit: 3000000 });
     await contract.deployTransaction.wait();
     
     console.log(`Oracle deployed to ${contract.address}`);
-    console.log('Done');
 
     console.log(`------ Add Oracle to Factory ---------`);
     const AuraFactory = await ethers.getContractFactory(`AuraFactory`);
     const f = AuraFactory.attach(FactoryAddress);
-
     let tx = await f.setOracle(contract.address, {gasLimit: 3000000});
     await tx.wait();
 }

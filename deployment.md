@@ -5,49 +5,48 @@ First of all, should deploy Aura Factory, for it, make sure `deployAuraFactory()
 
 Run `npx hardhat run scripts/1_deployFactoryRouter.js --network testnetBSC` (or mainnet)
 
-Now, copy the address of the factory contract and put it into the FACTORY map to `scripts/constants/contracts.js`.
+Now, copy the address of the factory contract and **put it into the factory map** to `scripts/constants/contracts.js`.
+copy *INIT_CODE_HASH* and **put it into FACTORY_INIT_CODE_HASH** to `scripts/constants/initials.js` and **put it into `AuraLibrary.sol`**
+
 Comment out `deployAuraFactory()` and uncomment `deployAuraRouter()`.
 
 Run `npx hardhat run scripts/1_deployFactoryRouter.js --network testnetBSC` (or mainnet)
 
 Now, we've deployed Factory and Router.
+## Aura Token
 
-NOTE: We will still come back to set the SwapFeeReward contract address.
+Open BEP20.sol and see `preMineSupply` and `maxSupply`. PreMine is mined directly to your wallet after the token is deployed. Max Supply is max that can be minted over time. e.g. by Staking chefs. Currently, Max Supply is set to be 1B, and PreMind to 100M. Change if needed.
+
+`truffle compile` after changed.
+Run `npx hardhat run scripts/deployAuraToken.js --network testnetBSC` (mainnet if needed)
+
+Now, copy the address of the AuraToken contract and **put it into the auraToken map** to `scripts/constants/contracts.js`.
 
 ## Oracle
 
 The oracle is queried for token pair price information via the consult function.
 
-The oracle can be deployed any time after the factory is deployed. 
+The oracle can be deployed any time **after the factory is deployed**. 
 It's passed 3 parameters, all of which are immutable: 
 
-1. a factory address
-The factory address is automatically retrieved from the src/scripts/constants/contracts.js file
-and is dependent on the env.network setting (test or main) in src/scripts/constants/env.js.
+1. a AuraFactory address.
+It will retrieve from `src/scripts/constants/contracts.js`
 
-2. an unsigned integer windowSize
+2. an unsigned integer windowSize.
+It refers `ORACLE_WINDOW_SIZE` from `src/scripts/constants/initials.js`.
 windowSize determines the total duration between which updates must occur for price data to remain up to date
 and small windowSize or insufficiently frequent calls to update trigger MISSING_HISTORICAL_OBSERVATION error. 
 Note that windowSize is in unix timestamp units, i.e. a windowSize of 24 does not equal 24 hours! 
 
-3. an unsigned int8 granularity. 
+3. an unsigned int8 granularity.
+It refers `ORACLE_GRANULARITY` from `src/scripts/constants/initials.js`.
 granularity is the number of observations made in the given windowSize.
 
-To deploy, run:
-`npx hardhat run scripts/deployOracle.js --network testnetBSC` (mainnet if needed)
+Run `npx hardhat run scripts/deployOracle.js --network testnetBSC` (mainnet if needed)
 
-## Aura Token
+It will add Oracle contract address to AuraFactory.
 
-Open BEP20.sol and see preMineSupply and maxSupply. PreMine is mined directly to your wallet after the token is deployed. Max Supply is max that can be minted over time. e.g. by Staking chefs. Currently, Max Supply is set to be 1B, and PreMind to 100M. Change if needed.
-
-`truffle compile` after changed.
-
-And then finally deploy by running the following.
-
-`npx hardhat run scripts/deployAuraToken.js --network testnetBSC` (mainnet if needed)
-
-It will print the address where the token is deployed to and who is the owner.
-
+Now, copy the address of the Oracle contract and **put it into the oracle map** to `scripts/constants/contracts.js`.
 ## Referrals Register
 
 Contract resposnbile for referrals registry and referral rewards accumulating and payout.
