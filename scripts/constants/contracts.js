@@ -43,10 +43,6 @@ module.exports = {
         'main': '',
         'test': '0xFC7EF377E976cC45c1D647d7060a8e4C1Fa26e4c',
     },
-    oracle: {
-        'main': '',
-        'test': '0xB8dF9dbf268E18026705757e91fAeEbb1B5b916E',
-    },
     swapFee: {
         'main': '',
         'test': '0x165b018e5f9aC93f011069969B9f852B7eDA94dD',

@@ -1,14 +1,16 @@
 ## Aura Factory and Router
 
-Open `1_initial_migration.js` and update `ADDRESS_OF_WHO_CAN_SET_FEES_ON_PAIR_SWAPS` and `ADDRESS_OF_WHO_WILL_RECEIVE_TRADING_FEES` constants. Make sure `deployAuraFactory` is uncommented.
+Open `scripts/constants/addresses.js` and update `setterFeeOnPairSwaps` and `poolReceiveTradFee` constants. 
+First of all, should deploy Aura Factory, for it, make sure `deployAuraFactory()` is uncommented.
 
-Run `truffle deploy --network=bsc_testnet` (or mainnet)
+Run `npx hardhat run scripts/1_deployFactoryRouter.js --network testnetBSC` (or mainnet)
 
-Now, copy the address of the factory contract and add it into the FACTORY map to a corresponding env. Comment out `deployAuraFactory` and uncomment `deployAuraRouter`.
+Now, copy the address of the factory contract and put it into the FACTORY map to `scripts/constants/contracts.js`.
+Comment out `deployAuraFactory()` and uncomment `deployAuraRouter()`.
 
-Run `truffle deploy --network=bsc_testnet` (or mainnet)
+Run `npx hardhat run scripts/1_deployFactoryRouter.js --network testnetBSC` (or mainnet)
 
-Now, we've deployed router and factory.
+Now, we've deployed Factory and Router.
 
 NOTE: We will still come back to set the SwapFeeReward contract address.
 
