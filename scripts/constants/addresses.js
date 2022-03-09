@@ -1,4 +1,8 @@
 module.exports = {
+    WBNB: {
+        'main': '',
+        'test': '0xae13d989dac2f0debff460ac112a837c89baa7cd',
+    },
     //ADDRESS_OF_WHO_CAN_SET_FEES_ON_PAIR_SWAPS
     setterFeeOnPairSwaps: {
         'main': '',

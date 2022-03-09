@@ -30,7 +30,7 @@ async function deployAuraRouter() {
 
     console.log(`------ Start deploying AuraRouter contract ---------`);
     const ContractRouter = await ethers.getContractFactory("AuraRouterV1");
-    const contract = await ContractRouter.deploy(contracts.factory[env.network], contracts.WBNB[env.network]);
+    const contract = await ContractRouter.deploy(contracts.factory[env.network], addresses.WBNB[env.network]);
     await contract.deployTransaction.wait();
 
     console.log(`AuraRouter deployed to ${contract.address}`);

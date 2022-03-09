@@ -1,4 +1,4 @@
-## Aura Factory and Router
+## 1. Aura Factory and Router
 
 Open `scripts/constants/addresses.js` and update `setterFeeOnPairSwaps` and `poolReceiveTradFee` constants. 
 First of all, should deploy Aura Factory, for it, make sure `deployAuraFactory()` is uncommented.
@@ -12,17 +12,17 @@ Comment out `deployAuraFactory()` and uncomment `deployAuraRouter()`.
 
 Run `npx hardhat run scripts/1_deployFactoryRouter.js --network testnetBSC` (or mainnet)
 
-Now, we've deployed Factory and Router.
-## Aura Token
+Now, copy the address of the Router contract and **put it into the router map** to `scripts/constants/contracts.js`.
+## 2. Aura Token
 
 Open BEP20.sol and see `preMineSupply` and `maxSupply`. PreMine is mined directly to your wallet after the token is deployed. Max Supply is max that can be minted over time. e.g. by Staking chefs. Currently, Max Supply is set to be 1B, and PreMind to 100M. Change if needed.
 
 `truffle compile` after changed.
-Run `npx hardhat run scripts/deployAuraToken.js --network testnetBSC` (mainnet if needed)
+Run `npx hardhat run scripts/2_deployAuraToken.js --network testnetBSC` (or mainnet)
 
 Now, copy the address of the AuraToken contract and **put it into the auraToken map** to `scripts/constants/contracts.js`.
 
-## Oracle
+## 3. Oracle
 
 The oracle is queried for token pair price information via the consult function.
 
@@ -42,22 +42,26 @@ Note that windowSize is in unix timestamp units, i.e. a windowSize of 24 does no
 It refers `ORACLE_GRANULARITY` from `src/scripts/constants/initials.js`.
 granularity is the number of observations made in the given windowSize.
 
-Run `npx hardhat run scripts/deployOracle.js --network testnetBSC` (mainnet if needed)
+Run `npx hardhat run scripts/3_deployOracle.js --network testnetBSC` (or mainnet)
 
 It will add Oracle contract address to AuraFactory.
 
 Now, copy the address of the Oracle contract and **put it into the oracle map** to `scripts/constants/contracts.js`.
-## Referrals Register
+## 4. Referral Register
 
 Contract resposnbile for referrals registry and referral rewards accumulating and payout.
 
 NOTE: Referral rewards are MINTED in Aura and not taken away from the person who was referred. Therefore, the rewards % are setup when contract is deployed.
 
-Open `deployReferralRegister.js` and update `AuraTokenAddress`. Then run the below command.
+`auraToken` address from `src/scripts/constants/contracts.js`.
+`REFERRAL_STAKING_FEE_PERCENT` from `src/scripts/constants/initials.js`.
+`REFERRAL_SWAP_FEE_PERCENT` from `src/scripts/constants/initials.js`.
 
-`npx hardhat run scripts/deployReferralRegister.js --network testnetBSC`
+Run `npx hardhat run scripts/4_deployReferralRegister.js --network testnetBSC` (or mainnet)
 
 It would deploy the referral register and add it as a minter to Aura token. Mints are done on withdrawal.
+
+Now, copy the address of the Referrals Register contract and **put it into the referralRegister map** to `scripts/constants/contracts.js`.
 
 ## Master Chef
 

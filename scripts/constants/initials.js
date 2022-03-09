@@ -11,4 +11,12 @@ module.exports = {
         'main': 24,
         'test': 24,
     },
+    REFERRAL_STAKING_FEE_PERCENT : {
+        'main': 30, // 3%
+        'test': 30, // 3%
+    },
+    REFERRAL_SWAP_FEE_PERCENT : {
+        'main': 50, // 5%
+        'test': 50, // 5%
+    },
 }
