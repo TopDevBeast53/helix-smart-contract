@@ -63,7 +63,7 @@ It would deploy the referral register and add it as a minter to Aura token. Mint
 
 Now, copy the address of the Referrals Register contract and **put it into the referralRegister map** to `scripts/constants/contracts.js`.
 
-## Master Chef
+## 5. Master Chef
 
 Main contract which is responsible for farms. But one pool (number 0) it has is for staking Aura and is created by default.
 

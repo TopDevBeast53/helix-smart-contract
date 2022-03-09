@@ -5,11 +5,11 @@ module.exports = {
     },
     factory: {
         'main': '',
-        'test': '0x84f22547020f582Deef1eb1B57b3b213D5997471',
+        'test': '0xab7384B8ddDb9e6640CE7cbdFb3a5Bd65a902bE2',
     },
     router: {
         'main': '',
-        'test': '0x38433227c7a606ebb9ccb0acfcd7504224659b74',
+        'test': '0x6B5C6335BB2ff25624364bDE8Dee0c7c4597747C',
     },
     auraLP: {
         'main': '',

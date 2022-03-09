@@ -1,7 +1,7 @@
 module.exports = {
     FACTORY_INIT_CODE_HASH: {
         'main': '',
-        'test': '0xd9b35256579ff1901f04559c5e15fd3b5c397d5f5a7900722d7512602a987fa8',
+        'test': '0x1edfe905a27b4e4e3c6ebe7eb40799334d5f79615b6a4c9d4a5a9f1e01516a05',
     },
     ORACLE_WINDOW_SIZE : {
         'main': 48,
