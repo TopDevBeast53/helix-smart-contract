@@ -3,7 +3,7 @@
  *
  * command for deploy on bsc-testnet: 
  * 
- *      `npx hardhat run scripts/deployAutoAura.js --network testnetBSC`
+ *      `npx hardhat run scripts/6_deployAutoAura.js --network testnetBSC`
  * 
  * Prereqs:
  *      1. Deploy `MasterChef` contract (if not deployed).      
@@ -12,37 +12,36 @@
  *      2. Update variables with according addresses.
  *      3. Deploy the AutoAura contract.
  */
- const { ethers, network } = require(`hardhat`);
- const contracts = require("./constants/contracts")
- const env = require("./constants/env")
- 
- const AuraTokenAddress = contracts.auraToken[env.network];
- const DeveloperAddress = '0x38606aEE8c5E713f91688D41ad6a7ab3B923F34b'; // <- update me | who is the admin taking care of calling all admin functions
- const TreasuryAddress = '0x7167a81a3a158Fc0383124Bd7e4d4e43f2b728b8'; // <- update me | who will collect the fees
- const MasterChefAddress = '0x3c72E6b19FAC06D07ee90dd7AFe9c655E798B5Ab'; // <- update me | address of deployed master chef
- 
- async function main() {
- 
-     const [deployer] = await ethers.getSigners();
-     console.log(`Deployer address: ${ deployer.address}`);
-     
-     let nonce = await network.provider.send(`eth_getTransactionCount`, [deployer.address, "latest"]);
+const { ethers, network } = require(`hardhat`);
+const contracts = require("./constants/contracts")
+const addresses = require("./constants/addresses")
+const env = require("./constants/env")
 
-     console.log(`------ Start deploying AutoAura contract ---------`);
-     const AutoAura = await ethers.getContractFactory(`AutoAura`);
-     let auto = await AutoAura.deploy(
-        /*aura token address=*/AuraTokenAddress,
-        /*master chef address=*/MasterChefAddress,
-        /*admin address=*/DeveloperAddress,
-        /*treasury address=*/TreasuryAddress, {nonce: nonce});
-     await auto.deployTransaction.wait();
-     console.log(`AutoAura deployed to ${auto.address}`);
- }
- 
- main()
-     .then(() => process.exit(0))
-     .catch((error) => {
-         console.error(error);
-         process.exit(1);
-     });
+const AuraTokenAddress = contracts.auraToken[env.network];
+const MasterChefAddress = contracts.masterChef[env.network];
+const TreasuryAddress = addresses.autoAuraTreasuryAddress[env.network];
+
+async function main() {
+
+    const [deployer] = await ethers.getSigners();
+    console.log(`Deployer address: ${ deployer.address}`);
+    
+    let nonce = await network.provider.send(`eth_getTransactionCount`, [deployer.address, "latest"]);
+
+    console.log(`------ Start deploying AutoAura contract ---------`);
+    const AutoAura = await ethers.getContractFactory(`AutoAura`);
+    let auto = await AutoAura.deploy(
+    /*aura token address=*/AuraTokenAddress,
+    /*master chef address=*/MasterChefAddress,
+    /*treasury address=*/TreasuryAddress, {nonce: nonce});
+    await auto.deployTransaction.wait();
+    console.log(`AutoAura deployed to ${auto.address}`);
+}
+
+main()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error(error);
+        process.exit(1);
+    });
  

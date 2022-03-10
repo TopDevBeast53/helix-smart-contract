@@ -26,7 +26,6 @@ contract AutoAura is Ownable, Pausable {
 
     uint256 public totalShares;
     uint256 public lastHarvestedTime;
-    address public admin;
     address public treasury;
 
     uint256 public constant MAX_PERFORMANCE_FEE = 500; // 5%
@@ -49,30 +48,19 @@ contract AutoAura is Ownable, Pausable {
      * @notice Constructor
      * @param _token: Aura token contract
      * @param _masterchef: MasterChef contract
-     * @param _admin: address of the admin
      * @param _treasury: address of the treasury (collects fees)
      */
     constructor(
         IERC20 _token,
         IMasterChef _masterchef,
-        address _admin,
         address _treasury
     ) {
         token = _token;
         masterchef = _masterchef;
-        admin = _admin;
         treasury = _treasury;
 
         // Infinite approve
         IERC20(_token).approve(address(_masterchef), type(uint256).max);
-    }
-
-    /**
-     * @notice Checks if the msg.sender is the admin address
-     */
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "admin: wut?");
-        _;
     }
 
     /**
@@ -144,15 +132,6 @@ contract AutoAura is Ownable, Pausable {
     }
 
     /**
-     * @notice Sets admin address
-     * @dev Only callable by the contract owner.
-     */
-    function setAdmin(address _admin) external onlyOwner {
-        require(_admin != address(0), "Cannot be zero address");
-        admin = _admin;
-    }
-
-    /**
      * @notice Sets treasury address
      * @dev Only callable by the contract owner.
      */
@@ -163,36 +142,36 @@ contract AutoAura is Ownable, Pausable {
 
     /**
      * @notice Sets performance fee
-     * @dev Only callable by the contract admin.
+     * @dev Only callable by the contract owner.
      */
-    function setPerformanceFee(uint256 _performanceFee) external onlyAdmin {
+    function setPerformanceFee(uint256 _performanceFee) external onlyOwner {
         require(_performanceFee <= MAX_PERFORMANCE_FEE, "performanceFee cannot be more than MAX_PERFORMANCE_FEE");
         performanceFee = _performanceFee;
     }
 
     /**
      * @notice Sets call fee
-     * @dev Only callable by the contract admin.
+     * @dev Only callable by the contract owner.
      */
-    function setCallFee(uint256 _callFee) external onlyAdmin {
+    function setCallFee(uint256 _callFee) external onlyOwner {
         require(_callFee <= MAX_CALL_FEE, "callFee cannot be more than MAX_CALL_FEE");
         callFee = _callFee;
     }
 
     /**
      * @notice Sets withdraw fee
-     * @dev Only callable by the contract admin.
+     * @dev Only callable by the contract owner.
      */
-    function setWithdrawFee(uint256 _withdrawFee) external onlyAdmin {
+    function setWithdrawFee(uint256 _withdrawFee) external onlyOwner {
         require(_withdrawFee <= MAX_WITHDRAW_FEE, "withdrawFee cannot be more than MAX_WITHDRAW_FEE");
         withdrawFee = _withdrawFee;
     }
 
     /**
      * @notice Sets withdraw fee period
-     * @dev Only callable by the contract admin.
+     * @dev Only callable by the contract owner.
      */
-    function setWithdrawFeePeriod(uint256 _withdrawFeePeriod) external onlyAdmin {
+    function setWithdrawFeePeriod(uint256 _withdrawFeePeriod) external onlyOwner {
         require(
             _withdrawFeePeriod <= MAX_WITHDRAW_FEE_PERIOD,
             "withdrawFeePeriod cannot be more than MAX_WITHDRAW_FEE_PERIOD"
@@ -202,16 +181,16 @@ contract AutoAura is Ownable, Pausable {
 
     /**
      * @notice Withdraws from MasterChef to Vault without caring about rewards.
-     * @dev EMERGENCY ONLY. Only callable by the contract admin.
+     * @dev EMERGENCY ONLY. Only callable by the contract owner.
      */
-    function emergencyWithdraw() external onlyAdmin {
+    function emergencyWithdraw() external onlyOwner {
         IMasterChef(masterchef).emergencyWithdraw(0);
     }
 
     /**
      * @notice Withdraw unexpected tokens sent to the Aura Vault
      */
-    function inCaseTokensGetStuck(address _token) external onlyAdmin {
+    function inCaseTokensGetStuck(address _token) external onlyOwner {
         require(_token != address(token), "Token cannot be same as deposit token");
 
         uint256 amount = IERC20(_token).balanceOf(address(this));
@@ -222,7 +201,7 @@ contract AutoAura is Ownable, Pausable {
      * @notice Triggers stopped state
      * @dev Only possible when contract not paused.
      */
-    function pause() external onlyAdmin whenNotPaused {
+    function pause() external onlyOwner whenNotPaused {
         _pause();
         emit Pause();
     }
@@ -231,7 +210,7 @@ contract AutoAura is Ownable, Pausable {
      * @notice Returns to normal state
      * @dev Only possible when contract is paused.
      */
-    function unpause() external onlyAdmin whenPaused {
+    function unpause() external onlyOwner whenPaused {
         _unpause();
         emit Unpause();
     }

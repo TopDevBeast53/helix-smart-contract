@@ -76,7 +76,7 @@ Check and update all variables:
 >`StakingPercent` from `src/scripts/constants/initials.js`.  
 >`DevPercent` from `src/scripts/constants/initials.js`.  
 
-Run `npx hardhat run scripts/deployMasterChef.js --network testnetBSC`
+Run `npx hardhat run scripts/5_deployMasterChef.js --network testnetBSC`
 
 It would deploy the contract AND add master chef as a minter to Aura token.
 
@@ -87,14 +87,10 @@ Auto-compounding aura token into the MasterChef pool number 0 (which is aura sta
 
 Check and update all variables:
 >`AuraTokenAddress` from `src/scripts/constants/contracts.js`.  
->`ReferralRegister` from `src/scripts/constants/contracts.js`.  
->`DeveloperAddress` from `src/scripts/constants/addresses.js`.  
->`StartBlock` from `src/scripts/constants/initials.js`.  
->`AuraTokenRewardPerBlock` from `src/scripts/constants/initials.js`.  
->`StakingPercent` from `src/scripts/constants/initials.js`.  
->`DevPercent` from `src/scripts/constants/initials.js`.  
+>`MasterChefAddress` from `src/scripts/constants/contracts.js`.  
+>`TreasuryAddress` from `src/scripts/constants/addresses.js`.  
 
-Run `npx hardhat run scripts/deployAutoAura.js --network testnetBSC`
+Run `npx hardhat run scripts/6_deployAutoAura.js --network testnetBSC`
 
 ## Pools (or SmartChefs)
 
