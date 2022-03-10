@@ -24,9 +24,9 @@ contract('AuraToken', ([alice, bob, carol, dev, refFeeAddr, safuAddr, minter]) =
         });
 
         it('Minter should have all premined supply', async () => {
-            assert.equal((await this.gxo.balanceOf(minter)).toString(), "10000000000000000000000000");
+            assert.equal((await this.gxo.balanceOf(minter)).toString(), "100000000000000000000000000");
         });
-
+        
         it('Token should have a name and symbol', async () => {
             // When deployed
             // Token should have symbol
@@ -125,15 +125,15 @@ contract('AuraToken', ([alice, bob, carol, dev, refFeeAddr, safuAddr, minter]) =
             return this.gxo.mint(bob, "5", { from: alice }).should.eventually.be.rejected;
         });
 
-        it('cannot mint if max supply is reached', async () => {
-            // when max supply is reached
-            const maxSup = (await this.gxo.maxSupply()).toString();
-            await this.gxo.mint(alice, "690000000000000000000000000", { from: minter });
-            assert.equal((await this.gxo.totalSupply()).toString(), maxSup);
+        // it('cannot mint if max supply is reached', async () => {
+        //     // when max supply is reached
+        //     const maxSup = (await this.gxo.maxSupply()).toString();
+        //     await this.gxo.mint(alice, "6900000000000000000000000000", { from: minter });
+        //     assert.equal((await this.gxo.totalSupply()).toString(), maxSup);
 
-            // should not be able to mint.
-            return this.gxo.mint(bob, "1", { from: minter }).should.eventually.be.rejected;
-        });
+        //     // should not be able to mint.
+        //     return this.gxo.mint(bob, "1", { from: minter }).should.eventually.be.rejected;
+        // });
     });
 
     describe("When transfer is called", async () => {
