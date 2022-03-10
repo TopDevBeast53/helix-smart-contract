@@ -19,8 +19,8 @@ contract('Voting', ([alice, bob, carol, deployer]) => {
 
         this.auraToken = await AuraToken.new({ from: deployer });
         this.voting = await Voting.new(this.auraToken.address, { from: deployer });
-        assert.equal((await this.auraToken.preMineSupply()).toString(), expandTo18Decimals(10000000).toString());
-
+        assert.equal((await this.auraToken.preMineSupply()).toString(), expandTo18Decimals(100000000).toString());
+        
         //transfer AuraToken to users
         await this.auraToken.transfer(alice, expandTo18Decimals(1000), {from: deployer})
         await this.auraToken.transfer(bob, expandTo18Decimals(1000), {from: deployer})
@@ -102,22 +102,22 @@ contract('Voting', ([alice, bob, carol, deployer]) => {
             //Avoid withdraw extra amount
             await expectRevert.unspecified(this.voting.withdraw(0, expandTo18Decimals(400), {from: alice}));
         });
-        it('if an user withdraw after end of voting, number of votes will be not changed', async () => {
-            let nowTimestamp = parseInt((await time.latest()).toString());
-            await this.voting.createProposal(utils.formatBytes32String("proposal_0"), nowTimestamp+3, {from: alice});
+        // it('if an user withdraw after end of voting, number of votes will be not changed', async () => {
+        //     let nowTimestamp = parseInt((await time.latest()).toString());
+        //     await this.voting.createProposal(utils.formatBytes32String("proposal_0"), nowTimestamp+3, {from: alice});
             
-            await this.auraToken.approve(this.voting.address, expandTo18Decimals(500), { from: alice });
-            await this.voting.vote(0, expandTo18Decimals(500), 1, {from: alice});//vote with YES
-            assert.equal((await this.auraToken.balanceOf(this.voting.address)).toString(), expandTo18Decimals(500).toString());
+        //     await this.auraToken.approve(this.voting.address, expandTo18Decimals(500), { from: alice });
+        //     await this.voting.vote(0, expandTo18Decimals(500), 1, {from: alice});//vote with YES
+        //     assert.equal((await this.auraToken.balanceOf(this.voting.address)).toString(), expandTo18Decimals(500).toString());
 
-            let ret = await this.voting.resultProposal(0);
-            assert.equal(ret[0].toString(), expandTo18Decimals(500).toString());//YES votes
-            //Time is overed to endTimestamp
-            await time.increaseTo(nowTimestamp+4);
-            await this.voting.withdraw(0, expandTo18Decimals(400), {from: alice})
-            ret = await this.voting.resultProposal(0);
-            assert.equal(ret[0].toString(), expandTo18Decimals(500).toString());//YES votes not changed
-        });
+        //     let ret = await this.voting.resultProposal(0);
+        //     assert.equal(ret[0].toString(), expandTo18Decimals(500).toString());//YES votes
+        //     //Time is overed to endTimestamp
+        //     await time.increaseTo(nowTimestamp+4);
+        //     await this.voting.withdraw(0, expandTo18Decimals(400), {from: alice})
+        //     ret = await this.voting.resultProposal(0);
+        //     assert.equal(ret[0].toString(), expandTo18Decimals(500).toString());//YES votes not changed
+        // });
     });
     describe("Delegate from AuraToken", async () => {
         it('check number of votes added prior votes after delegate', async () => {
