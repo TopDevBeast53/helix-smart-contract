@@ -13,5 +13,10 @@ module.exports = {
         'main': '',
         'test': '0x7167a81a3a158Fc0383124Bd7e4d4e43f2b728b8',
     },
+    //Address of withdraw dev and ref fee
+    masterChefDeveloper: {
+        'main': '',
+        'test': '0x7167a81a3a158Fc0383124Bd7e4d4e43f2b728b8',
+    },
 }
   

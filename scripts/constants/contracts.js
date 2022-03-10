@@ -23,6 +23,10 @@ module.exports = {
         'main': '',
         'test': '0xC8AeFE4648E709e8326045Ca1896295f6057F38C',
     },
+    masterChef: {
+        'main': '',
+        'test': '0x3A1021F61d39028C53774c13c94c750518fA58eE',
+    },
     auraNFT: {
         'main': '',
         'test': '0x8b2b085339D11DcF0FA0aaD985C30f82eb49a880',

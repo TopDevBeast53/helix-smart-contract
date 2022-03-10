@@ -1,18 +1,21 @@
 ## 1. Aura Factory and Router
 
-Open `scripts/constants/addresses.js` and update `setterFeeOnPairSwaps` and `poolReceiveTradFee` constants. 
+Check and update all variables:
+>`setterFeeOnPairSwaps` from `src/scripts/constants/addresses.js`.  
+>`poolReceiveTradFee` from `src/scripts/constants/addresses.js`. 
+
 First of all, should deploy Aura Factory, for it, make sure `deployAuraFactory()` is uncommented.
 
 Run `npx hardhat run scripts/1_deployFactoryRouter.js --network testnetBSC` (or mainnet)
 
-Now, copy the address of the factory contract and **put it into the factory map** to `scripts/constants/contracts.js`.
-copy *INIT_CODE_HASH* and **put it into FACTORY_INIT_CODE_HASH** to `scripts/constants/initials.js` and **put it into `AuraLibrary.sol`**
+Now, copy the address of the factory contract and **put it into the `factory` map** to `scripts/constants/contracts.js`.
+copy *INIT_CODE_HASH* and **put it into `FACTORY_INIT_CODE_HASH`** to `scripts/constants/initials.js` and **put it into `AuraLibrary.sol`**
 
 Comment out `deployAuraFactory()` and uncomment `deployAuraRouter()`.
 
 Run `npx hardhat run scripts/1_deployFactoryRouter.js --network testnetBSC` (or mainnet)
 
-Now, copy the address of the Router contract and **put it into the router map** to `scripts/constants/contracts.js`.
+Now, copy the address of the Router contract and **put it into the `router` map** to `scripts/constants/contracts.js`.
 ## 2. Aura Token
 
 Open BEP20.sol and see `preMineSupply` and `maxSupply`. PreMine is mined directly to your wallet after the token is deployed. Max Supply is max that can be minted over time. e.g. by Staking chefs. Currently, Max Supply is set to be 1B, and PreMind to 100M. Change if needed.
@@ -20,7 +23,7 @@ Open BEP20.sol and see `preMineSupply` and `maxSupply`. PreMine is mined directl
 `truffle compile` after changed.
 Run `npx hardhat run scripts/2_deployAuraToken.js --network testnetBSC` (or mainnet)
 
-Now, copy the address of the AuraToken contract and **put it into the auraToken map** to `scripts/constants/contracts.js`.
+Now, copy the address of the AuraToken contract and **put it into the `auraToken` map** to `scripts/constants/contracts.js`.
 
 ## 3. Oracle
 
@@ -29,59 +32,69 @@ The oracle is queried for token pair price information via the consult function.
 The oracle can be deployed any time **after the factory is deployed**. 
 It's passed 3 parameters, all of which are immutable: 
 
-1. a AuraFactory address.
-It will retrieve from `src/scripts/constants/contracts.js`
-
-2. an unsigned integer windowSize.
-It refers `ORACLE_WINDOW_SIZE` from `src/scripts/constants/initials.js`.
+Check and update all variables:
+>`auraFactory` address from `src/scripts/constants/contracts.js`.  
+>`ORACLE_WINDOW_SIZE` from `src/scripts/constants/initials.js`.  
 windowSize determines the total duration between which updates must occur for price data to remain up to date
 and small windowSize or insufficiently frequent calls to update trigger MISSING_HISTORICAL_OBSERVATION error. 
-Note that windowSize is in unix timestamp units, i.e. a windowSize of 24 does not equal 24 hours! 
-
-3. an unsigned int8 granularity.
-It refers `ORACLE_GRANULARITY` from `src/scripts/constants/initials.js`.
+Note that windowSize is in unix timestamp units, i.e. a windowSize of 24 does not equal 24 hours  
+>`ORACLE_GRANULARITY` from `src/scripts/constants/initials.js`.  
 granularity is the number of observations made in the given windowSize.
 
 Run `npx hardhat run scripts/3_deployOracle.js --network testnetBSC` (or mainnet)
 
 It will add Oracle contract address to AuraFactory.
 
-Now, copy the address of the Oracle contract and **put it into the oracle map** to `scripts/constants/contracts.js`.
+Now, copy the address of the Oracle contract and **put it into the `oracle` map** to `scripts/constants/contracts.js`.
 ## 4. Referral Register
 
 Contract resposnbile for referrals registry and referral rewards accumulating and payout.
 
 NOTE: Referral rewards are MINTED in Aura and not taken away from the person who was referred. Therefore, the rewards % are setup when contract is deployed.
 
-`auraToken` address from `src/scripts/constants/contracts.js`.
-`REFERRAL_STAKING_FEE_PERCENT` from `src/scripts/constants/initials.js`.
-`REFERRAL_SWAP_FEE_PERCENT` from `src/scripts/constants/initials.js`.
+Check and update all variables:
+>`auraToken` address from `src/scripts/constants/contracts.js`.  
+>`REFERRAL_STAKING_FEE_PERCENT` from `src/scripts/constants/initials.js`.  
+>`REFERRAL_SWAP_FEE_PERCENT` from `src/scripts/constants/initials.js`.
 
 Run `npx hardhat run scripts/4_deployReferralRegister.js --network testnetBSC` (or mainnet)
 
 It would deploy the referral register and add it as a minter to Aura token. Mints are done on withdrawal.
 
-Now, copy the address of the Referrals Register contract and **put it into the referralRegister map** to `scripts/constants/contracts.js`.
+Now, copy the address of the Referrals Register contract and **put it into the `referralRegister` map** to `scripts/constants/contracts.js`.
 
 ## 5. Master Chef
 
 Main contract which is responsible for farms. But one pool (number 0) it has is for staking Aura and is created by default.
 
-Update all variables: referral register, aura token, how many aura per block etc.
+Check and update all variables:
+>`AuraTokenAddress` from `src/scripts/constants/contracts.js`.  
+>`ReferralRegister` from `src/scripts/constants/contracts.js`.  
+>`DeveloperAddress` from `src/scripts/constants/addresses.js`.  
+>`StartBlock` from `src/scripts/constants/initials.js`.  
+>`AuraTokenRewardPerBlock` from `src/scripts/constants/initials.js`.  
+>`StakingPercent` from `src/scripts/constants/initials.js`.  
+>`DevPercent` from `src/scripts/constants/initials.js`.  
 
-And then run
-
-`npx hardhat run scripts/deployMasterChef.js --network testnetBSC`
+Run `npx hardhat run scripts/deployMasterChef.js --network testnetBSC`
 
 It would deploy the contract AND add master chef as a minter to Aura token.
 
-## Auto Aura
+Now, copy the address of the Referrals Register contract and **put it into the `masterChef` map** to `scripts/constants/contracts.js`.
+## 6. Auto Aura
 
 Auto-compounding aura token into the MasterChef pool number 0 (which is aura staking pool).
 
-Open `deployAutoAura.js` and update all the constants with contracts addresses we have deployed earlier. Then run
+Check and update all variables:
+>`AuraTokenAddress` from `src/scripts/constants/contracts.js`.  
+>`ReferralRegister` from `src/scripts/constants/contracts.js`.  
+>`DeveloperAddress` from `src/scripts/constants/addresses.js`.  
+>`StartBlock` from `src/scripts/constants/initials.js`.  
+>`AuraTokenRewardPerBlock` from `src/scripts/constants/initials.js`.  
+>`StakingPercent` from `src/scripts/constants/initials.js`.  
+>`DevPercent` from `src/scripts/constants/initials.js`.  
 
-`npx hardhat run scripts/deployAutoAura.js --network testnetBSC`
+Run `npx hardhat run scripts/deployAutoAura.js --network testnetBSC`
 
 ## Pools (or SmartChefs)
 

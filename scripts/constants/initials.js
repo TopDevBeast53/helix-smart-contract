@@ -19,4 +19,20 @@ module.exports = {
         'main': 50, // 5%
         'test': 50, // 5%
     },
+    MASTERCHEF_START_BLOCK : {
+        'main': 0,
+        'test': 0,
+    },
+    MASTERCHEF_AURA_TOKEN_REWARD_PER_BLOCK : {
+        'main': '40000000000000000000', // 40 * 10e18 -> 40 aura tokens per block 
+        'test': '40000000000000000000', // 40 * 10e18 -> 40 aura tokens per block 
+    },
+    MASTERCHEF_STAKING_PERCENT : {
+        'main': 999000, // -> 99.9% of all farm rewards will go the users
+        'test': 999000, // -> 99.9% of all farm rewards will go the users
+    },
+    MASTERCHEF_DEV_PERCENT : {
+        'main': 1000, // -> 0.1% of all farm rewards will go to dev address
+        'test': 1000, // -> 0.1% of all farm rewards will go to dev address
+    },
 }
