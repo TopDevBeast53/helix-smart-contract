@@ -92,7 +92,9 @@ Check and update all variables:
 
 Run `npx hardhat run scripts/6_deployAutoAura.js --network testnetBSC`
 
-## Pools (or SmartChefs)
+Now, copy the address of the Auto Aura contract and **put it into the `autoAura` map** to `scripts/constants/contracts.js`.
+
+## 7. Pools (or SmartChefs)
 
 AutoAura was the first pool we have. Now, each of the pools needs to be deployed separately and rewards funds must be deposited into each of the pools individually.
 
@@ -100,12 +102,12 @@ Let's say we want to create a pool for staking token A and getting rewards in to
 
 Most likely, for now the token B always be Aura Token.
 
-Open `deploySmartChef.js` and update the variables.
-
-Most important ones are:
-* Start Block
-* End block
-* Reward per block
+Check and update all variables:
+>`StakingTokenAddress` from `src/scripts/constants/addresses.js`(e.g. BUSD for now).  
+>`RewardTokenAddress` from `src/scripts/constants/contracts.js`(AuraToken for now).  
+>`StartBlock` from `src/scripts/constants/initials.js`.  
+>`EndBlock` from `src/scripts/constants/initials.js`.  
+>`RewardPerBlock` from `src/scripts/constants/initials.js`.  
 
 When setting this numbers you must do the following. Come up with a start block. Decide how much Aura will be given and how much per block.
 
@@ -116,7 +118,8 @@ total aura = 1M, and aura per block = 100, then end block must be 123 + 10^6 / 1
 
 Set all the numbers correctly and run
 
-`npx hardhat run scripts/deploySmartChef.js --network testnetBSC`
+`npx hardhat run scripts/7_deploySmartChef.js --network testnetBSC`
+Now, copy the address of the Smart Chef contract and **put it into the `smartChef` map** to `scripts/constants/contracts.js`.
 
 Now, we've got the contract deployed, however, you MUST fund it from the owner account (the account which deployed the contract). You must deposit (end block - start block + 1) * aura per block aura tokens into it for users to be able to claim their rewards.
 
@@ -124,25 +127,27 @@ DO NOT WORRY, if users don't use all the rewards, you can still withdraw Aura to
 
 NOW GO AND TRANSFER THE NEEDED AMOUNT OF AURA INTO THE CONTRACT! Go mint some amount of aura to your wallet and deposit it into the contract by literally doing a send from e.g. metamask.
 
-## Aura NFT and Staking Chef
+## 8. Aura NFT and AuraChefNFT
 
-Open `constants` folder and the files in it.
+Check and update all variables:
+>`StakingTokenAddress` from `src/scripts/constants/addresses.js`(e.g. BUSD for now).  
+>`RewardTokenAddress` from `src/scripts/constants/contracts.js`(AuraToken for now).  
+>`StartBlock` from `src/scripts/constants/initials.js`.  
+>`EndBlock` from `src/scripts/constants/initials.js`.  
+>`RewardPerBlock` from `src/scripts/constants/initials.js`.
 
-`contracts.js` --> update the aura token address
-`env.js` --> update the env name if needed (e.g. main) and rpc url
+Run `npx hardhat run scripts/8_deployAuraNFTStaking.js --network testnetBSC` (or main)
+Copy the address of the Aura NFT contract and **put it into the `auraNFT` map** to `scripts/constants/contracts.js`.
+Copy the address of the Aura NFT Chef  contract and **put it into the `auraNFTChef` map** to `scripts/constants/contracts.js`.
 
-Run `npx hardhat run scripts/deployAuraNFTStaking.js --network testnetBSC` (or main)
-
-Here will be deployed contracts `AuraNFT`, `AuraChefNFT`, `SwapFeeRewardsWithAP`
+Here will be deployed contracts `AuraNFT`, `AuraChefNFT`
 1. Deploy `AuraNFT` contract.
 2. Deploy `AuraChefNFT` contract.
  * Set deployed `AuraNFT` address as instance of `AuraChefNFT`.
-3. Deploy `SwapFeeRewardsWithAP` contract
-4. Set all roles of `AuraNFT`
+3. Set all roles of `AuraNFT`
  * Set `AuraChefNFT` address as a staker of `AuraNFT`.
  * Set `deployer` as a minter of `AuraNFT`.
- * Set `SwapFeeRewardsWithAP` address as accruer of `AuraNFT`.
-5. Add RewardToken of `AuraChefNFT` with `AURA` token.
+4. Add RewardToken of `AuraChefNFT` with `AURA` token.
 
 Here are the initial variables.
 1. `AuraNFT`
@@ -166,38 +171,44 @@ Here are the initial variables.
   	Accumulated Tokens per share = `rewardPerBlock * diffBlockNums`. diffBlockNums: diff from startRewardBlock to now
   	So, AuraChefNFT should have AuraToken amount to sufficient as above formula
 
-## Aura NFT Bridge
+## 9. Aura NFT Bridge
 
 Now, time to deploy the bridge contract. It will be called by the script doing all the briding work connecting solana and bsc.
 
-Open `deployAuraNFTBridge.js` and update `AuraNFTAddress` with the address of the Aura NFT contract that was deployed.
+Check and update all variables:
+>`auraNFTAddress` from `src/scripts/constants/contracts.js`.  
 
-After that, run
-
-`npx hardhat run scripts/deployAuraNFTBridge.js --network testnetBSC`
-
-## SwapFeeRewardsWithAP
+Run `npx hardhat run scripts/9_deployAuraNFTBridge.js --network testnetBSC`
+Copy the address of the Aura NFT contract and **put it into the `auraNFTBridge` map** to `scripts/constants/contracts.js`.
+## 10. SwapFeeRewardsWithAP
 
 It's called by the router when the user performs a token swap and will credit targetToken/targetAPToken to the user's balance.
 It's called by users to withdraw credited funds their calling address.
 
-SwapFeeRewardsWithAP can be deployed after the following have been deployed:
-factory
-router
-targetToken
-targetAPToken
-oracle
-auraToken
-auraNFT
-referralRegister
+Check and update all variables:
+>`factoryAddress` from `src/scripts/constants/contracts.js`.  
+>`routerAddress` from `src/scripts/constants/contracts.js`.  
+>`targetTokenAddress` from `src/scripts/constants/contracts.js`(Now auraToken).  
+>`targetAPTokenAddress` from `src/scripts/constants/contracts.js`(Now auraLP).  
+>`oracleAddress` from `src/scripts/constants/contracts.js`.  
+>`auraTokenAddress` from `src/scripts/constants/contracts.js`.  
+>`auraNFTAddress` from `src/scripts/constants/contracts.js`.  
+>`referralRegisterAddress` from `src/scripts/constants/contracts.js`.  
 
-The deployment script reads these addressess from src/scripts/constants/contracts.js
-and is dependent on the selected network (test or main) in src/scripts/constants/env.js
+Run `npx hardhat run scripts/deploySwapFee.js --network testnetBSC` (or mainnet)
+Copy the address of the Swap Fee contract and **put it into the `swapFee` map** to `scripts/constants/contracts.js`.
 
-To deploy, run:
-`npx hardhat run scripts/deploySwapFee.js --network testnetBSC` (or mainnet)
+## 11. AuraMigrator
 
-## Token Tools
+Migrates liquidity an external routers to MigrateLiquidity's set router via a single migrateLiquidity function.
+
+Check and update all variables:
+>`routerAddress` from `src/scripts/constants/contracts.js`.  
+
+Run `npx hardhat run scripts/deployMigrator.js --network testnetBSC` (or mainnet)
+Copy the address of the Aura Migrator contract and **put it into the `auraMigrator` map** to `scripts/constants/contracts.js`.
+
+## 12. Token Tools
 
 Intended to be used by the frontend for making efficient queries about LP token pairs and their holders
 e.g. getStakedTokenPairs which returns all the token pairs in which a given address has a positive balance,
@@ -205,17 +216,5 @@ including the token addresses in that pair, their balances, and their symbols.
 
 Is not dependent on any other contracts, has no constructor, and maintains no state.
 
-To deploy, run:
-`npx hardhat run scripts/TokenTools.js --network testnetBSC` (or mainnet)
-
-## AuraMigrator
-
-Migrates liquidity an external routers to MigrateLiquidity's set router via a single migrateLiquidity function.
-
-Can be deployed after a router is deployed.
-
-The deployment script reads the router address from src/scripts/constants/contracts.js
-and is dependent on the selected network (test or main) in src/scripts/constants/env.js
-
-To deploy, run:
-`npx hardhat run scripts/deployMigrator.js --network testnetBSC` (or mainnet)
+Run `npx hardhat run scripts/TokenTools.js --network testnetBSC` (or mainnet)
+Copy the address of the Token Tools contract and **put it into the `tokenTools` map** to `scripts/constants/contracts.js`.
