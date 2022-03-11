@@ -10,14 +10,19 @@ const contracts = require("./constants/contracts")
 const addresses = require("./constants/addresses")
 const env = require("./constants/env")
 
+const setterFeeOnPairSwaps = addresses.setterFeeOnPairSwaps[env.network]
+const poolReceiveTradeFee = addresses.poolReceiveTradeFee[env.network]
+const factoryAddress = contracts.factory[env.network]
+const routerWBNB = addresses.WBNB[env.network]
+
 async function deployAuraFactory() {
     
     console.log(`------ Start deploying AuraFactory contract ---------`);
     const AuraContractFactory = await ethers.getContractFactory("AuraFactory");
-    const contract = await AuraContractFactory.deploy(addresses.setterFeeOnPairSwaps[env.network]);
+    const contract = await AuraContractFactory.deploy(setterFeeOnPairSwaps);
     await contract.deployTransaction.wait();
     let instance = await contract.deployed();
-    await instance.setFeeTo(addresses.poolReceiveTradFee[env.network]);
+    await instance.setFeeTo(poolReceiveTradeFee);
     let res = await instance.feeTo();
     console.log('fee - ', res);
 
@@ -30,7 +35,7 @@ async function deployAuraRouter() {
 
     console.log(`------ Start deploying AuraRouter contract ---------`);
     const ContractRouter = await ethers.getContractFactory("AuraRouterV1");
-    const contract = await ContractRouter.deploy(contracts.factory[env.network], addresses.WBNB[env.network]);
+    const contract = await ContractRouter.deploy(factoryAddress, routerWBNB);
     await contract.deployTransaction.wait();
 
     console.log(`AuraRouter deployed to ${contract.address}`);
@@ -40,8 +45,8 @@ async function main() {
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${deployer.address}`);
 
-    // await deployAuraFactory();   
-    await deployAuraRouter('test') 
+    await deployAuraFactory();   
+    // await deployAuraRouter() 
 }
 
 main()

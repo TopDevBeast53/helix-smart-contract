@@ -13,7 +13,7 @@ module.exports = {
         'test': '0x59201fb8cb2D61118B280c8542127331DD141654',
     },
     //ADDRESS_OF_WHO_WILL_RECEIVE_TRADING_FEES
-    poolReceiveTradFee: {
+    poolReceiveTradeFee: {
         'main': '',
         'test': '0x7167a81a3a158Fc0383124Bd7e4d4e43f2b728b8',
     },
