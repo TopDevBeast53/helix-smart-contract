@@ -2,11 +2,8 @@
  * @dev Deployment script for Token Tools contract.
  *
  * Run from project root using:
- *     npx hardhat run scripts/deployTokenTools.js --network testnetBSC
+ *     npx hardhat run scripts/12_deployTokenTools.js --network testnetBSC
  */
-
-// Deployed by = 0x59201fb8cb2D61118B280c8542127331DD141654
-// Deployed at = 0xA8156dd9D4Ab1fc2C2eb592B98e340C56aadA4E9 
 
 const { ethers } = require(`hardhat`);
 

@@ -2,7 +2,7 @@
  * @dev Swap Fee Rewards with AP Deployment
  *
  * command to deploy on bsc-testnet:
- *      `npx hardhat run scripts/deploySwapFee.js --network testnetBSC`
+ *      `npx hardhat run scripts/10_deploySwapFee.js --network testnetBSC`
  *
  * Workflow:
  *      1. Deploy `SwapFeeRewardsWithAP` contract.                                                                                         
@@ -15,17 +15,16 @@ const env = require('./constants/env');
 
 const factoryAddress = contracts.factory[env.network];
 const routerAddress = contracts.router[env.network];
-const targetTokenAddress = contracts.auraToken[env.network];    // Note that targetTokenAddress == auraTokenAddress
+const targetTokenAddress = contracts.auraToken[env.network]; // Note that targetTokenAddress == auraTokenAddress
 const targetAPTokenAddress = contracts.auraLP[env.network];
 const oracleAddress = contracts.oracle[env.network];
 const auraTokenAddress = contracts.auraToken[env.network];
 const auraNFTAddress = contracts.auraNFT[env.network];
-const refRegAddress = contracts.refReg[env.network];
+const refRegAddress = contracts.referralRegister[env.network];
 
 async function main() {
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${deployer.address}`);
-    // Deployed by = 0x59201fb8cb2D61118B280c8542127331DD141654
 
     let nonce = await network.provider.send(`eth_getTransactionCount`, [deployer.address, "latest"])
 

@@ -4,7 +4,7 @@
  *
  * command for deploy on bsc-testnet: 
  * 
- *      `npx hardhat run scripts/deployAuraNFTBridge.js --network testnetBSC`
+ *      `npx hardhat run scripts/9_deployAuraNFTBridge.js --network testnetBSC`
  *       
  * Workflow:
  * 
@@ -31,15 +31,15 @@ async function addBridger(bridgeAddress, bridgerAddress) {
 
 async function addMinterToAuraNFT(bridgeAddress) {
     const [deployer] = await ethers.getSigners();
-    console.log(`------ Adding ${bridgerAddress} as Minter to AuraNFT ---------`);
+    console.log(`------ Adding ${bridgeAddress} as Minter to AuraNFT ---------`);
     let nonce = await network.provider.send(`eth_getTransactionCount`, [deployer.address, "latest"]);
 
     const IAuraNFT = await ethers.getContractFactory("AuraNFT");
-    const AuraNFT = IAuraNFT.attach(contracts.auraNFT[env.network]);
+    const AuraNFT = IAuraNFT.attach(AuraNFTAddress);
 
-    let tx = await AuraNFT.addMinter(bridgerAddress, {nonce: nonce, gasLimit: 3000000});
+    let tx = await AuraNFT.addMinter(bridgeAddress, {nonce: nonce, gasLimit: 3000000});
     await tx.wait();
-    console.log(`------ Added ${bridgerAddress} as Minter to AuraNFT ---------`);
+    console.log(`------ Added ${bridgeAddress} as Minter to AuraNFT ---------`);
 }
 
 async function main() {
@@ -63,7 +63,7 @@ async function main() {
 }
 
 // To add a bridger, comment out main() and uncomment addBridger with proper arguments
-// addBridger('0xE73F274906C8114c4Ff1C501dc549768c57A0308', '0x59201fb8cb2D61118B280c8542127331DD141654')
+// addBridger(AuraNFTAddress, input address you want)
 main()
     .then(() => process.exit(0))
     .catch((error) => {
