@@ -1,14 +1,13 @@
 /* 
- * @dev Interaction script for deployed SwapFeeRewardsWithAP contract.
+ * @dev Interaction script for deployed Referral Register contract.
  * 
  * Run from project root using:
- *     npx hardhat run scripts/interactSwapFee.js --network testnetBSC
+ *     npx hardhat run scripts/interactRefReg.js --network testnetBSC
  */
 
-const verbose = true
-
 require ('dotenv').config()
-const contracts = require('./constants/contracts')
+
+const contracts = require('./constants/interactRefRegContracts')
 const env = require('./constants/env')
 
 const factoryAddress = contracts.factory[env.network]
@@ -24,14 +23,18 @@ const wbnbTokenAddress = contracts.WBNB[env.network]
 const testTokenAAddress = contracts.testTokenA[env.network]
 const testTokenBAddress = contracts.testTokenB[env.network]
 
-const gasLimit = 9999999
-const addressZero = '0x0000000000000000000000000000000000000000'
+const verbose = true
+
+const ownerAddress = process.env.ADDRESS
 
 const defaultRewardDistribution = 100
 const userRewardDistribution = 100
 
-let owner
-let swapFee
+const gasLimit = 9999999
+const addressZero = '0x0000000000000000000000000000000000000000'
+
+let owner, user
+let ISwapFee, swapFee
 let router
 let factory
 let oracle
@@ -43,109 +46,101 @@ let auraNFT
 let auraToken
 let wbnbToken
 let refReg
+let tx
 
+/**
+ * @dev Initialize the contract and call functions.
+ */
 async function main() {
-    print('INTERACT SWAP FEE REWARDS WITH AP\n')
-    
+    // connect to the provider an load the wallets
     await initScript() 
+
+    // load the contract instances used in the script
     await loadContracts()
-    await printState()
-    
-    // await initContracts(tokenA, auraToken)
+
+    // make all preparations for swapping token0 for token1
+    await initContracts(tokenA, auraToken)
+
+    // Swap the tokens.
+    let amount = 1000
+    // use the owner because they'll already have tokens minted into their address
+    await swap(owner.address, testTokenAAddress, testTokenBAddress, amount)
 
     /*
-    let amount = 1000
-    await swap(owner.address, testTokenAAddress, testTokenBAddress, amount)
-    await withdraw()
+    // Withdraw tokens.
+    //await withdraw()
     */
 
     print('done')
 }
 
-// Initialize this script's provider and wallet
+/**
+ * @dev Initialize the script variables.
+ */
 async function initScript() {
     const rpc = 'https://data-seed-prebsc-1-s1.binance.org:8545'
     const provider = new ethers.providers.getDefaultProvider(rpc)
 
     owner = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
-    print(`wallet: \t${owner.address}\n`)
+    user = new ethers.Wallet(process.env.USER_PRIVATE_KEY, provider)
+    print(`load wallet:\nowner address: ${owner.address}\n`)
 }
 
 async function loadContracts() {
-    print('deployed contract addresses:')
-    print(`\tswapFee: \t${swapFeeAddress}`)
-    ISwapFee = await ethers.getContractFactory('SwapFeeRewardsWithAP')
-    swapFee = await ISwapFee.attach(swapFeeAddress).connect(owner)
+    print('load contracts:')
 
-    print(`\tfactory: \t${factoryAddress}`)
+    print(`load factory: ${factoryAddress}`)
     const IFactory = await ethers.getContractFactory('AuraFactory')
     factory = await IFactory.attach(factoryAddress).connect(owner)
 
-    print(`\trouter: \t${routerAddress}`)
+    print("CANCEL EXECUTION IF INIT CODE HASH DOESN'T MATCH VERSION IN AURA LIBRARY")
+    initCodeHash = await factory.INIT_CODE_HASH()
+    print(`factory INIT CODE HASH is ${initCodeHash}`)
+
+    print(`load router: ${routerAddress}`)
     const IRouter = await ethers.getContractFactory('AuraRouterV1')
     router = await IRouter.attach(routerAddress).connect(owner)
 
-    print(`\ttarget token: \t${targetTokenAddress}`)
-    const ITestToken = await ethers.getContractFactory('TestToken')
-    targetToken = await ITestToken.attach(targetTokenAddress).connect(owner)
+    print(`load swapFee: ${swapFeeAddress}`)
+    ISwapFee = await ethers.getContractFactory('SwapFeeRewardsWithAP')
+    swapFee = await ISwapFee.attach(swapFeeAddress).connect(owner)
 
-    print(`\tAP token: \t${targetAPTokenAddress}`)
+    print(`load oracle: ${oracleAddress}`)
+    const IOracle = await ethers.getContractFactory('Oracle')
+    oracle = await IOracle.attach(oracleAddress).connect(owner)
+
+    print(`load referral register: ${refRegAddress}`)
+    const IRefReg= await ethers.getContractFactory('ReferralRegister')
+    refReg = await IRefReg.attach(refRegAddress).connect(owner)
+
+    print(`load auraNFT: ${auraNFTAddress}`)
+    const IAuraNFT= await ethers.getContractFactory('AuraNFT')
+    auraNFT = await IAuraNFT.attach(auraNFTAddress).connect(owner)
+
+    print(`load tokenA: ${testTokenAAddress}`)
+    const ITestToken = await ethers.getContractFactory('TestToken')
+    tokenA = await ITestToken.attach(testTokenAAddress).connect(owner)
+
+    print(`load tokenB: ${testTokenBAddress}`)
+    // ITestToken already loaded
+    tokenB = await ITestToken.attach(testTokenBAddress).connect(owner)
+
+    print(`load target AP token: ${targetAPTokenAddress}`)
     // ITestToken already loaded
     // Using ITestToken since AuraLP fails to transfer
     targetAPToken = await ITestToken.attach(targetAPTokenAddress).connect(owner)
 
-    print(`\toracle: \t${oracleAddress}`)
-    const IOracle = await ethers.getContractFactory('Oracle')
-    oracle = await IOracle.attach(oracleAddress).connect(owner)
+    print(`load target token: ${targetTokenAddress}`)
+    // ITestToken already loaded
+    targetToken = await ITestToken.attach(targetTokenAddress).connect(owner)
 
-    print(`\tauraToken: \t${auraTokenAddress}`)
+    print(`load AURA token: ${auraTokenAddress}`)
     // ITestToken already loaded
     auraToken = await ITestToken.attach(auraTokenAddress).connect(owner)
 
-    print(`\tauraNFT: \t${auraNFTAddress}`)
-    const IAuraNFT= await ethers.getContractFactory('AuraNFT')
-    auraNFT = await IAuraNFT.attach(auraNFTAddress).connect(owner)
-
-    print(`\trefReg: \t${refRegAddress}`)
-    const IRefReg= await ethers.getContractFactory('ReferralRegister')
-    refReg = await IRefReg.attach(refRegAddress).connect(owner)
-    
-    print(`\ttokenA: \t${testTokenAAddress}`)
-    // ITestToken already loaded
-    tokenA = await ITestToken.attach(testTokenAAddress).connect(owner)
-
-    print(`\ttokenB: \t${testTokenBAddress}`)
-    // ITestToken already loaded
-    tokenB = await ITestToken.attach(testTokenBAddress).connect(owner)
-
-    print(`\tWBNB token: \t${wbnbTokenAddress}`)
+    print(`load WBNB token: ${wbnbTokenAddress}`)
     // ITestToken already loaded
     wbnbToken = await ITestToken.attach(wbnbTokenAddress).connect(owner)
-
-    print('\n')
-}
-
-async function printState() {
-    print('swapFee state:')
-    print(`\tfactory INIT CODE HASH \t\t${await factory.INIT_CODE_HASH()}`)
-    print(`\tfactory address is \t\t${short(await swapFee.factory())}`)
-    print(`\trouter address is \t\t${short(await swapFee.router())}`)
-    print(`\ttarget token address is \t${short(await swapFee.targetToken())}`)
-    print(`\tAP token address is \t\t${short(await swapFee.targetAPToken())}`)
-    print(`\toracle address is \t\t${short(await swapFee.oracle())}`)
-    print(`\tauraToken address is \t\t${short(await swapFee.auraToken())}`)
-    print(`\tauraNFT address is \t\t${short(await swapFee.auraNFT())}`)
-    print(`\trefReg address is \t\t${short(await swapFee.refReg())}`)
-    print(`\ttotal mined AURA is \t\t${await swapFee.totalMined()}`)
-    print(`\ttotal accrued AP is \t\t${await swapFee.totalAccruedAP()}`)
-
-    const pairsListLength = await swapFee.getPairsListLength()
-    print(`\tpair addresses (${pairsListLength}):`)
-    print(`\t\taddress, percentReward, isEnabled`)
-    for (let i = 0; i < pairsListLength; i++) {
-        const pair = await swapFee.pairsList(i)
-        print(`\t\t${pair[0]}, ${pair[1]}, ${pair[2]}`)
-    }
 
     print('\n')
 }
@@ -536,7 +531,9 @@ async function withdraw() {
     }
 }
 
-// Shorten the given string to the first and last n characters.
+/**
+ * @dev Shorten the given string to the first and last n characters.
+ */
 function short(str, n=4) {
     const first = str.slice(2, n+2)
     const last = str.slice(str.length-n, str.length)
@@ -544,11 +541,8 @@ function short(str, n=4) {
     return newStr
 }
 
-// Print the given string `str`
 function print(str) {
-    if (verbose) {
-        console.log(str)
-    }
+    if (verbose) console.log(str)
 }
 
 main()

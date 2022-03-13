@@ -187,7 +187,7 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
         {
             // If a direct exchange pair exists, then get the exchange quantity directly.
             // I.e. ETH -> BTC where a ETH -> BTC pair exists.
-            quantityOut = IOracle(oracle).consult(tokenIn, quantityIn, tokenOut);
+            //quantityOut = IOracle(oracle).consult(tokenIn, quantityIn, tokenOut);
         } else {
             // Otherwise, try to find an intermediate exchange token
             // and compute the exchange quantity via that intermediate token.
@@ -199,8 +199,8 @@ contract SwapFeeRewardsWithAP is Ownable, ReentrancyGuard {
                     && getPair(intermediate, tokenOut) != address(0)
                     && pairExists(intermediate, tokenOut))
                 {
-                    uint interQuantity = IOracle(oracle).consult(tokenIn, quantityIn, intermediate);
-                    quantityOut = IOracle(oracle).consult(intermediate, interQuantity, tokenOut);
+                    // uint interQuantity = IOracle(oracle).consult(tokenIn, quantityIn, intermediate);
+                    // quantityOut = IOracle(oracle).consult(intermediate, interQuantity, tokenOut);
                     break;
                 }
             }

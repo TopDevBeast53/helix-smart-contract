@@ -22,6 +22,8 @@ const auraTokenAddress = contracts.auraToken[env.network];
 const auraNFTAddress = contracts.auraNFT[env.network];
 const refRegAddress = contracts.referralRegister[env.network];
 
+gasLimit = 9999999;
+
 async function main() {
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${deployer.address}`);
@@ -40,7 +42,10 @@ async function main() {
         auraTokenAddress,
         auraNFTAddress,
         refRegAddress,
-        { nonce: nonce },
+        { 
+            gasLimit,
+            nonce: nonce,
+        },
     );
     await swapFee.deployTransaction.wait();
     console.log(`SwapFeeRewardsWithAP deployed to ${swapFee.address}`);
@@ -48,14 +53,20 @@ async function main() {
     // 2. Register swapFee contract with the Router.
     const Router = await ethers.getContractFactory('AuraRouterV1');
     const router = Router.attach(routerAddress);
-    let tx = await router.setSwapFeeReward(swapFee.address);
-    console.log(`Register Swap Fee address with Router, transaction results: ${tx}`);
+    await router.setSwapFeeReward(swapFee.address, { gasLimit });
+    console.log(`Swap Fee address registered with Router`);
 
     // 3. Register swapFee contract with the exchange's auraNFT as an accruer.
     const AuraNFT = await ethers.getContractFactory('AuraNFT');
     const auraNFT = AuraNFT.attach(auraNFTAddress);
-    tx = await auraNFT.addAccruer(swapFee.address);
-    console.log(`Register Swap Fee with AuraNFT as accruer, transaction results: ${tx}`);
+    await auraNFT.addAccruer(swapFee.address, { gasLimit });
+    console.log(`Swap Fee registered with AuraNFT as accruer`);
+
+    // 4. Register the swapFee contract with the referralRegister as a recorder
+    const RefReg = await ethers.getContractFactory('ReferralRegister');
+    const refReg = RefReg.attach(refRegAddress);
+    await refReg.addRecorder(swapFee.address, { gasLimit });
+    console.log(`Swap Fee registered with Referral Register as recorder`);
 }
 
 main()

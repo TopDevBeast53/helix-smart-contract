@@ -19,7 +19,8 @@ library AuraLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'31e71fcb0ffdbed08ecfcb46e2dc16cc772df76eef2cdc4019feebe43c210a21' // init code hash
+                // hex'31e71fcb0ffdbed08ecfcb46e2dc16cc772df76eef2cdc4019feebe43c210a21' // init code hash
+                hex'e2be1872349a12cd98a3799350bb6568c146c9c88225cf7e5b893ed76716c6c4' // init code hash
             )))));
     }
 
