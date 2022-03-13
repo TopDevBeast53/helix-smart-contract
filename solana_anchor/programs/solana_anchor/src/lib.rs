@@ -21,7 +21,18 @@ pub mod solana_anchor {
         Ok(())
     }
 
-    pub fn transfer_out(ctx: Context<Initialize>) -> Result<()> {
+    pub fn transfer_out(ctx: Context<TransferOut>) -> Result<()> {
+        {
+            let cpi_ctx = CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.pool_signer.to_account_info(),
+                    to: ctx.accounts.user.to_account_info(),
+                    authority: ctx.accounts.pool_signer.to_account_info(),
+                },
+            );
+            token::transfer(cpi_ctx, 1)?;
+        }
         Ok(())
     }
 }
@@ -34,8 +45,10 @@ pub struct TransferIn<'info> {
 }
 
 #[derive(Accounts)]
-pub struct Initialize {
-
+pub struct TransferOut<'info> {
+    pool_signer: Signer<'info>,
+    user: UncheckedAccount<'info>,
+    token_program: Program<'info, Token>,
 }
 
 #[error]
