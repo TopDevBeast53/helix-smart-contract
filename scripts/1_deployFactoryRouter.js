@@ -18,17 +18,31 @@ const routerWBNB = addresses.WBNB[env.network]
 async function deployAuraFactory() {
     
     console.log(`------ Start deploying AuraFactory contract ---------`);
-    const AuraContractFactory = await ethers.getContractFactory("AuraFactory");
-    const contract = await AuraContractFactory.deploy(setterFeeOnPairSwaps);
-    await contract.deployTransaction.wait();
-    let instance = await contract.deployed();
-    await instance.setFeeTo(poolReceiveTradeFee);
-    let res = await instance.feeTo();
+    const Factory = await ethers.getContractFactory("AuraFactory");
+    const factory = await Factory.deploy(setterFeeOnPairSwaps);
+    await factory.deployTransaction.wait();
+    let factoryInstance = await factory.deployed();
+    await factoryInstance.setFeeTo(poolReceiveTradeFee);
+    let res = await factoryInstance.feeTo();
     console.log('fee - ', res);
 
-    let INIT_CODE_HASH = await instance.INIT_CODE_HASH.call();
+    let INIT_CODE_HASH = await factoryInstance.INIT_CODE_HASH.call();
     console.log('INIT_CODE_HASH - ', INIT_CODE_HASH);
-    console.log(`Aura Factory deployed to ${contract.address}`);
+    console.log(`Aura Factory deployed to ${factory.address}`);
+
+    console.log(`------ Start deploying OracleFactory contract ---------`);
+
+    const OracleFactory = await ethers.getContractFactory("OracleFactory");
+    const oracleFactory = await OracleFactory.deploy(factoryAddress);
+    await oracleFactory.deployTransaction.wait();
+
+    console.log(`OracleFactory deployed to ${oracleFactory.address}`);
+
+    console.log(`------ Call Factory.setOracleFactory ---------`);
+
+    await factoryInstance.setOracleFactory(oracleFactory.address);
+    
+    console.log(`Factory oracleFactory set to ${oracleFactory.address}`)
 }
 
 async function deployAuraRouter() {
