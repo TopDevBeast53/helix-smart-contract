@@ -47,16 +47,18 @@ pub mod solana_anchor {
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(init, seeds = [b"state_account".as_ref()], bump, payer = pool)]
+    #[account(init, seeds = [b"state_account".as_ref(), admin.to_account_info().key.as_ref()], bump, payer = admin)]
     state_account: Account<'info, ApprovedNFTs>,
-    pool: Signer<'info>,
+    #[account(mut)]
+    admin: Signer<'info>,
     system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct TransferIn<'info> {
-    #[account(mut, seeds = [b"state_account".as_ref()], bump = state_account.bump)]
+    #[account(mut, seeds = [b"state_account".as_ref(), pool.to_account_info().key.as_ref()], bump = state_account.bump)]
     state_account: Account<'info, ApprovedNFTs>,
+    /// CHECK: for test
     pool: UncheckedAccount<'info>,
     user: Signer<'info>,
     token_program: Program<'info, Token>,
@@ -65,6 +67,7 @@ pub struct TransferIn<'info> {
 #[derive(Accounts)]
 pub struct TransferOut<'info> {
     pool: Signer<'info>,
+    /// CHECK: for test
     user: UncheckedAccount<'info>,
     token_program: Program<'info, Token>,
 }
