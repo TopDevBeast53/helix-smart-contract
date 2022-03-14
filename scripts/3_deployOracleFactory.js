@@ -25,7 +25,7 @@ async function main() {
     console.log(`------ Start deploying Oracle -------`)
 
     const OracleFactory = await ethers.getContractFactory('OracleFactory')
-    const oracleFactory = await ContractFactory.deploy(factoryAddress, overrides)
+    const oracleFactory = await OracleFactory.deploy(factoryAddress, overrides)
     await oracleFactory.deployTransaction.wait()
     
     console.log(`Oracle deployed to ${oracleFactory.address}`)
@@ -35,7 +35,7 @@ async function main() {
     console.log(`------ Register Oracle Factory with Factory ---------`)
 
     const Factory = await ethers.getContractFactory(`AuraFactory`)
-    const factory = factoryFactory.attach(factoryAddress)
+    const factory = Factory.attach(factoryAddress)
     await factory.setOracleFactory(oracleFactory.address, overrides)
 
     console.log('Oracle Factory is registered with Factory')

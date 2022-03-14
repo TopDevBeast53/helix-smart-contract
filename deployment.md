@@ -74,7 +74,6 @@ Run `npx hardhat run scripts/5_deployMasterChef.js --network testnetBSC`
 
 It would deploy the contract AND add master chef as a minter to Aura token.
 
-Now, copy the address of the Referrals Register contract and **put it into the `masterChef` map** to `scripts/constants/contracts.js`.
 ## 6. Auto Aura
 
 Auto-compounding aura token into the MasterChef pool number 0 (which is aura staking pool).
@@ -175,7 +174,15 @@ Check and update all variables:
 Run `npx hardhat run scripts/9_deployAuraNFTBridge.js --network testnetBSC`
 Copy the address of the Aura NFT contract and **put it into the `auraNFTBridge` map** to `scripts/constants/contracts.js`.
 
-## 10. SwapRewards
+## 10. AP Token / Aura LP
+
+This is the Aura Points / Liquidity Pool token
+
+Run `npx hardhat run scripts/10_deployApToken.js --network testnetBSC` (or mainnet)
+
+Now, copy the address of the ApToken contract and **put it into the `apToken` map** to `scripts/constants/contracts.js`.
+
+## 11. SwapRewards
 
 It's called by the router when the user performs a token swap and will credit auraToken/apToken to the user's balance
 and credit auraToken to the swap caller referrer's balance, if one is set.
@@ -196,7 +203,7 @@ auraRewardPercent: sets the percent of the reward granted in Aura
 apRewardPercent: sets the percent of the reward granted in Ap
 Note that all percentages in SwapRewards are out of 1000, so 0 -> 0%, 500 -> 50%, 1000 -> 100%
 
-Run `npx hardhat run scripts/deploySwapFee.js --network testnetBSC` (or mainnet)
+Run `npx hardhat run scripts/11_deploySwapRewards.js --network testnetBSC` (or mainnet)
 
 The script does and must register SwapRewards with the following contracts' function calls
 Router.setSwapRewards()
@@ -206,17 +213,17 @@ AuraNFT.addAccruer()
 
 Copy the address of the Swap Fee contract and **put it into the `swapFee` map** to `scripts/constants/contracts.js`.
 
-## 11. AuraMigrator
+## 12. AuraMigrator
 
 Migrates liquidity an external routers to MigrateLiquidity's set router via a single migrateLiquidity function.
 
 Check and update all variables:
 >`routerAddress` from `src/scripts/constants/contracts.js`.  
 
-Run `npx hardhat run scripts/deployMigrator.js --network testnetBSC` (or mainnet)
+Run `npx hardhat run scripts/12_deployMigrator.js --network testnetBSC` (or mainnet)
 Copy the address of the Aura Migrator contract and **put it into the `auraMigrator` map** to `scripts/constants/contracts.js`.
 
-## 12. Token Tools
+## 13. Token Tools
 
 Intended to be used by the frontend for making efficient queries about LP token pairs and their holders
 e.g. getStakedTokenPairs which returns all the token pairs in which a given address has a positive balance,
@@ -224,5 +231,5 @@ including the token addresses in that pair, their balances, and their symbols.
 
 Is not dependent on any other contracts, has no constructor, and maintains no state.
 
-Run `npx hardhat run scripts/TokenTools.js --network testnetBSC` (or mainnet)
+Run `npx hardhat run scripts/13_deployTokenTools.js --network testnetBSC` (or mainnet)
 Copy the address of the Token Tools contract and **put it into the `tokenTools` map** to `scripts/constants/contracts.js`.
