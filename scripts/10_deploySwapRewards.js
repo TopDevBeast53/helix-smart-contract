@@ -36,9 +36,9 @@ const auraTokenAddress = contracts.auraToken[env.network]
 const auraNFTAddress = contracts.auraNFT[env.network]
 const apTokenAddress = contracts.apToken[env.network]
 
-const splitRewardPercent = initials.SPLIT_REWARD_PERCENT
-const auraRewardPercent = initials.AURA_REWARD_PERCENT
-const apRewardPercent = initials.AP_REWARD_PERCENT
+const splitRewardPercent = initials.SPLIT_REWARD_PERCENT[env.network]
+const auraRewardPercent = initials.AURA_REWARD_PERCENT[env.network]
+const apRewardPercent = initials.AP_REWARD_PERCENT[env.network]
 
 async function main() {
     const [deployer] = await ethers.getSigners()
