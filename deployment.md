@@ -25,25 +25,19 @@ Run `npx hardhat run scripts/2_deployAuraToken.js --network testnetBSC` (or main
 
 Now, copy the address of the AuraToken contract and **put it into the `auraToken` map** to `scripts/constants/contracts.js`.
 
-## 3. Oracle
+## 3. OracleFactory
 
-The oracle is queried for token pair price information via the consult function.
+OracleFactory serves as the interface for other contracts to interact with Oracles. 
 
-The oracle can be deployed any time **after the factory is deployed**. 
-It's passed 3 parameters, all of which are immutable: 
+The OracleFactory can be deployed any time **after the factory is deployed** but must be deployed **before factory.createPair** is called. 
+It's passed the factory address as a constuctor argument.
 
 Check and update all variables:
 >`auraFactory` address from `src/scripts/constants/contracts.js`.  
->`ORACLE_WINDOW_SIZE` from `src/scripts/constants/initials.js`.  
-windowSize determines the total duration between which updates must occur for price data to remain up to date
-and small windowSize or insufficiently frequent calls to update trigger MISSING_HISTORICAL_OBSERVATION error. 
-Note that windowSize is in unix timestamp units, i.e. a windowSize of 24 does not equal 24 hours  
->`ORACLE_GRANULARITY` from `src/scripts/constants/initials.js`.  
-granularity is the number of observations made in the given windowSize.
 
-Run `npx hardhat run scripts/3_deployOracle.js --network testnetBSC` (or mainnet)
+Run `npx hardhat run scripts/3_deployOracleFactory.js --network testnetBSC` (or mainnet)
 
-It will add Oracle contract address to AuraFactory.
+It will add OracleFactory contract address to AuraFactory.
 
 Now, copy the address of the Oracle contract and **put it into the `oracle` map** to `scripts/constants/contracts.js`.
 ## 4. Referral Register
@@ -180,22 +174,36 @@ Check and update all variables:
 
 Run `npx hardhat run scripts/9_deployAuraNFTBridge.js --network testnetBSC`
 Copy the address of the Aura NFT contract and **put it into the `auraNFTBridge` map** to `scripts/constants/contracts.js`.
-## 10. SwapFeeRewardsWithAP
 
-It's called by the router when the user performs a token swap and will credit targetToken/targetAPToken to the user's balance.
-It's called by users to withdraw credited funds their calling address.
+## 10. SwapRewards
+
+It's called by the router when the user performs a token swap and will credit auraToken/apToken to the user's balance
+and credit auraToken to the swap caller referrer's balance, if one is set.
 
 Check and update all variables:
 >`factoryAddress` from `src/scripts/constants/contracts.js`.  
 >`routerAddress` from `src/scripts/constants/contracts.js`.  
->`targetTokenAddress` from `src/scripts/constants/contracts.js`(Now auraToken).  
->`targetAPTokenAddress` from `src/scripts/constants/contracts.js`(Now auraLP).  
->`oracleAddress` from `src/scripts/constants/contracts.js`.  
+>`oracleFactoryAddress` from `src/scripts/constants/contracts.js`.  
+>`referralRegisterAddress` from `src/scripts/constants/contracts.js`.  
 >`auraTokenAddress` from `src/scripts/constants/contracts.js`.  
 >`auraNFTAddress` from `src/scripts/constants/contracts.js`.  
->`referralRegisterAddress` from `src/scripts/constants/contracts.js`.  
+>`apTokenAddress` from `src/scripts/constants/contracts.js`(Now auraLP).  
+
+These addresses are passed to the constructor as arguments, including the following values
+
+splitRewardPercent: sets the percent split in rewards between Aura/Ap. 
+auraRewardPercent: sets the percent of the reward granted in Aura
+apRewardPercent: sets the percent of the reward granted in Ap
+Note that all percentages in SwapRewards are out of 1000, so 0 -> 0%, 500 -> 50%, 1000 -> 100%
 
 Run `npx hardhat run scripts/deploySwapFee.js --network testnetBSC` (or mainnet)
+
+The script does and must register SwapRewards with the following contracts' function calls
+Router.setSwapRewards()
+ReferralRegister.addRecorder()
+AuraToken.addMinter()
+AuraNFT.addAccruer()
+
 Copy the address of the Swap Fee contract and **put it into the `swapFee` map** to `scripts/constants/contracts.js`.
 
 ## 11. AuraMigrator
