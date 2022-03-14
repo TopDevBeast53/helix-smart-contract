@@ -11,6 +11,9 @@ module.exports = {
         'main': 24,
         'test': 24,
     },
+
+    // --------- Referral Register --------- //
+
     REFERRAL_STAKING_FEE_PERCENT : {
         'main': 30, // 3%
         'test': 30, // 3%
@@ -78,5 +81,20 @@ module.exports = {
     NFTCHEF_REWARD_PER_BLOCK : {
         'main': '1000000000000000000', 
         'test': '1000000000000000000', // currently this value means 1 AURA per block
+    },
+
+    // --------- Swap Rewards  --------- //
+
+    SPLIT_REWARD_PERCENT : {
+        'main': 500,        // 50% Aura and 50% Ap
+        'test': 500,        // 50% Aura and 50% Ap
+    },
+    AURA_REWARD_PERCENT : {
+        'main': 50,         // 5% Aura Rewards
+        'test': 50,         // 5% Aura Rewards
+    },
+    AP_REWARD_PERCENT : {
+        'main': 50,         // 5% Ap Rewards
+        'test': 50,         // 5% Ap Rewards
     },
 }

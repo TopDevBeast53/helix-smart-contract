@@ -18,6 +18,7 @@
 // Define script parameters
 const { ethers } = require(`hardhat`)
 const contracts = require('./constants/contracts')
+const initials = require('./constants/initials')
 const env = require('./constants/env')
 
 const overrides = {
@@ -35,9 +36,9 @@ const auraTokenAddress = contracts.auraToken[env.network]
 const auraNFTAddress = contracts.auraNFT[env.network]
 const apTokenAddress = contracts.apToken[env.network]
 
-const splitRewardPercent = 500     // Granted rewards are 50% Aura and %50% Ap
-const auraRewardPercent = 50       // Grant 5% Aura
-const apRewardPercent = 50         // Grant 5% Ap
+const splitRewardPercent = initials.SPLIT_REWARD_PERCENT
+const auraRewardPercent = initials.AURA_REWARD_PERCENT
+const apRewardPercent = initials.AP_REWARD_PERCENT
 
 async function main() {
     const [deployer] = await ethers.getSigners()
