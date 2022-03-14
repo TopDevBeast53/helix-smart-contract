@@ -2,7 +2,7 @@
  * @dev Deploy the AuraMigrator contract with the provided AuraRouter address.
  * 
  * command to deploy on bsc-testnet, run the following from the project root:
- *      npx hardhat run scripts/deployMigrator.js --network testnetBSC
+ *      npx hardhat run scripts/12_deployMigrator.js --network testnetBSC
  */
 
 const {ethers} = require('hardhat');

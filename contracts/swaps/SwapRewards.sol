@@ -2,27 +2,24 @@
 pragma solidity >= 0.8.0;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
-import '../libraries/AuraLibrary.sol';
-import '../swaps/AuraFactory.sol';
 import '../interfaces/IOracleFactory.sol';
 import '../interfaces/ISwapRewards.sol';
-import '../referrals/ReferralRegister.sol';
 import '../interfaces/IAuraToken.sol';
 import '../interfaces/IAuraNFT.sol';
+import '../referrals/ReferralRegister.sol';
 
 /**
  * @title Accrue AURA/AP to the swap caller
  */
 contract SwapRewards is ISwapRewards, Ownable {
-    AuraFactory public factory;
     IOracleFactory public oracleFactory;
-    ReferralRegister public refReg;
     IAuraToken public auraToken;
     IAuraNFT public auraNFT;
 
     // No functions are called on these 
     // so only addresses are needed.
     address public router;
+    address public refReg;
     address public apToken;
 
     // Determines the split between Aura and AP rewards.
@@ -46,10 +43,9 @@ contract SwapRewards is ISwapRewards, Ownable {
     );
     
     constructor(
-        AuraFactory _factory, 
         address _router, 
         IOracleFactory _oracleFactory,
-        ReferralRegister _refReg,
+        address _refReg,
         IAuraToken _auraToken,
         IAuraNFT _auraNFT,
         address _apToken,
@@ -57,17 +53,15 @@ contract SwapRewards is ISwapRewards, Ownable {
         uint _auraRewardPercent,
         uint _apRewardPercent
     ) {
-        setFactory(_factory);
-        setRouter(_router);
-        setOracleFactory(_oracleFactory);
-        setRefReg(_refReg);
-        setAuraToken(_auraToken);
-        setAuraNFT(_auraNFT);
-        setApToken(_apToken);
-
-        setSplitRewardPercent(_splitRewardPercent);
-        setAuraRewardPercent(_auraRewardPercent);
-        setApRewardPercent(_apRewardPercent);
+        router = _router;
+        oracleFactory = _oracleFactory;
+        refReg = _refReg;
+        auraToken = _auraToken;
+        auraNFT = _auraNFT;
+        apToken = _apToken;
+        splitRewardPercent = _splitRewardPercent;
+        auraRewardPercent = _auraRewardPercent;
+        apRewardPercent = _apRewardPercent;
     }
 
     /**
@@ -82,7 +76,7 @@ contract SwapRewards is ISwapRewards, Ownable {
         accrueAP(account, tokenOut, apAmount);
 
         // Accrue AURA to the swap caller referrer.
-        refReg.recordSwapReward(account, getAmountOut(tokenOut, amountIn, address(auraToken)));
+        ReferralRegister(refReg).recordSwapReward(account, getAmountOut(tokenOut, amountIn, address(auraToken)));
 
         emit Swap(
             account,
@@ -137,31 +131,27 @@ contract SwapRewards is ISwapRewards, Ownable {
         _;
     }
 
-    function setFactory(AuraFactory _factory) public onlyOwner validAddress(address(_factory)) {
-        factory = _factory;
-    }
-
-    function setRouter(address _router) public onlyOwner validAddress(_router) {
+    function setRouter(address _router) external onlyOwner validAddress(_router) {
         router = _router;
     }
 
-    function setOracleFactory(IOracleFactory _oracleFactory) public onlyOwner validAddress(address(_oracleFactory)) {
+    function setOracleFactory(IOracleFactory _oracleFactory) external onlyOwner validAddress(address(_oracleFactory)) {
         oracleFactory = _oracleFactory;
     }
 
-    function setRefReg(ReferralRegister _refReg) public onlyOwner validAddress(address(_refReg)) {
+    function setRefReg(address _refReg) external onlyOwner validAddress(_refReg) {
         refReg = _refReg;
     }
 
-    function setAuraToken(IAuraToken _auraToken) public onlyOwner validAddress(address(_auraToken)) {
+    function setAuraToken(IAuraToken _auraToken) external onlyOwner validAddress(address(_auraToken)) {
         auraToken = _auraToken;
     }
 
-    function setAuraNFT(IAuraNFT _auraNFT) public onlyOwner validAddress(address(_auraNFT)) {
+    function setAuraNFT(IAuraNFT _auraNFT) external onlyOwner validAddress(address(_auraNFT)) {
         auraNFT = _auraNFT;
     }
 
-    function setApToken(address _apToken) public onlyOwner validAddress(_apToken) {
+    function setApToken(address _apToken) external onlyOwner validAddress(_apToken) {
         apToken = _apToken;
     }
 
@@ -173,7 +163,7 @@ contract SwapRewards is ISwapRewards, Ownable {
     }
 
     function setSplitRewardPercent(uint _splitRewardPercent) 
-        public
+        external
         onlyOwner 
         validPercentage(_splitRewardPercent) 
     {
@@ -181,7 +171,7 @@ contract SwapRewards is ISwapRewards, Ownable {
     }
 
     function setApRewardPercent(uint _apRewardPercent) 
-        public
+        external
         onlyOwner 
         validPercentage(_apRewardPercent) 
     {
@@ -189,7 +179,7 @@ contract SwapRewards is ISwapRewards, Ownable {
     }
 
     function setAuraRewardPercent(uint _auraRewardPercent) 
-        public
+        external
         onlyOwner 
         validPercentage(_auraRewardPercent) 
     {

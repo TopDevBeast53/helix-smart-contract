@@ -21,9 +21,10 @@ const env = require("./constants/env")
 
 const StakingTokenAddress = addresses.BUSD[env.network];// token A which must be staked in this pool
 const RewardTokenAddress = contracts.auraToken[env.network];
-const StartBlock = initials.SMARTCHEF_START_BLOCK;
-const EndBlock = initials.SMARTCHEF_END_BLOCK;
-const RewardPerBlock = initials.SMARTCHEF_REWARD_PER_BLOCK;
+
+const StartBlock = initials.SMARTCHEF_START_BLOCK[env.network];
+const EndBlock = initials.SMARTCHEF_END_BLOCK[env.network];
+const RewardPerBlock = initials.SMARTCHEF_REWARD_PER_BLOCK[env.network];
 
 async function main() {
 
