@@ -25,7 +25,7 @@ export async function swapFeeFixture(provider: Web3Provider, [wallet]: Wallet[])
     const oracle = await deployContract(wallet, Oracle, [factory.address, 2, 2], overrides);
     const auraNFT = await deployContract(wallet, AuraNFT, [], overrides);
     const auraToken = await deployContract(wallet, AuraToken, [], overrides);
-    const refReg = await deployContract(wallet, ReferralRegister, [auraToken.address, 10, 20], overrides);
+    const refReg = await deployContract(wallet, ReferralRegister, [auraToken.address, 10, 10], overrides);
     const swapFee = await deployContract(wallet, SwapFeeRewardsWithAP, [
         factory.address,
         router.address,
@@ -48,6 +48,7 @@ export async function swapFeeFixture(provider: Web3Provider, [wallet]: Wallet[])
         targetToken,
         targetAPToken,
         oracle,
+        refReg,
         auraNFT,
         auraToken,
         swapFee,

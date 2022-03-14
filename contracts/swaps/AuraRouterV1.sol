@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import './AuraPair.sol';
 import '../libraries/AuraLibrary.sol';
 import '../interfaces/IAuraV2Router02.sol';
-import '../interfaces/IAuraSwapFeeReward.sol';
+import '../interfaces/ISwapRewards.sol';
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@uniswap/v2-periphery/contracts/interfaces/IWETH.sol';
@@ -14,7 +14,7 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
 
     address public immutable _factory;
     address public immutable _WETH;
-    address public swapFeeReward;
+    address public swapRewards;
 
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, 'AuraRouterV1: EXPIRED');
@@ -38,8 +38,8 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
         return _WETH;
     }
 
-    function setSwapFeeReward(address _swapFeeReward) public onlyOwner {
-        swapFeeReward = _swapFeeReward;
+    function setSwapRewards(address _swapRewards) public onlyOwner {
+        swapRewards = _swapRewards;
     }
 
     // **** ADD LIQUIDITY ****
@@ -229,13 +229,15 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
             (address token0,) = AuraLibrary.sortTokens(input, output);
             uint amountOut = amounts[i + 1];
             (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOut) : (amountOut, uint(0));
-            if (swapFeeReward != address(0)) {
-                IAuraSwapFeeReward(swapFeeReward).swap(msg.sender, input, output, amountOut);
-            }
+    
             address to = i < path.length - 2 ? AuraLibrary.pairFor(_factory, output, path[i + 2]) : _to;
             AuraPair(AuraLibrary.pairFor(_factory, input, output)).swap(
                 amount0Out, amount1Out, to, new bytes(0)
             );
+
+            if (swapRewards != address(0)) {
+                ISwapRewards(swapRewards).swap(msg.sender, input, output, amountOut);
+            }
         }
     }
     function swapExactTokensForTokens(
@@ -348,12 +350,14 @@ contract AuraRouterV1 is IAuraV2Router02, Ownable {
             amountInput = IERC20(input).balanceOf(address(pair)) - reserveInput;
             amountOutput = AuraLibrary.getAmountOut(amountInput, reserveInput, reserveOutput, pair.swapFee());
             }
-            if (swapFeeReward != address(0)) {
-                IAuraSwapFeeReward(swapFeeReward).swap(msg.sender, input, output, amountOutput);
-            }
+            
             (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOutput) : (amountOutput, uint(0));
             address to = i < path.length - 2 ? AuraLibrary.pairFor(_factory, output, path[i + 2]) : _to;
             pair.swap(amount0Out, amount1Out, to, new bytes(0));
+
+            if (swapRewards != address(0)) {
+                ISwapRewards(swapRewards).swap(msg.sender, input, output, amountOutput);
+            }
         }
     }
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(

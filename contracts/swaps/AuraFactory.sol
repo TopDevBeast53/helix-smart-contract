@@ -2,19 +2,17 @@
 pragma solidity >=0.8.0;
 
 import './AuraPair.sol';
-import '../interfaces/IOracle.sol';
+import '../interfaces/IOracleFactory.sol';
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 
 contract AuraFactory is IUniswapV2Factory {
     address public feeTo;
     address public feeToSetter;
+    address public oracleFactory; 
     bytes32 public INIT_CODE_HASH = keccak256(abi.encodePacked(type(AuraPair).creationCode));
 
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
-
-    address public oracle;
-    mapping(address => bool) public oracleEnabled;
 
     constructor(address _feeToSetter) {
         feeToSetter = _feeToSetter;
@@ -29,15 +27,20 @@ contract AuraFactory is IUniswapV2Factory {
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         require(token0 != address(0), 'Aura: ZERO_ADDRESS');
         require(getPair[token0][token1] == address(0), 'Aura: PAIR_EXISTS'); // single check is sufficient
+
         bytes memory bytecode = type(AuraPair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
         assembly {
             pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
         AuraPair(pair).initialize(token0, token1);
+
         getPair[token0][token1] = pair;
         getPair[token1][token0] = pair; // populate mapping in the reverse direction
         allPairs.push(pair);
+
+        IOracleFactory(oracleFactory).create(token0, token1);
+
         emit PairCreated(token0, token1, pair, allPairs.length);
     }
 
@@ -62,25 +65,12 @@ contract AuraFactory is IUniswapV2Factory {
         AuraPair(_pair).setSwapFee(_swapFee);
     }
 
-    function setOracle(address _oracle) external {
-        require(msg.sender == feeToSetter, 'Aura: FORBIDDEN');
-        oracle = _oracle;
+    function setOracleFactory(address _oracleFactory) external {
+        require(msg.sender == feeToSetter, 'Aura Factory: INVALID CALLER');
+        oracleFactory = _oracleFactory;
     }
 
-    function enablePair(address p) external {
-        require(msg.sender == feeToSetter, 'Aura: FORBIDDEN');
-        oracleEnabled[p] = true;
-    }
-
-    function disablePair(address p) external {
-        require(msg.sender == feeToSetter, 'Aura: FORBIDDEN');
-        oracleEnabled[p] = false;
-    }
-
-    function updateOracle(address pair) external {
-        if (oracleEnabled[pair]) {
-            AuraPair p = AuraPair(pair);
-            IOracle(oracle).update(p.token0(), p.token1());
-        }
+    function updateOracle(address token0, address token1) external {
+        IOracleFactory(oracleFactory).update(token0, token1); 
     }
 }

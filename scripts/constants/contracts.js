@@ -1,21 +1,17 @@
 module.exports = {
-    auraToken: {
-        'main': '',
-        'test': '',
-    },
     factory: {
         'main': '',
         'test': '',
     },
-    router: {
+        router: {
         'main': '',
         'test': '',
     },
-    auraLP: {
+    auraToken: {
         'main': '',
         'test': '',
     },
-    oracle: {
+    oracleFactory: {
         'main': '',
         'test': '',
     },
@@ -23,7 +19,11 @@ module.exports = {
         'main': '',
         'test': '',
     },
-    masterChef: {
+    auraLP: {
+        'main': '',
+        'test': '',
+    },
+        masterChef: {
         'main': '',
         'test': '',
     },
@@ -51,7 +51,7 @@ module.exports = {
         'main': '',
         'test': '',
     },
-    swapFee: {
+    swapRewards: {
         'main': '',
         'test': '',
     },

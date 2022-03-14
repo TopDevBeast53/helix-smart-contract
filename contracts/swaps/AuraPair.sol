@@ -194,7 +194,7 @@ contract AuraPair is AuraLP, ReentrancyGuard {
         _update(balance0, balance1, _reserve0, _reserve1);
         emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);
 
-        AuraFactory(factory).updateOracle(address(this));
+        AuraFactory(factory).updateOracle(token0, token1);
     }
 
     // force balances to match reserves

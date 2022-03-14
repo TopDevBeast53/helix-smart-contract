@@ -50,10 +50,12 @@ describe('AuraMigrator', () => {
 
         // Use existing tokens 0 and 1 to add a new pair (externalPair) 
         // to the external factory.
+        // wrap in try to handle pair already exists error
         await externalFactory.createPair(token0.address, token1.address);
+
         const externalPairAddress = await externalFactory.getPair(token0.address, token1.address);
         externalPair = new Contract(externalPairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet);
-        
+       
         // Permit the contracts to transfer large amounts of funds.
         await externalPair.approve(migrator.address, MaxUint256);
         await token0.approve(externalRouter.address, MaxUint256)

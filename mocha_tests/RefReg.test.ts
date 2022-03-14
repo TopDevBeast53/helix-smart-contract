@@ -28,8 +28,8 @@ describe('Router Swap: fee-on-transfer tokens', () => {
     const referred = owner.address
     const referrer = user.address
 
-    const stakeFee = 30;
-    const swapFee = 50;
+    const stakeFee = 10;
+    const swapFee = 10;
 
     const newStakeFee = 20;
     const newSwapFee = 60;
@@ -52,6 +52,10 @@ describe('Router Swap: fee-on-transfer tokens', () => {
         const fixture = await loadFixture(fullExchangeFixture)
         refReg = fixture.refReg
         auraToken = fixture.auraToken
+
+        // must add the calling accounts as recorders or calls
+        // or calls to record functions fail
+        await refReg.addRecorder(owner.address)
 
         // must add the refReg contract as an auraToken minter
         // or refReg.withdraw fails
@@ -140,6 +144,21 @@ describe('Router Swap: fee-on-transfer tokens', () => {
     it("refReg: can't self refer", async () => {
         // the caller shouldn't be able to add themselves as a referrer
         await expect(refReg.addRef(referred)).to.be.revertedWith("Referral Register: No self referral.");
+    })
+
+    it("refReg: can't record without owner permission", async () => {
+        // since the user isn't a recorder, expect calls to record to fail when called by the user 
+        const localRefReg = new Contract(refReg.address, JSON.stringify(ReferralRegister.abi), provider).connect(user)
+
+        await expect(localRefReg.recordStakingRewardWithdrawal(owner.address, 1000))
+            .to
+            .be
+            .revertedWith("ReferralRegister: caller is not a recorder")
+
+        await expect(localRefReg.recordSwapReward(owner.address, 1000))
+            .to
+            .be
+            .revertedWith("ReferralRegister: caller is not a recorder")
     })
 
     it('refReg: withdraw aura to referrer succeeds', async () => {

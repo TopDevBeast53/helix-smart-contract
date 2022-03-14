@@ -17,6 +17,7 @@ describe('SwapFeeRewardsWithAP', () => {
     let targetToken: Contract;
     let targetAPToken: Contract;
     let oracle: Contract;
+    let refReg: Contract;
     let auraNFT: Contract;
     let auraToken: Contract;
     let swapFee: Contract;
@@ -94,6 +95,7 @@ describe('SwapFeeRewardsWithAP', () => {
         targetToken = fixture.targetToken;
         targetAPToken = fixture.targetAPToken;
         oracle = fixture.oracle;
+        refReg = fixture.refReg;
         auraNFT = fixture.auraNFT;
         auraToken = fixture.auraToken;
         swapFee = fixture.swapFee;
@@ -246,11 +248,18 @@ describe('SwapFeeRewardsWithAP', () => {
         await auraToken.transfer(swapFee.address, swapFeeAuraBalance);
     });
 
+    beforeEach(async () => {
+        // initialize the referral register contract   
+        // add the user as a referrer so that they earn rewards when the owner swaps
+        await refReg.addRef(user.address);
+
+        // add the swapFee contract as a recorder so that it can call refReg.recordSwapReward
+        await refReg.addRecorder(swapFee.address);
+    });
+
     it('swapFee: factory and library INIT_CODE_HASH must match', async () => {
         const initCodeHash = await factory.INIT_CODE_HASH();
         console.log('INIT CODE HASH', initCodeHash);
-        //expect(initCodeHash).to.eq('0x979267a2f0b1e67d2a14aa2d846f0e5aad34e16494c7f6043c0b6cd541effc59');
-        //expect(initCodeHash).to.eq('0xef26689277ecbc19c2c971e6328183dfe2ee30d3713c7d1e4f48aa73a3d70ce6');
     });
 
     it('swapFee: factory fee to setter is set to owner', async () => {
@@ -515,6 +524,14 @@ describe('SwapFeeRewardsWithAP', () => {
         expect(amountOut).to.be.above(0);
     });
 
+    it('swapFee: owner has set a refReg referrer which earns rewards', async () => {
+        expect(await refReg.ref(owner.address)).to.eq(user.address)
+    });
+
+    it('swapFee: swapFee contract is registered with refReg as a recorder', async () => {
+        expect(await refReg.isRecorder(swapFee.address)).to.be.true
+    })
+
     it('swapFee: gets the quantity out for (A, B) pair (expected to occasionally fail)', async () => {
         const percentReward = 10;
         const tokenIn = tokenA.address;
@@ -646,11 +663,13 @@ describe('SwapFeeRewardsWithAP', () => {
         const newBalance = await swapFee.getBalance(account);                                                                            
         const newAP = await auraNFT.getAccumulatedAP(account);
         const newAccruedAP = (await swapFee.totalAccruedAP()).toNumber();
+        const referrerBalance = (await refReg.balance(refReg.ref(owner.address))).toNumber();
 
         if (tx !== false && verbose) {
             console.log(`previous balance was ${prevBalance} new balance is ${newBalance}`);
             console.log(`previous AP was ${prevAP} new AP is ${newAP}`);
             console.log(`previous total accrued AP was ${prevAccruedAP} new total accrued AP is ${newAccruedAP}`);
+            console.log(`caller's referrer accrued ${referrerBalance} AURA`);
         }
 
         // use at most since it's possible the either the callers balance or AP is
@@ -658,6 +677,9 @@ describe('SwapFeeRewardsWithAP', () => {
         expect(prevBalance).to.be.at.most(newBalance);
         expect(prevAP).to.be.at.most(newAP);
         expect(prevAccruedAP).to.be.below(newAccruedAP);
+    
+        // confirm that refReg was called and the caller's referrer accrued AURA
+        expect(referrerBalance).to.be.above(0)
     });
 
     it('swapFee: withdraw tokens (expected to occasionally fail)', async () => {
