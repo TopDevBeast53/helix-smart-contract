@@ -27,7 +27,6 @@ const overrides = {
 const verbose = true
 
 // Define SwapRewards contract constructor arguments
-const factoryAddress = contracts.factory[env.network]
 const routerAddress = contracts.router[env.network]
 const oracleFactoryAddress = contracts.oracleFactory[env.network]
 const refRegAddress = contracts.referralRegister[env.network]
@@ -49,19 +48,18 @@ async function main() {
     swapRewardsAddress = await deploySwapRewards()
 
     // Call setters on contracts which depend on swapRewards
-    registerWithRouter(swapRewardsAddress)
-    registerAsRecorder(swapRewardsAddress)
-    registerAsMinter(swapRewardsAddress)
-    registerAsAccruer(swapRewardsAddress)
+    await registerWithRouter(swapRewardsAddress)
+    await registerAsRecorder(swapRewardsAddress)
+    await registerAsMinter(swapRewardsAddress)
+    await registerAsAccruer(swapRewardsAddress)
 }
 
 // 0. Print the values that will be passed to the SwapRewards constructor
 function displayConstructorArgs() {
     print(`SwapRewards constructor arguments:`)
 
-    print(`\tfactory:\t\t\t${factoryAddress}`)
     print(`\trouter:\t\t\t${routerAddress}`)
-    print(`\toracle factory:\t${oracleFactoryAddress}`)
+    print(`\toracle factory:\t\t${oracleFactoryAddress}`)
     print(`\trefReg:\t\t\t${refRegAddress}`)
 
     print(`\taura token:\t\t${auraTokenAddress}`)
@@ -69,8 +67,8 @@ function displayConstructorArgs() {
     print(`\tap token:\t\t${apTokenAddress}`)
 
     print(`\tsplit reward percent:\t${splitRewardPercent / 10}%`)
-    print(`\taura reward percent:\t\t${auraNFTAddress / 10}%`)
-    print(`\tap reward percent:\t\t${apTokenAddress / 10}%\n`)
+    print(`\taura reward percent:\t${auraRewardPercent / 10}%`)
+    print(`\tap reward percent:\t${apRewardPercent / 10}%\n`)
 }
 
 // 1. Deploy the Swap Rewards contract
@@ -79,14 +77,15 @@ async function deploySwapRewards() {
 
     const SwapRewards = await ethers.getContractFactory('SwapRewards')
     const swapRewards = await SwapRewards.deploy(
-        factoryAddress,
         routerAddress,
         oracleFactoryAddress,
         refRegAddress,
         auraTokenAddress,
         auraNFTAddress,
         apTokenAddress,
-        overrides
+        splitRewardPercent,
+        auraRewardPercent,
+        apRewardPercent
     )
     await swapRewards.deployTransaction.wait()
 
@@ -112,7 +111,7 @@ async function registerAsRecorder(swapRewardsAddress) {
 
     const RefReg = await ethers.getContractFactory('ReferralRegister')
     const refReg = RefReg.attach(refRegAddress)
-    await refReg.addRecorder(swapRewards.address, overrides)
+    await refReg.addRecorder(swapRewardsAddress, overrides)
 
     print(`Done\n`)
 }
@@ -123,7 +122,7 @@ async function registerAsMinter(swapRewardsAddress) {
 
     const AuraToken = await ethers.getContractFactory('AuraToken')
     const auraToken = AuraToken.attach(auraTokenAddress)
-    await auraToken.addMinter(swapRewards.address, overrides)
+    await auraToken.addMinter(swapRewardsAddress, overrides)
 
     print(`Done\n`)
 }
@@ -134,7 +133,7 @@ async function registerAsAccruer(swapRewardsAddress) {
 
     const AuraNFT = await ethers.getContractFactory('AuraNFT')
     const auraNFT = AuraNFT.attach(auraNFTAddress)
-    await auraNFT.addAccruer(swapRewards.address, overrides)
+    await auraNFT.addAccruer(swapRewardsAddress, overrides)
 
     print(`Done\n`)
 }

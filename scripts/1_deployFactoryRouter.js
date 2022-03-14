@@ -29,20 +29,6 @@ async function deployAuraFactory() {
     let INIT_CODE_HASH = await factoryInstance.INIT_CODE_HASH.call();
     console.log('INIT_CODE_HASH - ', INIT_CODE_HASH);
     console.log(`Aura Factory deployed to ${factory.address}`);
-
-    console.log(`------ Start deploying OracleFactory contract ---------`);
-
-    const OracleFactory = await ethers.getContractFactory("OracleFactory");
-    const oracleFactory = await OracleFactory.deploy(factoryAddress);
-    await oracleFactory.deployTransaction.wait();
-
-    console.log(`OracleFactory deployed to ${oracleFactory.address}`);
-
-    console.log(`------ Call Factory.setOracleFactory ---------`);
-
-    await factoryInstance.setOracleFactory(oracleFactory.address);
-    
-    console.log(`Factory oracleFactory set to ${oracleFactory.address}`)
 }
 
 async function deployAuraRouter() {
@@ -59,8 +45,8 @@ async function main() {
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${deployer.address}`);
 
-    await deployAuraFactory();   
-    // await deployAuraRouter() 
+    // await deployAuraFactory();   
+    await deployAuraRouter() 
 }
 
 main()

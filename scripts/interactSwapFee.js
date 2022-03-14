@@ -12,17 +12,19 @@ const contracts = require('./constants/contracts')
 const env = require('./constants/env')
 
 const factoryAddress = contracts.factory[env.network]
+/*
 const routerAddress = contracts.router[env.network]
 const targetTokenAddress = contracts.auraToken[env.network]    // Note that targetTokenAddress == auraTokenAddress
 const targetAPTokenAddress = contracts.auraLP[env.network]     // Note that targetAPTokenAddress == testTokenCAddress
-const oracleAddress = contracts.oracle[env.network]
-const refRegAddress = contracts.refReg[env.network]
+// const oracleAddress = contracts.oracle[env.network]
+const refRegAddress = contracts.referralRegister[env.network]
 const auraTokenAddress = contracts.auraToken[env.network]
 const auraNFTAddress = contracts.auraNFT[env.network]
 const swapFeeAddress = contracts.swapFee[env.network]
 const wbnbTokenAddress = contracts.WBNB[env.network]
 const testTokenAAddress = contracts.testTokenA[env.network]
 const testTokenBAddress = contracts.testTokenB[env.network]
+*/
 
 const gasLimit = 9999999
 const addressZero = '0x0000000000000000000000000000000000000000'
@@ -72,15 +74,16 @@ async function initScript() {
 }
 
 async function loadContracts() {
+    /*
     print('deployed contract addresses:')
     print(`\tswapFee: \t${swapFeeAddress}`)
-    ISwapFee = await ethers.getContractFactory('SwapFeeRewardsWithAP')
-    swapFee = await ISwapFee.attach(swapFeeAddress).connect(owner)
+    */
 
     print(`\tfactory: \t${factoryAddress}`)
     const IFactory = await ethers.getContractFactory('AuraFactory')
     factory = await IFactory.attach(factoryAddress).connect(owner)
 
+    /*
     print(`\trouter: \t${routerAddress}`)
     const IRouter = await ethers.getContractFactory('AuraRouterV1')
     router = await IRouter.attach(routerAddress).connect(owner)
@@ -121,6 +124,7 @@ async function loadContracts() {
     print(`\tWBNB token: \t${wbnbTokenAddress}`)
     // ITestToken already loaded
     wbnbToken = await ITestToken.attach(wbnbTokenAddress).connect(owner)
+    */
 
     print('\n')
 }
