@@ -1,4 +1,4 @@
-// SPDX-LICENSE-IDENTIFIER: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import '../interfaces/IOracleFactory.sol';
@@ -30,6 +30,7 @@ contract OracleFactory is IOracleFactory {
      */
     function create(address token0, address token1) external {
         require(oracles[token0][token1] == address(0), 'OracleFactory: ORACLE HAS ALREADY BEEN CREATED');
+        require(msg.sender == factory, 'OracleFactory: CALLER IS NOT FACTORY');
 
         Oracle oracle = new Oracle(factory, token0, token1);
         oracles[token0][token1] = address(oracle);
@@ -42,7 +43,7 @@ contract OracleFactory is IOracleFactory {
      * @dev Update current prices of `token0` and `token1`.
      */
     function update(address token0, address token1) public {
-        require(oracles[token0][token1] != address(0), 'OracleFactory: ORACLE HAS NOT CREATED');
+        require(oracles[token0][token1] != address(0), 'OracleFactory: ORACLE HAS NOT BEEN CREATED');
 
         Oracle oracle = Oracle(oracles[token0][token1]);
         if (canUpdate(oracle)) {

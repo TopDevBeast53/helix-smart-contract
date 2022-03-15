@@ -71,7 +71,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // Deploy SwapRewards
     const swapRewards = await deployContract(wallet, SwapRewards,
         [
-            factory.address,        // factory
             router.address,         // router
             oracleFactory.address,  // oracleFactory
             refReg.address,         // refReg
