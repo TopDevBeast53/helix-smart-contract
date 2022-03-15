@@ -16,7 +16,6 @@ import ReferralRegister from '../../build/contracts/ReferralRegister.json'
 import RouterEventEmitter from '../../build/contracts/RouterEventEmitter.json'
 import AuraMigrator from '../../build/contracts/AuraMigrator.json'
 import SwapRewards from '../../build/contracts/SwapRewards.json'
-// import Oracle from '../../build/contracts/Oracle.json'
 import OracleFactory from '../../build/contracts/OracleFactory.json'
 import AuraNFT from '../../build/contracts/AuraNFT.json'
 
@@ -75,7 +74,6 @@ interface FullExchangeFixture {
     externalFactory: Contract
     externalRouter: Contract
     swapRewards: Contract
-    // oracle: Contract
     oracleFactory: Contract
     auraNFT: Contract
     apToken: Contract
@@ -142,19 +140,19 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const apToken = await deployContract(wallet, TestToken, [expandTo18Decimals(10000)], overrides);     // Use an AuraToken for now
 
     // Deploy SwapRewards
-    const swapRewards = await deployContract(wallet, SwapRewards,
-        [
-            factory.address,        // factory
+    const swapRewards = await deployContract(wallet, SwapRewards, [
             router.address,         // router
             oracleFactory.address,  // oracleFactory
             refReg.address,         // refReg
             auraToken.address,      // auraToken
             auraNFT.address,        // auraNFT
             apToken.address,        // apToken
-            0,                      // rewardPercentSplit (0% AURA, 100% AP)
+            500,                      // rewardPercentSplit (0% AURA, 100% AP)
             50,                     // auraPercentReward (5%)
             50                      // apPercentReward (5%)
-        ], overrides)
+        ], 
+        overrides
+    )
 
     const chef = await deployContract(wallet, MasterChef, 
         [
