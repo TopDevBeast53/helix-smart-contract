@@ -146,7 +146,7 @@ Here are the initial variables.
 1. `AuraNFT`
   - `initialAuraPoints` : A AuraNFT has AuraPoints amount initially when it is minted.
   	NOTE: Users can only earn AuraPoints through Swap trade.
-  		  `SwapFeeRewardsWithAP` calls the function.
+  		  `SwapRewards` calls the function.
   - `levelUpPercent` : When level up, add a percentage(`levelUpPercent`) of your previous AuraPoints.
     e.g. let's say that current level is 2 and current AuraPoints is 50 and `levelUpPercent` is 10.
          When upgrade to 3 Level, new AuraPoints will be `50 * (1 + 10/100)` => `55`
