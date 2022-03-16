@@ -3,7 +3,7 @@ import { solidity, MockProvider, createFixtureLoader } from 'legacy-ethereum-waf
 import { Contract } from 'legacy-ethers';
 import { MaxUint256 } from 'legacy-ethers/constants';
 import { BigNumber, bigNumberify } from 'legacy-ethers/utils';
-import { fullExchangeFixture, tokensFixture } from './shared/newFixtures';
+import { fullExchangeFixture } from './shared/newFixtures';
 import { expandTo18Decimals } from './shared/utilities'
 
 import AuraPair from '../build/contracts/AuraPair.json';
@@ -46,14 +46,12 @@ describe('TokenTools', () => {
         tokenTools = fullExchange.tokenTools;
         factory = fullExchange.factory;
         router = fullExchange.router;
-
-        const tokens = await loadFixture(tokensFixture);
-        tokenA = tokens.tokenA;
-        tokenB = tokens.tokenB;
-        tokenC = tokens.tokenC;
-        tokenD = tokens.tokenD;
-        tokenE = tokens.tokenE;
-        tokenF = tokens.tokenF;
+        tokenA = fullExchange.tokenA;
+        tokenB = fullExchange.tokenB;
+        tokenC = fullExchange.tokenC;
+        tokenD = fullExchange.tokenD;
+        tokenE = fullExchange.tokenE;
+        tokenF = fullExchange.tokenF;
      
         await factory.createPair(tokenA.address, tokenB.address, overrides);
         await factory.createPair(tokenC.address, tokenD.address, overrides);

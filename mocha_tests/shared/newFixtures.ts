@@ -99,26 +99,6 @@ export async function pairFixture(provider: Web3Provider, [wallet]: Wallet[]): P
     return { factory, token0, token1, pair, oracleFactory }
 }
 
-interface TokensFixture {
-    tokenA: Contract
-    tokenB: Contract
-    tokenC: Contract
-    tokenD: Contract
-    tokenE: Contract
-    tokenF: Contract
-}
-
-export async function tokensFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<TokensFixture> {
-    const tokenA = await deployContract(wallet, TestToken, ['Test Token A', 'TTA', expandTo18Decimals(100000)], overrides)
-    const tokenB = await deployContract(wallet, TestToken, ['Test Token B', 'TTB', expandTo18Decimals(100000)], overrides)
-    const tokenC = await deployContract(wallet, TestToken, ['Test Token C', 'TTC', expandTo18Decimals(100000)], overrides)
-    const tokenD = await deployContract(wallet, TestToken, ['Test Token D', 'TTD', expandTo18Decimals(100000)], overrides)
-    const tokenE = await deployContract(wallet, TestToken, ['Test Token E', 'TTE', expandTo18Decimals(100000)], overrides)
-    const tokenF = await deployContract(wallet, TestToken, ['Test Token F', 'TTF', expandTo18Decimals(100000)], overrides)
-
-    return { tokenA, tokenB, tokenC, tokenD, tokenE, tokenF }
-}
-
 interface FullExchangeFixture {
     WETH: Contract
     WETHPartner: Contract
@@ -142,10 +122,12 @@ interface FullExchangeFixture {
     tokenTools: Contract
     //externalFactory: Contract
     //externalRouter: Contract
-    //tokenA: Contract
-    //tokenB: Contract
-    //tokenC: Contract
-    //tokenD: Contract
+    tokenA: Contract
+    tokenB: Contract
+    tokenC: Contract
+    tokenD: Contract
+    tokenE: Contract
+    tokenF: Contract
     //token0: Contract
     //token1: Contract
     //pair: Contract
@@ -153,12 +135,12 @@ interface FullExchangeFixture {
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
     // 0 deploy tokens
-    /*
-    const tokenA = await deployContract(wallet, TestToken, [expandTo18Decimals(10000)], overrides)
-    const tokenB = await deployContract(wallet, TestToken, [expandTo18Decimals(10000)], overrides)
-    const tokenC = await deployContract(wallet, TestToken, [expandTo18Decimals(10000)], overrides)
-    const tokenD = await deployContract(wallet, TestToken, [expandTo18Decimals(10000)], overrides)
-    */
+    const tokenA = await deployContract(wallet, TestToken, ['Test Token A', 'TTA', expandTo18Decimals(100000)], overrides)
+    const tokenB = await deployContract(wallet, TestToken, ['Test Token B', 'TTB', expandTo18Decimals(100000)], overrides)
+    const tokenC = await deployContract(wallet, TestToken, ['Test Token C', 'TTC', expandTo18Decimals(100000)], overrides)
+    const tokenD = await deployContract(wallet, TestToken, ['Test Token D', 'TTD', expandTo18Decimals(100000)], overrides)
+    const tokenE = await deployContract(wallet, TestToken, ['Test Token E', 'TTE', expandTo18Decimals(100000)], overrides)
+    const tokenF = await deployContract(wallet, TestToken, ['Test Token F', 'TTF', expandTo18Decimals(100000)], overrides)
 
     const WETH = await deployContract(wallet, WETH9, [], overrides)
     const WETHPartner = await deployContract(wallet, TestToken, ['WETH Partner', 'WETHP', expandTo18Decimals(10000)], overrides)
@@ -312,10 +294,12 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         //WETHPair,
         //externalFactory,
         //externalRouter,
-        //tokenA,
-        //tokenB,
-        //tokenC,
-        //tokenD,
+        tokenA,
+        tokenB,
+        tokenC,
+        tokenD,
+        tokenE,
+        tokenF,
         //token0,
         //token1,
         //pair,

@@ -5,7 +5,7 @@ import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
 import { MaxUint256 } from 'legacy-ethers/constants'
 import AuraPair from '../build/contracts/AuraPair.json'
 
-import { fullExchangeFixture, tokensFixture } from './shared/newFixtures'
+import { fullExchangeFixture } from './shared/newFixtures'
 import { expandTo18Decimals, getApprovalDigest, MINIMUM_LIQUIDITY, createAndGetPair } from './shared/utilities'
 
 import DeflatingERC20 from '../build/contracts/DeflatingERC20.json'
@@ -37,10 +37,8 @@ describe('AuraRouter', () => {
         const fullExchange = await loadFixture(fullExchangeFixture)
         factory = fullExchange.factory
         router = fullExchange.router
-
-        const tokens = await loadFixture(tokensFixture)
-        const tokenA = tokens.tokenA
-        const tokenB = tokens.tokenB
+        const tokenA = fullExchange.tokenA
+        const tokenB = fullExchange.tokenB
 
         const result = await createAndGetPair(provider, wallet, factory, tokenA, tokenB) 
         factory = result.factory
