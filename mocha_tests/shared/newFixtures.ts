@@ -65,11 +65,14 @@ const overrides = {
 
 interface FactoryFixture {
     factory: Contract
+    oracleFactory: Contract
 }
 
 export async function factoryFixture(_: Web3Provider, [wallet]: Wallet[]): Promise<FactoryFixture> {
     const factory = await deployContract(wallet, AuraFactory, [wallet.address], overrides)
-    return { factory }
+    const oracleFactory = await deployContract(wallet, OracleFactory, [factory.address], overrides)
+    await factory.setOracleFactory(oracleFactory.address)
+    return { factory, oracleFactory }
 }
 
 interface PairFixture extends FactoryFixture {
@@ -79,10 +82,10 @@ interface PairFixture extends FactoryFixture {
 }
 
 export async function pairFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<PairFixture> {
-    const { factory } = await factoryFixture(provider, [wallet])
+    const { factory, oracleFactory } = await factoryFixture(provider, [wallet])
 
-    const tokenA = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)], overrides)
-    const tokenB = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)], overrides)
+    const tokenA = await deployContract(wallet, TestToken, [expandTo18Decimals(10000)], overrides)
+    const tokenB = await deployContract(wallet, TestToken, [expandTo18Decimals(10000)], overrides)
 
     await factory.createPair(tokenA.address, tokenB.address, overrides)
     const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
@@ -92,7 +95,7 @@ export async function pairFixture(provider: Web3Provider, [wallet]: Wallet[]): P
     const token0 = tokenA.address === token0Address ? tokenA : tokenB
     const token1 = tokenA.address === token0Address ? tokenB : tokenA
 
-    return { factory, token0, token1, pair }
+    return { factory, token0, token1, pair, oracleFactory }
 }
 
 interface TokensFixture {
