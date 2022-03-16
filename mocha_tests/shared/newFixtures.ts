@@ -241,7 +241,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await refReg.addRecorder(swapRewards.address, overrides)
     await auraToken.addMinter(swapRewards.address, overrides)
     await auraNFT.addAccruer(swapRewards.address, overrides)
-
     
     // 12 deploy migrator
     // const migrator = await deployContract(wallet, AuraMigrator, [router.address], overrides);
