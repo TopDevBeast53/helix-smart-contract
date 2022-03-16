@@ -118,8 +118,8 @@ describe('TokenTools', () => {
         await expect(result.length).to.eq(3);
         await expect(result[0].tokenA).to.eq(tokenA.address);
         await expect(result[0].tokenB).to.eq(tokenB.address);
-        await expect(result[1].tokenA).to.eq(tokenC.address);
-        await expect(result[1].tokenB).to.eq(tokenD.address);
+        await expect(result[1].tokenA).to.eq(tokenD.address);
+        await expect(result[1].tokenB).to.eq(tokenC.address);
         await expect(result[2].tokenA).to.eq(tokenF.address);
         await expect(result[2].tokenB).to.eq(tokenE.address);
     });
