@@ -5,8 +5,8 @@ import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
 import { MaxUint256 } from 'legacy-ethers/constants'
 import AuraPair from '../build/contracts/AuraPair.json'
 
-import { fullExchangeFixture } from './shared/fixtures'
-import { expandTo18Decimals, getApprovalDigest, MINIMUM_LIQUIDITY } from './shared/utilities'
+import { fullExchangeFixture, tokensFixture } from './shared/newFixtures'
+import { expandTo18Decimals, getApprovalDigest, MINIMUM_LIQUIDITY, createAndGetPair } from './shared/utilities'
 
 import DeflatingERC20 from '../build/contracts/DeflatingERC20.json'
 import { ecsign } from 'ethereumjs-util'
@@ -18,32 +18,44 @@ const overrides = {
 }
 
 describe('AuraRouter', () => {
-  const provider = new MockProvider({
-    hardfork: 'istanbul',
-    mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-    gasLimit: 99999999999
-  })
-  const [wallet] = provider.getWallets()
-  const loadFixture = createFixtureLoader(provider, [wallet])
+    const provider = new MockProvider({
+        hardfork: 'istanbul',
+        mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
+        gasLimit: 99999999999
+    })
+    const [wallet] = provider.getWallets()
+    const loadFixture = createFixtureLoader(provider, [wallet])
 
-  let token0: Contract
-  let token1: Contract
-  let router: Contract
-  let pair: Contract
-  let swapFee: BigNumber
-  let factory: Contract
+    let token0: Contract
+    let token1: Contract
+    let router: Contract
+    let pair: Contract
+    let swapFee: BigNumber
+    let factory: Contract
 
-  beforeEach(async function() {
-    const fixture = await loadFixture(fullExchangeFixture)
-    token0 = fixture.token0
-    token1 = fixture.token1
-    router = fixture.router
-    pair = fixture.pair
-    swapFee = await pair.swapFee()
-    factory = fixture.factory
-  })
+    beforeEach(async function() {
+        const fullExchange = await loadFixture(fullExchangeFixture)
+        factory = fullExchange.factory
+        router = fullExchange.router
 
-  it('quote', async () => {
+        const tokens = await loadFixture(tokensFixture)
+        const tokenA = tokens.tokenA
+        const tokenB = tokens.tokenB
+
+        const result = await createAndGetPair(provider, wallet, factory, tokenA, tokenB) 
+        factory = result.factory
+        token0 = result.token0
+        token1 = result.token1
+        pair = result.pair
+
+        swapFee = await pair.swapFee()
+    })
+
+    it('router: prints factory init code hash', async () => {
+        console.log(`INIT CODE HASH ${await factory.INIT_CODE_HASH()}`) 
+    })
+
+  it('router: quote', async () => {
     expect(await router.quote(bigNumberify(1), bigNumberify(100), bigNumberify(200))).to.eq(bigNumberify(2))
     expect(await router.quote(bigNumberify(2), bigNumberify(200), bigNumberify(100))).to.eq(bigNumberify(1))
     await expect(router.quote(bigNumberify(0), bigNumberify(100), bigNumberify(200))).to.be.revertedWith(
@@ -57,7 +69,7 @@ describe('AuraRouter', () => {
     )
   })
 
-  it('getAmountOut', async () => {
+  it('router: getAmountOut', async () => {
     const func = router['getAmountOut(uint256,uint256,uint256,uint256)'];
     expect(await func(bigNumberify(2), bigNumberify(100), bigNumberify(100), swapFee)).to.eq(bigNumberify(1))
     await expect(func(bigNumberify(0), bigNumberify(100), bigNumberify(100), swapFee)).to.be.revertedWith(
@@ -71,7 +83,7 @@ describe('AuraRouter', () => {
     )
   })
 
-  it('getAmountIn', async () => {
+  it('router: getAmountIn', async () => {
     const func = router['getAmountIn(uint256,uint256,uint256,uint256)'];
     expect(await func(bigNumberify(1), bigNumberify(100), bigNumberify(100), swapFee)).to.eq(bigNumberify(2))
     await expect(func(bigNumberify(0), bigNumberify(100), bigNumberify(100), swapFee)).to.be.revertedWith(
@@ -85,7 +97,7 @@ describe('AuraRouter', () => {
     )
   })
 
-  it('getAmountsOut', async () => {
+  it('router: getAmountsOut', async () => {
     await token0.approve(router.address, MaxUint256)
     await token1.approve(router.address, MaxUint256)
     const x = await router.addLiquidity(
@@ -108,7 +120,7 @@ describe('AuraRouter', () => {
     expect(await func(bigNumberify(2), path)).to.deep.eq([bigNumberify(2), bigNumberify(1)])
   })
 
-  it('getAmountsIn', async () => {
+  it('router: getAmountsIn', async () => {
     await token0.approve(router.address, MaxUint256)
     await token1.approve(router.address, MaxUint256)
     await router.addLiquidity(
@@ -171,7 +183,7 @@ describe('fee-on-transfer tokens', () => {
     })
   }
 
-  it('removeLiquidityETHSupportingFeeOnTransferTokens', async () => {
+  it('router: removeLiquidityETHSupportingFeeOnTransferTokens', async () => {
     const DTTAmount = expandTo18Decimals(1)
     const ETHAmount = expandTo18Decimals(4)
     await addLiquidity(DTTAmount, ETHAmount)
@@ -195,7 +207,7 @@ describe('fee-on-transfer tokens', () => {
     )
   })
 
-  it('removeLiquidityETHWithPermitSupportingFeeOnTransferTokens', async () => {
+  it('router: removeLiquidityETHWithPermitSupportingFeeOnTransferTokens', async () => {
     const DTTAmount = expandTo18Decimals(1)
       .mul(100)
       .div(99)
@@ -247,7 +259,7 @@ describe('fee-on-transfer tokens', () => {
       await addLiquidity(DTTAmount, ETHAmount)
     })
 
-    it('DTT -> WETH', async () => {
+    it('router: DTT -> WETH', async () => {
       await DTT.approve(router.address, MaxUint256)
 
       await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
@@ -261,7 +273,7 @@ describe('fee-on-transfer tokens', () => {
     })
 
     // WETH -> DTT
-    it('WETH -> DTT', async () => {
+    it('router: WETH -> DTT', async () => {
       await WETH.deposit({ value: amountIn }) // mint WETH
       await WETH.approve(router.address, MaxUint256)
 
@@ -277,7 +289,7 @@ describe('fee-on-transfer tokens', () => {
   })
 
   // ETH -> DTT
-  it('swapExactETHForTokensSupportingFeeOnTransferTokens', async () => {
+  it('router: swapExactETHForTokensSupportingFeeOnTransferTokens', async () => {
     const DTTAmount = expandTo18Decimals(10)
       .mul(100)
       .div(99)
@@ -298,7 +310,7 @@ describe('fee-on-transfer tokens', () => {
   })
 
   // DTT -> ETH
-  it('swapExactTokensForETHSupportingFeeOnTransferTokens', async () => {
+  it('router: swapExactTokensForETHSupportingFeeOnTransferTokens', async () => {
     const DTTAmount = expandTo18Decimals(5)
       .mul(100)
       .div(99)
@@ -375,7 +387,7 @@ describe('fee-on-transfer tokens: reloaded', () => {
       await addLiquidity(DTTAmount, DTT2Amount)
     })
 
-    it('DTT -> DTT2', async () => {
+    it('router: DTT -> DTT2', async () => {
       await DTT.approve(router.address, MaxUint256)
 
       await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(

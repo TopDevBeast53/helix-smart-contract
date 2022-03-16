@@ -4,7 +4,7 @@ import { Contract, constants } from 'legacy-ethers'
 import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
 import { MaxUint256 } from 'legacy-ethers/constants'
 
-import { fullExchangeFixture } from './shared/fixtures'
+import { fullExchangeFixture } from './shared/newFixtures'
 import { expandTo18Decimals } from './shared/utilities'
 
 import ReferralRegister from '../build/contracts/ReferralRegister.json'
@@ -15,7 +15,7 @@ const overrides = {
     gasLimit: 99999999999
 }
 
-describe('Router Swap: fee-on-transfer tokens', () => {
+describe('Referral Register: fee-on-transfer tokens', () => {
     const provider = new MockProvider({
         hardfork: 'istanbul',
         mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
@@ -28,8 +28,8 @@ describe('Router Swap: fee-on-transfer tokens', () => {
     const referred = owner.address
     const referrer = user.address
 
-    const stakeFee = 10;
-    const swapFee = 10;
+    const stakeFee = 30;
+    const swapFee = 50;
 
     const newStakeFee = 20;
     const newSwapFee = 60;
@@ -49,17 +49,13 @@ describe('Router Swap: fee-on-transfer tokens', () => {
     }
 
     beforeEach(async () => {
-        const fixture = await loadFixture(fullExchangeFixture)
-        refReg = fixture.refReg
-        auraToken = fixture.auraToken
+        const fullExchange = await loadFixture(fullExchangeFixture)
+        refReg = fullExchange.refReg
+        auraToken = fullExchange.auraToken
 
         // must add the calling accounts as recorders or calls
         // or calls to record functions fail
         await refReg.addRecorder(owner.address)
-
-        // must add the refReg contract as an auraToken minter
-        // or refReg.withdraw fails
-        await auraToken.addMinter(refReg.address)
     })
 
     it('refReg: initialized with expected values', async () => {

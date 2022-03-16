@@ -12,7 +12,7 @@ import { fullExchangeFixture } from './shared/swapRewardFixtures'
 
 use(solidity)
 
-const verbose = true
+const verbose = false
 const gasLimit = 999999999
 
 describe('SwapRewards', () => {
