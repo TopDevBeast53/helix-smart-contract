@@ -118,10 +118,10 @@ interface FullExchangeFixture {
     apToken: Contract
     swapRewards: Contract
     //WETHPair: Contract
-    //migrator: Contract
+    migrator: Contract
     tokenTools: Contract
-    //externalFactory: Contract
-    //externalRouter: Contract
+    externalFactory: Contract
+    externalRouter: Contract
     tokenA: Contract
     tokenB: Contract
     tokenC: Contract
@@ -243,7 +243,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await auraNFT.addAccruer(swapRewards.address, overrides)
     
     // 12 deploy migrator
-    // const migrator = await deployContract(wallet, AuraMigrator, [router.address], overrides);
+    const migrator = await deployContract(wallet, AuraMigrator, [router.address], overrides);
 
     // 13 deploy token tools
     const tokenTools = await deployContract(wallet, TokenTools, [], overrides)
@@ -253,6 +253,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await factory.createPair(tokenA.address, tokenB.address)
     const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
     const pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
+    */
 
     // Add external DEX components for migrator to use.
     const externalFactory = await deployContract(wallet, AuraFactory, [wallet.address], overrides);
@@ -260,6 +261,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await externalFactory.setOracleFactory(externalOracleFactory.address)
 
     const externalRouter = await deployContract(wallet, AuraRouterV1, [externalFactory.address, WETH.address], overrides);
+    /*
 
     const token0Address = await pair.token0()
     const token0 = tokenA.address === token0Address ? tokenA : tokenB
@@ -288,11 +290,11 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         auraLP,
         apToken,
         swapRewards,
-        //migrator, 
+        migrator, 
         tokenTools,
         //WETHPair,
-        //externalFactory,
-        //externalRouter,
+        externalFactory,
+        externalRouter,
         tokenA,
         tokenB,
         tokenC,

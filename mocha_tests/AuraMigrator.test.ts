@@ -3,7 +3,7 @@ import { solidity, MockProvider, createFixtureLoader } from 'legacy-ethereum-waf
 import { Contract } from 'legacy-ethers';
 import { MaxUint256 } from 'legacy-ethers/constants';
 import { BigNumber, bigNumberify } from 'legacy-ethers/utils';
-import { fullExchangeFixture } from './shared/fixtures';
+import { fullExchangeFixture } from './shared/newFixtures';
 
 import AuraPair from '../build/contracts/AuraPair.json'
 
@@ -40,13 +40,21 @@ describe('AuraMigrator', () => {
     beforeEach(async () => {
         // Load the contracts from fixture.
         const fixture = await loadFixture(fullExchangeFixture);
+        const factory = fixture.factory
         migrator = fixture.migrator;
-        token0 = fixture.token0;
-        token1 = fixture.token1;
-        pair = fixture.pair;
         router = fixture.router;
         externalFactory = fixture.externalFactory;
         externalRouter = fixture.externalRouter;
+        const tokenA = fixture.tokenA
+        const tokenB = fixture.tokenB
+
+        await factory.createPair(tokenA.address, tokenB.address, overrides)
+        const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
+        pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
+
+        const token0Address = (await pair.token0()).address
+        token0 = tokenA.address === token0Address ? tokenB : tokenA
+        token1 = tokenA.address === token0Address ? tokenA : tokenB
 
         // Use existing tokens 0 and 1 to add a new pair (externalPair) 
         // to the external factory.
