@@ -27,7 +27,7 @@ describe('AuraLPToken', () => {
     token = await deployContract(wallet, ERC20, [TOTAL_SUPPLY])
   })
 
-  it('name, symbol, decimals, totalSupply, balanceOf, DOMAIN_SEPARATOR, PERMIT_TYPEHASH', async () => {
+  it('auraLP: name, symbol, decimals, totalSupply, balanceOf, DOMAIN_SEPARATOR, PERMIT_TYPEHASH', async () => {
     const name = await token.name()
     expect(name).to.eq('Aura LPs')
     expect(await token.symbol()).to.eq('AURA-LP')
@@ -55,14 +55,14 @@ describe('AuraLPToken', () => {
     )
   })
 
-  it('approve', async () => {
+  it('auraLP: approve', async () => {
     await expect(token.approve(other.address, TEST_AMOUNT))
       .to.emit(token, 'Approval')
       .withArgs(wallet.address, other.address, TEST_AMOUNT)
     expect(await token.allowance(wallet.address, other.address)).to.eq(TEST_AMOUNT)
   })
 
-  it('transfer', async () => {
+  it('auraLP: transfer', async () => {
     await expect(token.transfer(other.address, TEST_AMOUNT))
       .to.emit(token, 'Transfer')
       .withArgs(wallet.address, other.address, TEST_AMOUNT)
@@ -70,12 +70,12 @@ describe('AuraLPToken', () => {
     expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT)
   })
 
-  it('transfer:fail', async () => {
+  it('auraLP: transfer:fail', async () => {
     await expect(token.transfer(other.address, TOTAL_SUPPLY.add(1))).to.be.reverted // ds-math-sub-underflow
     await expect(token.connect(other).transfer(wallet.address, 1)).to.be.reverted // ds-math-sub-underflow
   })
 
-  it('transferFrom', async () => {
+  it('auraLP: transferFrom', async () => {
     await token.approve(other.address, TEST_AMOUNT)
     await expect(token.connect(other).transferFrom(wallet.address, other.address, TEST_AMOUNT))
       .to.emit(token, 'Transfer')
@@ -85,7 +85,7 @@ describe('AuraLPToken', () => {
     expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT)
   })
 
-  it('transferFrom:max', async () => {
+  it('auraLP: transferFrom:max', async () => {
     await token.approve(other.address, MaxUint256)
     await expect(token.connect(other).transferFrom(wallet.address, other.address, TEST_AMOUNT))
       .to.emit(token, 'Transfer')
@@ -95,7 +95,7 @@ describe('AuraLPToken', () => {
     expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT)
   })
 
-  it('permit', async () => {
+  it('auraLP: permit', async () => {
     const nonce = await token.nonces(wallet.address)
     const deadline = MaxUint256
     const digest = await getApprovalDigest(

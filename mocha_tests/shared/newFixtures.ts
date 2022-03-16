@@ -59,12 +59,12 @@ const swapRewardsSplitRewardPercent = initials.SPLIT_REWARD_PERCENT[env.network]
 const swapRewardsAuraRewardPercent = initials.AURA_REWARD_PERCENT[env.network]
 const swapRewardsApRewardPercent = initials.AP_REWARD_PERCENT[env.network]
 
-interface FactoryFixture {
-    factory: Contract
-}
-
 const overrides = {
     gasLimit: 9999999
+}
+
+interface FactoryFixture {
+    factory: Contract
 }
 
 export async function factoryFixture(_: Web3Provider, [wallet]: Wallet[]): Promise<FactoryFixture> {
