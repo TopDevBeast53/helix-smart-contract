@@ -4,7 +4,7 @@ import { solidity, MockProvider, createFixtureLoader } from 'legacy-ethereum-waf
 import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
 
 import { expandTo18Decimals, mineBlock, encodePrice, createAndGetPair } from './shared/utilities'
-import { fullExchangeFixture, tokensFixture, pairFixture } from './shared/newFixtures'
+import { fullExchangeFixture, pairFixture } from './shared/newFixtures'
 import { AddressZero } from 'legacy-ethers/constants'
 
 import AuraPair from '../build/contracts/AuraPair.json'
@@ -47,10 +47,8 @@ describe('AuraPair', () => {
     beforeEach(async () => {
         const fullExchange = await loadFixture(fullExchangeFixture)
         factory = fullExchange.factory
-
-        const tokens = await loadFixture(tokensFixture)
-        const tokenA = tokens.tokenA
-        const tokenB = tokens.tokenB
+        const tokenA = fullExchange.tokenA
+        const tokenB = fullExchange.tokenB
 
         // Locally create the pair
         await factory.createPair(tokenA.address, tokenB.address, overrides)
@@ -60,6 +58,10 @@ describe('AuraPair', () => {
         const token0Address = (await pair.token0()).address
         token0 = tokenA.address === token0Address ? tokenB : tokenA
         token1 = tokenA.address === token0Address ? tokenA : tokenB
+    })
+
+    it('auraPair: prints factory init code hash', async () => {
+        console.log(`INIT CODE HASH ${await factory.INIT_CODE_HASH()}`)
     })
 
     it('auraPair: mint', async () => {
@@ -136,7 +138,7 @@ describe('AuraPair', () => {
         })
     })
 
-    it('auraPair: swap:token0', async () => {
+    it('auraPair: swap token0', async () => {
         const token0Amount = expandTo18Decimals(5)
         const token1Amount = expandTo18Decimals(10)
         await addLiquidity(token0Amount, token1Amount)
@@ -163,7 +165,7 @@ describe('AuraPair', () => {
         expect(await token1.balanceOf(wallet.address)).to.eq(totalSupplyToken1.sub(token1Amount).add(expectedOutputAmount))
     })
 
-    it('auraPair: swap:token1', async () => {
+    it('auraPair: swap token1', async () => {
         const token0Amount = expandTo18Decimals(5)
         const token1Amount = expandTo18Decimals(10)
         await addLiquidity(token0Amount, token1Amount)
@@ -190,7 +192,7 @@ describe('AuraPair', () => {
         expect(await token1.balanceOf(wallet.address)).to.eq(totalSupplyToken1.sub(token1Amount).sub(swapAmount))
     })
 
-    it('auraPair: swap:gas', async () => {
+    it('auraPair: swap gas', async () => {
         const token0Amount = expandTo18Decimals(5)
         const token1Amount = expandTo18Decimals(10)
         await addLiquidity(token0Amount, token1Amount)
@@ -205,7 +207,7 @@ describe('AuraPair', () => {
         await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
         const tx = await pair.swap(expectedOutputAmount, 0, wallet.address, '0x', overrides)
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(78062)
+        expect(receipt.gasUsed).to.eq(206074)
     })
 
     it('auraPair: burn', async () => {
