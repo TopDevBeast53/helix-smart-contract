@@ -109,12 +109,12 @@ interface TokensFixture {
 }
 
 export async function tokensFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<TokensFixture> {
-    const tokenA = await deployContract(wallet, TestToken, [expandTo18Decimals(100000)], overrides)
-    const tokenB = await deployContract(wallet, TestToken, [expandTo18Decimals(100000)], overrides)
-    const tokenC = await deployContract(wallet, TestToken, [expandTo18Decimals(100000)], overrides)
-    const tokenD = await deployContract(wallet, TestToken, [expandTo18Decimals(100000)], overrides)
-    const tokenE = await deployContract(wallet, TestToken, [expandTo18Decimals(100000)], overrides)
-    const tokenF = await deployContract(wallet, TestToken, [expandTo18Decimals(100000)], overrides)
+    const tokenA = await deployContract(wallet, TestToken, ['Test Token A', 'TTA', expandTo18Decimals(100000)], overrides)
+    const tokenB = await deployContract(wallet, TestToken, ['Test Token B', 'TTB', expandTo18Decimals(100000)], overrides)
+    const tokenC = await deployContract(wallet, TestToken, ['Test Token C', 'TTC', expandTo18Decimals(100000)], overrides)
+    const tokenD = await deployContract(wallet, TestToken, ['Test Token D', 'TTD', expandTo18Decimals(100000)], overrides)
+    const tokenE = await deployContract(wallet, TestToken, ['Test Token E', 'TTE', expandTo18Decimals(100000)], overrides)
+    const tokenF = await deployContract(wallet, TestToken, ['Test Token F', 'TTF', expandTo18Decimals(100000)], overrides)
 
     return { tokenA, tokenB, tokenC, tokenD, tokenE, tokenF }
 }
@@ -139,7 +139,7 @@ interface FullExchangeFixture {
     swapRewards: Contract
     //WETHPair: Contract
     //migrator: Contract
-    //tokenTools: Contract
+    tokenTools: Contract
     //externalFactory: Contract
     //externalRouter: Contract
     //tokenA: Contract
@@ -153,13 +153,15 @@ interface FullExchangeFixture {
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
     // 0 deploy tokens
+    /*
     const tokenA = await deployContract(wallet, TestToken, [expandTo18Decimals(10000)], overrides)
     const tokenB = await deployContract(wallet, TestToken, [expandTo18Decimals(10000)], overrides)
     const tokenC = await deployContract(wallet, TestToken, [expandTo18Decimals(10000)], overrides)
     const tokenD = await deployContract(wallet, TestToken, [expandTo18Decimals(10000)], overrides)
+    */
 
     const WETH = await deployContract(wallet, WETH9, [], overrides)
-    const WETHPartner = await deployContract(wallet, TestToken, [expandTo18Decimals(10000)], overrides)
+    const WETHPartner = await deployContract(wallet, TestToken, ['WETH Partner', 'WETHP', expandTo18Decimals(10000)], overrides)
 
     // 1 deploy factory and router
     const factory = await deployContract(wallet, AuraFactory, [wallet.address], overrides)
@@ -237,7 +239,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
 
     // 10 deploy AP/LP token
     const auraLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
-    const apToken = await deployContract(wallet, TestToken, [expandTo18Decimals(100000)], overrides);
+    const apToken = await deployContract(wallet, TestToken, ['AP Token', 'APT', expandTo18Decimals(100000)], overrides);
 
     // 11 deploy swapRewards and register with other contracts
     const swapRewards = await deployContract(wallet, SwapRewards, [
@@ -258,14 +260,14 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await auraToken.addMinter(swapRewards.address, overrides)
     await auraNFT.addAccruer(swapRewards.address, overrides)
 
-    /*
     
     // 12 deploy migrator
-    const migrator = await deployContract(wallet, AuraMigrator, [router.address], overrides);
+    // const migrator = await deployContract(wallet, AuraMigrator, [router.address], overrides);
 
     // 13 deploy token tools
     const tokenTools = await deployContract(wallet, TokenTools, [], overrides)
 
+    /*
     // initialize
     await factory.createPair(tokenA.address, tokenB.address)
     const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
@@ -306,7 +308,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         apToken,
         swapRewards,
         //migrator, 
-        //tokenTools,
+        tokenTools,
         //WETHPair,
         //externalFactory,
         //externalRouter,
