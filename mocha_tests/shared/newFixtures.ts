@@ -5,6 +5,7 @@ import { deployContract } from 'legacy-ethereum-waffle'
 import { expandTo18Decimals } from './utilities'
 
 import ERC20 from '../../build/contracts/ERC20LP.json'
+import ERC20LP from '../../build/contracts/ERC20LP.json'
 import AuraFactory from '../../build/contracts/AuraFactory.json'
 import AuraPair from '../../build/contracts/AuraPair.json'
 import AuraRouterV1 from '../../build/contracts/AuraRouterV1.json'
@@ -133,6 +134,7 @@ interface FullExchangeFixture {
     auraNFT: Contract
     //auraChefNFT: Contract
     //auraNFTBridge: Contract
+    auraLP: Contract
     apToken: Contract
     swapRewards: Contract
     //WETHPair: Contract
@@ -234,8 +236,8 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     */
 
     // 10 deploy AP/LP token
-    const apToken = await deployContract(wallet, AuraLP, [], overrides);
-    // const apToken = await deployContract(wallet, TestToken, [expandTo18Decimals(100000)], overrides);
+    const auraLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
+    const apToken = await deployContract(wallet, TestToken, [expandTo18Decimals(100000)], overrides);
 
     // 11 deploy swapRewards and register with other contracts
     const swapRewards = await deployContract(wallet, SwapRewards, [
@@ -300,6 +302,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         auraNFT,
         //auraChefNFT,
         //auraNFTBridge,
+        auraLP,
         apToken,
         swapRewards,
         //migrator, 
