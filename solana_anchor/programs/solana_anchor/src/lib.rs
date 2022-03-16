@@ -1,31 +1,37 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, Transfer};
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+use anchor_spl::token::{self, Token, Transfer, TokenAccount};
+declare_id!("A7nCafiWF1mDUHYJxfXGaBX3vJm7XvzkUtgSe9R1kK9D");
 
 #[program]
 pub mod solana_anchor {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>, bump: u8) -> Result<()> {
+    pub fn initialize(ctx: Context<Initialize>, bump: u8, capacity: u16) -> Result<()> {
         ctx.accounts.state_account.bump = bump;
+        ctx.accounts.state_account.capacity = capacity;
         Ok(())
     }
 
     pub fn transfer_in(ctx: Context<TransferIn>, bsc_address: Pubkey) -> Result<()> {
+        let state_account = &mut ctx.accounts.state_account;
+        if state_account.bsc_address.len() >= state_account.capacity as usize {
+            return Err(CustomeError::ListFull.into())
+        }
+
         {
             let cpi_ctx = CpiContext::new(
                 ctx.accounts.token_program.to_account_info(),
                 Transfer {
-                    from: ctx.accounts.user.to_account_info(),
-                    to: ctx.accounts.pool.to_account_info(),
-                    authority: ctx.accounts.user.to_account_info(),
+                    from: ctx.accounts.from.to_account_info(),
+                    to: ctx.accounts.to.to_account_info(),
+                    authority: ctx.accounts.owner.to_account_info(),
                 },
             );
             token::transfer(cpi_ctx, 1)?;
         }
 
-        ctx.accounts.state_account.bsc_address = bsc_address;
-        ctx.accounts.state_account.user_address = *ctx.accounts.user.to_account_info().key;
+        ctx.accounts.state_account.bsc_address.push(bsc_address);
+        ctx.accounts.state_account.user_address.push(*ctx.accounts.owner.to_account_info().key);
         Ok(())
     }
 
@@ -34,9 +40,9 @@ pub mod solana_anchor {
             let cpi_ctx = CpiContext::new(
                 ctx.accounts.token_program.to_account_info(),
                 Transfer {
-                    from: ctx.accounts.pool.to_account_info(),
-                    to: ctx.accounts.user.to_account_info(),
-                    authority: ctx.accounts.pool.to_account_info(),
+                    from: ctx.accounts.from.to_account_info(),
+                    to: ctx.accounts.to.to_account_info(),
+                    authority: ctx.accounts.owner.to_account_info(),
                 },
             );
             token::transfer(cpi_ctx, 1)?;
@@ -46,42 +52,56 @@ pub mod solana_anchor {
 }
 
 #[derive(Accounts)]
+#[instruction(bump: u8, capacity: u16)]
 pub struct Initialize<'info> {
-    #[account(init, seeds = [b"state_account".as_ref(), admin.to_account_info().key.as_ref()], bump, payer = admin)]
-    state_account: Account<'info, ApprovedNFTs>,
     #[account(mut)]
     admin: Signer<'info>,
+    #[account(init,space = ApprovedNFTs::space(capacity), seeds = [b"stateAccount".as_ref()], bump, payer = admin)]
+    state_account: Account<'info, ApprovedNFTs>,
     system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct TransferIn<'info> {
-    #[account(mut, seeds = [b"state_account".as_ref(), pool.to_account_info().key.as_ref()], bump = state_account.bump)]
+    #[account(mut, seeds = [b"stateAccount".as_ref()], bump = state_account.bump)]
     state_account: Account<'info, ApprovedNFTs>,
-    /// CHECK: for test
-    pool: UncheckedAccount<'info>,
-    user: Signer<'info>,
+    from: Account<'info, TokenAccount>,
+    to: Account<'info, TokenAccount>,
+    owner: Signer<'info>,
     token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
 pub struct TransferOut<'info> {
-    pool: Signer<'info>,
-    /// CHECK: for test
-    user: UncheckedAccount<'info>,
+    from: Account<'info, TokenAccount>,
+    to: Account<'info, TokenAccount>,
+    owner: Signer<'info>,
     token_program: Program<'info, Token>,
 }
 
 #[account]
-#[derive(Default)]
 pub struct ApprovedNFTs {
-    bsc_address: Pubkey,
-    user_address: Pubkey,
+    bsc_address: Vec<Pubkey>,
+    user_address: Vec<Pubkey>,
     bump: u8,
+    capacity: u16
+}
+
+impl ApprovedNFTs {
+    fn space(capacity: u16) -> usize {
+        // discriminator + bump + capacity
+        8 + 1 + 2 +
+            // vec of item pubkeys
+            4 + (capacity as usize) * std::mem::size_of::<Pubkey>() +
+            // vec of item pubkeys
+            4 + (capacity as usize) * std::mem::size_of::<Pubkey>()
+    }
 }
 
 #[error]
 pub enum CustomeError {
     #[msg("Owner can transfer the token")]
-    IsNotOwner
+    IsNotOwner,
+    #[msg("List is full")]
+    ListFull
 }
