@@ -115,7 +115,9 @@ describe('AuraRouter', () => {
       'AuraLibrary: INVALID_PATH'
     )
     const path = [token0.address, token1.address]
-    expect(await func(bigNumberify(2), path)).to.deep.eq([bigNumberify(2), bigNumberify(1)])
+    const result = await func(bigNumberify(2), path)
+    expect(result[0]).to.eq(bigNumberify(2))
+    expect(result[1]).to.eq(bigNumberify(1))
   })
 
   it('router: getAmountsIn', async () => {
@@ -138,7 +140,9 @@ describe('AuraRouter', () => {
       'AuraLibrary: INVALID_PATH'
     )
     const path = [token0.address, token1.address]
-    expect(await func(bigNumberify(1), path)).to.deep.eq([bigNumberify(2), bigNumberify(1)])
+    const result = await func(bigNumberify(2), path)
+    expect(result[0]).to.eq(bigNumberify(3))
+    expect(result[1]).to.eq(bigNumberify(2))
   })
 })
 
