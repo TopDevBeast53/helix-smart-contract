@@ -8,11 +8,11 @@ import { expandTo18Decimals } from './shared/utilities'
 import AuraPair from '../build/contracts/AuraPair.json'
 import Oracle from '../build/contracts/Oracle.json'
 import SwapRewards from '../build/contracts/SwapRewards.json'
-import { fullExchangeFixture } from './shared/swapRewardFixtures'
+import { fullExchangeFixture } from './shared/fixtures'
 
 use(solidity)
 
-const verbose = true
+const verbose = false
 const gasLimit = 999999999
 
 describe('SwapRewards', () => {
@@ -23,7 +23,7 @@ describe('SwapRewards', () => {
     let refReg: Contract
     let auraToken: Contract
     let auraNFT: Contract
-    let apToken: Contract
+    let auraLP: Contract
 
     let tokenA: Contract
     let tokenB: Contract
@@ -41,55 +41,41 @@ describe('SwapRewards', () => {
     beforeEach(async () => {
         // Load all the contracts used in creating swapRewards contract.
         const fixture = await loadFixture(fullExchangeFixture)
-        swapRewards = fixture.swapRewards
 
         factory = fixture.factory
         router = fixture.router
         oracleFactory = fixture.oracleFactory
         refReg = fixture.refReg
+        swapRewards = fixture.swapRewards
 
         auraToken = fixture.auraToken
         auraNFT = fixture.auraNFT
-        apToken = fixture.apToken
+        auraLP = fixture.auraLP
 
         tokenA = fixture.tokenA
         tokenB = fixture.tokenB
 
-        await init(tokenA, tokenB)
+        await initPairs(tokenA, tokenB)
+
+        // Add the user as the wallet's referrer
+        await refReg.addRef(user.address)
     })
 
-    async function init(token0: Contract, token1: Contract) {
-        // factory must reference oracle factory before creating pairs
-        await factory.setOracleFactory(oracleFactory.address)
-
-        // router must reference swapRewards  
-        await router.setSwapRewards(swapRewards.address)
-
-        // initialize the valid swap pairs for the tokens 0, 1, Ap, and Aura
+    async function initPairs(token0: Contract, token1: Contract) {
+        // initialize all the valid swap pairs for the tokens 0, 1, Ap, and Aura
         const amount0 = expandTo18Decimals(900)
         const amount1 = expandTo18Decimals(300)
         const apAmount = expandTo18Decimals(800)
         const auraAmount = expandTo18Decimals(700)
 
         await initPair(token0, amount0, token1, amount1)
-        await initPair(token0, amount0, apToken, apAmount)
+        await initPair(token0, amount0, auraLP, apAmount)
         await initPair(token0, amount0, auraToken, auraAmount)
 
-        await initPair(token1, amount1, apToken, apAmount)
+        await initPair(token1, amount1, auraLP, apAmount)
         await initPair(token1, amount1, auraToken, auraAmount)
 
-        await initPair(apToken, apAmount, auraToken, auraAmount)
-
-        // refReg must recognize swapRewards as a recorder add a referrer for wallet
-        await refReg.addRecorder(swapRewards.address)
-        await refReg.addRef(user.address)
-
-        // auraNFT must be initialized and recognize wallet as an accruer
-        await auraNFT.initialize("BASEURI", expandTo18Decimals(10000), 20)
-        await auraNFT.addAccruer(swapRewards.address)
-        
-        // swapFee must be registered with auraToken as a minter
-        await auraToken.addMinter(swapRewards.address)
+        await initPair(auraLP, apAmount, auraToken, auraAmount)
     }
 
     async function initPair(token0: Contract, amount0: BigNumber, token1: Contract, amount1: BigNumber) {
@@ -118,14 +104,14 @@ describe('SwapRewards', () => {
     it('swapRewards: factory is initialized', async () => {
         // pairs are created
         expect(await factory.getPair(tokenA.address, tokenB.address)).to.not.eq(constants.AddressZero)
-        expect(await factory.getPair(tokenB.address, apToken.address)).to.not.eq(constants.AddressZero)
+        expect(await factory.getPair(tokenB.address, auraLP.address)).to.not.eq(constants.AddressZero)
         expect(await factory.getPair(tokenB.address, auraToken.address)).to.not.eq(constants.AddressZero)
     })
 
     it('swapRewards: oracle factory is initialized', async () => {
         // oracle pairs are created
         expect(await oracleFactory.getOracle(tokenA.address, tokenB.address)).to.not.eq(constants.AddressZero)
-        expect(await oracleFactory.getOracle(tokenB.address, apToken.address)).to.not.eq(constants.AddressZero)
+        expect(await oracleFactory.getOracle(tokenB.address, auraLP.address)).to.not.eq(constants.AddressZero)
         expect(await oracleFactory.getOracle(tokenB.address, auraToken.address)).to.not.eq(constants.AddressZero)
     })
 
@@ -143,7 +129,7 @@ describe('SwapRewards', () => {
     })
 
     it('swapRewards: pair (B, AP) is initialized', async () => {
-        let pairAddress = await factory.getPair(tokenB.address, apToken.address)
+        let pairAddress = await factory.getPair(tokenB.address, auraLP.address)
         let pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
         let [reserves0, reserves1, ] = await pair.getReserves()
         expect(reserves0).to.be.above(0)
@@ -243,7 +229,7 @@ describe('SwapRewards', () => {
         await router.swapExactTokensForTokens(
             expandTo18Decimals(90), 
             0, 
-            [tokenB.address, apToken.address], 
+            [tokenB.address, auraLP.address], 
             wallet.address, 
             MaxUint256,
             { gasLimit }

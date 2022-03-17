@@ -26,7 +26,7 @@ describe('OracleFactory', () => {
     let refReg: Contract
     let auraToken: Contract
     let auraNFT: Contract
-    let apToken: Contract
+    let auraLP: Contract
 
     let tokenA: Contract
     let tokenB: Contract
@@ -53,7 +53,7 @@ describe('OracleFactory', () => {
 
         auraToken = fixture.auraToken
         auraNFT = fixture.auraNFT
-        apToken = fixture.apToken
+        auraLP = fixture.auraLP
 
         tokenA = fixture.tokenA
         tokenB = fixture.tokenB
@@ -74,7 +74,7 @@ describe('OracleFactory', () => {
     })
 
     it('oracleFactory: create duplicate oracle', async () => {
-        // expect create pair (A, B) to fail since it should have been created in fixture
+        await factory.createPair(tokenA.address, tokenB.address)
         await expect(oracleFactory.create(tokenA.address, tokenB.address))
             .to.be.revertedWith('OracleFactory: ORACLE HAS ALREADY BEEN CREATED');
     })
@@ -119,7 +119,7 @@ describe('OracleFactory', () => {
             .withArgs(
                 tokenD.address,
                 tokenC.address,
-                '0x29B01F0d694D2D410E2507145F8DC63552112F6B'
+                '0x36f04D4aEE9c3d382cBf17B6f650BCd5F63679d6'
         )
     })
 
@@ -214,11 +214,12 @@ describe('OracleFactory', () => {
     })
 
     it('oracleFactory: get oracle for token pair (A, B)', async () => {
-        // pair (A, B) should already have been created in fixture
+        await factory.createPair(tokenA.address, tokenB.address)
         expect(await oracleFactory.getOracle(tokenA.address, tokenB.address)).to.not.eq(constants.AddressZero)
     })
     
     it('oracleFactory: get oracle argument order doesn\'t matter', async () => {
+        await factory.createPair(tokenA.address, tokenB.address)
         expect(await oracleFactory.getOracle(tokenB.address, tokenA.address)).to.not.eq(constants.AddressZero)
     })
 
