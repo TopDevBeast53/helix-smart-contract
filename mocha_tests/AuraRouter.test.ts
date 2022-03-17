@@ -5,7 +5,7 @@ import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
 import { MaxUint256 } from 'legacy-ethers/constants'
 import AuraPair from '../build/contracts/AuraPair.json'
 
-import { fullExchangeFixture } from './shared/newFixtures'
+import { fullExchangeFixture } from './shared/fixtures'
 import { expandTo18Decimals, getApprovalDigest, MINIMUM_LIQUIDITY, createAndGetPair } from './shared/utilities'
 
 import DeflatingERC20 from '../build/contracts/DeflatingERC20.json'

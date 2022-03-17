@@ -6,7 +6,7 @@ import { solidity, loadFixture, createFixtureLoader, MockProvider } from 'legacy
 import { ecsign } from 'ethereumjs-util'
 
 import { expandTo18Decimals, getApprovalDigest } from './shared/utilities'
-import { fullExchangeFixture } from './shared/newFixtures'
+import { fullExchangeFixture } from './shared/fixtures'
 
 chai.use(solidity)
 

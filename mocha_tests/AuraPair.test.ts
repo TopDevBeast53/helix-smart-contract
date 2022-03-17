@@ -4,7 +4,7 @@ import { solidity, MockProvider, createFixtureLoader } from 'legacy-ethereum-waf
 import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
 
 import { expandTo18Decimals, mineBlock, encodePrice, createAndGetPair } from './shared/utilities'
-import { fullExchangeFixture, pairFixture } from './shared/newFixtures'
+import { fullExchangeFixture } from './shared/fixtures'
 import { AddressZero } from 'legacy-ethers/constants'
 
 import AuraPair from '../build/contracts/AuraPair.json'

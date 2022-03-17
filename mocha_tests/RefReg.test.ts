@@ -4,7 +4,7 @@ import { Contract, constants } from 'legacy-ethers'
 import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
 import { MaxUint256 } from 'legacy-ethers/constants'
 
-import { fullExchangeFixture } from './shared/newFixtures'
+import { fullExchangeFixture } from './shared/fixtures'
 import { expandTo18Decimals } from './shared/utilities'
 
 import ReferralRegister from '../build/contracts/ReferralRegister.json'

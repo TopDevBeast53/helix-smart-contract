@@ -9,7 +9,7 @@ import AuraPair from '../build/contracts/AuraPair.json'
 import Oracle from '../build/contracts/Oracle.json'
 import OracleFactory from '../build/contracts/OracleFactory.json'
 import SwapRewards from '../build/contracts/SwapRewards.json'
-import { fullExchangeFixture } from './shared/newFixtures'
+import { fullExchangeFixture } from './shared/fixtures'
 
 use(solidity)
 

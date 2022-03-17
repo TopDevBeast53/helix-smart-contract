@@ -5,7 +5,7 @@ import { bigNumberify } from 'legacy-ethers/utils'
 import { solidity, MockProvider, createFixtureLoader } from 'legacy-ethereum-waffle'
 
 import { getCreate2Address } from './shared/utilities'
-import { fullExchangeFixture } from './shared/newFixtures'
+import { fullExchangeFixture } from './shared/fixtures'
 
 import AuraPair from '../build/contracts/AuraPair.json'
 

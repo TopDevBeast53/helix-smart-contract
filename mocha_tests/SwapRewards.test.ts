@@ -8,7 +8,7 @@ import { expandTo18Decimals } from './shared/utilities'
 import AuraPair from '../build/contracts/AuraPair.json'
 import Oracle from '../build/contracts/Oracle.json'
 import SwapRewards from '../build/contracts/SwapRewards.json'
-import { fullExchangeFixture } from './shared/newFixtures'
+import { fullExchangeFixture } from './shared/fixtures'
 
 use(solidity)
 

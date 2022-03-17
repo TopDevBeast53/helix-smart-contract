@@ -3,7 +3,7 @@ import { solidity, MockProvider, createFixtureLoader } from 'legacy-ethereum-waf
 import { Contract } from 'legacy-ethers';
 import { MaxUint256 } from 'legacy-ethers/constants';
 import { BigNumber, bigNumberify } from 'legacy-ethers/utils';
-import { fullExchangeFixture } from './shared/newFixtures';
+import { fullExchangeFixture } from './shared/fixtures';
 import { expandTo18Decimals } from './shared/utilities'
 
 import AuraPair from '../build/contracts/AuraPair.json';
