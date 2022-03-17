@@ -25,7 +25,6 @@ async function addBridger(bridgeAddress, bridgerAddress) {
     const bridge = AuraNFTBridge.attach(bridgeAddress);
 
     let tx = await bridge.addBridger(bridgerAddress, {nonce: nonce, gasLimit: 3000000});
-    console.log(tx);
     await tx.wait();
 }
 

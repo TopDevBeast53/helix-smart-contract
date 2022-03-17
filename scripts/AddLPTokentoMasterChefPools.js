@@ -1,11 +1,18 @@
+/**
+ * @dev Add LP token to MasterChef
+ * 
+ * Run on bsc-testnet: 
+ *      `npx hardhat run scripts/AddLPTokentoMasterChefPools.js --network testnetBSC`
+ */
+
 const { ethers, network } = require(`hardhat`);
 const contracts = require("./constants/contracts")
 const env = require("./constants/env")
 require("dotenv").config();
 
-
+// AURA-BUSD : 0xB024cd9a1Fe32D615ee6EF7137E355A422b3d9d7
 const MasterChefAddress = contracts.masterChef[env.network];
-const AuraLPTokenAddress = ""; // update LP token address
+const AuraLPTokenAddress = "0xB024cd9a1Fe32D615ee6EF7137E355A422b3d9d7"; // update LP token address
 const LPDepositValue = 822;
 
 async function main() {

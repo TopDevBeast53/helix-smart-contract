@@ -20,7 +20,6 @@ Now, copy the address of the Router contract and **put it into the `router` map*
 
 Open BEP20.sol and see `preMineSupply` and `maxSupply`. PreMine is mined directly to your wallet after the token is deployed. Max Supply is max that can be minted over time. e.g. by Staking chefs. Currently, Max Supply is set to be 1B, and PreMind to 100M. Change if needed.
 
-`truffle compile` after changed.
 Run `npx hardhat run scripts/2_deployAuraToken.js --network testnetBSC` (or mainnet)
 
 Now, copy the address of the AuraToken contract and **put it into the `auraToken` map** to `scripts/constants/contracts.js`.
@@ -71,6 +70,7 @@ Check and update all variables:
 >`DevPercent` from `src/scripts/constants/initials.js`.  
 
 Run `npx hardhat run scripts/5_deployMasterChef.js --network testnetBSC`
+Now, copy the address of the MasterChef contract and **put it into the `masterChef` map** to `scripts/constants/contracts.js`.
 
 It would deploy the contract AND add master chef as a minter to Aura token.
 
@@ -109,9 +109,7 @@ end block = start block + (total aura amount / aura per block) - 1
 i.e. if start block = 123
 total aura = 1M, and aura per block = 100, then end block must be 123 + 10^6 / 10^2 - 1 = 123 + 10^4 - 1 = 10122.
 
-Set all the numbers correctly and run
-
-`npx hardhat run scripts/7_deploySmartChef.js --network testnetBSC`
+Run `npx hardhat run scripts/7_deploySmartChef.js --network testnetBSC`
 Now, copy the address of the Smart Chef contract and **put it into the `smartChef` map** to `scripts/constants/contracts.js`.
 
 Now, we've got the contract deployed, however, you MUST fund it from the owner account (the account which deployed the contract). You must deposit (end block - start block + 1) * aura per block aura tokens into it for users to be able to claim their rewards.
@@ -211,7 +209,7 @@ ReferralRegister.addRecorder()
 AuraToken.addMinter()
 AuraNFT.addAccruer()
 
-Copy the address of the Swap Fee contract and **put it into the `swapFee` map** to `scripts/constants/contracts.js`.
+Copy the address of the Swap Fee contract and **put it into the `swapRewards` map** to `scripts/constants/contracts.js`.
 
 ## 12. AuraMigrator
 

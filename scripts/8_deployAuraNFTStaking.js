@@ -58,7 +58,7 @@ async function main() {
     tx = await auraChefNft.addNewRewardToken(rewardToken, startBlock, rewardPerBlock, {gasLimit: 3000000});
     await tx.wait();
 
-    console.log('done!')
+    console.log(`Do NOT forget to fund the newly deployed AuraNFTChef with some reward tokens!`);
 }
 
 main()
