@@ -7,14 +7,15 @@ pub mod solana_anchor {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>, bump: u8, capacity: u16) -> Result<()> {
-        ctx.accounts.state_account.bump = bump;
-        ctx.accounts.state_account.capacity = capacity;
+        let state_account = &mut ctx.accounts.state_account;
+        state_account.bump = bump;
+        state_account.capacity = capacity;
         Ok(())
     }
 
-    pub fn transfer_in(ctx: Context<TransferIn>, bsc_address: Pubkey) -> Result<()> {
+    pub fn transfer_in(ctx: Context<TransferIn>, bsc_address: [u8;40]) -> Result<()> {
         let state_account = &mut ctx.accounts.state_account;
-        if state_account.bsc_address.len() >= state_account.capacity as usize {
+        if state_account.addresses.len() >= state_account.capacity as usize {
             return Err(CustomeError::ListFull.into())
         }
 
@@ -30,8 +31,13 @@ pub mod solana_anchor {
             token::transfer(cpi_ctx, 1)?;
         }
 
-        ctx.accounts.state_account.bsc_address.push(bsc_address);
-        ctx.accounts.state_account.user_address.push(*ctx.accounts.owner.to_account_info().key);
+        ctx.accounts.state_account.addresses.push(
+            Addresses {
+                bsc_address: bsc_address,
+                user_address: *ctx.accounts.owner.to_account_info().key,
+                token_address: *ctx.accounts.to.to_account_info().key
+            }
+        );
         Ok(())
     }
 
@@ -56,16 +62,18 @@ pub mod solana_anchor {
 pub struct Initialize<'info> {
     #[account(mut)]
     admin: Signer<'info>,
-    #[account(init,space = ApprovedNFTs::space(capacity), seeds = [b"stateAccount".as_ref()], bump, payer = admin)]
+    #[account(init,space = ApprovedNFTs::space(capacity), seeds = [b"test6".as_ref()], bump, payer = admin)]
     state_account: Account<'info, ApprovedNFTs>,
     system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct TransferIn<'info> {
-    #[account(mut, seeds = [b"stateAccount".as_ref()], bump = state_account.bump)]
+    #[account(mut, seeds = [b"test6".as_ref()], bump = state_account.bump)]
     state_account: Account<'info, ApprovedNFTs>,
+    #[account(mut)]
     from: Account<'info, TokenAccount>,
+    #[account(mut)]
     to: Account<'info, TokenAccount>,
     owner: Signer<'info>,
     token_program: Program<'info, Token>,
@@ -73,7 +81,9 @@ pub struct TransferIn<'info> {
 
 #[derive(Accounts)]
 pub struct TransferOut<'info> {
+    #[account(mut)]
     from: Account<'info, TokenAccount>,
+    #[account(mut)]
     to: Account<'info, TokenAccount>,
     owner: Signer<'info>,
     token_program: Program<'info, Token>,
@@ -81,20 +91,26 @@ pub struct TransferOut<'info> {
 
 #[account]
 pub struct ApprovedNFTs {
-    bsc_address: Vec<Pubkey>,
-    user_address: Vec<Pubkey>,
     bump: u8,
-    capacity: u16
+    capacity: u16,
+    addresses: Vec<Addresses>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct Addresses {
+    bsc_address: [u8;40],
+    user_address: Pubkey,
+    token_address: Pubkey
 }
 
 impl ApprovedNFTs {
     fn space(capacity: u16) -> usize {
-        // discriminator + bump + capacity
-        8 + 1 + 2 +
-            // vec of item pubkeys
-            4 + (capacity as usize) * std::mem::size_of::<Pubkey>() +
-            // vec of item pubkeys
-            4 + (capacity as usize) * std::mem::size_of::<Pubkey>()
+        // discriminator 
+        8 + 
+        // vec of item pubkeys
+        4 + (capacity as usize) * std::mem::size_of::<Pubkey>() * 2 + 40 + 
+        // + bump + capacity
+        1 + 2
     }
 }
 
