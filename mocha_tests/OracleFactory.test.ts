@@ -26,7 +26,7 @@ describe('OracleFactory', () => {
     let refReg: Contract
     let auraToken: Contract
     let auraNFT: Contract
-    let apToken: Contract
+    let auraLP: Contract
 
     let tokenA: Contract
     let tokenB: Contract
@@ -53,7 +53,7 @@ describe('OracleFactory', () => {
 
         auraToken = fixture.auraToken
         auraNFT = fixture.auraNFT
-        apToken = fixture.apToken
+        auraLP = fixture.auraLP
 
         tokenA = fixture.tokenA
         tokenB = fixture.tokenB
@@ -119,7 +119,7 @@ describe('OracleFactory', () => {
             .withArgs(
                 tokenD.address,
                 tokenC.address,
-                '0xF84F84Fd2650105d004FD468A74f29E396E3e71a'
+                '0x36f04D4aEE9c3d382cBf17B6f650BCd5F63679d6'
         )
     })
 

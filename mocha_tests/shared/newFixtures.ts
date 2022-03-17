@@ -34,17 +34,14 @@ const refRegDefaultStakingRef = initials.REFERRAL_STAKING_FEE_PERCENT[env.networ
 const refRegDefaultSwapRef = initials.REFERRAL_SWAP_FEE_PERCENT[env.network]
 
 const chefDeveloperAddress = addresses.masterChefDeveloper[env.network];
-// const chefDeveloperAddress = '0x59201fb8cb2D61118B280c8542127331DD141654';
 const chefStartBlock = initials.MASTERCHEF_START_BLOCK[env.network];
 const chefAuraTokenRewardPerBlock = initials.MASTERCHEF_AURA_TOKEN_REWARD_PER_BLOCK[env.network];
 const chefStakingPercent = initials.MASTERCHEF_STAKING_PERCENT[env.network];
 const chefDevPercent = initials.MASTERCHEF_DEV_PERCENT[env.network];
 
 const autoAuraTreasuryAddress = addresses.autoAuraTreasuryAddress[env.network];
-// const autoAuraTreasuryAddress = '0x59201fb8cb2D61118B280c8542127331DD141654' 
 
 const smartChefStakingTokenAddress = addresses.BUSD[env.network];// token A which must be staked in this pool
-// const smartChefStakingTokenAddress = '0x59201fb8cb2D61118B280c8542127331DD141654';
 const smartChefStartBlock = initials.SMARTCHEF_START_BLOCK[env.network];
 const smartChefEndBlock = initials.SMARTCHEF_END_BLOCK[env.network];
 const smartChefRewardPerBlock = initials.SMARTCHEF_REWARD_PER_BLOCK[env.network]
@@ -100,8 +97,13 @@ export async function pairFixture(provider: Web3Provider, [wallet]: Wallet[]): P
 }
 
 interface FullExchangeFixture {
+    tokenA: Contract
+    tokenB: Contract
+    tokenC: Contract
+    tokenD: Contract
+    tokenE: Contract
+    tokenF: Contract
     WETH: Contract
-    WETHPartner: Contract
     factory: Contract
     router: Contract
     routerEventEmitter: Contract
@@ -109,28 +111,17 @@ interface FullExchangeFixture {
     oracleFactory: Contract
     refReg: Contract
     chef: Contract
-    //autoAura: Contract
-    //smartChef: Contract
+    autoAura: Contract
+    smartChef: Contract
     auraNFT: Contract
-    //auraChefNFT: Contract
-    //auraNFTBridge: Contract
+    auraChefNFT: Contract
+    auraNFTBridge: Contract
     auraLP: Contract
-    apToken: Contract
     swapRewards: Contract
-    //WETHPair: Contract
-    migrator: Contract
-    tokenTools: Contract
     externalFactory: Contract
     externalRouter: Contract
-    tokenA: Contract
-    tokenB: Contract
-    tokenC: Contract
-    tokenD: Contract
-    tokenE: Contract
-    tokenF: Contract
-    //token0: Contract
-    //token1: Contract
-    //pair: Contract
+    migrator: Contract
+    tokenTools: Contract
 }
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
@@ -143,7 +134,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const tokenF = await deployContract(wallet, TestToken, ['Test Token F', 'TTF', expandTo18Decimals(100000)], overrides)
 
     const WETH = await deployContract(wallet, WETH9, [], overrides)
-    const WETHPartner = await deployContract(wallet, TestToken, ['WETH Partner', 'WETHP', expandTo18Decimals(10000)], overrides)
 
     // 1 deploy factory and router
     const factory = await deployContract(wallet, AuraFactory, [wallet.address], overrides)
@@ -180,7 +170,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     )
     await auraToken.addMinter(chef.address)
     await refReg.addRecorder(chef.address)
-    /*
 
     // 6 deploy auto aura
     const autoAura = await deployContract(wallet, AutoAura,
@@ -199,17 +188,14 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         ], 
         overrides
     )
-    */
 
     // 8 deploy auraNFT and auraChefNFT and register with other contracts
     const auraNFT = await deployContract(wallet, AuraNFT, [], overrides)
-    await auraNFT.initialize("TODO", auraNFTInitialAuraPoints, auraNFTLevelUpPercent)
-    // TODO
-    // const auraChefNFT = await deployContract(wallet, AuraChefNFT, [], overrides)
+    await auraNFT.initialize("BASEURI", auraNFTInitialAuraPoints, auraNFTLevelUpPercent)
+    const auraChefNFT = await deployContract(wallet, AuraChefNFT, [auraNFT.address, auraChefNFTLastRewardBlock], overrides)
 
-    /*
-    await auraNFT.addStaker(auraChefNFT.address, overrides)
     await auraNFT.addMinter(wallet.address, overrides)
+    await auraNFT.addStaker(auraChefNFT.address, overrides)
     await auraChefNFT.addNewRewardToken(auraToken.address, auraChefNFTStartBlock, auraChefNFTRewardPerBlock, overrides)
 
     // 9 deploy auraNFTBridge, add a bridger, and register as minter
@@ -217,11 +203,9 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await auraNFTBridge.addBridger(wallet.address, overrides)
     await auraNFT.addMinter(auraNFTBridge.address, overrides)
 
-    */
 
     // 10 deploy AP/LP token
     const auraLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
-    const apToken = await deployContract(wallet, TestToken, ['AP Token', 'APT', expandTo18Decimals(100000)], overrides);
 
     // 11 deploy swapRewards and register with other contracts
     const swapRewards = await deployContract(wallet, SwapRewards, [
@@ -230,7 +214,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
             refReg.address,
             auraToken.address,
             auraNFT.address,
-            apToken.address,
+            auraLP.address,
             swapRewardsSplitRewardPercent,
             swapRewardsAuraRewardPercent,
             swapRewardsApRewardPercent
@@ -241,40 +225,27 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await refReg.addRecorder(swapRewards.address, overrides)
     await auraToken.addMinter(swapRewards.address, overrides)
     await auraNFT.addAccruer(swapRewards.address, overrides)
-    
+
+    // Add external DEX components for migrator to use.
+    const externalFactory = await deployContract(wallet, AuraFactory, [wallet.address], overrides);
+    const externalOracleFactory = await deployContract(wallet, OracleFactory, [externalFactory.address], overrides)
+    await externalFactory.setOracleFactory(externalOracleFactory.address)
+    const externalRouter = await deployContract(wallet, AuraRouterV1, [externalFactory.address, WETH.address], overrides);
+
     // 12 deploy migrator
     const migrator = await deployContract(wallet, AuraMigrator, [router.address], overrides);
 
     // 13 deploy token tools
     const tokenTools = await deployContract(wallet, TokenTools, [], overrides)
 
-    /*
-    // initialize
-    await factory.createPair(tokenA.address, tokenB.address)
-    const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
-    const pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
-    */
-
-    // Add external DEX components for migrator to use.
-    const externalFactory = await deployContract(wallet, AuraFactory, [wallet.address], overrides);
-    const externalOracleFactory = await deployContract(wallet, OracleFactory, [externalFactory.address], overrides)
-    await externalFactory.setOracleFactory(externalOracleFactory.address)
-
-    const externalRouter = await deployContract(wallet, AuraRouterV1, [externalFactory.address, WETH.address], overrides);
-    /*
-
-    const token0Address = await pair.token0()
-    const token0 = tokenA.address === token0Address ? tokenA : tokenB
-    const token1 = tokenA.address === token0Address ? tokenB : tokenA
-
-    await factory.createPair(WETH.address, WETHPartner.address)
-    const WETHPairAddress = await factory.getPair(WETH.address, WETHPartner.address)
-    const WETHPair = new Contract(WETHPairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
-    */
-
     return {
+        tokenA,
+        tokenB,
+        tokenC,
+        tokenD,
+        tokenE,
+        tokenF,
         WETH,
-        WETHPartner,
         factory,
         router,
         routerEventEmitter,
@@ -282,27 +253,16 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         oracleFactory,
         refReg,
         chef,
-        //autoAura,
-        //smartChef,
+        autoAura,
+        smartChef,
         auraNFT,
-        //auraChefNFT,
-        //auraNFTBridge,
+        auraChefNFT,
+        auraNFTBridge,
         auraLP,
-        apToken,
         swapRewards,
-        migrator, 
-        tokenTools,
-        //WETHPair,
         externalFactory,
         externalRouter,
-        tokenA,
-        tokenB,
-        tokenC,
-        tokenD,
-        tokenE,
-        tokenF,
-        //token0,
-        //token1,
-        //pair,
+        migrator, 
+        tokenTools,
     }
 }

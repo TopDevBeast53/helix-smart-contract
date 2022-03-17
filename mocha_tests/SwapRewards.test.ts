@@ -23,7 +23,7 @@ describe('SwapRewards', () => {
     let refReg: Contract
     let auraToken: Contract
     let auraNFT: Contract
-    let apToken: Contract
+    let auraLP: Contract
 
     let tokenA: Contract
     let tokenB: Contract
@@ -50,7 +50,7 @@ describe('SwapRewards', () => {
 
         auraToken = fixture.auraToken
         auraNFT = fixture.auraNFT
-        apToken = fixture.apToken
+        auraLP = fixture.auraLP
 
         tokenA = fixture.tokenA
         tokenB = fixture.tokenB
@@ -69,13 +69,13 @@ describe('SwapRewards', () => {
         const auraAmount = expandTo18Decimals(700)
 
         await initPair(token0, amount0, token1, amount1)
-        await initPair(token0, amount0, apToken, apAmount)
+        await initPair(token0, amount0, auraLP, apAmount)
         await initPair(token0, amount0, auraToken, auraAmount)
 
-        await initPair(token1, amount1, apToken, apAmount)
+        await initPair(token1, amount1, auraLP, apAmount)
         await initPair(token1, amount1, auraToken, auraAmount)
 
-        await initPair(apToken, apAmount, auraToken, auraAmount)
+        await initPair(auraLP, apAmount, auraToken, auraAmount)
     }
 
     async function initPair(token0: Contract, amount0: BigNumber, token1: Contract, amount1: BigNumber) {
@@ -104,14 +104,14 @@ describe('SwapRewards', () => {
     it('swapRewards: factory is initialized', async () => {
         // pairs are created
         expect(await factory.getPair(tokenA.address, tokenB.address)).to.not.eq(constants.AddressZero)
-        expect(await factory.getPair(tokenB.address, apToken.address)).to.not.eq(constants.AddressZero)
+        expect(await factory.getPair(tokenB.address, auraLP.address)).to.not.eq(constants.AddressZero)
         expect(await factory.getPair(tokenB.address, auraToken.address)).to.not.eq(constants.AddressZero)
     })
 
     it('swapRewards: oracle factory is initialized', async () => {
         // oracle pairs are created
         expect(await oracleFactory.getOracle(tokenA.address, tokenB.address)).to.not.eq(constants.AddressZero)
-        expect(await oracleFactory.getOracle(tokenB.address, apToken.address)).to.not.eq(constants.AddressZero)
+        expect(await oracleFactory.getOracle(tokenB.address, auraLP.address)).to.not.eq(constants.AddressZero)
         expect(await oracleFactory.getOracle(tokenB.address, auraToken.address)).to.not.eq(constants.AddressZero)
     })
 
@@ -129,7 +129,7 @@ describe('SwapRewards', () => {
     })
 
     it('swapRewards: pair (B, AP) is initialized', async () => {
-        let pairAddress = await factory.getPair(tokenB.address, apToken.address)
+        let pairAddress = await factory.getPair(tokenB.address, auraLP.address)
         let pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
         let [reserves0, reserves1, ] = await pair.getReserves()
         expect(reserves0).to.be.above(0)
@@ -229,7 +229,7 @@ describe('SwapRewards', () => {
         await router.swapExactTokensForTokens(
             expandTo18Decimals(90), 
             0, 
-            [tokenB.address, apToken.address], 
+            [tokenB.address, auraLP.address], 
             wallet.address, 
             MaxUint256,
             { gasLimit }
