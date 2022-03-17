@@ -1,4 +1,4 @@
-import { Contract } from 'legacy-ethers'
+import { Wallet, Contract } from 'legacy-ethers'
 import { Web3Provider } from 'legacy-ethers/providers'
 import {
   BigNumber,
@@ -9,6 +9,11 @@ import {
   toUtf8Bytes,
   solidityPack
 } from 'legacy-ethers/utils'
+import AuraPair from '../../build/contracts/AuraPair.json'
+
+const overrides = {
+    gasLimit: 99999999999
+}
 
 const PERMIT_TYPEHASH = keccak256(
   toUtf8Bytes('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)')
@@ -104,4 +109,22 @@ export async function mineBlocks(blocks: number, provider: Web3Provider): Promis
 
 export function encodePrice(reserve0: BigNumber, reserve1: BigNumber) {
   return [reserve1.mul(bigNumberify(2).pow(112)).div(reserve0), reserve0.mul(bigNumberify(2).pow(112)).div(reserve1)]
+}
+
+export async function createAndGetPair(
+    provider: Web3Provider, 
+    wallet: Wallet,
+    factory: Contract, 
+    tokenA: Contract, 
+    tokenB: Contract
+) {
+    await factory.createPair(tokenA.address, tokenB.address, overrides)
+    const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
+    const pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
+
+    const token0Address = (await pair.token0()).address
+    const token0 = tokenA.address === token0Address ? tokenA : tokenB
+    const token1 = tokenA.address === token0Address ? tokenB : tokenA
+
+    return { factory, token0, token1, pair }
 }

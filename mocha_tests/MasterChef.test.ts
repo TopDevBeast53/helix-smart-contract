@@ -38,20 +38,29 @@ describe('MasterChef', () => {
       const fixture = await loadFixture(fullExchangeFixture)
       auraToken = fixture.auraToken
       chef = fixture.chef
-      token0 = fixture.token0
-      token1 = fixture.token1
       router = fixture.router
       factory = fixture.factory
+      const tokenA = fixture.tokenA
+      const tokenB = fixture.tokenB
+
+        // Locally create the pair
+        await factory.createPair(tokenA.address, tokenB.address, overrides)
+        const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
+        const pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
+
+        const token0Address = (await pair.token0()).address
+        token0 = tokenA.address === token0Address ? tokenB : tokenA
+        token1 = tokenA.address === token0Address ? tokenA : tokenB
 
       await auraToken.addMinter(chef.address)
     })
 
-    it('chef is minter', async () => {
+    it('masterChef: chef is minter', async () => {
       const isChefMinter = await auraToken.isMinter(chef.address);
       expect(isChefMinter).to.eq(true);
     })
 
-    it('add liquidity and farm', async () => {
+    it('masterChef: add liquidity and farm', async () => {
       // Prepare
       await token0.approve(router.address, MaxUint256)
       await token1.approve(router.address, MaxUint256)
@@ -96,10 +105,10 @@ describe('MasterChef', () => {
       const newAuraBalance = await auraToken.balanceOf(wallet.address);
       const newBalanceOfLp = await lpToken.balanceOf(wallet.address);
       expect(newBalanceOfLp).to.eq(99000);
-      expect(newAuraBalance).to.eq("100002019997980000000000000");
+      expect(newAuraBalance).to.eq("100002690639999999999999998");
     });
 
-    it('stake aura', async () => {
+    it('masterChef: stake aura', async () => {
       // Chef must already have a pool with id = 0 which is responsible
       // for staking aura
       
@@ -114,6 +123,6 @@ describe('MasterChef', () => {
       // Unstake
       await chef.leaveStaking("1000000000000000000000000");
       const userBalanceAfterUnStaking = await auraToken.balanceOf(wallet.address);
-      expect(userBalanceAfterUnStaking).to.eq("100000029999970000000000000");
+      expect(userBalanceAfterUnStaking).to.eq("100000039960000000000000000");
     });
 })

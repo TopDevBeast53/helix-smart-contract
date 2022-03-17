@@ -5,7 +5,7 @@ import { bigNumberify } from 'legacy-ethers/utils'
 import { solidity, MockProvider, createFixtureLoader } from 'legacy-ethereum-waffle'
 
 import { getCreate2Address } from './shared/utilities'
-import { factoryFixture } from './shared/fixtures'
+import { fullExchangeFixture } from './shared/fixtures'
 
 import AuraPair from '../build/contracts/AuraPair.json'
 
@@ -27,11 +27,15 @@ describe('AuraFactory', () => {
 
   let factory: Contract
   beforeEach(async () => {
-    const fixture = await loadFixture(factoryFixture)
-    factory = fixture.factory
+    const fullExchange = await loadFixture(fullExchangeFixture)
+    factory = fullExchange.factory
   })
 
-  it('feeTo, feeToSetter, allPairsLength', async () => {
+  it('factory: prints factory init code hash', async () => {
+    console.log(`INIT CODE HASH ${await factory.INIT_CODE_HASH()}`);
+  })
+
+  it('factory: feeTo, feeToSetter, allPairsLength', async () => {
     expect(await factory.feeTo()).to.eq(AddressZero)
     expect(await factory.feeToSetter()).to.eq(wallet.address)
     expect(await factory.allPairsLength()).to.eq(0)
@@ -57,34 +61,31 @@ describe('AuraFactory', () => {
     expect(await pair.token1()).to.eq(TEST_ADDRESSES[1])
   }
 
-  it('createPair', async () => {
+  it('factory: createPair', async () => {
     await createPair(TEST_ADDRESSES)
   })
 
-  it('createPair:reverse', async () => {
+  it('factory: createPair:reverse', async () => {
     await createPair(TEST_ADDRESSES.slice().reverse() as [string, string])
   })
 
-  it('createPair:gas', async () => {
+  it('factory: createPair:gas', async () => {
     const tx = await factory.createPair(...TEST_ADDRESSES)
     const receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(2268692)
+    expect(receipt.gasUsed).to.eq(2975019)
   })
 
-  it('setFeeTo', async () => {
+  it('factory: setFeeTo', async () => {
     await expect(factory.connect(other).setFeeTo(other.address)).to.be.revertedWith('Aura: FORBIDDEN')
     await factory.setFeeTo(wallet.address)
     expect(await factory.feeTo()).to.eq(wallet.address)
   })
 
-  it('setFeeToSetter', async () => {
+  it('factory: setFeeToSetter', async () => {
     await expect(factory.connect(other).setFeeToSetter(other.address)).to.be.revertedWith('Aura: FORBIDDEN')
     await factory.setFeeToSetter(other.address)
     expect(await factory.feeToSetter()).to.eq(other.address)
     await expect(factory.setFeeToSetter(wallet.address)).to.be.revertedWith('Aura: FORBIDDEN')
   })
 
-  it('initCodeHash', async () => {
-    console.log('init_code - ', await factory.INIT_CODE_HASH());
   })
-})

@@ -2,8 +2,8 @@
 pragma solidity >=0.8.0;
 
 contract TestToken {
-    string public constant name = 'SECOND TEST TOKEN';
-    string public constant symbol = 'STT';
+    string public name;
+    string public symbol;
     uint8 public constant decimals = 18;
     uint  public totalSupply;
     mapping(address => uint) public balanceOf;
@@ -17,7 +17,9 @@ contract TestToken {
     event Approval(address indexed owner, address indexed spender, uint value);
     event Transfer(address indexed from, address indexed to, uint value);
 
-    constructor(uint _totalSupply) {
+    constructor(string memory _name, string memory _symbol, uint _totalSupply) {
+        name = _name;
+        symbol = _symbol;
         uint chainId;
         assembly {
             chainId := chainid()
