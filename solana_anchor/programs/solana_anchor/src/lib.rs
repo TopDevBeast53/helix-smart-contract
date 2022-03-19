@@ -41,18 +41,24 @@ pub mod solana_anchor {
         Ok(())
     }
 
-    pub fn transfer_out(ctx: Context<TransferOut>) -> Result<()> {
+    pub fn transfer_out(ctx: Context<TransferOut>, bsc_address: [u8;40]) -> Result<()> {
+        let state_account = &mut ctx.accounts.state_account;
+
+        let from = ctx.accounts.to.to_account_info().key;
+        let to = ctx.accounts.to.to_account_info().key;
         {
             let cpi_ctx = CpiContext::new(
                 ctx.accounts.token_program.to_account_info(),
                 Transfer {
-                    from: ctx.accounts.from.to_account_info(),
+                    from: ctx.accounts.to.to_account_info(),
                     to: ctx.accounts.to.to_account_info(),
                     authority: ctx.accounts.owner.to_account_info(),
                 },
             );
             token::transfer(cpi_ctx, 1)?;
         }
+
+        state_account.addresses.retain(|a| a.bsc_address != bsc_address && a.user_address != *to && a.token_address != *from);
         Ok(())
     }
 }
@@ -81,6 +87,8 @@ pub struct TransferIn<'info> {
 
 #[derive(Accounts)]
 pub struct TransferOut<'info> {
+    #[account(mut, seeds = [b"test6".as_ref()], bump = state_account.bump)]
+    state_account: Account<'info, ApprovedNFTs>,
     #[account(mut)]
     from: Account<'info, TokenAccount>,
     #[account(mut)]
@@ -107,7 +115,7 @@ impl ApprovedNFTs {
     fn space(capacity: u16) -> usize {
         // discriminator 
         8 + 
-        // vec of item pubkeys
+        // vec of item pubkeys + bsc address
         4 + (capacity as usize) * std::mem::size_of::<Pubkey>() * 2 + 40 + 
         // + bump + capacity
         1 + 2
