@@ -46,6 +46,16 @@ pub mod solana_anchor {
 
         let from = ctx.accounts.to.to_account_info().key;
         let to = ctx.accounts.to.to_account_info().key;
+
+        let remove_account = Addresses {
+            bsc_address: bsc_address,
+            user_address: *from,
+            token_address: *to
+        }
+
+        if(!state_account.contains(&remove_account)) {
+            return Err(CustomeError::StateNotExist.into())
+        }
         {
             let cpi_ctx = CpiContext::new(
                 ctx.accounts.token_program.to_account_info(),
@@ -104,7 +114,7 @@ pub struct ApprovedNFTs {
     addresses: Vec<Addresses>,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq)]
 pub struct Addresses {
     bsc_address: [u8;40],
     user_address: Pubkey,
@@ -127,5 +137,7 @@ pub enum CustomeError {
     #[msg("Owner can transfer the token")]
     IsNotOwner,
     #[msg("List is full")]
-    ListFull
+    ListFull,
+    #[msg("State not exist")]
+    StateNotExist
 }
