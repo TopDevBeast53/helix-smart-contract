@@ -51,9 +51,9 @@ pub mod solana_anchor {
             bsc_address: bsc_address,
             user_address: *from,
             token_address: *to
-        }
+        };
 
-        if(!state_account.contains(&remove_account)) {
+        if !state_account.addresses.contains(&remove_account) {
             return Err(CustomeError::StateNotExist.into())
         }
         {
