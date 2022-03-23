@@ -167,7 +167,32 @@ async function createKeypairFromFile(filePath) {
   return Keypair.fromSecretKey(secretKey);
 }
 
+function deserializeAccountInfo(buffer) {
+  if (!buffer) {
+    console.error("empty account data!");
+    return [];
+  }
+
+  const len = buffer.length;
+  let result = [];
+  // 10 means the start index of data, 96 means 3 Pubkeys
+  for (let i = 15; i < len; i += 104) {
+    if (buffer[i] === 0) {
+      break;
+    }
+
+    result.push({
+      bsc: new TextDecoder().decode(buffer.slice(i, i + 40)),
+      user: new PublicKey(buffer.slice(i + 40, i + 72)),
+      token: new PublicKey(buffer.slice(i + 72, i + 104)),
+    });
+  }
+
+  return result;
+}
+
 module.exports = {
   createKeypairFromFile,
   getOrCreateAssociatedTokenAccount,
+  deserializeAccountInfo
 };

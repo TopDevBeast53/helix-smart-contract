@@ -5,10 +5,12 @@ const dotenv = require("dotenv").config().parsed;
 const {
   getOrCreateAssociatedTokenAccount,
   createKeypairFromFile,
+  deserializeAccountInfo,
 } = require("./util.js");
 
 const idl = require("../target/idl/solana_anchor.json");
 const compiledBridge = require("../target/idl/AuraNFTBridge.json");
+const programID = new PublicKey(dotenv.PROGRAM_ID);
 
 function establishConnection() {
   const network = dotenv.NETWORK;
@@ -34,7 +36,6 @@ async function establishPayer(connection) {
     commitment: "processed",
   };
 
-  const programID = new PublicKey(dotenv.PROGRAM_ID);
   const wallet = new Wallet(keyPair);
   const provider = new Provider(connection, wallet, defaultOpts);
   const program = new Program(idl, programID, provider);
@@ -43,13 +44,23 @@ async function establishPayer(connection) {
 }
 
 async function getQueuedEvents() {
-    Contract.setProvider(dotenv.RPC);
-    const contract = new Contract(compiledBridge.abi, dotenv.CONTRACT_ADDRESS);
-    return await contract.methods.getBridgeToSolanaEvents().call();
+  Contract.setProvider(dotenv.RPC);
+  const contract = new Contract(compiledBridge.abi, dotenv.CONTRACT_ADDRESS);
+  return await contract.methods.getBridgeToSolanaEvents().call();
+}
+
+async function getProgramOwnedNfts(connection) {
+  const [statePDA, stateBump] = await PublicKey.findProgramAddress(
+    [Buffer.from("test6")],
+    programID
+  );
+  const stateAccount = await connection.getAccountInfo(statePDA);
+  return deserializeAccountInfo(stateAccount.data);
 }
 
 module.exports = {
   establishConnection,
   establishPayer,
-  getQueuedEvents
+  getQueuedEvents,
+  getProgramOwnedNfts,
 };
