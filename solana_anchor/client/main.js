@@ -8,6 +8,7 @@ const {
   createKeypairFromFile,
 } = require("./util.js");
 const idl = require("../target/idl/solana_anchor.json");
+const compiledBridge = require("../target/idl/AuraNFTBridge.json");
 
 async function main() {
   const network = dotenv.parsed.NETWORK;
@@ -32,9 +33,14 @@ async function main() {
 
   const provider = new Provider(connection, wallet, defaultOpts);
   const program = new Program(idl, programID, provider);
-
-  const contract = new Contract();
-
+  Contract.setProvider(dotenv.parsed.RPC);
+  const contract = new Contract(
+    compiledBridge.abi,
+    dotenv.parsed.CONTRACT_ADDRESS
+  );
+    
+  bridged_events = await contract.methods.getBridgeToSolanaEvents().call();
+  console.debug("okay", bridged_events);
   // const senderATA = await getOrCreateAssociatedTokenAccount(wallet.publicKey, mint, wallet.publicKey, wallet.signTransaction)
   // const receiverATA = await getOrCreateAssociatedTokenAccount(wallet.publicKey, mint, programID, wallet.signTransaction);
 
