@@ -296,6 +296,7 @@ contract AuraNFT is ERC721EnumerableUpgradeable {
             uint remainAPToNextLvl,
             bool isStaked,
             uint createTimestamp,
+            string memory externalTokenID,
             string memory uri
         )
     {
@@ -308,6 +309,7 @@ contract AuraNFT is ERC721EnumerableUpgradeable {
         remainAPToNextLvl = _remainAPToNextLevel(_tokenId);
         isStaked = token.isStaked;
         createTimestamp = token.createTimestamp;
+        externalTokenID = token.externalTokenID;
         uri = tokenURI(_tokenId);
     }
 
