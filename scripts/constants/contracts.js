@@ -59,6 +59,10 @@ module.exports = {
         56: '',
         97: '0xdf10C205011bb36fda556d9C1521bCeAe0f32551',
     },
+    auraVault: {
+        56: '',
+        97: '0xf2fc3f8F3A0630C82f6d0837B713c186f9748f2e',
+    },
     auraNFTImpl: {
         56: '',
         97: '',
