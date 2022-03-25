@@ -33,15 +33,15 @@ module.exports = {
     },
     auraNFT: {
         56: '',
-        97: '0x3220C39B265C857d40F2b538C814b49e4f55A2EF',
+        97: '0x94DF97954ec548bd2Db1c9357982445A7245363d',
     },
     auraNFTChef: {
         56: '',
-        97: '0x58c9E40D374B7687004D2578b9344958b6632231',
+        97: '0x6cc6f1F6eD0d2A13635034Cf2A0E2934449d2C38',
     },
     auraNFTBridge: {
         56: '',
-        97: '0x5B624EBfA9b7d598A8d8c5DE7DB2d1a1646D7Ef7',
+        97: '0x4F807c0f58e88A2fEee50bC9dd80db0923e46002',
     },
     apToken: {
         56: '',

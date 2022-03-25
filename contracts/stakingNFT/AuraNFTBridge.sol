@@ -63,8 +63,8 @@ contract AuraNFTBridge is Ownable {
     /**
      * @dev This function is called ONLY by bridgers to bridge the token to BSC
      */
-    function bridgeFromSolana(string calldata externalTokenID, address owner, string calldata uri) onlyBridger external {
-        require(!_bridgedExternalTokenIDs[externalTokenID], "AuraNFTBridge: The token is already bridged");
+    function bridgeToBSC(string calldata externalTokenID, address owner, string calldata uri) onlyBridger external {
+        require(!_bridgedExternalTokenIDs[externalTokenID], "AuraNFTBridge: The token is already bridged to Binance");
         _bridgedExternalTokenIDs[externalTokenID] = true;
         _bridgedExternalTokenIDsPickUp[externalTokenID] = owner;
 
@@ -115,6 +115,8 @@ contract AuraNFTBridge is Ownable {
     function bridgeToSolana(uint256 tokenId, string calldata externalOwnerAddress) external {
         // Get externalTokenID
         string memory externalTokenID = auraNFT.getExternalTokenID(tokenId);
+        require(_bridgedExternalTokenIDs[externalTokenID], "AuraNFTBridge: already bridged to Solana");
+        require(_bridgedExternalTokenIDsPickUp[externalTokenID] == msg.sender, "AuraNFTBridge: Not owner");
 
         // Mark as unavailable on BSC.
         _bridgedExternalTokenIDs[externalTokenID] = false;
