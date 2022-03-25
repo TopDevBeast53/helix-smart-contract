@@ -1,4 +1,4 @@
 # AURA
-### The most efficient state-of-the-art DEX in DeFi
+### Aura DEX Backend and Smart Contracts
 
 Just go into contracts and the files are self-descriptive.
