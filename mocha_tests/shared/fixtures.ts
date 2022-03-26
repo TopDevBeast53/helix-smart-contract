@@ -21,7 +21,6 @@ import OracleFactory from '../../build/contracts/OracleFactory.json'
 import HelixNFT from '../../build/contracts/HelixNFT.json'
 import TokenTools from '../../build/contracts/TokenTools.json'
 import AutoHelix from '../../build/contracts/AutoHelix.json'
-import SmartChef from '../../build/contracts/SmartChef.json'
 import HelixChefNFT from '../../build/contracts/HelixChefNFT.json'
 import HelixLP from '../../build/contracts/HelixLP.json'
 import HelixNFTBridge from '../../build/contracts/HelixNFTBridge.json'
@@ -41,11 +40,6 @@ const chefDevPercent = initials.MASTERCHEF_DEV_PERCENT[env.network];
 
 const autoHelixTreasuryAddress = addresses.autoHelixTreasuryAddress[env.network];
 
-const smartChefStakingTokenAddress = addresses.BUSD[env.network];// token A which must be staked in this pool
-const smartChefStartBlock = initials.SMARTCHEF_START_BLOCK[env.network];
-const smartChefEndBlock = initials.SMARTCHEF_END_BLOCK[env.network];
-const smartChefRewardPerBlock = initials.SMARTCHEF_REWARD_PER_BLOCK[env.network]
-
 const helixNFTInitialHelixPoints = initials.NFT_INITIAL_HELIXPOINTS[env.network];
 const helixNFTLevelUpPercent = initials.NFT_LEVEL_UP_PERCENT[env.network];
 
@@ -55,7 +49,7 @@ const helixChefNFTLastRewardBlock = initials.NFTCHEF_LAST_REWARD_BLOCK[env.netwo
 
 const swapRewardsSplitRewardPercent = initials.SPLIT_REWARD_PERCENT[env.network]
 const swapRewardsHelixRewardPercent = initials.HELIX_REWARD_PERCENT[env.network]
-const swapRewardsApRewardPercent = initials.AP_REWARD_PERCENT[env.network]
+const swapRewardsApRewardPercent = initials.HP_REWARD_PERCENT[env.network]
 
 const overrides = {
     gasLimit: 9999999
@@ -77,7 +71,6 @@ interface FullExchangeFixture {
     refReg: Contract
     chef: Contract
     autoHelix: Contract
-    smartChef: Contract
     helixNFT: Contract
     helixChefNFT: Contract
     helixNFTBridge: Contract
@@ -142,19 +135,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         overrides
     )
 
-    // 7 deploy smart chef
-    const smartChef = await deployContract(wallet, SmartChef,
-        [
-            smartChefStakingTokenAddress,
-            helixToken.address,
-            smartChefRewardPerBlock,
-            smartChefStartBlock,
-            smartChefEndBlock
-        ], 
-        overrides
-    )
-
-    // 8 deploy helixNFT and helixChefNFT and register with other contracts
+    // 7 deploy helixNFT and helixChefNFT and register with other contracts
     const helixNFT = await deployContract(wallet, HelixNFT, [], overrides)
     await helixNFT.initialize("BASEURI", helixNFTInitialHelixPoints, helixNFTLevelUpPercent)
     const helixChefNFT = await deployContract(wallet, HelixChefNFT, [helixNFT.address, helixChefNFTLastRewardBlock], overrides)
@@ -163,16 +144,16 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await helixNFT.addStaker(helixChefNFT.address, overrides)
     await helixChefNFT.addNewRewardToken(helixToken.address, helixChefNFTStartBlock, helixChefNFTRewardPerBlock, overrides)
 
-    // 9 deploy helixNFTBridge, add a bridger, and register as minter
+    // 8 deploy helixNFTBridge, add a bridger, and register as minter
     const helixNFTBridge = await deployContract(wallet, HelixNFTBridge, [helixNFT.address], overrides)
     await helixNFTBridge.addBridger(wallet.address, overrides)
     await helixNFT.addMinter(helixNFTBridge.address, overrides)
 
 
-    // 10 deploy AP/LP token
+    // 9 deploy HP/LP token
     const helixLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
 
-    // 11 deploy swapRewards and register with other contracts
+    // 10 deploy swapRewards and register with other contracts
     const swapRewards = await deployContract(wallet, SwapRewards, [
             router.address,
             oracleFactory.address,
@@ -197,10 +178,10 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await externalFactory.setOracleFactory(externalOracleFactory.address)
     const externalRouter = await deployContract(wallet, HelixRouterV1, [externalFactory.address, WETH.address], overrides);
 
-    // 12 deploy migrator
+    // 11 deploy migrator
     const migrator = await deployContract(wallet, HelixMigrator, [router.address], overrides);
 
-    // 13 deploy token tools
+    // 12 deploy token tools
     const tokenTools = await deployContract(wallet, TokenTools, [], overrides)
 
     return {
@@ -219,7 +200,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         refReg,
         chef,
         autoHelix,
-        smartChef,
         helixNFT,
         helixChefNFT,
         helixNFTBridge,

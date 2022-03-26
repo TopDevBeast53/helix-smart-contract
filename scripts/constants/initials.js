@@ -86,8 +86,8 @@ module.exports = {
     // --------- Swap Rewards  --------- //
 
     SPLIT_REWARD_PERCENT : {
-        56: 500,        // 50% Helix and 50% Ap
-        97: 500,        // 50% Helix and 50% Ap
+        56: 500,        // 50% Helix and 50% Hp
+        97: 500,        // 50% Helix and 50% Hp
     },
     HELIX_REWARD_PERCENT : {
         56: 50,         // 5% Helix Rewards

@@ -62,20 +62,20 @@ describe('SwapRewards', () => {
     })
 
     async function initPairs(token0: Contract, token1: Contract) {
-        // initialize all the valid swap pairs for the tokens 0, 1, Ap, and Helix
+        // initialize all the valid swap pairs for the tokens 0, 1, Hp, and Helix
         const amount0 = expandTo18Decimals(900)
         const amount1 = expandTo18Decimals(300)
-        const apAmount = expandTo18Decimals(800)
+        const hpAmount = expandTo18Decimals(800)
         const helixAmount = expandTo18Decimals(700)
 
         await initPair(token0, amount0, token1, amount1)
-        await initPair(token0, amount0, helixLP, apAmount)
+        await initPair(token0, amount0, helixLP, hpAmount)
         await initPair(token0, amount0, helixToken, helixAmount)
 
-        await initPair(token1, amount1, helixLP, apAmount)
+        await initPair(token1, amount1, helixLP, hpAmount)
         await initPair(token1, amount1, helixToken, helixAmount)
 
-        await initPair(helixLP, apAmount, helixToken, helixAmount)
+        await initPair(helixLP, hpAmount, helixToken, helixAmount)
     }
 
     async function initPair(token0: Contract, amount0: BigNumber, token1: Contract, amount1: BigNumber) {
@@ -128,7 +128,7 @@ describe('SwapRewards', () => {
         expect(reserves1).to.be.above(0)
     })
 
-    it('swapRewards: pair (B, AP) is initialized', async () => {
+    it('swapRewards: pair (B, HP) is initialized', async () => {
         let pairAddress = await factory.getPair(tokenB.address, helixLP.address)
         let pair = new Contract(pairAddress, JSON.stringify(HelixPair.abi), provider).connect(wallet)
         let [reserves0, reserves1, ] = await pair.getReserves()
@@ -158,20 +158,20 @@ describe('SwapRewards', () => {
     })
 
     it('swapRewards: split amount is correct', async () => {
-        await swapRewards.setSplitRewardPercent(50)     // 5% Helix and 95% Ap
-        let [helixAmount0, apAmount0] = await swapRewards.splitReward(100)
+        await swapRewards.setSplitRewardPercent(50)     // 5% Helix and 95% Hp
+        let [helixAmount0, hpAmount0] = await swapRewards.splitReward(100)
         expect(helixAmount0).to.eq(5)
-        expect(apAmount0).to.eq(95)
+        expect(hpAmount0).to.eq(95)
 
-        await swapRewards.setSplitRewardPercent(150)    // 15% Helix and 85% Ap
-        let [helixAmount1, apAmount1] = await swapRewards.splitReward(100)
+        await swapRewards.setSplitRewardPercent(150)    // 15% Helix and 85% Hp
+        let [helixAmount1, hpAmount1] = await swapRewards.splitReward(100)
         expect(helixAmount1).to.eq(15)
-        expect(apAmount1).to.eq(85)
+        expect(hpAmount1).to.eq(85)
 
-        await swapRewards.setSplitRewardPercent(500)    // 50% Helix and 50% Ap
-        let [helixAmount2, apAmount2] = await swapRewards.splitReward(100)
+        await swapRewards.setSplitRewardPercent(500)    // 50% Helix and 50% Hp
+        let [helixAmount2, hpAmount2] = await swapRewards.splitReward(100)
         expect(helixAmount2).to.eq(50)
-        expect(apAmount2).to.eq(50)
+        expect(hpAmount2).to.eq(50)
     })
 
     it('swapRewards: swap tokens from swapRewards', async () => {
@@ -186,7 +186,7 @@ describe('SwapRewards', () => {
 
         // Store the previous values of interest before swap 
         const prevAccountHelix = await helixToken.balanceOf(account)
-        const prevAccountAp = await helixNFT.getAccumulatedAP(account)
+        const prevAccountHp = await helixNFT.getAccumulatedHP(account)
         const prevReferrerHelix = await refReg.balance(referrer)
 
         // Swap A for B and collect rewards
@@ -194,16 +194,16 @@ describe('SwapRewards', () => {
 
         // Get the updated values after swap
         const newAccountHelix = await helixToken.balanceOf(account)
-        const newAccountAp = await helixNFT.getAccumulatedAP(account)
+        const newAccountHp = await helixNFT.getAccumulatedHP(account)
         const newReferrerHelix = await refReg.balance(referrer)
 
         print(`account Helix was ${prevAccountHelix} and now is ${newAccountHelix}`)
-        print(`account Ap was ${prevAccountAp} and now is ${newAccountAp}`)
+        print(`account Hp was ${prevAccountHp} and now is ${newAccountHp}`)
         print(`referrer Helix was ${prevReferrerHelix} and now is ${newReferrerHelix}`)
 
         // We don't actually expect any rewards to accrue because a swap hasn't been triggered.
         expect(prevAccountHelix).to.be.at.most(newAccountHelix)
-        expect(prevAccountAp).to.be.at.most(newAccountAp)
+        expect(prevAccountHp).to.be.at.most(newAccountHp)
         expect(prevReferrerHelix).to.be.at.most(newReferrerHelix)
     })
 
@@ -213,7 +213,7 @@ describe('SwapRewards', () => {
 
         // Store the previous values of interest before swap 
         const prevAccountHelix = await helixToken.balanceOf(account)
-        const prevAccountAp = await helixNFT.getAccumulatedAP(account)
+        const prevAccountHp = await helixNFT.getAccumulatedHP(account)
         const prevReferrerHelix = await refReg.balance(referrer)
 
         // Swap twice and earn rewards
@@ -246,15 +246,15 @@ describe('SwapRewards', () => {
 
         // Get the updated values after swap
         const newAccountHelix = await helixToken.balanceOf(account)
-        const newAccountAp = await helixNFT.getAccumulatedAP(account)
+        const newAccountHp = await helixNFT.getAccumulatedHP(account)
         const newReferrerHelix = await refReg.balance(referrer)
 
         print(`account Helix was ${prevAccountHelix} and now is ${newAccountHelix}`)
-        print(`account Ap was ${prevAccountAp} and now is ${newAccountAp}`)
+        print(`account Hp was ${prevAccountHp} and now is ${newAccountHp}`)
         print(`referrer Helix was ${prevReferrerHelix} and now is ${newReferrerHelix}`)
 
         expect(prevAccountHelix).to.be.at.most(newAccountHelix)
-        expect(prevAccountAp).to.be.at.most(newAccountAp)
+        expect(prevAccountHp).to.be.at.most(newAccountHp)
         expect(prevReferrerHelix).to.be.at.most(newReferrerHelix)
     })
 

@@ -33,7 +33,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
     /**
      * @dev Accruers who can accrue HelixPoints to users
      *
-     * NOTE : Accruers would be SwapFeeRewardsWithAP contract
+     * NOTE : Accruers would be SwapRewards contract
      */
     EnumerableSet.AddressSet private _accruers;
 
@@ -98,7 +98,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
     // map token info by token ID : TokenId => Token
     mapping(uint256 => Token) private _tokens;
     // map accrued HelixPoints by user address : userAddress => accumulated HelixPoints amount
-    mapping(address => uint) private _accumulatedAP;
+    mapping(address => uint) private _accumulatedHP;
 
     // event when any tokenId gain HelixPoints 
     event AccrueHelixPoints(address indexed tokenId, uint amount);
@@ -251,25 +251,25 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
     }
     
     /**
-     * @dev Returns (HelixPoints amount to upgrade to the next level - current AP amount)
+     * @dev Returns (HelixPoints amount to upgrade to the next level - current HP amount)
      */
-    function remainAPToNextLevel(uint tokenId) external view returns (uint) {
-        return _remainAPToNextLevel(tokenId);
+    function remainHPToNextLevel(uint tokenId) external view returns (uint) {
+        return _remainHPToNextLevel(tokenId);
     }
 
     /**
      * @dev See accumulated HelixPoints amount by `user`
      */
-    function getAccumulatedAP(address user) external view returns (uint) {
-        return _accumulatedAP[user];
+    function getAccumulatedHP(address user) external view returns (uint) {
+        return _accumulatedHP[user];
     }
 
     /**
      * @dev Set accumulated HelixPoints amount of `user`
      */
-    function setAccumulatedAP(address user, uint amount) external onlyStaker {
+    function setAccumulatedHP(address user, uint amount) external onlyStaker {
         require(amount >= 0, "Wrong number of amount");
-        _accumulatedAP[user] = amount;
+        _accumulatedHP[user] = amount;
     }
 
     /**
@@ -280,7 +280,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
      */
     function accruePoints(address user, uint amount) external onlyAccruer {
         require(amount > 0, "Wrong number of amount");
-        _accumulatedAP[user] += amount;
+        _accumulatedHP[user] += amount;
         emit AccrueHelixPoints(user, amount);
     }
     
@@ -293,7 +293,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
             address tokenOwner,
             uint level,
             uint helixPoints,
-            uint remainAPToNextLvl,
+            uint remainHPToNextLvl,
             bool isStaked,
             uint createTimestamp,
             string memory externalTokenID,
@@ -306,7 +306,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
         tokenOwner = ownerOf(_tokenId);
         level = token.level;
         helixPoints = token.helixPoints;
-        remainAPToNextLvl = _remainAPToNextLevel(_tokenId);
+        remainHPToNextLvl = _remainHPToNextLevel(_tokenId);
         isStaked = token.isStaked;
         createTimestamp = token.createTimestamp;
         externalTokenID = token.externalTokenID;
@@ -383,8 +383,8 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
     /**
      * @dev External function to set HelixPointsTable
      */
-    function setHelixPointsTable(uint[7] calldata apTable) external onlyOwner {
-        _helixPointsTable = apTable;
+    function setHelixPointsTable(uint[7] calldata hpTable) external onlyOwner {
+        _helixPointsTable = hpTable;
     }
 
     /**
@@ -398,9 +398,9 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
     }
 
     /**
-     * @dev Returns (HelixPoints amount to upgrade to the next level - current AP amount)
+     * @dev Returns (HelixPoints amount to upgrade to the next level - current HP amount)
      */
-    function _remainAPToNextLevel(uint tokenId) internal view returns (uint) {
+    function _remainHPToNextLevel(uint tokenId) internal view returns (uint) {
         return _helixPointsTable[uint(_tokens[tokenId].level)] - _tokens[tokenId].helixPoints;
     }
 
