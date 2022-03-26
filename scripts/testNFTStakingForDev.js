@@ -8,10 +8,10 @@
  * Workflow:
  * 
  *      1. Initialize to set wallet & contract instance
- *      2. Check how many `AURA` tokens `AuraChefNFT` contract has
+ *      2. Check how many `HELIX` tokens `HelixChefNFT` contract has
  *      3. Mint to an user by minter
  *      4. Stake by the user
- *      5. Accrue AuraPoints to the user by accruer(TODO: accruer should be SwapFeeRewardsWithAP but now minter temporary)
+ *      5. Accrue HelixPoints to the user by accruer(TODO: accruer should be SwapFeeRewardsWithAP but now minter temporary)
  *      6. Boost NFT by the user
  */
 
@@ -23,7 +23,7 @@ const env = require("./constants/env")
  
 require("dotenv").config();
 
-let IAuraChefNFT, IAuraNFT, IAuraToken;
+let IHelixChefNFT, IHelixNFT, IHelixToken;
 let rpc, minter, user;
 let tx, nonce_minter, nonce_user;
 
@@ -35,29 +35,29 @@ async function init() {
     rpc =  new ethers.providers.JsonRpcProvider(env.rpcURL) ;
     minter = new ethers.Wallet( process.env.PRIVATE_KEY, rpc);
     user = new ethers.Wallet( process.env.USER_PRIVATE_KEY, rpc);
-    IAuraChefNFT = await ethers.getContractFactory("AuraChefNFT");
-    IAuraNFT = await ethers.getContractFactory("AuraNFT");
-    IAuraToken = await ethers.getContractFactory("AuraToken");
+    IHelixChefNFT = await ethers.getContractFactory("HelixChefNFT");
+    IHelixNFT = await ethers.getContractFactory("HelixNFT");
+    IHelixToken = await ethers.getContractFactory("HelixToken");
     console.log('-- initialize to set connections --');
     console.log('minter address:', minter.address);
     console.log('user address:', user.address);
 }
 
-async function getAuraTokenBalanceOf(address){
-    const AuraToken = IAuraToken.attach(contracts.auraToken[env.network]).connect(user);
-    let ret = await AuraToken.balanceOf(address);
+async function getHelixTokenBalanceOf(address){
+    const HelixToken = IHelixToken.attach(contracts.helixToken[env.network]).connect(user);
+    let ret = await HelixToken.balanceOf(address);
     return ret;
 }
 
 async function mintToUserByMinter() {
     console.log('-- Now minting --');
 
-    const AuraNFT = IAuraNFT.attach(contracts.auraNFT[env.network]).connect(minter);
+    const HelixNFT = IHelixNFT.attach(contracts.helixNFT[env.network]).connect(minter);
 
-    tx = await AuraNFT.mint(user.address, {nonce: nonce_minter, gasLimit: 3000000});//
+    tx = await HelixNFT.mint(user.address, {nonce: nonce_minter, gasLimit: 3000000});//
     await tx.wait();
 
-    tx = await AuraNFT.getTokenIdsOfOwner(user.address);
+    tx = await HelixNFT.getTokenIdsOfOwner(user.address);
     console.log('-- Successful to mint to user --');
     console.log('tokenids:', tx);
 }
@@ -66,23 +66,23 @@ async function stake() {
 
     console.log('-- Now staking --');
 
-    let prev = await getAuraTokenBalanceOf(user.address);
-    console.log('Previous `AURA` Balance of `user` is', prev.toString());
+    let prev = await getHelixTokenBalanceOf(user.address);
+    console.log('Previous `HELIX` Balance of `user` is', prev.toString());
 
-    const AuraNFT = IAuraNFT.attach(contracts.auraNFT[env.network]).connect(user);
-    const AuraChefNFT = IAuraChefNFT.attach(contracts.auraNFTChef[env.network]).connect(user);
+    const HelixNFT = IHelixNFT.attach(contracts.helixNFT[env.network]).connect(user);
+    const HelixChefNFT = IHelixChefNFT.attach(contracts.helixNFTChef[env.network]).connect(user);
     
-    const lastTokenId = await AuraNFT.getLastTokenId();
+    const lastTokenId = await HelixNFT.getLastTokenId();
 
     for (let tokenId = 1; tokenId <= lastTokenId; tokenId++) {
-        const token = await AuraNFT.getToken(tokenId);
+        const token = await HelixNFT.getToken(tokenId);
         if (token.tokenOwner == user.address && token.isStaked == false) {
             //start staking
-            tx = await AuraChefNFT.stake([tokenId], {nonce: nonce_user, gasLimit: 3000000});
+            tx = await HelixChefNFT.stake([tokenId], {nonce: nonce_user, gasLimit: 3000000});
             await tx.wait();
 
-            let now = await getAuraTokenBalanceOf(user.address);
-            console.log('Now You have received', (now - prev).toString(), 'AURA');
+            let now = await getHelixTokenBalanceOf(user.address);
+            console.log('Now You have received', (now - prev).toString(), 'HELIX');
             return tokenId;
         }
     }
@@ -91,26 +91,26 @@ async function stake() {
 
 async function withdrawReward() {
     console.log('-- Now withdraw --')
-    const AuraChefNFT = IAuraChefNFT.attach(contracts.auraNFTChef[env.network]).connect(user);
+    const HelixChefNFT = IHelixChefNFT.attach(contracts.helixNFTChef[env.network]).connect(user);
     
-    let prev = await getAuraTokenBalanceOf(user.address);
-    console.log('Previous `AURA` Balance of `user` is ', prev.toString());
+    let prev = await getHelixTokenBalanceOf(user.address);
+    console.log('Previous `HELIX` Balance of `user` is ', prev.toString());
 
-    tx = await AuraChefNFT.withdrawRewardToken({nonce: ++nonce_user, gasLimit: 3000000});
+    tx = await HelixChefNFT.withdrawRewardToken({nonce: ++nonce_user, gasLimit: 3000000});
     await tx.wait();
 
-    let now = await getAuraTokenBalanceOf(user.address);
+    let now = await getHelixTokenBalanceOf(user.address);
     console.log('Now You have received ', (now - prev).toString());
 }
 
-async function accrueAuraPoints() {
+async function accrueHelixPoints() {
 
-    const AuraNFT = IAuraNFT.attach(contracts.auraNFT[env.network]).connect(minter);
+    const HelixNFT = IHelixNFT.attach(contracts.helixNFT[env.network]).connect(minter);
 
     console.log('-- Adding accruer --');
-    const _isAccruer = await AuraNFT.isAccruer(minter.address);
+    const _isAccruer = await HelixNFT.isAccruer(minter.address);
     if (!_isAccruer) {
-        tx = await AuraNFT.addAccruer(minter.address, {nonce: ++nonce_minter, gasLimit: 3000000});
+        tx = await HelixNFT.addAccruer(minter.address, {nonce: ++nonce_minter, gasLimit: 3000000});
         const ret = await tx.wait();
         if(ret)
             console.log('Added accruer:', minter.address);
@@ -120,39 +120,39 @@ async function accrueAuraPoints() {
 
     console.log('-- Now accrue --');
 
-    const prevAP = await AuraNFT.getAccumulatedAP(user.address);
-    console.log('Previous AuraPoints balance of `user` is', prevAP.toString());
+    const prevAP = await HelixNFT.getAccumulatedAP(user.address);
+    console.log('Previous HelixPoints balance of `user` is', prevAP.toString());
 
-    console.log('- Adding AuraPoints 15 ether to `user` -');
-    tx = await AuraNFT.accruePoints(user.address, expandTo18Decimals(15), {nonce: ++nonce_minter, gasLimit: 3000000});//
+    console.log('- Adding HelixPoints 15 ether to `user` -');
+    tx = await HelixNFT.accruePoints(user.address, expandTo18Decimals(15), {nonce: ++nonce_minter, gasLimit: 3000000});//
     await tx.wait();
 
-    const curAP = await AuraNFT.getAccumulatedAP(user.address);
-    console.log('Current AuraPoints balance of `user` is', curAP.toString());
+    const curAP = await HelixNFT.getAccumulatedAP(user.address);
+    console.log('Current HelixPoints balance of `user` is', curAP.toString());
 }
 
 async function boostNFT(tokenId) {
 
     console.log('-- Now boosting NFT --');
 
-    const AuraChefNFT = IAuraChefNFT.attach(contracts.auraNFTChef[env.network]).connect(user);
-    const AuraNFT = IAuraNFT.attach(contracts.auraNFT[env.network]).connect(user);
+    const HelixChefNFT = IHelixChefNFT.attach(contracts.helixNFTChef[env.network]).connect(user);
+    const HelixNFT = IHelixNFT.attach(contracts.helixNFT[env.network]).connect(user);
 
-    const prevAP = await AuraNFT.getAccumulatedAP(user.address);
-    console.log('Previous AuraPoints balance of `user` is', prevAP.toString());
+    const prevAP = await HelixNFT.getAccumulatedAP(user.address);
+    console.log('Previous HelixPoints balance of `user` is', prevAP.toString());
 
-    const prevLevel = await AuraNFT.getLevel(tokenId);
+    const prevLevel = await HelixNFT.getLevel(tokenId);
     console.log('Previous tokenId', tokenId, '`s level is', prevLevel.toString());
     
 
     console.log('- Boosting NFT id', tokenId, 'with', prevAP.toString(), 'amount by user -');
-    tx = await AuraChefNFT.boostAuraNFT(tokenId, prevAP, {nonce: ++nonce_user, gasLimit: 3000000})
+    tx = await HelixChefNFT.boostHelixNFT(tokenId, prevAP, {nonce: ++nonce_user, gasLimit: 3000000})
     await tx.wait();
 
-    const curAP = await AuraNFT.getAccumulatedAP(user.address);
-    console.log('Current AuraPoints balance of `user` is', curAP.toString());
+    const curAP = await HelixNFT.getAccumulatedAP(user.address);
+    console.log('Current HelixPoints balance of `user` is', curAP.toString());
 
-    const curLevel = await AuraNFT.getLevel(tokenId);
+    const curLevel = await HelixNFT.getLevel(tokenId);
     console.log('Current tokenId', tokenId, '`s level is', curLevel.toString());
 
 }
@@ -165,14 +165,14 @@ async function main() {
     //get nonce of minter
     nonce_minter = await network.provider.send(`eth_getTransactionCount`, [minter.address, "latest"]);
 
-    // check how many `AURA` tokens `AuraChefNFT` has
-    let ret = await getAuraTokenBalanceOf(contracts.auraNFTChef[env.network]);
+    // check how many `HELIX` tokens `HelixChefNFT` has
+    let ret = await getHelixTokenBalanceOf(contracts.helixNFTChef[env.network]);
     if (parseInt(ret.toString()) < 100000) {
-        console.log('AuraChefNFT has not enough `AURA` tokens, now balance is', ret.toString());
-        console.log('You should send `AURA` more than 100000 wei to AuraChefNFT address');
+        console.log('HelixChefNFT has not enough `HELIX` tokens, now balance is', ret.toString());
+        console.log('You should send `HELIX` more than 100000 wei to HelixChefNFT address');
         return;
     }
-    console.log('`AURA` balance of AuraChefNFT is', ret.toString());
+    console.log('`HELIX` balance of HelixChefNFT is', ret.toString());
 
     //mint by minter
     await mintToUserByMinter();
@@ -188,8 +188,8 @@ async function main() {
         console.log('Error to minting!');
     }
 
-    //accrue AuraPoints by accruer(TODO: accruer should be SwapFeeRewardsWithAP but now minter in temporary)
-    await accrueAuraPoints();
+    //accrue HelixPoints by accruer(TODO: accruer should be SwapFeeRewardsWithAP but now minter in temporary)
+    await accrueHelixPoints();
 
     //boost NFT
     if (stakedTokedId != 0) {

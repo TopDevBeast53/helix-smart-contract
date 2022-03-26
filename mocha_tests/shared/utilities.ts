@@ -9,7 +9,7 @@ import {
   toUtf8Bytes,
   solidityPack
 } from 'legacy-ethers/utils'
-import AuraPair from '../../build/contracts/AuraPair.json'
+import HelixPair from '../../build/contracts/HelixPair.json'
 
 const overrides = {
     gasLimit: 99999999999
@@ -120,7 +120,7 @@ export async function createAndGetPair(
 ) {
     await factory.createPair(tokenA.address, tokenB.address, overrides)
     const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
-    const pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
+    const pair = new Contract(pairAddress, JSON.stringify(HelixPair.abi), provider).connect(wallet)
 
     const token0Address = (await pair.token0()).address
     const token0 = tokenA.address === token0Address ? tokenA : tokenB

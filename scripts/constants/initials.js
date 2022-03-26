@@ -29,9 +29,9 @@ module.exports = {
         56: 0,
         97: 0,
     },
-    MASTERCHEF_AURA_TOKEN_REWARD_PER_BLOCK : {
-        56: '40000000000000000000', // 40 * 10e18 -> 40 aura tokens per block 
-        97: '40000000000000000000', // 40 * 10e18 -> 40 aura tokens per block 
+    MASTERCHEF_HELIX_TOKEN_REWARD_PER_BLOCK : {
+        56: '40000000000000000000', // 40 * 10e18 -> 40 helix tokens per block 
+        97: '40000000000000000000', // 40 * 10e18 -> 40 helix tokens per block 
     },
     MASTERCHEF_STAKING_PERCENT : {
         56: 999000, // -> 99.9% of all farm rewards will go the users
@@ -56,14 +56,14 @@ module.exports = {
     },
     SMARTCHEF_REWARD_PER_BLOCK : {
         56: '1000000000000000000', 
-        97: '1000000000000000000', // currently this value means 1 AURA per block
+        97: '1000000000000000000', // currently this value means 1 HELIX per block
     },
     
-    // --------- Aura NFT & Chef --------- //
+    // --------- Helix NFT & Chef --------- //
 
-    NFT_INITIAL_AURAPOINTS : {
+    NFT_INITIAL_HELIXPOINTS : {
         56: '1000000000000000000', 
-        97: '1000000000000000000', // currently this value means 1 AURAPOINTS
+        97: '1000000000000000000', // currently this value means 1 HELIXPOINTS
     },
     NFT_LEVEL_UP_PERCENT : {
         56: 10,
@@ -80,21 +80,37 @@ module.exports = {
     },
     NFTCHEF_REWARD_PER_BLOCK : {
         56: '1000000000000000000', 
-        97: '1000000000000000000', // currently this value means 1 AURA per block
+        97: '1000000000000000000', // currently this value means 1 HELIX per block
     },
 
     // --------- Swap Rewards  --------- //
 
     SPLIT_REWARD_PERCENT : {
-        56: 500,        // 50% Aura and 50% Ap
-        97: 500,        // 50% Aura and 50% Ap
+        56: 500,        // 50% Helix and 50% Hp
+        97: 500,        // 50% Helix and 50% Hp
     },
-    AURA_REWARD_PERCENT : {
-        56: 50,         // 5% Aura Rewards
-        97: 50,         // 5% Aura Rewards
+    HELIX_REWARD_PERCENT : {
+        56: 50,         // 5% Helix Rewards
+        97: 50,         // 5% Helix Rewards
     },
-    AP_REWARD_PERCENT : {
-        56: 50,         // 5% Ap Rewards
-        97: 50,         // 5% Ap Rewards
+    HP_REWARD_PERCENT : {
+        56: 50,         // 5% HP Rewards
+        97: 50,         // 5% HP Rewards
     },
+    
+    // --------- Helix Vault  --------- //
+    VAULT_REWARD_PER_BLOCK : {
+        56: '1000000000000000000',
+        97: '1000000000000000000',
+    },
+    //Reward will calculate from this blocknum
+    VAULT_START_BLOCK : {
+        56: 0, 
+        97: 0,
+    },
+    VAULT_BONUS_END_BLOCK : {
+        56: 1000000000, 
+        97: 1000000000, // currently this value means 1 HELIX per block
+    },
+
 }

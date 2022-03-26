@@ -3,23 +3,23 @@
 // swapFee interaction script that doesn't mean they must be replaced. Hence, a
 // separate file for the interactSwapFee script.
 module.exports = {
-    auraToken: {
+    helixToken: {
         56: '',
-        97: '0xE75cca98b0274b7A6c1C6728870497eE1b3170e7',       // use Test Token D instead since transferring BEP20 to AuraPair fails
+        97: '0xE75cca98b0274b7A6c1C6728870497eE1b3170e7',       // use Test Token D instead since transferring BEP20 to HelixPair fails
     },
-    auraNFT: {
+    helixNFT: {
         56: '',
         97: '0x8b2b085339D11DcF0FA0aaD985C30f82eb49a880',
     },
-    auraLP: {
+    helixLP: {
         56: '',
-        97: '0x0B8c4BBC3C63Cc96AF95e250e1B83E9Da7c9830F',       // using Test Token C instead since transfer to AuraPair fails
+        97: '0x0B8c4BBC3C63Cc96AF95e250e1B83E9Da7c9830F',       // using Test Token C instead since transfer to HelixPair fails
     },
-    auraNFTImpl: {
+    helixNFTImpl: {
         56: '',
         97: '0x1a90de3849072ff46eca70cf714eac45e7a27304',
     },
-    auraNFTChef: {
+    helixNFTChef: {
         56: '',
         97: '0x6C57410c639c6A10208185853b8990d32dcF6d14',
     },

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "../tokens/AuraToken.sol";
+import "../tokens/HelixToken.sol";
 import "../interfaces/IMasterChef.sol";
 import "../interfaces/IMigratorChef.sol";
 import "../referrals/ReferralRegister.sol";
@@ -9,10 +9,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
-// MasterChef is the master of AuraToken. He can make AuraToken and he is a fair guy.
+// MasterChef is the master of HelixToken. He can make HelixToken and he is a fair guy.
 //
 // Note that it's ownable and the owner wields tremendous power. The ownership
-// will be transferred to a governance smart contract once AuraToken is sufficiently
+// will be transferred to a governance smart contract once HelixToken is sufficiently
 // distributed and the community can show to govern itself.
 //
 // Have fun reading it. Hopefully it's bug-free. God bless.
@@ -24,13 +24,13 @@ contract MasterChef is Ownable, IMasterChef {
         uint256 amount; // How many LP tokens the user has provided.
         uint256 rewardDebt; // Reward debt. See explanation below.
         //
-        // We do some fancy math here. Basically, any point in time, the amount of AuraTokens
+        // We do some fancy math here. Basically, any point in time, the amount of HelixTokens
         // entitled to a user but is pending to be distributed is:
         //
-        //   pending reward = (user.amount * pool.accAuraTokenPerShare) - user.rewardDebt
+        //   pending reward = (user.amount * pool.accHelixTokenPerShare) - user.rewardDebt
         //
         // Whenever a user deposits or withdraws LP tokens to a pool. Here's what happens:
-        //   1. The pool's `accAuraTokenPerShare` (and `lastRewardBlock`) gets updated.
+        //   1. The pool's `accHelixTokenPerShare` (and `lastRewardBlock`) gets updated.
         //   2. User receives the pending reward sent to his/her address.
         //   3. User's `amount` gets updated.
         //   4. User's `rewardDebt` gets updated.
@@ -38,12 +38,12 @@ contract MasterChef is Ownable, IMasterChef {
     // Info of each pool.
     struct PoolInfo {
         IERC20 lpToken; // Address of LP token contract.
-        uint256 allocPoint; // How many allocation points assigned to this pool. AuraTokens to distribute per block.
-        uint256 lastRewardBlock; // Last block number that AuraTokens distribution occurs.
-        uint256 accAuraTokenPerShare; // Accumulated AuraTokens per share, times 1e12. See below.
+        uint256 allocPoint; // How many allocation points assigned to this pool. HelixTokens to distribute per block.
+        uint256 lastRewardBlock; // Last block number that HelixTokens distribution occurs.
+        uint256 accHelixTokenPerShare; // Accumulated HelixTokens per share, times 1e12. See below.
     }
-    // The AuraToken TOKEN!
-    AuraToken public auraToken;
+    // The HelixToken TOKEN!
+    HelixToken public helixToken;
     //Pools, Farms, Dev, Refs percent decimals
     uint256 public percentDec = 1000000;
     //Pools and Farms percent from token per block
@@ -54,9 +54,9 @@ contract MasterChef is Ownable, IMasterChef {
     address public devaddr;
     // Last block then develeper withdraw dev and ref fee
     uint256 public lastBlockDevWithdraw;
-    // AuraToken tokens created per block.
-    uint256 public AuraTokenPerBlock;
-    // Bonus muliplier for early AuraToken makers.
+    // HelixToken tokens created per block.
+    uint256 public HelixTokenPerBlock;
+    // Bonus muliplier for early HelixToken makers.
     uint256 public BONUS_MULTIPLIER = 1;
     // The migrator contract. It has a lot of power. Can only be set through governance (owner).
     IMigratorChef public migrator;
@@ -68,10 +68,10 @@ contract MasterChef is Ownable, IMasterChef {
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
     // Total allocation poitns. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
-    // The block number when AuraToken mining starts.
+    // The block number when HelixToken mining starts.
     uint256 public startBlock;
-    // Deposited amount AuraToken in MasterChef
-    uint256 public depositedAura;
+    // Deposited amount HelixToken in MasterChef
+    uint256 public depositedHelix;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
@@ -82,17 +82,17 @@ contract MasterChef is Ownable, IMasterChef {
     );
 
     constructor(
-        AuraToken _AuraToken,
+        HelixToken _HelixToken,
         address _devaddr,
-        uint256 _AuraTokenPerBlock,
+        uint256 _HelixTokenPerBlock,
         uint256 _startBlock,
         uint256 _stakingPercent,
         uint256 _devPercent,
         ReferralRegister _referralRegister
     ) {
-        auraToken = _AuraToken;
+        helixToken = _HelixToken;
         devaddr = _devaddr;
-        AuraTokenPerBlock = _AuraTokenPerBlock;
+        HelixTokenPerBlock = _HelixTokenPerBlock;
         startBlock = _startBlock;
         stakingPercent = _stakingPercent;
         devPercent = _devPercent;
@@ -101,10 +101,10 @@ contract MasterChef is Ownable, IMasterChef {
         
         // staking pool
         poolInfo.push(PoolInfo({
-            lpToken: _AuraToken,
+            lpToken: _HelixToken,
             allocPoint: 1000,
             lastRewardBlock: startBlock,
-            accAuraTokenPerShare: 0
+            accHelixTokenPerShare: 0
         }));
 
         totalAllocPoint = 1000;
@@ -121,8 +121,8 @@ contract MasterChef is Ownable, IMasterChef {
     function withdrawDevAndRefFee() public{
         require(lastBlockDevWithdraw < block.number, 'wait for new block');
         uint256 multiplier = getMultiplier(lastBlockDevWithdraw, block.number);
-        uint256 AuraTokenReward = multiplier * AuraTokenPerBlock;
-        auraToken.mint(devaddr, (AuraTokenReward * devPercent) / (percentDec));
+        uint256 HelixTokenReward = multiplier * HelixTokenPerBlock;
+        helixToken.mint(devaddr, (HelixTokenReward * devPercent) / (percentDec));
         lastBlockDevWithdraw = block.number;
     }
 
@@ -139,12 +139,12 @@ contract MasterChef is Ownable, IMasterChef {
                 lpToken: _lpToken,
                 allocPoint: _allocPoint,
                 lastRewardBlock: lastRewardBlock,
-                accAuraTokenPerShare: 0
+                accHelixTokenPerShare: 0
             })
         );
     }
 
-    // Update the given pool's AuraToken allocation point. Can only be called by the owner.
+    // Update the given pool's HelixToken allocation point. Can only be called by the owner.
     function set( uint256 _pid, uint256 _allocPoint, bool _withUpdate) public onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
@@ -180,23 +180,23 @@ contract MasterChef is Ownable, IMasterChef {
         refRegister = ReferralRegister(_address);
     }
 
-    // View function to see pending AuraTokens on frontend.
-    function pendingAuraToken(uint256 _pid, address _user) external view returns (uint256){
+    // View function to see pending HelixTokens on frontend.
+    function pendingHelixToken(uint256 _pid, address _user) external view returns (uint256){
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
-        uint256 accAuraTokenPerShare = pool.accAuraTokenPerShare;
+        uint256 accHelixTokenPerShare = pool.accHelixTokenPerShare;
         uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         if (_pid == 0){
-            lpSupply = depositedAura;
+            lpSupply = depositedHelix;
         }
 
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-            uint256 AuraTokenReward = multiplier * (AuraTokenPerBlock) * (pool.allocPoint) / (totalAllocPoint) * (stakingPercent) / (percentDec);
-            accAuraTokenPerShare = accAuraTokenPerShare + (AuraTokenReward * (1e12) / (lpSupply));
+            uint256 HelixTokenReward = multiplier * (HelixTokenPerBlock) * (pool.allocPoint) / (totalAllocPoint) * (stakingPercent) / (percentDec);
+            accHelixTokenPerShare = accHelixTokenPerShare + (HelixTokenReward * (1e12) / (lpSupply));
         }
 
-        uint256 pending = user.amount * (accAuraTokenPerShare) / (1e12) - (user.rewardDebt);
+        uint256 pending = user.amount * (accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
         return pending;
     }
 
@@ -216,92 +216,92 @@ contract MasterChef is Ownable, IMasterChef {
         }
         uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         if (_pid == 0){
-            lpSupply = depositedAura;
+            lpSupply = depositedHelix;
         }
         if (lpSupply <= 0) {
             pool.lastRewardBlock = block.number;
             return;
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-        uint256 AuraTokenReward = multiplier * (AuraTokenPerBlock) * (pool.allocPoint) / (totalAllocPoint) * (stakingPercent) / (percentDec);
-        auraToken.mint(address(this), AuraTokenReward);
-        pool.accAuraTokenPerShare = pool.accAuraTokenPerShare + (AuraTokenReward * (1e12) / (lpSupply));
+        uint256 HelixTokenReward = multiplier * (HelixTokenPerBlock) * (pool.allocPoint) / (totalAllocPoint) * (stakingPercent) / (percentDec);
+        helixToken.mint(address(this), HelixTokenReward);
+        pool.accHelixTokenPerShare = pool.accHelixTokenPerShare + (HelixTokenReward * (1e12) / (lpSupply));
         pool.lastRewardBlock = block.number;
     }
 
-    // Deposit LP tokens to MasterChef for AuraToken allocation.
+    // Deposit LP tokens to MasterChef for HelixToken allocation.
     function deposit(uint256 _pid, uint256 _amount) public {
 
-        require (_pid != 0, 'deposit AuraToken by staking');
+        require (_pid != 0, 'deposit HelixToken by staking');
 
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
         if (user.amount > 0) {
-            uint256 pending = user.amount * (pool.accAuraTokenPerShare) / (1e12) - (user.rewardDebt);
-            safeAuraTokenTransfer(msg.sender, pending);
+            uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
+            safeHelixTokenTransfer(msg.sender, pending);
         }
         TransferHelper.safeTransferFrom(address(pool.lpToken), address(msg.sender), address(this), _amount);
         user.amount = user.amount + (_amount);
-        user.rewardDebt = user.amount * (pool.accAuraTokenPerShare) / (1e12);
+        user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
         emit Deposit(msg.sender, _pid, _amount);
     }
 
     // Withdraw LP tokens from MasterChef.
     function withdraw(uint256 _pid, uint256 _amount) public {
 
-        require (_pid != 0, 'withdraw AuraToken by unstaking');
+        require (_pid != 0, 'withdraw HelixToken by unstaking');
 
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool(_pid);
-        uint256 pending = user.amount * (pool.accAuraTokenPerShare) / (1e12) - (user.rewardDebt);
-        safeAuraTokenTransfer(msg.sender, pending);
+        uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
+        safeHelixTokenTransfer(msg.sender, pending);
         user.amount = user.amount - (_amount);
-        user.rewardDebt = user.amount * (pool.accAuraTokenPerShare) / (1e12);
+        user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
         TransferHelper.safeTransfer(address(pool.lpToken), address(msg.sender), _amount);
         refRegister.recordStakingRewardWithdrawal(msg.sender, pending);
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
-    // Stake AuraToken tokens to MasterChef
+    // Stake HelixToken tokens to MasterChef
     function enterStaking(uint256 _amount) public {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
         updatePool(0);
         if (user.amount > 0) {
-            uint256 pending = user.amount * (pool.accAuraTokenPerShare) / (1e12) - (user.rewardDebt);
+            uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
             if(pending > 0) {
-                safeAuraTokenTransfer(msg.sender, pending);
+                safeHelixTokenTransfer(msg.sender, pending);
             }
         }
         if(_amount > 0) {
             TransferHelper.safeTransferFrom(address(pool.lpToken), address(msg.sender), address(this), _amount);
             user.amount = user.amount + (_amount);
-            depositedAura = depositedAura + (_amount);
+            depositedHelix = depositedHelix + (_amount);
         }
-        user.rewardDebt = user.amount * (pool.accAuraTokenPerShare) / (1e12);
+        user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
         emit Deposit(msg.sender, 0, _amount);
     }
 
-    // Withdraw AuraToken tokens from STAKING.
+    // Withdraw HelixToken tokens from STAKING.
     function leaveStaking(uint256 _amount) public {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool(0);
-        uint256 pending = user.amount * (pool.accAuraTokenPerShare) / (1e12) - (user.rewardDebt);
+        uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
         if(pending > 0) {
-            safeAuraTokenTransfer(msg.sender, pending);
+            safeHelixTokenTransfer(msg.sender, pending);
             refRegister.recordStakingRewardWithdrawal(msg.sender, pending);
         }
         if(_amount > 0) {
             user.amount = user.amount - (_amount);
             TransferHelper.safeTransfer(address(pool.lpToken), address(msg.sender), _amount);
-            depositedAura = depositedAura - (_amount);
+            depositedHelix = depositedHelix - (_amount);
         }
-        user.rewardDebt = user.amount * (pool.accAuraTokenPerShare) / (1e12);
+        user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
         emit Withdraw(msg.sender, 0, _amount);
     }
 
@@ -316,13 +316,13 @@ contract MasterChef is Ownable, IMasterChef {
         user.rewardDebt = 0;
     }
 
-    // Safe AuraToken transfer function, just in case if rounding error causes pool to not have enough AuraTokens.
-    function safeAuraTokenTransfer(address _to, uint256 _amount) internal {
-        uint256 AuraTokenBal = auraToken.balanceOf(address(this));
-        if (_amount > AuraTokenBal) {
-            auraToken.transfer(_to, AuraTokenBal);
+    // Safe HelixToken transfer function, just in case if rounding error causes pool to not have enough HelixTokens.
+    function safeHelixTokenTransfer(address _to, uint256 _amount) internal {
+        uint256 HelixTokenBal = helixToken.balanceOf(address(this));
+        if (_amount > HelixTokenBal) {
+            helixToken.transfer(_to, HelixTokenBal);
         } else {
-            auraToken.transfer(_to, _amount);
+            helixToken.transfer(_to, _amount);
         }
     }
 
@@ -330,9 +330,9 @@ contract MasterChef is Ownable, IMasterChef {
         devaddr = _devaddr;
     }
 
-    function updateAuraPerBlock(uint256 newAmount) public onlyOwner {
-        require(newAmount <= 40 * 1e18, 'Max per block 40 AuraToken');
-        require(newAmount >= 1e17, 'Min per block 0.1 AuraToken');
-        AuraTokenPerBlock = newAmount;
+    function updateHelixPerBlock(uint256 newAmount) public onlyOwner {
+        require(newAmount <= 40 * 1e18, 'Max per block 40 HelixToken');
+        require(newAmount >= 1e17, 'Min per block 0.1 HelixToken');
+        HelixTokenPerBlock = newAmount;
     }
 }

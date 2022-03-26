@@ -12,12 +12,12 @@ const env = require('./constants/env')
 
 const factoryAddress = contracts.factory[env.network]
 const routerAddress = contracts.router[env.network]
-const targetTokenAddress = contracts.auraToken[env.network]    // Note that targetTokenAddress == auraTokenAddress
-const targetAPTokenAddress = contracts.auraLP[env.network]     // Note that targetAPTokenAddress == testTokenCAddress
+const targetTokenAddress = contracts.helixToken[env.network]    // Note that targetTokenAddress == helixTokenAddress
+const targetHPTokenAddress = contracts.helixLP[env.network]     // Note that targetHPTokenAddress == testTokenCAddress
 const oracleAddress = contracts.oracle[env.network]
 const refRegAddress = contracts.refReg[env.network]
-const auraTokenAddress = contracts.auraToken[env.network]
-const auraNFTAddress = contracts.auraNFT[env.network]
+const helixTokenAddress = contracts.helixToken[env.network]
+const helixNFTAddress = contracts.helixNFT[env.network]
 const swapFeeAddress = contracts.swapFee[env.network]
 const wbnbTokenAddress = contracts.WBNB[env.network]
 const testTokenAAddress = contracts.testTokenA[env.network]
@@ -40,10 +40,10 @@ let factory
 let oracle
 let tokenA
 let tokenB
-let targetAPToken
+let targetHPToken
 let targetToken
-let auraNFT
-let auraToken
+let helixNFT
+let helixToken
 let wbnbToken
 let refReg
 let tx
@@ -59,7 +59,7 @@ async function main() {
     await loadContracts()
 
     // make all preparations for swapping token0 for token1
-    await initContracts(tokenA, auraToken)
+    await initContracts(tokenA, helixToken)
 
     // Swap the tokens.
     let amount = 1000
@@ -90,15 +90,15 @@ async function loadContracts() {
     print('load contracts:')
 
     print(`load factory: ${factoryAddress}`)
-    const IFactory = await ethers.getContractFactory('AuraFactory')
+    const IFactory = await ethers.getContractFactory('HelixFactory')
     factory = await IFactory.attach(factoryAddress).connect(owner)
 
-    print("CANCEL EXECUTION IF INIT CODE HASH DOESN'T MATCH VERSION IN AURA LIBRARY")
+    print("CANCEL EXECUTION IF INIT CODE HASH DOESN'T MATCH VERSION IN HELIX LIBRARY")
     initCodeHash = await factory.INIT_CODE_HASH()
     print(`factory INIT CODE HASH is ${initCodeHash}`)
 
     print(`load router: ${routerAddress}`)
-    const IRouter = await ethers.getContractFactory('AuraRouterV1')
+    const IRouter = await ethers.getContractFactory('HelixRouterV1')
     router = await IRouter.attach(routerAddress).connect(owner)
 
     print(`load swapFee: ${swapFeeAddress}`)
@@ -113,9 +113,9 @@ async function loadContracts() {
     const IRefReg= await ethers.getContractFactory('ReferralRegister')
     refReg = await IRefReg.attach(refRegAddress).connect(owner)
 
-    print(`load auraNFT: ${auraNFTAddress}`)
-    const IAuraNFT= await ethers.getContractFactory('AuraNFT')
-    auraNFT = await IAuraNFT.attach(auraNFTAddress).connect(owner)
+    print(`load helixNFT: ${helixNFTAddress}`)
+    const IHelixNFT= await ethers.getContractFactory('HelixNFT')
+    helixNFT = await IHelixNFT.attach(helixNFTAddress).connect(owner)
 
     print(`load tokenA: ${testTokenAAddress}`)
     const ITestToken = await ethers.getContractFactory('TestToken')
@@ -125,18 +125,18 @@ async function loadContracts() {
     // ITestToken already loaded
     tokenB = await ITestToken.attach(testTokenBAddress).connect(owner)
 
-    print(`load target AP token: ${targetAPTokenAddress}`)
+    print(`load target AP token: ${targetHPTokenAddress}`)
     // ITestToken already loaded
-    // Using ITestToken since AuraLP fails to transfer
-    targetAPToken = await ITestToken.attach(targetAPTokenAddress).connect(owner)
+    // Using ITestToken since HelixLP fails to transfer
+    targetHPToken = await ITestToken.attach(targetHPTokenAddress).connect(owner)
 
     print(`load target token: ${targetTokenAddress}`)
     // ITestToken already loaded
     targetToken = await ITestToken.attach(targetTokenAddress).connect(owner)
 
-    print(`load AURA token: ${auraTokenAddress}`)
+    print(`load HELIX token: ${helixTokenAddress}`)
     // ITestToken already loaded
-    auraToken = await ITestToken.attach(auraTokenAddress).connect(owner)
+    helixToken = await ITestToken.attach(helixTokenAddress).connect(owner)
 
     print(`load WBNB token: ${wbnbTokenAddress}`)
     // ITestToken already loaded
@@ -177,11 +177,11 @@ async function initContracts(token0, token1) {
     */
 
     // make sure owner is an accruer
-    if (!(await auraNFT.isAccruer(owner.address))) {
-        print(`registering owner ${short(owner.address)} as accruer with auraNFT ${short(auraNFT.address)}`)
-        await auraNFT.addAccruer(owner.address, { gasLimit })
+    if (!(await helixNFT.isAccruer(owner.address))) {
+        print(`registering owner ${short(owner.address)} as accruer with helixNFT ${short(helixNFT.address)}`)
+        await helixNFT.addAccruer(owner.address, { gasLimit })
     } else {
-        print('owner is registered as accruer with auraNFT\n')
+        print('owner is registered as accruer with helixNFT\n')
     }
 
     // Initialize the SwapFee and it's variables.
@@ -222,7 +222,7 @@ async function initFactory(token0, token1) {
     // create the token pairs in factory that will be used by swap, those are 
     // (A, B) which are the input and output swap values
     // (B, AP) which is the output paid to the user in AP
-    // (B, TT) which is the output paid to the user in AURA (TT == Target Token)
+    // (B, TT) which is the output paid to the user in HELIX (TT == Target Token)
     // Prepare the token pairs for swapping.
     print('prepare the factory token pairs:')
     print('\n')
@@ -231,11 +231,11 @@ async function initFactory(token0, token1) {
     await prepareFactoryPair(token0, token1) 
     print('\n')
 
-    // internal to swapFee, tokens 1 and 0 will swap with targetAPToken
-    await prepareFactoryPair(token0, targetAPToken) 
+    // internal to swapFee, tokens 1 and 0 will swap with targetHPToken
+    await prepareFactoryPair(token0, targetHPToken) 
     print('\n')
 
-    await prepareFactoryPair(token1, targetAPToken) 
+    await prepareFactoryPair(token1, targetHPToken) 
     print('\n')
 
     // internal to swapFee, tokens 1 and 0 will swap with targetToken
@@ -270,7 +270,7 @@ async function prepareFactoryPair(token0, token1) {
 
     // 2. get a pair instance so that pair functions can be called
     print(`2. load pair: ${pairAddress}`)
-    const IPair = await ethers.getContractFactory('AuraPair')
+    const IPair = await ethers.getContractFactory('HelixPair')
     const pair = await IPair.attach(pairAddress).connect(owner)
 
     // 3. enable the pair with the oracle if it hasn't been already
@@ -341,10 +341,10 @@ async function initSwapFee(token0, token1) {
     // 3. make sure that the swap fee refReg address matches the refReg address
     // 4. make sure the swapFee router address is set to owner.address
     // 5. set the contractRewardDistribution to give the user the full range of choices
-    // 6. set the userRewardDistribution to 50, to give them 50% AURA and 50% AP payout
+    // 6. set the userRewardDistribution to 50, to give them 50% HELIX and 50% AP payout
     // 7. make sure all the tokens that'll be used are whitelisted
-    // 8. make sure that the swapFee contract has the right auraToken set
-    // 9. make sure that the swapFee contract has a positive balance of auraToken
+    // 8. make sure that the swapFee contract has the right helixToken set
+    // 9. make sure that the swapFee contract has a positive balance of helixToken
     // 10. make sure all the tokens that'll be used are added to the swapFee contract 
 
     // the order of the calls in this function don't matter too much as long as 
@@ -394,7 +394,7 @@ async function initSwapFee(token0, token1) {
     }
 
     // 5. set the user's default reward distribution
-    // take a 50/50 split of AURA and AP, i.e. userRewardDistribution == 50
+    // take a 50/50 split of HELIX and AP, i.e. userRewardDistribution == 50
     if (userRewardDistribution != await swapFee.rewardDistribution(owner.address)) {
         print(`6. set user reward distribution to ${userRewardDistribution}`)
 
@@ -410,31 +410,31 @@ async function initSwapFee(token0, token1) {
     await whitelistAdd(token0.address)
     await whitelistAdd(token1.address)
   
-    // 8. make sure that the swapFee contract has the right aura token set
-    print('8. check swap fee aura token matches auraTokenAddress')
-    if (await swapFee.auraToken() != auraToken.address) {
-        await swapFee.setAuraToken(auraToken.address)
+    // 8. make sure that the swapFee contract has the right helix token set
+    print('8. check swap fee helix token matches helixTokenAddress')
+    if (await swapFee.helixToken() != helixToken.address) {
+        await swapFee.setHelixToken(helixToken.address)
     }
 
-    // 9. make sure the swapFee contract has a positive AURA balance
-    const swapFeeAuraBalance = '10000000000000'
-    const swapFeeAuraThreshold = '10000000000'
-    print(`9. swapFee AURA balance is ${await auraToken.balanceOf(swapFee.address)}`)
-    if (await auraToken.balanceOf(swapFee.address) < swapFeeAuraThreshold) {
-        print(`increase swapFee AURA balance by ${swapFeeAuraBalance}`)
-        await auraToken.transfer(swapFee.address, swapFeeAuraBalance, { gasLimit })
+    // 9. make sure the swapFee contract has a positive HELIX balance
+    const swapFeeHelixBalance = '10000000000000'
+    const swapFeeHelixThreshold = '10000000000'
+    print(`9. swapFee HELIX balance is ${await helixToken.balanceOf(swapFee.address)}`)
+    if (await helixToken.balanceOf(swapFee.address) < swapFeeHelixThreshold) {
+        print(`increase swapFee HELIX balance by ${swapFeeHelixBalance}`)
+        await helixToken.transfer(swapFee.address, swapFeeHelixBalance, { gasLimit })
     }
 
     // 10. make sure that the token pairs have been added to swapFee contract
     // Note that we need to add 3 pairs,
     // the input output pair (0, 1)
     // pairs that internally swap for AP
-    // and pairs that internally swap for AURA
+    // and pairs that internally swap for HELIX
     print('10. add pairs')
     const percentReward = 10
     await addPair(token0.address, token1.address, percentReward)
-    await addPair(token0.address, targetAPToken.address, percentReward)
-    await addPair(token1.address, targetAPToken.address, percentReward)
+    await addPair(token0.address, targetHPToken.address, percentReward)
+    await addPair(token1.address, targetHPToken.address, percentReward)
     await addPair(token0.address, targetToken.address, percentReward)
     // await addPair(token1.address, targetToken.address, percentReward)
 
@@ -483,7 +483,7 @@ async function swap(account, input, output, amount) {
     print(`swap ${amount} of token ${short(input)} for token ${short(output)} and credit account ${short(account)}.`)
 
     const prevBalance = await swapFee.getBalance(account)
-    const prevAP = await auraNFT.getAccumulatedAP(account)
+    const prevAP = await helixNFT.getAccumulatedAP(account)
     const prevAccruedAP = (await swapFee.totalAccruedAP()).toNumber()
 
     try {
@@ -496,7 +496,7 @@ async function swap(account, input, output, amount) {
 
         // Check the change in AP
         print(`account ${short(account)} previous AP: ${prevAP}`)
-        const ap = await auraNFT.getAccumulatedAP(account)
+        const ap = await helixNFT.getAccumulatedAP(account)
         print(`account ${short(account)} new balance: ${ap}`)
 
         // Check the change in total AP

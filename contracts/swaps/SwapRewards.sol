@@ -4,37 +4,37 @@ pragma solidity >= 0.8.0;
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '../interfaces/IOracleFactory.sol';
 import '../interfaces/ISwapRewards.sol';
-import '../interfaces/IAuraToken.sol';
-import '../interfaces/IAuraNFT.sol';
+import '../interfaces/IHelixToken.sol';
+import '../interfaces/IHelixNFT.sol';
 import '../referrals/ReferralRegister.sol';
 
 /**
- * @title Accrue AURA/AP to the swap caller
+ * @title Accrue HELIX/AP to the swap caller
  */
 contract SwapRewards is ISwapRewards, Ownable {
     IOracleFactory public oracleFactory;
-    IAuraToken public auraToken;
-    IAuraNFT public auraNFT;
+    IHelixToken public helixToken;
+    IHelixNFT public helixNFT;
 
     // No functions are called on these 
     // so only addresses are needed.
     address public router;
     address public refReg;
-    address public apToken;
+    address public hpToken;
 
-    // Determines the split between Aura and AP rewards.
-    // 10    -> Rewards are 1% AURA and 99% AP.
-    // 500   -> Rewards are 50% AURA and 50% AP. 
-    // 1000  -> Rewards are 100% AURA and 0% AP.
+    // Determines the split between Helix and AP rewards.
+    // 10    -> Rewards are 1% HELIX and 99% AP.
+    // 500   -> Rewards are 50% HELIX and 50% AP. 
+    // 1000  -> Rewards are 100% HELIX and 0% AP.
     uint public splitRewardPercent;
 
     // Percents earned on rewards after split.
     // 10 -> 1%, 100 -> 10%, 1000 -> 100%
-    uint public auraRewardPercent;
+    uint public helixRewardPercent;
     uint public apRewardPercent;
 
     event AccrueAp(address indexed account, uint ap);
-    event AccrueAura(address indexed account, uint aura);
+    event AccrueHelix(address indexed account, uint helix);
     event Swap(
         address indexed account, 
         address indexed tokenIn, 
@@ -46,37 +46,37 @@ contract SwapRewards is ISwapRewards, Ownable {
         address _router, 
         IOracleFactory _oracleFactory,
         address _refReg,
-        IAuraToken _auraToken,
-        IAuraNFT _auraNFT,
-        address _apToken,
+        IHelixToken _helixToken,
+        IHelixNFT _helixNFT,
+        address _hpToken,
         uint _splitRewardPercent,
-        uint _auraRewardPercent,
+        uint _helixRewardPercent,
         uint _apRewardPercent
     ) {
         router = _router;
         oracleFactory = _oracleFactory;
         refReg = _refReg;
-        auraToken = _auraToken;
-        auraNFT = _auraNFT;
-        apToken = _apToken;
+        helixToken = _helixToken;
+        helixNFT = _helixNFT;
+        hpToken = _hpToken;
         splitRewardPercent = _splitRewardPercent;
-        auraRewardPercent = _auraRewardPercent;
+        helixRewardPercent = _helixRewardPercent;
         apRewardPercent = _apRewardPercent;
     }
 
     /**
-     * @dev Accrue AURA/AP to the swap caller and accrue AURA to the swap caller's referrer
+     * @dev Accrue HELIX/AP to the swap caller and accrue HELIX to the swap caller's referrer
      */
     function swap(address account, address tokenIn, address tokenOut, uint amountIn) external {
         require (msg.sender == router, "SwapFee: CALLER IS NOT THE ROUTER");
 
-        // Accrue AURA/AP to the swap caller
-        (uint auraAmount, uint apAmount) = splitReward(amountIn);
-        accrueAura(account, tokenOut, auraAmount);
+        // Accrue HELIX/AP to the swap caller
+        (uint helixAmount, uint apAmount) = splitReward(amountIn);
+        accrueHelix(account, tokenOut, helixAmount);
         accrueAP(account, tokenOut, apAmount);
 
-        // Accrue AURA to the swap caller referrer.
-        ReferralRegister(refReg).recordSwapReward(account, getAmountOut(tokenOut, amountIn, address(auraToken)));
+        // Accrue HELIX to the swap caller referrer.
+        ReferralRegister(refReg).recordSwapReward(account, getAmountOut(tokenOut, amountIn, address(helixToken)));
 
         emit Swap(
             account,
@@ -87,23 +87,23 @@ contract SwapRewards is ISwapRewards, Ownable {
     }
 
     /**
-     * @dev returns AURA and AP rewards split by splitRewardPercent percentage
-     *      such that auraAmount + apAmount = `amount`
+     * @dev returns HELIX and AP rewards split by splitRewardPercent percentage
+     *      such that helixAmount + apAmount = `amount`
      */
-    function splitReward(uint amount) public view returns (uint auraAmount, uint apAmount) {
-        auraAmount = amount * splitRewardPercent / 1000;
-        apAmount = amount - auraAmount;
+    function splitReward(uint amount) public view returns (uint helixAmount, uint apAmount) {
+        helixAmount = amount * splitRewardPercent / 1000;
+        apAmount = amount - helixAmount;
     }
 
     /**
-     * @dev Accrue AURA to `account` based on `amountIn` of `tokenIn`.
+     * @dev Accrue HELIX to `account` based on `amountIn` of `tokenIn`.
      */
-    function accrueAura(address account, address tokenIn, uint amountIn) private {
-        uint auraOut = getAmountOut(tokenIn, amountIn, address(auraToken));
-        auraOut = auraOut * auraRewardPercent / 1000;
-        if (auraOut > 0) {
-            auraToken.mint(account, auraOut);
-            emit AccrueAura(account, auraOut);
+    function accrueHelix(address account, address tokenIn, uint amountIn) private {
+        uint helixOut = getAmountOut(tokenIn, amountIn, address(helixToken));
+        helixOut = helixOut * helixRewardPercent / 1000;
+        if (helixOut > 0) {
+            helixToken.mint(account, helixOut);
+            emit AccrueHelix(account, helixOut);
         }
     }
 
@@ -111,10 +111,10 @@ contract SwapRewards is ISwapRewards, Ownable {
      * @dev Accrue AP to `account` based on `amountIn` of `tokenIn`.
      */
     function accrueAP(address account, address tokenIn, uint amountIn) private {
-        uint apOut = getAmountOut(tokenIn, amountIn, apToken);
+        uint apOut = getAmountOut(tokenIn, amountIn, hpToken);
         apOut = apOut * apRewardPercent / 1000;
         if (apOut > 0) {
-            auraNFT.accruePoints(account, apOut);
+            helixNFT.accruePoints(account, apOut);
             emit AccrueAp(account, apOut);
         }
     }
@@ -143,16 +143,16 @@ contract SwapRewards is ISwapRewards, Ownable {
         refReg = _refReg;
     }
 
-    function setAuraToken(IAuraToken _auraToken) external onlyOwner validAddress(address(_auraToken)) {
-        auraToken = _auraToken;
+    function setHelixToken(IHelixToken _helixToken) external onlyOwner validAddress(address(_helixToken)) {
+        helixToken = _helixToken;
     }
 
-    function setAuraNFT(IAuraNFT _auraNFT) external onlyOwner validAddress(address(_auraNFT)) {
-        auraNFT = _auraNFT;
+    function setHelixNFT(IHelixNFT _helixNFT) external onlyOwner validAddress(address(_helixNFT)) {
+        helixNFT = _helixNFT;
     }
 
-    function setApToken(address _apToken) external onlyOwner validAddress(_apToken) {
-        apToken = _apToken;
+    function setHpToken(address _hpToken) external onlyOwner validAddress(_hpToken) {
+        hpToken = _hpToken;
     }
 
     // Note that all percentages in this contract are out of 1000,
@@ -178,11 +178,11 @@ contract SwapRewards is ISwapRewards, Ownable {
         apRewardPercent = _apRewardPercent;
     }
 
-    function setAuraRewardPercent(uint _auraRewardPercent) 
+    function setHelixRewardPercent(uint _helixRewardPercent) 
         external
         onlyOwner 
-        validPercentage(_auraRewardPercent) 
+        validPercentage(_helixRewardPercent) 
     {
-        auraRewardPercent = _auraRewardPercent;
+        helixRewardPercent = _helixRewardPercent;
     }
 }

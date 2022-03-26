@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "../tokens/AuraToken.sol";
+import "../tokens/HelixToken.sol";
 import "../interfaces/IBEP20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
 contract HelixVault is Ownable {
 
-    uint256 lastRewardBlock;  // Last block number that Auras distribution occurs.
-    uint256 accAuraPerShare;   // Accumulated Auras per share, times PRECISION_FACTOR. See below.
+    uint256 lastRewardBlock;  // Last block number that Helixs distribution occurs.
+    uint256 accHelixPerShare;   // Accumulated Helixs per share, times PRECISION_FACTOR. See below.
     
     struct Deposit {
         address depositor;                  // the user making the deposit
@@ -38,14 +38,14 @@ contract HelixVault is Ownable {
     // used to index deposits for storage and retrieval
     uint numDeposits;    
 
-    // The Aura TOKEN!
-    IBEP20 public auraToken;
+    // The Helix TOKEN!
+    IBEP20 public helixToken;
     IBEP20 public rewardToken;
 
-    // Aura tokens created per block.
+    // Helix tokens created per block.
     uint256 public rewardPerBlock;
     
-    // The block number when Aura mining ends.
+    // The block number when Helix mining ends.
     uint256 public bonusEndBlock;
    
     // The precision factor
@@ -58,13 +58,13 @@ contract HelixVault is Ownable {
     event RefPercentChanged(uint256 currentPercent);
 
     constructor(
-        IBEP20 _aura,
+        IBEP20 _helix,
         IBEP20 _rewardToken,
         uint256 _rewardPerBlock,
         uint256 _startBlock,
         uint256 _bonusEndBlock
     ) {
-        auraToken = _aura;
+        helixToken = _helix;
         rewardToken = _rewardToken;
         rewardPerBlock = _rewardPerBlock;
 
@@ -96,33 +96,33 @@ contract HelixVault is Ownable {
 
     // View function to see pending Reward on frontend.
     function pendingReward(uint id) external view returns (uint256) {
-        require(id < numDeposits, 'AuraVault: INVALID ID');
+        require(id < numDeposits, 'HelixVault: INVALID ID');
         Deposit storage d = deposits[id];
-        require(d.depositor == msg.sender, 'AuraVault: CALLER IS NOT DEPOSITOR');
-        require(d.withdrawn == false, 'AuraVault: TOKENS ARE ALREADY WITHDRAWN');
+        require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
+        require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
-        uint256 _accAuraPerShare = accAuraPerShare;
-        uint256 lpSupply = auraToken.balanceOf(address(this));
+        uint256 _accHelixPerShare = accHelixPerShare;
+        uint256 lpSupply = helixToken.balanceOf(address(this));
         if (block.number > lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = getMultiplier(lastRewardBlock, block.number);
-            uint256 AuraReward = multiplier * rewardPerBlock;
-            _accAuraPerShare += AuraReward * PRECISION_FACTOR / lpSupply;
+            uint256 HelixReward = multiplier * rewardPerBlock;
+            _accHelixPerShare += HelixReward * PRECISION_FACTOR / lpSupply;
         }
-        return d.amount * d.weight * _accAuraPerShare / PRECISION_FACTOR / 100 - d.rewardDebt;
+        return d.amount * d.weight * _accHelixPerShare / PRECISION_FACTOR / 100 - d.rewardDebt;
     }
 
     function claimReward(uint id) external {
-        require(id < numDeposits, 'AuraVault: INVALID ID');
+        require(id < numDeposits, 'HelixVault: INVALID ID');
         Deposit storage d = deposits[id];
-        require(d.depositor == msg.sender, 'AuraVault: CALLER IS NOT DEPOSITOR');
-        require(d.withdrawn == false, 'AuraVault: TOKENS ARE ALREADY WITHDRAWN');
+        require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
+        require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
         updatePool();
-        uint256 pending = d.amount * d.weight * accAuraPerShare / PRECISION_FACTOR / 100 - d.rewardDebt;//100: for decimals of weight
+        uint256 pending = d.amount * d.weight * accHelixPerShare / PRECISION_FACTOR / 100 - d.rewardDebt;//100: for decimals of weight
         if(pending > 0) {
             TransferHelper.safeTransfer(address(rewardToken), msg.sender, pending);
         }
-        d.rewardDebt = d.amount * d.weight * accAuraPerShare / PRECISION_FACTOR / 100;
+        d.rewardDebt = d.amount * d.weight * accHelixPerShare / PRECISION_FACTOR / 100;
     } 
 
     // Update reward variables of the given pool to be up-to-date.
@@ -131,38 +131,37 @@ contract HelixVault is Ownable {
         if (block.number <= lastRewardBlock) {
             return;
         }
-        uint256 lpSupply = auraToken.balanceOf(address(this));
+        uint256 lpSupply = helixToken.balanceOf(address(this));
         if (lpSupply == 0) {
             lastRewardBlock = block.number;
             return;
         }
         uint256 multiplier = getMultiplier(lastRewardBlock, block.number);
         uint256 helixReward = multiplier * rewardPerBlock;
-        accAuraPerShare += helixReward * PRECISION_FACTOR / lpSupply;
+        accHelixPerShare += helixReward * PRECISION_FACTOR / lpSupply;
         lastRewardBlock = block.number;
     }
 
-    // Stake auraToken tokens to SmartChef\
     function deposit(uint id, uint256 amount, uint durationIndex) public {
         require(amount > 0, 'HelixVault: NOTHING TO DEPOSIT');
         require(durationIndex < durations.length, 'HelixVault: INVALID DURATION INDEX');
-        require(id < numDeposits, 'AuraVault: INVALID ID');
+        require(id < numDeposits, 'HelixVault: INVALID ID');
 
         updatePool();
         if (id > 0) {
             Deposit storage d = deposits[id];
-            require(d.depositor == msg.sender, 'AuraVault: CALLER IS NOT DEPOSITOR');
-            require(d.withdrawn == false, 'AuraVault: TOKENS ARE ALREADY WITHDRAWN');
-            uint256 pending = d.amount * d.weight * accAuraPerShare / PRECISION_FACTOR / 100 - d.rewardDebt;//100: for decimals of weight
+            require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
+            require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
+            uint256 pending = d.amount * d.weight * accHelixPerShare / PRECISION_FACTOR / 100 - d.rewardDebt;//100: for decimals of weight
             if(pending > 0) {
                 TransferHelper.safeTransfer(address(rewardToken), msg.sender, pending);
             }
-            TransferHelper.safeTransferFrom(address(auraToken), msg.sender, address(this), amount);
+            TransferHelper.safeTransferFrom(address(helixToken), msg.sender, address(this), amount);
             d.amount += amount;
-            d.rewardDebt = d.amount * d.weight * accAuraPerShare / PRECISION_FACTOR / 100;
+            d.rewardDebt = d.amount * d.weight * accHelixPerShare / PRECISION_FACTOR / 100;
             emit UpdateDeposit(msg.sender, id, amount);
         } else {
-            TransferHelper.safeTransferFrom(address(auraToken), msg.sender, address(this), amount);
+            TransferHelper.safeTransferFrom(address(helixToken), msg.sender, address(this), amount);
             // Get the id of this deposit and create the deposit object
             uint newId = numDeposits++;
             Deposit storage d = deposits[newId];
@@ -173,24 +172,24 @@ contract HelixVault is Ownable {
             d.withdrawTimestamp = block.timestamp + durations[durationIndex].duration;
             d.withdrawn = false;
 
-            d.rewardDebt = d.amount * d.weight * accAuraPerShare / PRECISION_FACTOR / 100;
+            d.rewardDebt = d.amount * d.weight * accHelixPerShare / PRECISION_FACTOR / 100;
             // Relay the deposit id to the user's account
             depositIds[msg.sender].push(id);
             emit AddDeposit(msg.sender, id, amount, d.weight, d.depositTimestamp, d.withdrawTimestamp);
         }
     }
 
-    // Withdraw auraToken tokens from STAKING.
+    // Withdraw helixToken tokens from STAKING.
     function withdraw(uint id, uint amount) public {
-        require(id < numDeposits && id > 0, 'AuraVault: INVALID ID');
+        require(id < numDeposits && id > 0, 'HelixVault: INVALID ID');
         Deposit storage d = deposits[id];
-        require(msg.sender == d.depositor, 'AuraVault: CALLER IS NOT DEPOSITOR');
-        require(d.withdrawn == false, 'AuraVault: TOKENS ARE ALREADY WITHDRAWN');
-        require(d.amount >= amount && amount > 0, "AuraVault: INVALID AMOUNT");
-        require(block.timestamp >= d.withdrawTimestamp, 'AuraVault: TOKENS ARE LOCKED');
+        require(msg.sender == d.depositor, 'HelixVault: CALLER IS NOT DEPOSITOR');
+        require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
+        require(d.amount >= amount && amount > 0, "HelixVault: INVALID AMOUNT");
+        require(block.timestamp >= d.withdrawTimestamp, 'HelixVault: TOKENS ARE LOCKED');
         
         updatePool();
-        uint256 pending = d.amount * d.weight * accAuraPerShare / PRECISION_FACTOR / 100 - d.rewardDebt;//100: for decimals of weight
+        uint256 pending = d.amount * d.weight * accHelixPerShare / PRECISION_FACTOR / 100 - d.rewardDebt;//100: for decimals of weight
         if(pending > 0) {
             TransferHelper.safeTransfer(address(rewardToken), msg.sender, pending);
         }
@@ -198,15 +197,15 @@ contract HelixVault is Ownable {
             d.withdrawn = true;
         } else {
             d.amount -= amount;
-            d.rewardDebt = d.amount * d.weight * accAuraPerShare / PRECISION_FACTOR / 100;
+            d.rewardDebt = d.amount * d.weight * accHelixPerShare / PRECISION_FACTOR / 100;
         }
-        TransferHelper.safeTransfer(address(auraToken), msg.sender, amount);
+        TransferHelper.safeTransfer(address(helixToken), msg.sender, amount);
         emit Withdraw(msg.sender, amount);
     }
 
     function updateRewardPerBlock(uint256 newAmount) public onlyOwner {
-        require(newAmount <= 40 * 1e18, 'Max per block 40 AuraToken');
-        require(newAmount >= 1e17, 'Min per block 0.1 AuraToken');
+        require(newAmount <= 40 * 1e18, 'Max per block 40 HelixToken');
+        require(newAmount >= 1e17, 'Min per block 0.1 HelixToken');
         rewardPerBlock = newAmount;
     }
 

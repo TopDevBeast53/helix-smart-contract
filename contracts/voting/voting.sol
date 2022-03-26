@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "../tokens/AuraToken.sol";
+import "../tokens/HelixToken.sol";
 import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract Voting is ReentrancyGuard, Ownable {
     
-    AuraToken private auraToken;
+    HelixToken private helixToken;
 
     EnumerableSet.AddressSet private _CoreMembers;
 
@@ -22,7 +22,7 @@ contract Voting is ReentrancyGuard, Ownable {
         uint endTimestamp;                      // a timestamp of when the voting ends 
         mapping(address => uint8) decisions;    // decisions[voterAddr] == 1 -> YES, decisions[voterAddr] == 2 -> NO
         address[] voters;                       // array of voters
-        mapping(address => uint) balance;       // balance of deposited aura token for each voter into the given proposal
+        mapping(address => uint) balance;       // balance of deposited helix token for each voter into the given proposal
         mapping(address => uint) withdrawAfterEnd;// withdraw amount for each voter after end of voting
     }
     
@@ -39,8 +39,8 @@ contract Voting is ReentrancyGuard, Ownable {
     event CreateProposal(string proposalName);
 
     // constructor that create a new Voting to choose one of `proposalNames`.
-    constructor(AuraToken _auraToken) {
-        auraToken = _auraToken;
+    constructor(HelixToken _helixToken) {
+        helixToken = _helixToken;
     }
 
     //External functions --------------------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ contract Voting is ReentrancyGuard, Ownable {
         require(decision > 0 && decision < 3, "Wrong decision number");
         
         if (withTokenAmount > 0) { 
-            auraToken.transferFrom(voter, address(this), withTokenAmount);
+            helixToken.transferFrom(voter, address(this), withTokenAmount);
             _proposal.balance[voter] += withTokenAmount;
         }
         _proposal.voters.push(voter);
@@ -120,7 +120,7 @@ contract Voting is ReentrancyGuard, Ownable {
         address voter = msg.sender;
         Proposal storage _proposal = proposalsByIndex[proposalId];
         require(amount > 0 && _proposal.balance[voter] >= _proposal.withdrawAfterEnd[voter] + amount, "Wrong withdraw amount");
-        auraToken.transfer(voter, amount);
+        helixToken.transfer(voter, amount);
         if (isActive(proposalId)) {
             _proposal.balance[voter] -= amount;
         } else {
@@ -155,10 +155,10 @@ contract Voting is ReentrancyGuard, Ownable {
     /**
      * @dev Get the number of votes by `voter`
      *
-     * NOTE: AuraToken's PriorVotes + deposited balance to proposal
+     * NOTE: HelixToken's PriorVotes + deposited balance to proposal
      */
     function getNumberOfVotes(address voter, uint proposalId) public view returns (uint) {
-        return auraToken.getPriorVotes(voter, proposalsByIndex[proposalId].blockNum) + proposalsByIndex[proposalId].balance[voter];
+        return helixToken.getPriorVotes(voter, proposalsByIndex[proposalId].blockNum) + proposalsByIndex[proposalId].balance[voter];
     }
 
      /**
@@ -169,7 +169,7 @@ contract Voting is ReentrancyGuard, Ownable {
     function addCoreMember(address _CoreMember) public onlyOwner returns (bool) {
         require(
             _CoreMember != address(0),
-            "AuraVoting: _CoreMember is the zero address"
+            "HelixVoting: _CoreMember is the zero address"
         );
         return EnumerableSet.add(_CoreMembers, _CoreMember);
     }
@@ -182,7 +182,7 @@ contract Voting is ReentrancyGuard, Ownable {
     function delCoreMember(address _CoreMember) external onlyOwner returns (bool) {
         require(
             _CoreMember != address(0),
-            "AuraVoting: _CoreMember is the zero address"
+            "HelixVoting: _CoreMember is the zero address"
         );
         return EnumerableSet.remove(_CoreMembers, _CoreMember);
     }
@@ -215,7 +215,7 @@ contract Voting is ReentrancyGuard, Ownable {
         onlyOwner
         returns (address)
     {
-        require(_index <= getCoreMembersLength() - 1, "AuraVoting: index out of bounds");
+        require(_index <= getCoreMembersLength() - 1, "HelixVoting: index out of bounds");
         return EnumerableSet.at(_CoreMembers, _index);
     }
 }

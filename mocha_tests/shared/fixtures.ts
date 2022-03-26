@@ -6,25 +6,24 @@ import { expandTo18Decimals } from './utilities'
 
 import ERC20 from '../../build/contracts/ERC20LP.json'
 import ERC20LP from '../../build/contracts/ERC20LP.json'
-import AuraFactory from '../../build/contracts/AuraFactory.json'
-import AuraPair from '../../build/contracts/AuraPair.json'
-import AuraRouterV1 from '../../build/contracts/AuraRouterV1.json'
+import HelixFactory from '../../build/contracts/HelixFactory.json'
+import HelixPair from '../../build/contracts/HelixPair.json'
+import HelixRouterV1 from '../../build/contracts/HelixRouterV1.json'
 import MasterChef from '../../build/contracts/MasterChef.json'
-import AuraToken from '../../build/contracts/AuraToken.json'
+import HelixToken from '../../build/contracts/HelixToken.json'
 import TestToken from '../../build/contracts/TestToken.json'
 import WETH9 from '../../build/contracts/WETH9.json'
 import ReferralRegister from '../../build/contracts/ReferralRegister.json'
 import RouterEventEmitter from '../../build/contracts/RouterEventEmitter.json'
-import AuraMigrator from '../../build/contracts/AuraMigrator.json'
+import HelixMigrator from '../../build/contracts/HelixMigrator.json'
 import SwapRewards from '../../build/contracts/SwapRewards.json'
 import OracleFactory from '../../build/contracts/OracleFactory.json'
-import AuraNFT from '../../build/contracts/AuraNFT.json'
+import HelixNFT from '../../build/contracts/HelixNFT.json'
 import TokenTools from '../../build/contracts/TokenTools.json'
-import AutoAura from '../../build/contracts/AutoAura.json'
-import SmartChef from '../../build/contracts/SmartChef.json'
-import AuraChefNFT from '../../build/contracts/AuraChefNFT.json'
-import AuraLP from '../../build/contracts/AuraLP.json'
-import AuraNFTBridge from '../../build/contracts/AuraNFTBridge.json'
+import AutoHelix from '../../build/contracts/AutoHelix.json'
+import HelixChefNFT from '../../build/contracts/HelixChefNFT.json'
+import HelixLP from '../../build/contracts/HelixLP.json'
+import HelixNFTBridge from '../../build/contracts/HelixNFTBridge.json'
 
 const addresses = require('../../scripts/constants/addresses')
 const initials = require('../../scripts/constants/initials')
@@ -35,27 +34,22 @@ const refRegDefaultSwapRef = initials.REFERRAL_SWAP_FEE_PERCENT[env.network]
 
 const chefDeveloperAddress = addresses.masterChefDeveloper[env.network];
 const chefStartBlock = initials.MASTERCHEF_START_BLOCK[env.network];
-const chefAuraTokenRewardPerBlock = initials.MASTERCHEF_AURA_TOKEN_REWARD_PER_BLOCK[env.network];
+const chefHelixTokenRewardPerBlock = initials.MASTERCHEF_HELIX_TOKEN_REWARD_PER_BLOCK[env.network];
 const chefStakingPercent = initials.MASTERCHEF_STAKING_PERCENT[env.network];
 const chefDevPercent = initials.MASTERCHEF_DEV_PERCENT[env.network];
 
-const autoAuraTreasuryAddress = addresses.autoAuraTreasuryAddress[env.network];
+const autoHelixTreasuryAddress = addresses.autoHelixTreasuryAddress[env.network];
 
-const smartChefStakingTokenAddress = addresses.BUSD[env.network];// token A which must be staked in this pool
-const smartChefStartBlock = initials.SMARTCHEF_START_BLOCK[env.network];
-const smartChefEndBlock = initials.SMARTCHEF_END_BLOCK[env.network];
-const smartChefRewardPerBlock = initials.SMARTCHEF_REWARD_PER_BLOCK[env.network]
+const helixNFTInitialHelixPoints = initials.NFT_INITIAL_HELIXPOINTS[env.network];
+const helixNFTLevelUpPercent = initials.NFT_LEVEL_UP_PERCENT[env.network];
 
-const auraNFTInitialAuraPoints = initials.NFT_INITIAL_AURAPOINTS[env.network];
-const auraNFTLevelUpPercent = initials.NFT_LEVEL_UP_PERCENT[env.network];
-
-const auraChefNFTStartBlock = initials.NFTCHEF_START_BLOCK[env.network];
-const auraChefNFTRewardPerBlock = initials.NFTCHEF_REWARD_PER_BLOCK[env.network];
-const auraChefNFTLastRewardBlock = initials.NFTCHEF_LAST_REWARD_BLOCK[env.network];
+const helixChefNFTStartBlock = initials.NFTCHEF_START_BLOCK[env.network];
+const helixChefNFTRewardPerBlock = initials.NFTCHEF_REWARD_PER_BLOCK[env.network];
+const helixChefNFTLastRewardBlock = initials.NFTCHEF_LAST_REWARD_BLOCK[env.network];
 
 const swapRewardsSplitRewardPercent = initials.SPLIT_REWARD_PERCENT[env.network]
-const swapRewardsAuraRewardPercent = initials.AURA_REWARD_PERCENT[env.network]
-const swapRewardsApRewardPercent = initials.AP_REWARD_PERCENT[env.network]
+const swapRewardsHelixRewardPercent = initials.HELIX_REWARD_PERCENT[env.network]
+const swapRewardsApRewardPercent = initials.HP_REWARD_PERCENT[env.network]
 
 const overrides = {
     gasLimit: 9999999
@@ -72,16 +66,15 @@ interface FullExchangeFixture {
     factory: Contract
     router: Contract
     routerEventEmitter: Contract
-    auraToken: Contract
+    helixToken: Contract
     oracleFactory: Contract
     refReg: Contract
     chef: Contract
-    autoAura: Contract
-    smartChef: Contract
-    auraNFT: Contract
-    auraChefNFT: Contract
-    auraNFTBridge: Contract
-    auraLP: Contract
+    autoHelix: Contract
+    helixNFT: Contract
+    helixChefNFT: Contract
+    helixNFTBridge: Contract
+    helixLP: Contract
     swapRewards: Contract
     externalFactory: Contract
     externalRouter: Contract
@@ -101,31 +94,31 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const WETH = await deployContract(wallet, WETH9, [], overrides)
 
     // 1 deploy factory and router
-    const factory = await deployContract(wallet, AuraFactory, [wallet.address], overrides)
-    const router = await deployContract(wallet, AuraRouterV1, [factory.address, WETH.address], overrides)
+    const factory = await deployContract(wallet, HelixFactory, [wallet.address], overrides)
+    const router = await deployContract(wallet, HelixRouterV1, [factory.address, WETH.address], overrides)
     // event emitter for testing
     const routerEventEmitter = await deployContract(wallet, RouterEventEmitter, [], overrides)
 
-    // 2 deploy aura token
-    const auraToken = await deployContract(wallet, AuraToken, [], overrides)
+    // 2 deploy helix token
+    const helixToken = await deployContract(wallet, HelixToken, [], overrides)
 
     // 3 deploy oracle factory and register with factory
     const oracleFactory = await deployContract(wallet, OracleFactory, [factory.address], overrides)
     await factory.setOracleFactory(oracleFactory.address)
 
-    // 4 deploy referral register and register as minter with aura token
+    // 4 deploy referral register and register as minter with helix token
     const refReg = await deployContract(wallet, ReferralRegister,
-        [auraToken.address, refRegDefaultStakingRef, refRegDefaultSwapRef],
+        [helixToken.address, refRegDefaultStakingRef, refRegDefaultSwapRef],
         overrides
     )
-    await auraToken.addMinter(refReg.address)
+    await helixToken.addMinter(refReg.address)
 
-    // 5 deploy master chef and register as minter with aura token
+    // 5 deploy master chef and register as minter with helix token
     const chef = await deployContract(wallet, MasterChef, 
         [
-            auraToken.address,
+            helixToken.address,
             chefDeveloperAddress,
-            chefAuraTokenRewardPerBlock,
+            chefHelixTokenRewardPerBlock,
             chefStartBlock,
             chefStakingPercent,
             chefDevPercent,
@@ -133,74 +126,62 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         ], 
         overrides
     )
-    await auraToken.addMinter(chef.address)
+    await helixToken.addMinter(chef.address)
     await refReg.addRecorder(chef.address)
 
-    // 6 deploy auto aura
-    const autoAura = await deployContract(wallet, AutoAura,
-        [auraToken.address, chef.address, autoAuraTreasuryAddress], 
+    // 6 deploy auto helix
+    const autoHelix = await deployContract(wallet, AutoHelix,
+        [helixToken.address, chef.address, autoHelixTreasuryAddress], 
         overrides
     )
 
-    // 7 deploy smart chef
-    const smartChef = await deployContract(wallet, SmartChef,
-        [
-            smartChefStakingTokenAddress,
-            auraToken.address,
-            smartChefRewardPerBlock,
-            smartChefStartBlock,
-            smartChefEndBlock
-        ], 
-        overrides
-    )
+    // 7 deploy helixNFT and helixChefNFT and register with other contracts
+    const helixNFT = await deployContract(wallet, HelixNFT, [], overrides)
+    await helixNFT.initialize("BASEURI", helixNFTInitialHelixPoints, helixNFTLevelUpPercent)
+    const helixChefNFT = await deployContract(wallet, HelixChefNFT, [helixNFT.address, helixChefNFTLastRewardBlock], overrides)
 
-    // 8 deploy auraNFT and auraChefNFT and register with other contracts
-    const auraNFT = await deployContract(wallet, AuraNFT, [], overrides)
-    await auraNFT.initialize("BASEURI", auraNFTInitialAuraPoints, auraNFTLevelUpPercent)
-    const auraChefNFT = await deployContract(wallet, AuraChefNFT, [auraNFT.address, auraChefNFTLastRewardBlock], overrides)
+    await helixNFT.addMinter(wallet.address, overrides)
+    await helixNFT.addStaker(helixChefNFT.address, overrides)
+    await helixChefNFT.addNewRewardToken(helixToken.address, helixChefNFTStartBlock, helixChefNFTRewardPerBlock, overrides)
 
-    await auraNFT.addMinter(wallet.address, overrides)
-    await auraNFT.addStaker(auraChefNFT.address, overrides)
-    await auraChefNFT.addNewRewardToken(auraToken.address, auraChefNFTStartBlock, auraChefNFTRewardPerBlock, overrides)
-
-    // 9 deploy auraNFTBridge, add a bridger, and register as minter
-    const auraNFTBridge = await deployContract(wallet, AuraNFTBridge, [auraNFT.address], overrides)
-    await auraNFTBridge.addBridger(wallet.address, overrides)
-    await auraNFT.addMinter(auraNFTBridge.address, overrides)
+    // 8 deploy helixNFTBridge, add a bridger, and register as minter
+    const helixNFTBridge = await deployContract(wallet, HelixNFTBridge, [helixNFT.address], overrides)
+    await helixNFTBridge.addBridger(wallet.address, overrides)
+    await helixNFT.addMinter(helixNFTBridge.address, overrides)
 
 
-    // 10 deploy AP/LP token
-    const auraLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
+    // 9 deploy HP/LP token
+    const helixLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
 
-    // 11 deploy swapRewards and register with other contracts
+    // 10 deploy swapRewards and register with other contracts
     const swapRewards = await deployContract(wallet, SwapRewards, [
             router.address,
             oracleFactory.address,
             refReg.address,
-            auraToken.address,
-            auraNFT.address,
-            auraLP.address,
+            helixToken.address,
+            helixNFT.address,
+            helixLP.address,
             swapRewardsSplitRewardPercent,
-            swapRewardsAuraRewardPercent,
+            swapRewardsHelixRewardPercent,
             swapRewardsApRewardPercent
         ], 
         overrides
     )
     await router.setSwapRewards(swapRewards.address, overrides)
     await refReg.addRecorder(swapRewards.address, overrides)
-    await auraToken.addMinter(swapRewards.address, overrides)
-    await auraNFT.addAccruer(swapRewards.address, overrides)
+    await helixToken.addMinter(swapRewards.address, overrides)
+    await helixNFT.addAccruer(swapRewards.address, overrides)
 
     // Add external DEX components for migrator to use.
-    const externalFactory = await deployContract(wallet, AuraFactory, [wallet.address], overrides);
+    const externalFactory = await deployContract(wallet, HelixFactory, [wallet.address], overrides);
     const externalOracleFactory = await deployContract(wallet, OracleFactory, [externalFactory.address], overrides)
     await externalFactory.setOracleFactory(externalOracleFactory.address)
-    const externalRouter = await deployContract(wallet, AuraRouterV1, [externalFactory.address, WETH.address], overrides);
+    const externalRouter = await deployContract(wallet, HelixRouterV1, [externalFactory.address, WETH.address], overrides);
 
-    // 12 deploy migrator
-    const migrator = await deployContract(wallet, AuraMigrator, [router.address], overrides);
+    // 11 deploy migrator
+    const migrator = await deployContract(wallet, HelixMigrator, [router.address], overrides);
 
-    // 13 deploy token tools
+    // 12 deploy token tools
     const tokenTools = await deployContract(wallet, TokenTools, [], overrides)
 
     return {
@@ -214,16 +195,15 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         factory,
         router,
         routerEventEmitter,
-        auraToken,
+        helixToken,
         oracleFactory,
         refReg,
         chef,
-        autoAura,
-        smartChef,
-        auraNFT,
-        auraChefNFT,
-        auraNFTBridge,
-        auraLP,
+        autoHelix,
+        helixNFT,
+        helixChefNFT,
+        helixNFTBridge,
+        helixLP,
         swapRewards,
         externalFactory,
         externalRouter,

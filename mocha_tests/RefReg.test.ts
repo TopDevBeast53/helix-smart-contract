@@ -38,7 +38,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
     const swapAmount = 10000;
 
     let refReg: Contract
-    let auraToken: Contract
+    let helixToken: Contract
 
     function expectedBalanceAfterStake(amount: number) {
         return amount * stakeFee / 1000
@@ -51,7 +51,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
     beforeEach(async () => {
         const fullExchange = await loadFixture(fullExchangeFixture)
         refReg = fullExchange.refReg
-        auraToken = fullExchange.auraToken
+        helixToken = fullExchange.helixToken
 
         // must add the calling accounts as recorders or calls
         // or calls to record functions fail
@@ -59,7 +59,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
     })
 
     it('refReg: initialized with expected values', async () => {
-        expect(await refReg.auraToken()).to.eq(auraToken.address)
+        expect(await refReg.helixToken()).to.eq(helixToken.address)
         expect(await refReg.stakingRefFee()).to.eq(stakeFee)
         expect(await refReg.swapRefFee()).to.eq(swapFee)
     })
@@ -157,7 +157,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
             .revertedWith("ReferralRegister: caller is not a recorder")
     })
 
-    it('refReg: withdraw aura to referrer succeeds', async () => {
+    it('refReg: withdraw helix to referrer succeeds', async () => {
         // add a referrer
         await refReg.addRef(referrer)
     
@@ -171,7 +171,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
         await localRefReg.withdraw()
 
         // check referrer token balance is increased
-        expect(bigNumberify(await auraToken.balanceOf(referrer))).to.eq(expectedBalanceAfterSwap(swapAmount))
+        expect(bigNumberify(await helixToken.balanceOf(referrer))).to.eq(expectedBalanceAfterSwap(swapAmount))
 
         // check referrer refReg contract balance is reset to 0
         expect(await refReg.balance(referrer)).to.eq(0)
