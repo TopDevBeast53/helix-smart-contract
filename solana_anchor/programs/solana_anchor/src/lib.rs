@@ -35,32 +35,33 @@ pub mod solana_anchor {
             Addresses {
                 bsc_address: bsc_address,
                 user_address: *ctx.accounts.owner.to_account_info().key,
-                token_address: *ctx.accounts.to.to_account_info().key
+                token_address: *ctx.accounts.mint.to_account_info().key
             }
         );
         Ok(())
     }
 
-    pub fn transfer_out(ctx: Context<TransferOut>, bsc_address: [u8;40]) -> Result<()> {
+    pub fn transfer_out(ctx: Context<TransferOut>) -> Result<()> {
         let state_account = &mut ctx.accounts.state_account;
 
-        let from = ctx.accounts.to.to_account_info().key;
-        let to = ctx.accounts.to.to_account_info().key;
+        // let from = ctx.accounts.to.to_account_info().key;
+        // let to = ctx.accounts.to.to_account_info().key;
+        let mint = ctx.accounts.mint.to_account_info().key;
 
-        let remove_account = Addresses {
-            bsc_address: bsc_address,
-            user_address: *from,
-            token_address: *to
-        };
+        // let remove_account = Addresses {
+        //     bsc_address: bsc_address,
+        //     user_address: *from,
+        //     token_address: *to
+        // };
 
-        if !state_account.addresses.contains(&remove_account) {
-            return Err(CustomeError::StateNotExist.into())
-        }
+        // if !state_account.addresses.contains(&remove_account) {
+        //     return Err(CustomeError::StateNotExist.into())
+        // }
         {
             let cpi_ctx = CpiContext::new(
                 ctx.accounts.token_program.to_account_info(),
                 Transfer {
-                    from: ctx.accounts.to.to_account_info(),
+                    from: ctx.accounts.from.to_account_info(),
                     to: ctx.accounts.to.to_account_info(),
                     authority: ctx.accounts.owner.to_account_info(),
                 },
@@ -68,7 +69,7 @@ pub mod solana_anchor {
             token::transfer(cpi_ctx, 1)?;
         }
 
-        state_account.addresses.retain(|a| a.bsc_address != bsc_address && a.user_address != *to && a.token_address != *from);
+        state_account.addresses.retain(|a| a.token_address != *mint);
         Ok(())
     }
 }
@@ -78,31 +79,33 @@ pub mod solana_anchor {
 pub struct Initialize<'info> {
     #[account(mut)]
     admin: Signer<'info>,
-    #[account(init,space = ApprovedNFTs::space(capacity), seeds = [b"test6".as_ref()], bump, payer = admin)]
+    #[account(init,space = ApprovedNFTs::space(capacity), seeds = [b"test7".as_ref()], bump, payer = admin)]
     state_account: Account<'info, ApprovedNFTs>,
     system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct TransferIn<'info> {
-    #[account(mut, seeds = [b"test6".as_ref()], bump = state_account.bump)]
+    #[account(mut, seeds = [b"test7".as_ref()], bump = state_account.bump)]
     state_account: Account<'info, ApprovedNFTs>,
     #[account(mut)]
     from: Account<'info, TokenAccount>,
     #[account(mut)]
     to: Account<'info, TokenAccount>,
+    mint: AccountInfo<'info>,
     owner: Signer<'info>,
     token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
 pub struct TransferOut<'info> {
-    #[account(mut, seeds = [b"test6".as_ref()], bump = state_account.bump)]
+    #[account(mut, seeds = [b"test7".as_ref()], bump = state_account.bump)]
     state_account: Account<'info, ApprovedNFTs>,
     #[account(mut)]
     from: Account<'info, TokenAccount>,
     #[account(mut)]
     to: Account<'info, TokenAccount>,
+    mint: AccountInfo<'info>,
     owner: Signer<'info>,
     token_program: Program<'info, Token>,
 }
