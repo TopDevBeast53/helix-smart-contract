@@ -51,8 +51,8 @@ contract HelixVault is Ownable {
     // The precision factor
     uint256 public PRECISION_FACTOR;
 
-    event UpdateDeposit(address indexed user, uint256 id, uint256 amount);
     event AddDeposit(address indexed user, uint256 id, uint256 amount, uint256 weight, uint depositTimestamp,uint withdrawTimestamp);
+    event UpdateDeposit(address indexed user, uint256 id, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 amount);
     event RefPercentChanged(uint256 currentPercent);
@@ -240,6 +240,7 @@ contract HelixVault is Ownable {
         isValidIndex(index)
         isValidDuration(duration)
         isValidWeight(weight)  
+        onlyOwner
     {
         durations[index].duration = duration;
         durations[index].weight = weight;
@@ -249,11 +250,16 @@ contract HelixVault is Ownable {
         external 
         isValidDuration(duration) 
         isValidWeight(weight)
+        onlyOwner
     {
         durations.push(Duration(duration, weight));
     }
 
-    function removeDuration(uint index) external isValidIndex(index) {
+    function removeDuration(uint index) 
+        external 
+        isValidIndex(index)
+        onlyOwner
+    {
         durations[index] = durations[durations.length - 1];
         durations.pop();
     }
