@@ -92,7 +92,7 @@ interface FullExchangeFixture {
     externalRouter: Contract
     migrator: Contract
     tokenTools: Contract
-    helixVault: Contract
+    vault: Contract
 }
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
@@ -210,7 +210,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const tokenTools = await deployContract(wallet, TokenTools, [], overrides)
 
     // 14 deploy helix vault
-    const helixVault = await deployContract(wallet, HelixVault, 
+    const vault = await deployContract(wallet, HelixVault, 
         [
             auraToken.address,
             auraToken.address,
@@ -247,6 +247,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         externalRouter,
         migrator, 
         tokenTools,
-        helixVault,
+        vault,
     }
 }
