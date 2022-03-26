@@ -1,0 +1,188 @@
+{
+  "version": "0.0.0",
+  "name": "solana_anchor",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "stateAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        },
+        {
+          "name": "capacity",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "transferIn",
+      "accounts": [
+        {
+          "name": "stateAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "from",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "to",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bscAddress",
+          "type": {
+            "array": [
+              "u8",
+              40
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "transferOut",
+      "accounts": [
+        {
+          "name": "stateAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "from",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "to",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "ApprovedNFTs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "capacity",
+            "type": "u16"
+          },
+          {
+            "name": "addresses",
+            "type": {
+              "vec": {
+                "defined": "Addresses"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "Addresses",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bscAddress",
+            "type": {
+              "array": [
+                "u8",
+                40
+              ]
+            }
+          },
+          {
+            "name": "userAddress",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenAddress",
+            "type": "publicKey"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 300,
+      "name": "IsNotOwner",
+      "msg": "Owner can transfer the token"
+    },
+    {
+      "code": 301,
+      "name": "ListFull",
+      "msg": "List is full"
+    },
+    {
+      "code": 302,
+      "name": "StateNotExist",
+      "msg": "State not exist"
+    }
+  ]
+}
