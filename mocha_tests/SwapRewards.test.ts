@@ -5,7 +5,7 @@ import { BigNumber } from 'legacy-ethers/utils'
 import { MaxUint256 } from 'legacy-ethers/constants'
 import { expandTo18Decimals } from './shared/utilities'
 
-import AuraPair from '../build/contracts/AuraPair.json'
+import HelixPair from '../build/contracts/HelixPair.json'
 import Oracle from '../build/contracts/Oracle.json'
 import SwapRewards from '../build/contracts/SwapRewards.json'
 import { fullExchangeFixture } from './shared/fixtures'
@@ -21,9 +21,9 @@ describe('SwapRewards', () => {
     let router: Contract
     let oracleFactory: Contract
     let refReg: Contract
-    let auraToken: Contract
-    let auraNFT: Contract
-    let auraLP: Contract
+    let helixToken: Contract
+    let helixNFT: Contract
+    let helixLP: Contract
 
     let tokenA: Contract
     let tokenB: Contract
@@ -48,9 +48,9 @@ describe('SwapRewards', () => {
         refReg = fixture.refReg
         swapRewards = fixture.swapRewards
 
-        auraToken = fixture.auraToken
-        auraNFT = fixture.auraNFT
-        auraLP = fixture.auraLP
+        helixToken = fixture.helixToken
+        helixNFT = fixture.helixNFT
+        helixLP = fixture.helixLP
 
         tokenA = fixture.tokenA
         tokenB = fixture.tokenB
@@ -62,20 +62,20 @@ describe('SwapRewards', () => {
     })
 
     async function initPairs(token0: Contract, token1: Contract) {
-        // initialize all the valid swap pairs for the tokens 0, 1, Ap, and Aura
+        // initialize all the valid swap pairs for the tokens 0, 1, Ap, and Helix
         const amount0 = expandTo18Decimals(900)
         const amount1 = expandTo18Decimals(300)
         const apAmount = expandTo18Decimals(800)
-        const auraAmount = expandTo18Decimals(700)
+        const helixAmount = expandTo18Decimals(700)
 
         await initPair(token0, amount0, token1, amount1)
-        await initPair(token0, amount0, auraLP, apAmount)
-        await initPair(token0, amount0, auraToken, auraAmount)
+        await initPair(token0, amount0, helixLP, apAmount)
+        await initPair(token0, amount0, helixToken, helixAmount)
 
-        await initPair(token1, amount1, auraLP, apAmount)
-        await initPair(token1, amount1, auraToken, auraAmount)
+        await initPair(token1, amount1, helixLP, apAmount)
+        await initPair(token1, amount1, helixToken, helixAmount)
 
-        await initPair(auraLP, apAmount, auraToken, auraAmount)
+        await initPair(helixLP, apAmount, helixToken, helixAmount)
     }
 
     async function initPair(token0: Contract, amount0: BigNumber, token1: Contract, amount1: BigNumber) {
@@ -104,15 +104,15 @@ describe('SwapRewards', () => {
     it('swapRewards: factory is initialized', async () => {
         // pairs are created
         expect(await factory.getPair(tokenA.address, tokenB.address)).to.not.eq(constants.AddressZero)
-        expect(await factory.getPair(tokenB.address, auraLP.address)).to.not.eq(constants.AddressZero)
-        expect(await factory.getPair(tokenB.address, auraToken.address)).to.not.eq(constants.AddressZero)
+        expect(await factory.getPair(tokenB.address, helixLP.address)).to.not.eq(constants.AddressZero)
+        expect(await factory.getPair(tokenB.address, helixToken.address)).to.not.eq(constants.AddressZero)
     })
 
     it('swapRewards: oracle factory is initialized', async () => {
         // oracle pairs are created
         expect(await oracleFactory.getOracle(tokenA.address, tokenB.address)).to.not.eq(constants.AddressZero)
-        expect(await oracleFactory.getOracle(tokenB.address, auraLP.address)).to.not.eq(constants.AddressZero)
-        expect(await oracleFactory.getOracle(tokenB.address, auraToken.address)).to.not.eq(constants.AddressZero)
+        expect(await oracleFactory.getOracle(tokenB.address, helixLP.address)).to.not.eq(constants.AddressZero)
+        expect(await oracleFactory.getOracle(tokenB.address, helixToken.address)).to.not.eq(constants.AddressZero)
     })
 
     it('swapRewards: router is initialized', async () => {
@@ -122,23 +122,23 @@ describe('SwapRewards', () => {
 
     it('swapRewards: pair (A, B) is initialized', async () => {
         let pairAddress = await factory.getPair(tokenA.address, tokenB.address)
-        let pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
+        let pair = new Contract(pairAddress, JSON.stringify(HelixPair.abi), provider).connect(wallet)
         let [reserves0, reserves1, ] = await pair.getReserves()
         expect(reserves0).to.be.above(0)
         expect(reserves1).to.be.above(0)
     })
 
     it('swapRewards: pair (B, AP) is initialized', async () => {
-        let pairAddress = await factory.getPair(tokenB.address, auraLP.address)
-        let pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
+        let pairAddress = await factory.getPair(tokenB.address, helixLP.address)
+        let pair = new Contract(pairAddress, JSON.stringify(HelixPair.abi), provider).connect(wallet)
         let [reserves0, reserves1, ] = await pair.getReserves()
         expect(reserves0).to.be.above(0)
         expect(reserves1).to.be.above(0)
     })
 
-    it('swapRewards: pair (B, AURA) is initialized', async () => {
-        let pairAddress = await factory.getPair(tokenB.address, auraToken.address)
-        let pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
+    it('swapRewards: pair (B, HELIX) is initialized', async () => {
+        let pairAddress = await factory.getPair(tokenB.address, helixToken.address)
+        let pair = new Contract(pairAddress, JSON.stringify(HelixPair.abi), provider).connect(wallet)
         let [reserves0, reserves1, ] = await pair.getReserves()
         expect(reserves0).to.be.above(0)
         expect(reserves1).to.be.above(0)
@@ -149,28 +149,28 @@ describe('SwapRewards', () => {
         expect(await refReg.isRecorder(swapRewards.address)).to.be.true
     })
 
-    it('swapRewards: auraNFT is initialized', async () => {
-        expect(await auraNFT.isAccruer(swapRewards.address)).to.be.true
+    it('swapRewards: helixNFT is initialized', async () => {
+        expect(await helixNFT.isAccruer(swapRewards.address)).to.be.true
     })
 
-    it('swapRewards: aura token is initialized', async () => {
-        expect(await auraToken.isMinter(swapRewards.address)).to.be.true
+    it('swapRewards: helix token is initialized', async () => {
+        expect(await helixToken.isMinter(swapRewards.address)).to.be.true
     })
 
     it('swapRewards: split amount is correct', async () => {
-        await swapRewards.setSplitRewardPercent(50)     // 5% Aura and 95% Ap
-        let [auraAmount0, apAmount0] = await swapRewards.splitReward(100)
-        expect(auraAmount0).to.eq(5)
+        await swapRewards.setSplitRewardPercent(50)     // 5% Helix and 95% Ap
+        let [helixAmount0, apAmount0] = await swapRewards.splitReward(100)
+        expect(helixAmount0).to.eq(5)
         expect(apAmount0).to.eq(95)
 
-        await swapRewards.setSplitRewardPercent(150)    // 15% Aura and 85% Ap
-        let [auraAmount1, apAmount1] = await swapRewards.splitReward(100)
-        expect(auraAmount1).to.eq(15)
+        await swapRewards.setSplitRewardPercent(150)    // 15% Helix and 85% Ap
+        let [helixAmount1, apAmount1] = await swapRewards.splitReward(100)
+        expect(helixAmount1).to.eq(15)
         expect(apAmount1).to.eq(85)
 
-        await swapRewards.setSplitRewardPercent(500)    // 50% Aura and 50% Ap
-        let [auraAmount2, apAmount2] = await swapRewards.splitReward(100)
-        expect(auraAmount2).to.eq(50)
+        await swapRewards.setSplitRewardPercent(500)    // 50% Helix and 50% Ap
+        let [helixAmount2, apAmount2] = await swapRewards.splitReward(100)
+        expect(helixAmount2).to.eq(50)
         expect(apAmount2).to.eq(50)
     })
 
@@ -185,26 +185,26 @@ describe('SwapRewards', () => {
         await swapRewards.setRouter(account)
 
         // Store the previous values of interest before swap 
-        const prevAccountAura = await auraToken.balanceOf(account)
-        const prevAccountAp = await auraNFT.getAccumulatedAP(account)
-        const prevReferrerAura = await refReg.balance(referrer)
+        const prevAccountHelix = await helixToken.balanceOf(account)
+        const prevAccountAp = await helixNFT.getAccumulatedAP(account)
+        const prevReferrerHelix = await refReg.balance(referrer)
 
         // Swap A for B and collect rewards
         await swapRewards.swap(account, tokenA.address, tokenB.address, 1000)
 
         // Get the updated values after swap
-        const newAccountAura = await auraToken.balanceOf(account)
-        const newAccountAp = await auraNFT.getAccumulatedAP(account)
-        const newReferrerAura = await refReg.balance(referrer)
+        const newAccountHelix = await helixToken.balanceOf(account)
+        const newAccountAp = await helixNFT.getAccumulatedAP(account)
+        const newReferrerHelix = await refReg.balance(referrer)
 
-        print(`account Aura was ${prevAccountAura} and now is ${newAccountAura}`)
+        print(`account Helix was ${prevAccountHelix} and now is ${newAccountHelix}`)
         print(`account Ap was ${prevAccountAp} and now is ${newAccountAp}`)
-        print(`referrer Aura was ${prevReferrerAura} and now is ${newReferrerAura}`)
+        print(`referrer Helix was ${prevReferrerHelix} and now is ${newReferrerHelix}`)
 
         // We don't actually expect any rewards to accrue because a swap hasn't been triggered.
-        expect(prevAccountAura).to.be.at.most(newAccountAura)
+        expect(prevAccountHelix).to.be.at.most(newAccountHelix)
         expect(prevAccountAp).to.be.at.most(newAccountAp)
-        expect(prevReferrerAura).to.be.at.most(newReferrerAura)
+        expect(prevReferrerHelix).to.be.at.most(newReferrerHelix)
     })
 
     it('swapRewards: swap tokens from router', async () => {
@@ -212,9 +212,9 @@ describe('SwapRewards', () => {
         const referrer = user.address
 
         // Store the previous values of interest before swap 
-        const prevAccountAura = await auraToken.balanceOf(account)
-        const prevAccountAp = await auraNFT.getAccumulatedAP(account)
-        const prevReferrerAura = await refReg.balance(referrer)
+        const prevAccountHelix = await helixToken.balanceOf(account)
+        const prevAccountAp = await helixNFT.getAccumulatedAP(account)
+        const prevReferrerHelix = await refReg.balance(referrer)
 
         // Swap twice and earn rewards
         await router.swapExactTokensForTokens(
@@ -229,7 +229,7 @@ describe('SwapRewards', () => {
         await router.swapExactTokensForTokens(
             expandTo18Decimals(90), 
             0, 
-            [tokenB.address, auraLP.address], 
+            [tokenB.address, helixLP.address], 
             wallet.address, 
             MaxUint256,
             { gasLimit }
@@ -238,24 +238,24 @@ describe('SwapRewards', () => {
         await router.swapExactTokensForTokens(
             expandTo18Decimals(90), 
             0, 
-            [tokenB.address, auraToken.address], 
+            [tokenB.address, helixToken.address], 
             wallet.address, 
             MaxUint256,
             { gasLimit }
         )
 
         // Get the updated values after swap
-        const newAccountAura = await auraToken.balanceOf(account)
-        const newAccountAp = await auraNFT.getAccumulatedAP(account)
-        const newReferrerAura = await refReg.balance(referrer)
+        const newAccountHelix = await helixToken.balanceOf(account)
+        const newAccountAp = await helixNFT.getAccumulatedAP(account)
+        const newReferrerHelix = await refReg.balance(referrer)
 
-        print(`account Aura was ${prevAccountAura} and now is ${newAccountAura}`)
+        print(`account Helix was ${prevAccountHelix} and now is ${newAccountHelix}`)
         print(`account Ap was ${prevAccountAp} and now is ${newAccountAp}`)
-        print(`referrer Aura was ${prevReferrerAura} and now is ${newReferrerAura}`)
+        print(`referrer Helix was ${prevReferrerHelix} and now is ${newReferrerHelix}`)
 
-        expect(prevAccountAura).to.be.at.most(newAccountAura)
+        expect(prevAccountHelix).to.be.at.most(newAccountHelix)
         expect(prevAccountAp).to.be.at.most(newAccountAp)
-        expect(prevReferrerAura).to.be.at.most(newReferrerAura)
+        expect(prevReferrerHelix).to.be.at.most(newReferrerHelix)
     })
 
     function print(str: string) {

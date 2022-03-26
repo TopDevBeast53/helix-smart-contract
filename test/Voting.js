@@ -6,7 +6,7 @@ var chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised).should();
 
 
-const AuraToken = artifacts.require('AuraToken');
+const HelixToken = artifacts.require('HelixToken');
 const Voting = artifacts.require('Voting');
 
 function expandTo18Decimals(n) {
@@ -17,15 +17,15 @@ contract('Voting', ([alice, bob, carol, deployer]) => {
 
     beforeEach(async () => {
 
-        this.auraToken = await AuraToken.new({ from: deployer });
-        this.voting = await Voting.new(this.auraToken.address, { from: deployer });
-        assert.equal((await this.auraToken.preMineSupply()).toString(), expandTo18Decimals(100000000).toString());
+        this.helixToken = await HelixToken.new({ from: deployer });
+        this.voting = await Voting.new(this.helixToken.address, { from: deployer });
+        assert.equal((await this.helixToken.preMineSupply()).toString(), expandTo18Decimals(100000000).toString());
         
-        //transfer AuraToken to users
-        await this.auraToken.transfer(alice, expandTo18Decimals(1000), {from: deployer})
-        await this.auraToken.transfer(bob, expandTo18Decimals(1000), {from: deployer})
-        await this.auraToken.transfer(carol, expandTo18Decimals(1000), {from: deployer})
-        assert.equal((await this.auraToken.balanceOf(alice)).toString(), expandTo18Decimals(1000).toString());
+        //transfer HelixToken to users
+        await this.helixToken.transfer(alice, expandTo18Decimals(1000), {from: deployer})
+        await this.helixToken.transfer(bob, expandTo18Decimals(1000), {from: deployer})
+        await this.helixToken.transfer(carol, expandTo18Decimals(1000), {from: deployer})
+        assert.equal((await this.helixToken.balanceOf(alice)).toString(), expandTo18Decimals(1000).toString());
     });
 
     describe("Create proposals", async () => {
@@ -54,11 +54,11 @@ contract('Voting', ([alice, bob, carol, deployer]) => {
             //Wrong decision value
             await expectRevert.unspecified(this.voting.vote(0, expandTo18Decimals(500), 0, {from: alice}));
             
-            await this.auraToken.approve(this.voting.address, expandTo18Decimals(500), { from: alice });
+            await this.helixToken.approve(this.voting.address, expandTo18Decimals(500), { from: alice });
             //vote with `YES`
             await this.voting.vote(0, expandTo18Decimals(500), 1, {from: alice});
-            //check the left balance of alice once voted with deposit AuraToken
-            assert.equal((await this.auraToken.balanceOf(alice)).toString(), expandTo18Decimals(500).toString());
+            //check the left balance of alice once voted with deposit HelixToken
+            assert.equal((await this.helixToken.balanceOf(alice)).toString(), expandTo18Decimals(500).toString());
             assert.equal((await this.voting.getDecision(0, alice)).toString(), "1");
 
             //Avoid voting twice for one proposal
@@ -69,13 +69,13 @@ contract('Voting', ([alice, bob, carol, deployer]) => {
             await this.voting.createProposal(utils.formatBytes32String("proposal_0"), nowTimestamp+100, {from: alice});
             
             //alice votes 'YES' with 800 tokens
-            await this.auraToken.approve(this.voting.address, expandTo18Decimals(800), { from: alice });
+            await this.helixToken.approve(this.voting.address, expandTo18Decimals(800), { from: alice });
             await this.voting.vote(0, expandTo18Decimals(800), 1, {from: alice});
             //bob votes 'YES' with 500 tokens
-            await this.auraToken.approve(this.voting.address, expandTo18Decimals(500), { from: bob });
+            await this.helixToken.approve(this.voting.address, expandTo18Decimals(500), { from: bob });
             await this.voting.vote(0, expandTo18Decimals(500), 1, {from: bob});
             //carol votes 'NO' with 900 tokens
-            await this.auraToken.approve(this.voting.address, expandTo18Decimals(900), { from: carol });
+            await this.helixToken.approve(this.voting.address, expandTo18Decimals(900), { from: carol });
             await this.voting.vote(0, expandTo18Decimals(900), 2, {from: carol});
             
             let ret = await this.voting.resultProposal(0);
@@ -88,9 +88,9 @@ contract('Voting', ([alice, bob, carol, deployer]) => {
             let nowTimestamp = parseInt((await time.latest()).toString());
             await this.voting.createProposal(utils.formatBytes32String("proposal_0"), nowTimestamp+100, {from: alice});
             
-            await this.auraToken.approve(this.voting.address, expandTo18Decimals(500), { from: alice });
+            await this.helixToken.approve(this.voting.address, expandTo18Decimals(500), { from: alice });
             await this.voting.vote(0, expandTo18Decimals(500), 1, {from: alice});//vote with YES
-            assert.equal((await this.auraToken.balanceOf(this.voting.address)).toString(), expandTo18Decimals(500).toString());
+            assert.equal((await this.helixToken.balanceOf(this.voting.address)).toString(), expandTo18Decimals(500).toString());
 
             let ret = await this.voting.resultProposal(0);
             assert.equal(ret[0].toString(), expandTo18Decimals(500).toString());//YES votes
@@ -106,9 +106,9 @@ contract('Voting', ([alice, bob, carol, deployer]) => {
         //     let nowTimestamp = parseInt((await time.latest()).toString());
         //     await this.voting.createProposal(utils.formatBytes32String("proposal_0"), nowTimestamp+3, {from: alice});
             
-        //     await this.auraToken.approve(this.voting.address, expandTo18Decimals(500), { from: alice });
+        //     await this.helixToken.approve(this.voting.address, expandTo18Decimals(500), { from: alice });
         //     await this.voting.vote(0, expandTo18Decimals(500), 1, {from: alice});//vote with YES
-        //     assert.equal((await this.auraToken.balanceOf(this.voting.address)).toString(), expandTo18Decimals(500).toString());
+        //     assert.equal((await this.helixToken.balanceOf(this.voting.address)).toString(), expandTo18Decimals(500).toString());
 
         //     let ret = await this.voting.resultProposal(0);
         //     assert.equal(ret[0].toString(), expandTo18Decimals(500).toString());//YES votes
@@ -119,11 +119,11 @@ contract('Voting', ([alice, bob, carol, deployer]) => {
         //     assert.equal(ret[0].toString(), expandTo18Decimals(500).toString());//YES votes not changed
         // });
     });
-    describe("Delegate from AuraToken", async () => {
+    describe("Delegate from HelixToken", async () => {
         it('check number of votes added prior votes after delegate', async () => {
             // delegate to self, current votes will be 1000
-            await this.auraToken.delegate(alice, { from: alice });
-            assert.equal(await this.auraToken.delegates(alice), alice);
+            await this.helixToken.delegate(alice, { from: alice });
+            assert.equal(await this.helixToken.delegates(alice), alice);
 
             // move 20 blocks from current block
             let blockNumAfterDelegate = parseInt((await time.latestBlock()).toString());
@@ -135,7 +135,7 @@ contract('Voting', ([alice, bob, carol, deployer]) => {
 
             // vote with `YES`
             const depositAmount = 500;
-            await this.auraToken.approve(this.voting.address, expandTo18Decimals(depositAmount), { from: alice });
+            await this.helixToken.approve(this.voting.address, expandTo18Decimals(depositAmount), { from: alice });
             await this.voting.vote(0, expandTo18Decimals(depositAmount), 1, {from: alice});
 
             // check result

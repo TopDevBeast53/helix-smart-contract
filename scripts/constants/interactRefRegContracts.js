@@ -1,22 +1,22 @@
 module.exports = {
-    auraToken: {
+    helixToken: {
         56: '',
         97: '0xAfD66ae7f555bCA74A42A3cE0a1C1b4Fc65C5715',
     },
-    auraNFT: {
+    helixNFT: {
         56: '',
         97: '0x8b2b085339D11DcF0FA0aaD985C30f82eb49a880',
     },
-    auraLP: {
+    helixLP: {
         56: '',
         97: '0x529cce4dd9c2234be9ca724a4158b8f675b22778',
-        //97: '0x0B8c4BBC3C63Cc96AF95e250e1B83E9Da7c9830F',       // using Test Token C instead since transfer to AuraPair fails
+        //97: '0x0B8c4BBC3C63Cc96AF95e250e1B83E9Da7c9830F',       // using Test Token C instead since transfer to HelixPair fails
     },
-    auraNFTImpl: {
+    helixNFTImpl: {
         56: '',
         97: '0x1a90de3849072ff46eca70cf714eac45e7a27304',
     },
-    auraNFTChef: {
+    helixNFTChef: {
         56: '',
         97: '0x6C57410c639c6A10208185853b8990d32dcF6d14',
     },

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "../tokens/AuraToken.sol";
+import "../tokens/HelixToken.sol";
 import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -27,7 +27,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     uint256 constant MAX_STAKING_FEE = 30; // 3%
     uint256 constant MAX_SWAP_FEE = 100; // 10%
 
-    AuraToken public auraToken;
+    HelixToken public helixToken;
     uint256 public stakingRefFee;
     uint256 public swapRefFee;
 
@@ -40,8 +40,8 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     // Should be initialize by default with 
     // defaultStakingRef = 10 (meaning 1% reward for staking)
     // defaultSwapRef = 10 (meaning 1% reward for swap)
-    constructor(AuraToken token, uint256 defaultStakingRef, uint256 defaultSwapRef) {
-        auraToken = token;
+    constructor(HelixToken token, uint256 defaultStakingRef, uint256 defaultSwapRef) {
+        helixToken = token;
         stakingRefFee = defaultStakingRef;
         swapRefFee = defaultSwapRef;
     }
@@ -91,7 +91,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
         }
         balance[msg.sender] = 0;
 
-        auraToken.mint(msg.sender, toMint);
+        helixToken.mint(msg.sender, toMint);
     }
 
     // Role functions for Recorders --------------------------------------------------------------------------------------

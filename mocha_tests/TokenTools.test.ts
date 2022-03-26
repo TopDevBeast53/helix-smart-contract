@@ -6,7 +6,7 @@ import { BigNumber, bigNumberify } from 'legacy-ethers/utils';
 import { fullExchangeFixture } from './shared/fixtures';
 import { expandTo18Decimals } from './shared/utilities'
 
-import AuraPair from '../build/contracts/AuraPair.json';
+import HelixPair from '../build/contracts/HelixPair.json';
 
 use(solidity);
 
@@ -126,6 +126,6 @@ describe('TokenTools', () => {
 
     async function getPair(token0: Contract, token1: Contract) {
         let pairAddress = await factory.getPair(token0.address, token1.address);
-        return new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet);
+        return new Contract(pairAddress, JSON.stringify(HelixPair.abi), provider).connect(wallet);
     }
 });

@@ -8,10 +8,10 @@
  * Workflow:
  * 
  *      1. Initialize to set wallet & contract instance
- *      2. Check how many `AURA` tokens `AuraChefNFT` contract has
+ *      2. Check how many `HELIX` tokens `HelixChefNFT` contract has
  *      3. Mint to an user by minter
  *      4. Stake by the user
- *      5. Accrue AuraPoints to the user by accruer(TODO: accruer should be SwapFeeRewardsWithAP but now minter temporary)
+ *      5. Accrue HelixPoints to the user by accruer(TODO: accruer should be SwapFeeRewardsWithAP but now minter temporary)
  *      6. Boost NFT by the user
  */
 
@@ -44,7 +44,7 @@
  async function getPendingReward(){
      console.log('sdfsf')
      const masterChef = IMasterChef.attach(contracts.masterChef[env.network]).connect(user);
-     let ret = await masterChef.pendingAuraToken(2, user.address);
+     let ret = await masterChef.pendingHelixToken(2, user.address);
      console.log(ret)
      return ret;
  }

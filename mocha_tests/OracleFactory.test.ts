@@ -5,7 +5,7 @@ import { BigNumber } from 'legacy-ethers/utils'
 import { MaxUint256 } from 'legacy-ethers/constants'
 import { expandTo18Decimals } from './shared/utilities'
 
-import AuraPair from '../build/contracts/AuraPair.json'
+import HelixPair from '../build/contracts/HelixPair.json'
 import Oracle from '../build/contracts/Oracle.json'
 import OracleFactory from '../build/contracts/OracleFactory.json'
 import SwapRewards from '../build/contracts/SwapRewards.json'
@@ -24,9 +24,9 @@ describe('OracleFactory', () => {
     let router: Contract
     let oracleFactory: Contract
     let refReg: Contract
-    let auraToken: Contract
-    let auraNFT: Contract
-    let auraLP: Contract
+    let helixToken: Contract
+    let helixNFT: Contract
+    let helixLP: Contract
 
     let tokenA: Contract
     let tokenB: Contract
@@ -51,9 +51,9 @@ describe('OracleFactory', () => {
         oracleFactory = fixture.oracleFactory
         refReg = fixture.refReg
 
-        auraToken = fixture.auraToken
-        auraNFT = fixture.auraNFT
-        auraLP = fixture.auraLP
+        helixToken = fixture.helixToken
+        helixNFT = fixture.helixNFT
+        helixLP = fixture.helixLP
 
         tokenA = fixture.tokenA
         tokenB = fixture.tokenB

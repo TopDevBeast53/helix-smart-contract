@@ -8,7 +8,7 @@
  * Workflow:
  * 
  *      1. Deploy `Voting` contract.
- *         - Set `AuraToken` address to `auraToken` of `AuraChefNFT`.
+ *         - Set `HelixToken` address to `helixToken` of `HelixChefNFT`.
  */
  const { ethers, network } = require(`hardhat`);
  const contracts = require("./constants/contracts")
@@ -23,7 +23,7 @@
      
      console.log(`------ Start deploying Voting contract ---------`);
      const Voting = await ethers.getContractFactory(`Voting`);
-     const _voting = await Voting.deploy(contracts.auraToken[env.network], {nonce: nonce});
+     const _voting = await Voting.deploy(contracts.helixToken[env.network], {nonce: nonce});
      await _voting.deployTransaction.wait();
      console.log(`Voting deployed to ${_voting.address}`);
  }

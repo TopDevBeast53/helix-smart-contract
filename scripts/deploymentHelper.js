@@ -15,39 +15,39 @@ require ('dotenv').config()
 const env = require('./constants/env')
 
 const initials = require('./constants/initials')
-const auraChefNFTStartBlock = initials.NFTCHEF_START_BLOCK[env.network];
-const auraChefNFTRewardPerBlock = initials.NFTCHEF_REWARD_PER_BLOCK[env.network];
+const helixChefNFTStartBlock = initials.NFTCHEF_START_BLOCK[env.network];
+const helixChefNFTRewardPerBlock = initials.NFTCHEF_REWARD_PER_BLOCK[env.network];
 
 const contracts = require('./constants/contracts')
 const factoryAddress = contracts.factory[env.network]
 const routerAddress = contracts.router[env.network]
-const auraTokenAddress = contracts.auraToken[env.network]
+const helixTokenAddress = contracts.helixToken[env.network]
 const oracleFactoryAddress = contracts.oracleFactory[env.network]
 const refRegAddress = contracts.referralRegister[env.network]
 const masterChefAddress = contracts.masterChef[env.network]
-const autoAuraAddress = contracts.autoAura[env.network]
+const autoHelixAddress = contracts.autoHelix[env.network]
 const smartChefAddress = contracts.smartChef[env.network]
-const auraNFTAddress = contracts.auraNFT[env.network]
-const auraNFTChefAddress = contracts.auraNFTChef[env.network]
-const auraNFTBridgeAddress = contracts.auraNFTBridge[env.network]
-const auraLPAddress = contracts.apToken[env.network]
+const helixNFTAddress = contracts.helixNFT[env.network]
+const helixNFTChefAddress = contracts.helixNFTChef[env.network]
+const helixNFTBridgeAddress = contracts.helixNFTBridge[env.network]
+const helixLPAddress = contracts.hpToken[env.network]
 const swapRewardsAddress = contracts.swapRewards[env.network]
-const migratorAddress = contracts.auraMigrator[env.network]
+const migratorAddress = contracts.helixMigrator[env.network]
 const tokenToolsAddress = contracts.tokenTools[env.network]
 
 let wallet
 let factory
 let router
-let auraToken
+let helixToken
 let oracleFactory
 let refReg
 let masterChef
-let autoAura
+let autoHelix
 let smartChef
-let auraNFT
-let auraNFTChef
-let auraNFTBridge
-let auraLP
+let helixNFT
+let helixNFTChef
+let helixNFTBridge
+let helixLP
 let swapRewards
 let migrator
 let tokenTools
@@ -64,11 +64,11 @@ async function main() {
     // which register another contract with Contract
     await initFactory();
     await initRouter();
-    await initAuraToken();
+    await initHelixToken();
     await initRefReg();
-    await initAuraNFT();
-    await initAuraChefNFT();
-    await initAuraNFTBridge(); 
+    await initHelixNFT();
+    await initHelixChefNFT();
+    await initHelixNFTBridge(); 
 
     print('done')
 }
@@ -86,16 +86,16 @@ async function loadContracts() {
     print('load contracts:')
 
     print(`load factory: ${factoryAddress}`)
-    const IFactory = await ethers.getContractFactory('AuraFactory')
+    const IFactory = await ethers.getContractFactory('HelixFactory')
     factory = await IFactory.attach(factoryAddress).connect(wallet)
 
     print(`load router: ${routerAddress}`)
-    const IRouter = await ethers.getContractFactory('AuraRouterV1')
+    const IRouter = await ethers.getContractFactory('HelixRouterV1')
     router = await IRouter.attach(routerAddress).connect(wallet)
 
-    print(`load AURA token: ${auraTokenAddress}`)
-    const IAuraToken = await ethers.getContractFactory('AuraToken')
-    auraToken = await IAuraToken.attach(auraTokenAddress).connect(wallet)
+    print(`load HELIX token: ${helixTokenAddress}`)
+    const IHelixToken = await ethers.getContractFactory('HelixToken')
+    helixToken = await IHelixToken.attach(helixTokenAddress).connect(wallet)
 
     print(`load oracle factory: ${oracleFactoryAddress}`)
     const IOracleFactory = await ethers.getContractFactory('OracleFactory')
@@ -109,36 +109,36 @@ async function loadContracts() {
     const IMasterChef = await ethers.getContractFactory('MasterChef')
     masterChef = await IMasterChef.attach(masterChefAddress).connect(wallet)
 
-    print(`load auto aura: ${autoAuraAddress}`)
-    const IAutoAura = await ethers.getContractFactory('AutoAura')
-    autoAura = await IAutoAura.attach(autoAuraAddress).connect(wallet)
+    print(`load auto helix: ${autoHelixAddress}`)
+    const IAutoHelix = await ethers.getContractFactory('AutoHelix')
+    autoHelix = await IAutoHelix.attach(autoHelixAddress).connect(wallet)
 
     print(`load smart chef: ${smartChefAddress}`)
     const ISmartChef = await ethers.getContractFactory('SmartChef')
     smartChef = await ISmartChef.attach(smartChefAddress).connect(wallet)
 
-    print(`load aura NFT: ${auraNFTAddress}`)
-    const IAuraNFT = await ethers.getContractFactory('AuraNFT')
-    auraNFT = await IAuraNFT.attach(auraNFTAddress).connect(wallet)
+    print(`load helix NFT: ${helixNFTAddress}`)
+    const IHelixNFT = await ethers.getContractFactory('HelixNFT')
+    helixNFT = await IHelixNFT.attach(helixNFTAddress).connect(wallet)
 
-    print(`load aura NFT chef: ${auraNFTChefAddress}`)
-    const IAuraNFTChef = await ethers.getContractFactory('AuraChefNFT')
-    auraNFTChef = await IAuraNFTChef.attach(auraNFTChefAddress).connect(wallet)
+    print(`load helix NFT chef: ${helixNFTChefAddress}`)
+    const IHelixNFTChef = await ethers.getContractFactory('HelixChefNFT')
+    helixNFTChef = await IHelixNFTChef.attach(helixNFTChefAddress).connect(wallet)
 
-    print(`load aura NFT bridge: ${auraNFTBridgeAddress}`)
-    const IAuraNFTBridge = await ethers.getContractFactory('AuraNFTBridge')
-    auraNFTBridge = await IAuraNFTBridge.attach(auraNFTBridgeAddress).connect(wallet)
+    print(`load helix NFT bridge: ${helixNFTBridgeAddress}`)
+    const IHelixNFTBridge = await ethers.getContractFactory('HelixNFTBridge')
+    helixNFTBridge = await IHelixNFTBridge.attach(helixNFTBridgeAddress).connect(wallet)
 
-    print(`load aura LP: ${auraLPAddress}`)
-    const IAuraLP = await ethers.getContractFactory('AuraLP')
-    auraLP = await IAuraLP.attach(auraLPAddress).connect(wallet)
+    print(`load helix LP: ${helixLPAddress}`)
+    const IHelixLP = await ethers.getContractFactory('HelixLP')
+    helixLP = await IHelixLP.attach(helixLPAddress).connect(wallet)
 
     print(`load swap rewards: ${swapRewardsAddress}`)
     ISwapRewards = await ethers.getContractFactory('SwapRewards')
     swapRewards = await ISwapRewards.attach(swapRewardsAddress).connect(wallet)
 
     print(`load migrator: ${migratorAddress}`)
-    IMigrator = await ethers.getContractFactory('AuraMigrator')
+    IMigrator = await ethers.getContractFactory('HelixMigrator')
     migrator = await IMigrator.attach(migratorAddress).connect(wallet)
 
     print(`load token tools: ${tokenToolsAddress}`)
@@ -169,19 +169,19 @@ async function initRouter() {
 }
 
 
-async function initAuraToken() {
-    print(`init aura token`)
+async function initHelixToken() {
+    print(`init helix token`)
 
-    print(`register referral register as aura token minter`)
-    await auraToken.addMinter(refReg.address, overrides)
+    print(`register referral register as helix token minter`)
+    await helixToken.addMinter(refReg.address, overrides)
     print(`done`)
 
-    print(`register master chef as aura token minter`)
-    await auraToken.addMinter(masterChef.address, overrides)
+    print(`register master chef as helix token minter`)
+    await helixToken.addMinter(masterChef.address, overrides)
     print(`done`)
 
-    print(`register swap rewards as aura token minter`)
-    await auraToken.addMinter(swapRewards.address, overrides)
+    print(`register swap rewards as helix token minter`)
+    await helixToken.addMinter(swapRewards.address, overrides)
     print(`done`)
 
     print(`\n`)
@@ -207,38 +207,38 @@ async function initSmartChef() {
     print(`\n`)
 }
 
-async function initAuraNFT() {
-    print(`init aura NFT`)
+async function initHelixNFT() {
+    print(`init helix NFT`)
 
-    print(`register wallet as aura NFT minter`)
-    await auraNFT.addMinter(wallet.address, overrides)
+    print(`register wallet as helix NFT minter`)
+    await helixNFT.addMinter(wallet.address, overrides)
     print(`done`)
 
-    print(`register aura chef NFT as aura NFT staker`)
-    await auraNFT.addStaker(auraNFTChef.address, overrides)
+    print(`register helix chef NFT as helix NFT staker`)
+    await helixNFT.addStaker(helixNFTChef.address, overrides)
     print(`done`)
 
-    print(`register aura nft bridge as aura NFT minter`)
-    await auraNFT.addMinter(auraNFTBridge.address, overrides)
+    print(`register helix nft bridge as helix NFT minter`)
+    await helixNFT.addMinter(helixNFTBridge.address, overrides)
     print(`done`)
 
-    print(`register swap rewards as aura NFT accruer`)
-    await auraNFT.addAccruer(swapRewards.address, overrides)
+    print(`register swap rewards as helix NFT accruer`)
+    await helixNFT.addAccruer(swapRewards.address, overrides)
     print(`done`)
 
     print(`\n`)
 }
 
-async function initAuraChefNFT() {
-    print(`init aura chef NFT`)
+async function initHelixChefNFT() {
+    print(`init helix chef NFT`)
 
-    print(`register aura token as aura chef NFT reward token`)
+    print(`register helix token as helix chef NFT reward token`)
     try {
-        // fails if auraToken has already been registered
-        await auraNFTChef.addNewRewardToken(
-            auraToken, 
-            auraChefNFTStartBlock, 
-            auraChefNFTRewardPerBlock, 
+        // fails if helixToken has already been registered
+        await helixNFTChef.addNewRewardToken(
+            helixToken, 
+            helixChefNFTStartBlock, 
+            helixChefNFTRewardPerBlock, 
             overrides
         )
     } catch(error) {
@@ -246,16 +246,16 @@ async function initAuraChefNFT() {
     }
     print(`done`)
 
-    print(`did you remember to fund aura chef NFT with reward tokens`)
+    print(`did you remember to fund helix chef NFT with reward tokens`)
 
     print(`\n`)
 }
 
-async function initAuraNFTBridge() {
-    print(`init aura NFT bridge`)
+async function initHelixNFTBridge() {
+    print(`init helix NFT bridge`)
 
-    print(`register wallet as aura NFT bridge bridger`)
-    await auraNFTBridge.addBridger(wallet.address, overrides)
+    print(`register wallet as helix NFT bridge bridger`)
+    await helixNFTBridge.addBridger(wallet.address, overrides)
     print(`done`)
 
     print(`\n`)
