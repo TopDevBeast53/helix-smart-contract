@@ -5,7 +5,7 @@ import { Program, Provider, web3 } from "@project-serum/anchor";
 import Contract from "web3-eth-contract";
 import {
   getOrCreateAssociatedTokenAccount,
-  TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import idl from "./solana_anchor.json";
 import compiledBridge from "./AuraNFTBridge.json";
@@ -23,13 +23,10 @@ import {
 require("@solana/wallet-adapter-react-ui/styles.css");
 
 const wallets = [
-  /* view list of available wallets at https://github.com/solana-labs/wallet-adapter#wallets */
   new PhantomWalletAdapter(),
 ];
 
-const { SystemProgram, Keypair } = web3;
-/* create an account  */
-const baseAccount = Keypair.generate();
+const { Keypair } = web3;
 const opts = {
   preflightCommitment: "processed",
 };
@@ -38,14 +35,12 @@ const programID = new PublicKey(process.env.REACT_APP_PROGRAM_ID);
 const NETWORK = process.env.REACT_APP_SOLANA_NETWORK;
 
 function App() {
-  const [value, setValue] = useState(null);
   const [connection, setConnection] = useState(null);
   const [nfts, setNfts] = useState([]);
   const [events, setEvents] = useState([]);
   const wallet = useWallet();
   const secretKeyString = process.env.REACT_APP_PRIVATE_KEY;
   async function getProvider() {
-    /* create the provider and return it to the caller */
     setConnection(new Connection(NETWORK, opts.preflightCommitment));
 
     const provider = new Provider(connection, wallet, opts.preflightCommitment);
@@ -56,7 +51,13 @@ function App() {
     async function loadInit() {
       await getProvider();
       setNfts(await getProgramOwnedNfts());
-      setEvents(await getQueuedEvents());
+      const allEvents = await getQueuedEvents();
+      const filteredEvents = allEvents.filter((e) => {
+        return nfts.some((n) => {
+          return n.token.toString() === e.externalTokenID
+        })
+      })
+      setEvents(filteredEvents, nfts);
     }
 
     loadInit();
@@ -87,6 +88,7 @@ function App() {
   }
 
   async function getProgramOwnedNfts() {
+    // eslint-disable-next-line no-unused-vars
     const [statePDA, stateBump] = await PublicKey.findProgramAddress(
       [Buffer.from(process.env.REACT_APP_ACCOUNT_KEY)],
       programID
@@ -104,23 +106,20 @@ function App() {
     return await contract.methods.getBridgeToSolanaEvents().call();
   }
 
-  async function createCounter() {
+  const bridgeToSolana = async (i) => {
     const provider = await getProvider();
     const program = new Program(idl, programID, provider);
     const secretKey = Uint8Array.from(JSON.parse(secretKeyString));
     const programKeyPair = Keypair.fromSecretKey(secretKey);
-
+    // eslint-disable-next-line no-unused-vars
     const [statePDA, stateBump] = await PublicKey.findProgramAddress(
       [Buffer.from(process.env.REACT_APP_ACCOUNT_KEY)],
       programID
     );
 
     // just for test
-    const mint = new PublicKey("2yXkQJxQp7MuhvGVUxgZUfNbzYy47yqfTEXT6AxxPhZQ");
-    const destination = new PublicKey(
-      "6WF3wdGj4ht6Jmn8AYpeBXNsqAfBrBWwk4B1os4UBTVY"
-    );
-    // const bsc = "59201fb8cb2D61118B280c8542127331DD141654";
+    const mint = new PublicKey(events[i].externalTokenID);
+    const destination = new PublicKey(events[i].externalOwnerID);
     const senderATA = await getOrCreateAssociatedTokenAccount(
       connection,
       wallet,
@@ -155,12 +154,10 @@ function App() {
         signers: [programKeyPair],
       });
 
-      const account = await program.account.baseAccount.fetch(
-        baseAccount.publicKey
-      );
-      console.debug("account: ", account);
-      setValue(account.count.toString());
+      console.debug("account: ");
+      alert('success!');
     } catch (err) {
+      alert('error: nft not exist');
       console.debug("Transaction error: ", err);
     }
   }
@@ -182,8 +179,6 @@ function App() {
     return (
       <div className="App">
         <div>
-          {!value && <button onClick={createCounter}>Bridge To Solana</button>}
-
           <h2>Data from Solana</h2>
           {nfts != null &&
             nfts.map((n, i) => {
@@ -198,18 +193,22 @@ function App() {
           {events != null &&
             events.map((n, i) => {
               return (
-                <h3 key={i}>
-                  token: {n[0]}, owner: {n[1]}
-                </h3>
+                <>
+                  <h3 key={i}>
+                    token: {n.externalTokenID}, owner: {n[1]}
+                  </h3>
+                  <button key={n[1]} onClick={() => bridgeToSolana(i)}>Bridge To Solana</button>
+                </>
               );
             })}
+
+          {events == null && <h3>No bridged NFTS</h3>}
         </div>
       </div>
     );
   }
 }
 
-/* wallet configuration as specified here: https://github.com/solana-labs/wallet-adapter#setup */
 const AppWithProvider = () => (
   <ConnectionProvider endpoint={NETWORK}>
     <WalletProvider wallets={wallets} autoConnect>
