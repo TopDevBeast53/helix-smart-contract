@@ -8,7 +8,7 @@ import {
   TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import idl from "./solana_anchor.json";
-import compiledBridge from "./AuraNFTBridge.json";
+import compiledBridge from "./HelixNFTBridge.json";
 
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
 import {
