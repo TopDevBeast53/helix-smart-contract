@@ -25,6 +25,7 @@ import SmartChef from '../../build/contracts/SmartChef.json'
 import AuraChefNFT from '../../build/contracts/AuraChefNFT.json'
 import AuraLP from '../../build/contracts/AuraLP.json'
 import AuraNFTBridge from '../../build/contracts/AuraNFTBridge.json'
+import HelixVault from '../../build/contracts/HelixVault.json'
 
 const addresses = require('../../scripts/constants/addresses')
 const initials = require('../../scripts/constants/initials')
@@ -57,6 +58,10 @@ const swapRewardsSplitRewardPercent = initials.SPLIT_REWARD_PERCENT[env.network]
 const swapRewardsAuraRewardPercent = initials.AURA_REWARD_PERCENT[env.network]
 const swapRewardsApRewardPercent = initials.AP_REWARD_PERCENT[env.network]
 
+const helixVaultRewardPerBlock = initials.HELIX_VAULT_REWARD_PER_BLOCK[env.network]
+const helixVaultStartBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
+const helixVaultBonusEndBlock = initials.HELIX_VAULT_BONUS_END_BLOCK[env.network]
+
 const overrides = {
     gasLimit: 9999999
 }
@@ -87,6 +92,7 @@ interface FullExchangeFixture {
     externalRouter: Contract
     migrator: Contract
     tokenTools: Contract
+    helixVault: Contract
 }
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
@@ -203,6 +209,18 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // 13 deploy token tools
     const tokenTools = await deployContract(wallet, TokenTools, [], overrides)
 
+    // 14 deploy helix vault
+    const helixVault = await deployContract(wallet, HelixVault, 
+        [
+            auraToken.address,
+            auraToken.address,
+            helixVaultRewardPerBlock,
+            helixVaultStartBlock,
+            helixVaultBonusEndBlock
+        ], 
+        overrides
+    )
+
     return {
         tokenA,
         tokenB,
@@ -229,5 +247,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         externalRouter,
         migrator, 
         tokenTools,
+        helixVault,
     }
 }

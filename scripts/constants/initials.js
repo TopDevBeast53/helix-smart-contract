@@ -97,4 +97,22 @@ module.exports = {
         56: 50,         // 5% Ap Rewards
         97: 50,         // 5% Ap Rewards
     },
+
+    // --------- Helix Vault --------- //
+
+    HELIX_VAULT_REWARD_PER_BLOCK: {
+        56: '1000000000000000000', 
+        97: '1000000000000000000', // currently this value means 1 HELIX per block
+    },
+
+    HELIX_VAULT_START_BLOCK : {
+        56: 0, 
+        97: 0,
+    },
+
+    //block when rewards are no longer being given away
+    HELIX_VAULT_BONUS_END_BLOCK : {
+        56: 1000000000,
+        97: 1000000000,
+    },
 }
