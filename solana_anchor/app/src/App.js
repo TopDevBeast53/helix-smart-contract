@@ -4,10 +4,8 @@ import { Connection, PublicKey } from "@solana/web3.js";
 import { Program, Provider, web3 } from "@project-serum/anchor";
 import Contract from "web3-eth-contract";
 import {
-  getAssociatedTokenAddress,
   getOrCreateAssociatedTokenAccount,
   TOKEN_PROGRAM_ID,
-  closeAccount
 } from "@solana/spl-token";
 import idl from "./solana_anchor.json";
 import compiledBridge from "./AuraNFTBridge.json";
@@ -36,7 +34,8 @@ const opts = {
   preflightCommitment: "processed",
 };
 
-const programID = new PublicKey("A7nCafiWF1mDUHYJxfXGaBX3vJm7XvzkUtgSe9R1kK9D");
+const programID = new PublicKey(process.env.REACT_APP_PROGRAM_ID);
+const NETWORK = process.env.REACT_APP_SOLANA_NETWORK;
 
 function App() {
   const [value, setValue] = useState(null);
@@ -44,13 +43,10 @@ function App() {
   const [nfts, setNfts] = useState([]);
   const [events, setEvents] = useState([]);
   const wallet = useWallet();
-  const secretKeyString =
-    "[193,53,54,156,26,231,111,92,37,45,201,126,105,131,237,132,33,87,190,19,58,156,137,40,192,147,60,178,4,96,54,104,135,117,198,77,24,204,99,100,96,203,128,209,55,14,193,131,244,159,26,218,228,129,90,158,208,8,145,253,109,7,147,156]";
+  const secretKeyString = process.env.REACT_APP_PRIVATE_KEY;
   async function getProvider() {
     /* create the provider and return it to the caller */
-    /* network set to local network for now */
-    const network = "https://api.devnet.solana.com";
-    setConnection(new Connection(network, opts.preflightCommitment));
+    setConnection(new Connection(NETWORK, opts.preflightCommitment));
 
     const provider = new Provider(connection, wallet, opts.preflightCommitment);
     return provider;
@@ -92,19 +88,18 @@ function App() {
 
   async function getProgramOwnedNfts() {
     const [statePDA, stateBump] = await PublicKey.findProgramAddress(
-      [Buffer.from("test7")],
+      [Buffer.from(process.env.REACT_APP_ACCOUNT_KEY)],
       programID
     );
     const stateAccount = await connection.getAccountInfo(statePDA);
-    console.debug('what', stateAccount)
     return deserializeAccountInfo(stateAccount.data);
   }
 
   async function getQueuedEvents() {
-    Contract.setProvider("https://data-seed-prebsc-1-s1.binance.org:8545/");
+    Contract.setProvider(process.env.REACT_APP_BINANCE_NETWORK);
     const contract = new Contract(
       compiledBridge.abi,
-      "0x4F807c0f58e88A2fEee50bC9dd80db0923e46002"
+      process.env.REACT_APP_BINANCE_PROGRAM_ADDRESS
     );
     return await contract.methods.getBridgeToSolanaEvents().call();
   }
@@ -116,7 +111,7 @@ function App() {
     const programKeyPair = Keypair.fromSecretKey(secretKey);
 
     const [statePDA, stateBump] = await PublicKey.findProgramAddress(
-      [Buffer.from("test7")],
+      [Buffer.from(process.env.REACT_APP_ACCOUNT_KEY)],
       programID
     );
 
@@ -139,7 +134,6 @@ function App() {
       mint,
       destination
     );
-    // const uint8array = new TextEncoder().encode(bsc);
 
     try {
       /* interact with the program via rpc */
@@ -217,7 +211,7 @@ function App() {
 
 /* wallet configuration as specified here: https://github.com/solana-labs/wallet-adapter#setup */
 const AppWithProvider = () => (
-  <ConnectionProvider endpoint="https://api.devnet.solana.com">
+  <ConnectionProvider endpoint={NETWORK}>
     <WalletProvider wallets={wallets} autoConnect>
       <WalletModalProvider>
         <App />
