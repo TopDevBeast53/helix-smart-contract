@@ -24,6 +24,7 @@ import AutoHelix from '../../build/contracts/AutoHelix.json'
 import HelixChefNFT from '../../build/contracts/HelixChefNFT.json'
 import HelixLP from '../../build/contracts/HelixLP.json'
 import HelixNFTBridge from '../../build/contracts/HelixNFTBridge.json'
+import HelixVault from '../../build/contracts/HelixVault.json'
 
 const addresses = require('../../scripts/constants/addresses')
 const initials = require('../../scripts/constants/initials')
@@ -192,8 +193,8 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // 14 deploy helix vault
     const vault = await deployContract(wallet, HelixVault, 
         [
-            auraToken.address,
-            auraToken.address,
+            helixToken.address,
+            helixToken.address,
             helixVaultRewardPerBlock,
             helixVaultStartBlock,
             helixVaultBonusEndBlock

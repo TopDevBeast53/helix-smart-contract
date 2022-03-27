@@ -34,23 +34,23 @@ describe('Vault', () => {
     const loadFixture = createFixtureLoader(provider, [owner])
 
     let vault: Contract
-    let auraToken: Contract
+    let helixToken: Contract
 
     beforeEach(async () => {
         const fullExchange = await loadFixture(fullExchangeFixture)
         vault = fullExchange.vault
-        auraToken = fullExchange.auraToken
+        helixToken = fullExchange.helixToken
 
         // Fund vault with reward tokens
-        await auraToken.transfer(vault.address, expandTo18Decimals(10000))
+        await helixToken.transfer(vault.address, expandTo18Decimals(10000))
 
         // Approve the vault to spend caller's funds
-        await auraToken.approve(vault.address, MaxUint256)
+        await helixToken.approve(vault.address, MaxUint256)
     })
 
     it('vault: initialized with expected values', async () => {
-        expect(await vault.token()).to.eq(auraToken.address)
-        expect(await vault.rewardToken()).to.eq(auraToken.address)
+        expect(await vault.token()).to.eq(helixToken.address)
+        expect(await vault.rewardToken()).to.eq(helixToken.address)
         expect(await vault.rewardPerBlock()).to.eq(rewardPerBlock)
         expect(await vault.bonusEndBlock()).to.eq(bonusEndBlock)
 
@@ -71,7 +71,7 @@ describe('Vault', () => {
         expect(durations[4][0]).to.eq(720 * SECONDS_PER_DAY)
         expect(durations[4][1]).to.eq(1000)
 
-        expect(await auraToken.balanceOf(vault.address)).to.eq(expandTo18Decimals(10000))
+        expect(await helixToken.balanceOf(vault.address)).to.eq(expandTo18Decimals(10000))
     })
 
     it('vault: new deposit', async () => {
