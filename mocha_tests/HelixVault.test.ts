@@ -1,5 +1,5 @@
 import chai, { expect } from 'chai'
-import { solidity, MockProvider, createFixtureLoader } from 'legacy-ethereum-waffle'
+import { solidity, MockProvider, createFixtureLoader, deployContract } from 'legacy-ethereum-waffle'
 import { Contract, constants } from 'legacy-ethers'
 import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
 import { MaxUint256 } from 'legacy-ethers/constants'
@@ -7,10 +7,13 @@ import { MaxUint256 } from 'legacy-ethers/constants'
 import { fullExchangeFixture } from './shared/fixtures'
 import { expandTo18Decimals } from './shared/utilities'
 
+import HelixVault from '../build/contracts/HelixVault.json'
+
 const initials = require('../scripts/constants/initials')
 const env = require('../scripts/constants/env')
 
 const rewardPerBlock = initials.HELIX_VAULT_REWARD_PER_BLOCK[env.network]
+const startBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
 const bonusEndBlock = initials.HELIX_VAULT_BONUS_END_BLOCK[env.network]
 
 chai.use(solidity)
@@ -30,11 +33,14 @@ describe('Vault', () => {
         gasLimit: 99999999999
     })
 
-    const [owner, user] = provider.getWallets()
-    const loadFixture = createFixtureLoader(provider, [owner])
+    const [wallet0, wallet1] = provider.getWallets()
+    const loadFixture = createFixtureLoader(provider, [wallet0])
 
     let vault: Contract
     let helixToken: Contract
+
+    // Vault owned by wallet1, used for checking isOwner privileges
+    let _vault: Contract
 
     beforeEach(async () => {
         const fullExchange = await loadFixture(fullExchangeFixture)
@@ -46,6 +52,9 @@ describe('Vault', () => {
 
         // Approve the vault to spend caller's funds
         await helixToken.approve(vault.address, MaxUint256)
+
+        // Create the wallet1 owned vault
+        _vault = new Contract(vault.address, JSON.stringify(HelixVault.abi), provider).connect(wallet1)   
     })
 
     it('vault: initialized with expected values', async () => {
@@ -53,48 +62,329 @@ describe('Vault', () => {
         expect(await vault.rewardToken()).to.eq(helixToken.address)
         expect(await vault.rewardPerBlock()).to.eq(rewardPerBlock)
         expect(await vault.bonusEndBlock()).to.eq(bonusEndBlock)
-
-        const durations = await vault.getDurations();
-   
-        expect(durations[0][0]).to.eq(90 * SECONDS_PER_DAY)     // duration (n days * seconds per day)
-        expect(durations[0][1]).to.eq(50)                       // weight
-
-        expect(durations[1][0]).to.eq(180 * SECONDS_PER_DAY)
-        expect(durations[1][1]).to.eq(100)
-
-        expect(durations[2][0]).to.eq(360 * SECONDS_PER_DAY)
-        expect(durations[2][1]).to.eq(300)
-
-        expect(durations[3][0]).to.eq(540 * SECONDS_PER_DAY)
-        expect(durations[3][1]).to.eq(500)
-
-        expect(durations[4][0]).to.eq(720 * SECONDS_PER_DAY)
-        expect(durations[4][1]).to.eq(1000)
-
         expect(await helixToken.balanceOf(vault.address)).to.eq(expandTo18Decimals(10000))
+    })
+
+    it('vault: get durations initialized by constructor', async () => {
+        const durations = await vault.getDurations()
+   
+        expect(durations[0].duration).to.eq(90 * SECONDS_PER_DAY)     // duration (n days * seconds per day)
+        expect(durations[0].weight).to.eq(50)                       // weight
+
+        expect(durations[1].duration).to.eq(180 * SECONDS_PER_DAY)
+        expect(durations[1].weight).to.eq(100)
+
+        expect(durations[2].duration).to.eq(360 * SECONDS_PER_DAY)
+        expect(durations[2].weight).to.eq(300)
+
+        expect(durations[3].duration).to.eq(540 * SECONDS_PER_DAY)
+        expect(durations[3].weight).to.eq(500)
+
+        expect(durations[4].duration).to.eq(720 * SECONDS_PER_DAY)
+        expect(durations[4].weight).to.eq(1000)
+    })
+
+    it('vault: add duration', async () => {
+        const duration = 1;
+        const weight = 1000;
+        await vault.addDuration(duration, weight)
+
+        const durations = await vault.getDurations()
+        // expect the length to equal 6 since 5 durations were added by the constructor
+        expect(durations.length).to.eq(6)
+
+        expect(durations[5].duration).to.eq(duration)
+        expect(durations[5].weight).to.eq(weight)
+    })
+
+    it('vault: add duration with invalid duration fails to add', async () => {
+        const invalidDuration = 0;
+        const weight = 1000;
+        await expect(vault.addDuration(invalidDuration, weight)).to.be.revertedWith('HelixVault: INVALID DURATION')
+    })
+
+    it('vault: add duration with invalid weight fails to add', async () => {
+        const duration = 1;
+        const invalidWeight = 0;
+        await expect(vault.addDuration(duration, invalidWeight)).to.be.revertedWith('HelixVault: INVALID WEIGHT')
+    })
+
+    it('vault: add duration as non-owner fails to add', async () => {
+        const duration = 1;
+        const weight = 1000;
+        await expect(_vault.addDuration(duration, weight)).to.be.revertedWith('Ownable: caller is not the owner')
+    })
+
+    it('vault: remove duration', async () => {
+        // vault is initialized with 5 durations
+        // remove the middle duration
+        await vault.removeDuration(2)
+
+        // and check that the remaining 4 durations exist and are correctly ordered
+        let durations = await vault.getDurations()
+
+        expect(durations[0].duration).to.eq(90 * SECONDS_PER_DAY)
+        expect(durations[0].weight).to.eq(50)
+
+        expect(durations[1].duration).to.eq(180 * SECONDS_PER_DAY)
+        expect(durations[1].weight).to.eq(100)
+
+        expect(durations[2].duration).to.eq(540 * SECONDS_PER_DAY)
+        expect(durations[2].weight).to.eq(500)
+
+        expect(durations[3].duration).to.eq(720 * SECONDS_PER_DAY)
+        expect(durations[3].weight).to.eq(1000)
+
+        // remove the first duration
+        await vault.removeDuration(0)
+
+        // and check that the remaining 3 durations exist and are correctly ordered
+        durations = await vault.getDurations()
+
+        expect(durations[0].duration).to.eq(180 * SECONDS_PER_DAY)
+        expect(durations[0].weight).to.eq(100)
+
+        expect(durations[1].duration).to.eq(540 * SECONDS_PER_DAY)
+        expect(durations[1].weight).to.eq(500)
+
+        expect(durations[2].duration).to.eq(720 * SECONDS_PER_DAY)
+        expect(durations[2].weight).to.eq(1000)
+ 
+        // remove the last duration
+        await vault.removeDuration(2)
+
+        // and check that the remaining 2 durations exist and are correctly ordered
+        durations = await vault.getDurations()
+
+        expect(durations[0].duration).to.eq(180 * SECONDS_PER_DAY)
+        expect(durations[0].weight).to.eq(100)
+
+        expect(durations[1].duration).to.eq(540 * SECONDS_PER_DAY)
+        expect(durations[1].weight).to.eq(500)
+ 
+        // remove the two remaining durations
+        await vault.removeDuration(0)
+        await vault.removeDuration(0)
+
+        // and check that there are no remaining durations
+        durations = await vault.getDurations()
+        expect(durations.length).to.eq(0)
+
+        // try to remove from empty array and expect error
+        await expect(vault.removeDuration(0)).to.be.revertedWith('HelixVault: INVALID DURATION INDEX')
+    })
+
+    it('vault: remove duration with invalid duration index fails to remove', async () => {
+        await expect(vault.removeDuration(5)).to.be.revertedWith('HelixVault: INVALID DURATION INDEX')
+    })
+
+    it('vault: remove duration as non-owner fails to remove', async () => {
+        await expect(_vault.removeDuration(0)).to.be.revertedWith('Ownable: caller is not the owner')
+    })
+
+    it('vault: update reward per block', async () => {
+        const rewardPerBlock = expandTo18Decimals(10)
+        await vault.updateRewardPerBlock(rewardPerBlock)
+        expect(await vault.rewardPerBlock()).to.eq(rewardPerBlock)
+    })
+
+    it('vault: update reward per block as non-owner fails to update', async () => {
+        const rewardPerBlock = expandTo18Decimals(10)
+        await expect(_vault.updateRewardPerBlock(rewardPerBlock)).to.be.revertedWith('Ownable: caller is not the owner')
+    })
+
+    it('vault: update reward per block with too large reward fails to update', async () => {
+        // max valid reward is 40 * 10 ^ 18, update should succeed
+        const rewardPerBlock = expandTo18Decimals(40)           // 40 * 10 ^ 18
+        await vault.updateRewardPerBlock(rewardPerBlock)
+        expect(await vault.rewardPerBlock()).to.eq(rewardPerBlock)
+
+        // while this update should fail
+        const invalidRewardPerBlock = expandTo18Decimals(41)    // 41 * 10 ^ 18
+        await expect(vault.updateRewardPerBlock(invalidRewardPerBlock)).to.be.revertedWith('HelixVault: 40 TOKENS MAX PER BLOCK')
+    })
+
+    it('vault: update reward per block with too small reward fails to update', async () => {
+        // min valid reward is 1 * 10 ^ 17, update should succeed
+        const rewardPerBlock = expandTo18Decimals(1).div(10)            // 1 * 10 ^ 17
+        await vault.updateRewardPerBlock(rewardPerBlock)
+        expect(await vault.rewardPerBlock()).to.eq(rewardPerBlock)
+
+        // while this update should fail
+        const invalidRewardPerBlock = expandTo18Decimals(9).div(100)    // 9 * 10 ^ 16
+        await expect(vault.updateRewardPerBlock(invalidRewardPerBlock)).to.be.revertedWith('HelixVault: 0.1 TOKENS MIN PER BLOCK')
+    })
+
+    it('vault: get multiplier', async () => {
+        const bonusEndBlock = await vault.bonusEndBlock() 
+
+        // Expect to enter the "if" condition
+        let to = bonusEndBlock - 1
+        let from = to - 1
+        expect(await vault.getMultiplier(from, to)).to.eq(to - from)
+
+        // Expect to enter the "else if" condition
+        to = bonusEndBlock + 2
+        from = bonusEndBlock
+        expect(await vault.getMultiplier(from, to)).to.eq(0)
+
+        // Expect to enter the "else" condition
+        to = bonusEndBlock + 1
+        from = bonusEndBlock - 1
+        expect(await vault.getMultiplier(from, to)).to.eq(bonusEndBlock - from)
+    }) 
+
+    it('vault: get multiplier fails if "to" preceeds "from" block', async () => {
+        const to = 998
+        const from = 999
+        expect(to).to.be.below(from) // require "to" to be less than "from" for following test to fail as expected
+        await expect(vault.getMultiplier(from, to)).to.be.revertedWith('HelixVault: TO BLOCK MAY NOT PRECEED FROM BLOCK')
+    })
+
+    it('vault: update pool', async () => {
+        // Skip testing block.number <= lastRewardBlock condition
+
+        // First test the case where the vault contract balance is 0
+        // overwrite _vault with a fresh deployment so that the contract's token balance == 0
+        const _vault = await deployContract(wallet0, HelixVault, 
+            [
+                helixToken.address,
+                helixToken.address,
+                rewardPerBlock,
+                startBlock,
+                bonusEndBlock
+            ], 
+            overrides
+        )
+        expect(await helixToken.balanceOf(_vault.address)).to.eq(0)
+
+        // and now after update expect lastRewardBlock to be increased 
+        // but expect accTokenPerShare to stay the same
+        let prevAccTokenPerShare = await _vault.accTokenPerShare()
+        let prevLastRewardBlock = await _vault.lastRewardBlock()
+    
+        // +1 since update pool occurs on block after reading the block number
+        let expectedBlockNumber = (await provider.getBlockNumber()) + 1
+
+        await _vault.updatePool()
+
+        expect(await _vault.accTokenPerShare()).to.eq(prevAccTokenPerShare)
+        expect(await _vault.lastRewardBlock()).to.eq(expectedBlockNumber)
+
+        // Now test the case where the contract balance is not zero
+        // Note that we're now using "vault" and not "_vault"
+        prevAccTokenPerShare = await vault.accTokenPerShare()
+        prevLastRewardBlock = await vault.lastRewardBlock()
+
+        expectedBlockNumber = (await provider.getBlockNumber()) + 1
+        const expectedAccTokenPerShare = await getAccTokenPerShare(expectedBlockNumber)
+        
+        await vault.updatePool()
+
+        expect(await vault.accTokenPerShare()).to.eq(expectedAccTokenPerShare)
+        expect(await vault.lastRewardBlock()).to.eq(expectedBlockNumber)
+    })
+
+    it('vault: deposit fails if invalid amount is passed', async () => {
+        const invalidAmount = 0
+        const durationIndex = 0
+        const id = 0
+    
+        await expect(vault.deposit(invalidAmount, durationIndex, id)).to.be.revertedWith('HelixVault: NOTHING TO DEPOSIT')
+    })
+
+    it('vault: new deposit triggers update pool', async () => {
+        // only testing that update is called during successful deposit
+        const expectedBlockNumber = (await provider.getBlockNumber()) + 1
+        const expectedAccTokenPerShare = await getAccTokenPerShare(expectedBlockNumber)
+
+        const amount = expandTo18Decimals(100)
+        const durationIndex = 0
+        const id = 0
+        await vault.deposit(amount, durationIndex, id); 
+
+        expect(await vault.accTokenPerShare()).to.eq(expectedAccTokenPerShare)
+        expect(await vault.lastRewardBlock()).to.eq(expectedBlockNumber)
+    })
+
+    it('vault: new deposit fails if called with invalid index', async () => {
+        const amount = expandTo18Decimals(100)
+        const invalidDurationIndex = (await vault.getDurations()).length
+        const id = 0
+
+        await expect(vault.deposit(amount, invalidDurationIndex, id)).to.be.revertedWith('HelixVault: INVALID DURATION INDEX')
     })
 
     it('vault: new deposit', async () => {
         const amount = expandTo18Decimals(100)
         const durationIndex = 0
         const id = 0
+    
+        // track the change in vault balance after deposit
+        const prevVaultBalance = await helixToken.balanceOf(vault.address)
 
         // create the new deposit
         await vault.deposit(amount, durationIndex, id); 
 
-        // check that it was correctly created
-        const depositIds = await vault.getDepositIds(owner.address)
+        // check that it was created
+        const depositIds = await vault.getDepositIds(wallet0.address)
         expect(depositIds[0]).to.eq(1)
 
-        const expectedWeight = 50;  // 5%
+        const expectedWeight = (await vault.durations(0)).weight
 
+        // check that the deposit was made
         const deposit = await vault.deposits(depositIds[0])
-        expect(deposit.depositor).to.eq(owner.address)
+        expect(deposit.depositor).to.eq(wallet0.address)
         expect(deposit.amount).to.eq(amount)
         expect(deposit.weight).to.eq(expectedWeight)
         // Don't check timestamps
         expect(deposit.rewardDebt).to.eq(await getRewardDebt(amount, expectedWeight))
         expect(deposit.withdrawn).to.be.false
+
+        // check that funds were transfered to the vault
+        expect(await helixToken.balanceOf(vault.address)).to.eq(amount.add(prevVaultBalance))
+    })
+
+    it('vault: new deposit emits NewDeposit event', async () => {
+        const amount = expandTo18Decimals(100)
+        const durationIndex = 0
+        const id = 0
+
+        const expectedId = (await vault.depositId()) + 1
+        const durations = await vault.getDurations()
+        const expectedDurationShift = (durations[0].duration).toNumber()
+        const expectedWeight = durations[0].weight
+
+        await expect(vault.deposit(amount, durationIndex, id))
+            .to.emit(vault, 'NewDeposit')
+            .withArgs(
+                wallet0.address,
+                expectedId,
+                amount,
+                expectedWeight,
+                Math.trunc(Date.now() / 1000),
+                Math.trunc(Date.now() / 1000) + expectedDurationShift
+            )
+    })
+
+    it('vault: update deposit fails if called with invalid id', async () => {
+        let amount = expandTo18Decimals(100)
+        let durationIndex = 0
+        let invalidId = 1
+
+        await expect(vault.deposit(amount, durationIndex, invalidId)).to.be.revertedWith('HelixVault: INVALID DEPOSIT ID')
+    })
+
+    it('vault: update deposit fails if caller is not depositor', async () => {
+        // first deposit to vault as wallet0 resulting in depositId == 1
+        let amount = expandTo18Decimals(100)
+        let durationIndex = 0
+        let id = 0
+        await vault.deposit(amount, durationIndex, id); 
+
+        // then make deposit to depositId == 1 as wallet1
+        id = 1
+        await expect(_vault.deposit(amount, durationIndex, id)).to.be.revertedWith('HelixVault: CALLER IS NOT DEPOSITOR')
     })
 
     it('vault: update deposit', async () => {
@@ -107,31 +397,35 @@ describe('Vault', () => {
         await vault.deposit(amount, durationIndex, id); 
 
         // check that it was correctly created
-        let depositIds = await vault.getDepositIds(owner.address)
+        let depositIds = await vault.getDepositIds(wallet0.address)
         expect(depositIds[0]).to.eq(1)
 
         let expectedWeight = 50;  // 5%
 
         let deposit = await vault.deposits(depositIds[0])
-        expect(deposit.depositor).to.eq(owner.address)
+        expect(deposit.depositor).to.eq(wallet0.address)
         expect(deposit.amount).to.eq(amount)
         expect(deposit.weight).to.eq(expectedWeight)
         // Don't check timestamps
         expect(deposit.rewardDebt).to.eq(await getRewardDebt(amount, expectedWeight))
         expect(deposit.withdrawn).to.be.false
-
+        
         // Then update the deposit and test the change
         id = 1
         await vault.deposit(amount, durationIndex, id); 
 
-        // check that it was correctly created
-        depositIds = await vault.getDepositIds(owner.address)
-        expect(depositIds[0]).to.eq(1)
+        // get the deposit ids for this users
+        depositIds = await vault.getDepositIds(wallet0.address)
 
+        // confirm that the correct id was assigned
+        expect(depositIds[0]).to.eq(id)
+
+        // the new, expected amount of deposit
         const newAmount = amount.mul(2)
 
+        // check that the deposit has updated values
         deposit = await vault.deposits(depositIds[0])
-        expect(deposit.depositor).to.eq(owner.address)
+        expect(deposit.depositor).to.eq(wallet0.address)
         expect(deposit.amount).to.eq(newAmount)
         expect(deposit.weight).to.eq(expectedWeight)
         // Don't check timestamps
@@ -139,8 +433,148 @@ describe('Vault', () => {
         expect(deposit.withdrawn).to.be.false
     })
 
+    it('vault: update deposit emits UpdateDeposit event', async () => {
+        // Make initial deposit
+        let amount = expandTo18Decimals(100)
+        let durationIndex = 0
+        let id = 0
+        await vault.deposit(amount, durationIndex, id); 
+
+        // Now update the deposit
+        const expectedId = await vault.depositId()
+        const expectedBalance = amount.mul(2)
+        await expect(vault.deposit(amount, durationIndex, expectedId))
+            .to.emit(vault, 'UpdateDeposit')
+            .withArgs(
+                wallet0.address,
+                expectedId,
+                amount,
+                expectedBalance
+            )
+    })
+
+    it('vault: withdraw fails if caller is not depositor', async () => {
+        // Deposit as wallet0 and attempt withdrawal as wallet1
+        let amount = expandTo18Decimals(100)
+        let durationIndex = 0
+        let id = 0
+        await vault.deposit(amount, durationIndex, id)
+
+        id = await _vault.depositId()
+        await expect(_vault.withdraw(amount, id)).to.be.revertedWith('HelixVault: CALLER IS NOT DEPOSITOR')
+    })
+
+    it('vault: withdraw fails if deposit is already withdrawn', async () => {
+        // Add the smallest possible duration so that a withdrawl can be made by the test
+        const duration = 1
+        const weight = 1000
+        await vault.addDuration(duration, weight)
+
+        // make a deposit
+        let amount = expandTo18Decimals(100)
+        let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
+        let id = 0
+        await vault.deposit(amount, durationIndex, id)
+        
+        // get the most recent deposit id
+        id = await vault.depositId()
+   
+        // and use that to get the withdraw timestamp
+        const deposit = await vault.deposits(id)
+        const expectedWithdrawTimestamp = deposit.withdrawTimestamp
+
+        // wait until that timestamp has passed
+        await waitUntil(expectedWithdrawTimestamp)
+
+        // Perform a withdrawl
+        id = await vault.depositId()
+        await vault.withdraw(amount, id)
+
+        // expect another withdrawal to fail
+        await expect(vault.withdraw(amount, id)).to.be.revertedWith('HelixVault: TOKENS ARE ALREADY WITHDRAWN')
+    })
+
+    it('vault: withdraw fails if withdrawing amount larger than that deposited', async () => {
+        // Add the smallest possible duration so that a withdrawl can be made by the test
+        const duration = 1
+        const weight = 1000
+        await vault.addDuration(duration, weight)
+
+        // make a deposit
+        let amount = expandTo18Decimals(100)
+        let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
+        let id = 0
+        await vault.deposit(amount, durationIndex, id)
+        
+        // get the most recent deposit id
+        id = await vault.depositId()
+   
+        // and use that to get the withdraw timestamp
+        const deposit = await vault.deposits(id)
+        const expectedWithdrawTimestamp = deposit.withdrawTimestamp
+
+        // wait until that timestamp has passed
+        await waitUntil(expectedWithdrawTimestamp)
+
+        // expect withdrawl to fail
+        const invalidAmount = amount.add(1)
+        id = await vault.depositId()
+        await expect(vault.withdraw(invalidAmount, id)).to.be.revertedWith('HelixVault: INVALID AMOUNT')
+    })
+
+    it('vault: withdraw fails if tokens are locked', async () => {
+        // make a deposit
+        let amount = expandTo18Decimals(100)
+        let durationIndex = 0
+        let id = 0
+        await vault.deposit(amount, durationIndex, id)
+        
+        // we don't wait
+
+        // expect withdrawal to fail because we haven't waited 90 days before withdrawing
+        id = await vault.depositId()
+        await expect(vault.withdraw(amount, id)).to.be.revertedWith('HelixVault: TOKENS ARE LOCKED')
+    })
+
+    async function getAccTokenPerShare(blockNumber: number) {
+        const multiplier = await vault.getMultiplier(await vault.lastRewardBlock(), blockNumber)
+        const _rewardPerBlock = await vault.rewardPerBlock() // preface with _ avoid name conflict with global rewardPerBlock
+        const reward = multiplier * _rewardPerBlock
+
+        const accTokenPerShare = await vault.accTokenPerShare()
+        const precisionFactor = await vault.PRECISION_FACTOR()
+        const balance = await helixToken.balanceOf(vault.address)
+
+        return accTokenPerShare + reward * precisionFactor / balance
+    }
+
     function print(str: string) {
         if (verbose) console.log(str)
+    }
+
+    // return the current timestamp
+    async function now() {
+        return (await provider.getBlock(provider.getBlockNumber())).timestamp 
+    }
+
+    // used to wait until withdraw can be called
+    // perform dummy writes to the contract until the desired timestamp is reached
+    async function waitUntil(timestamp: number) {
+        // add a new duration
+        const duration = 1
+        const weight = 1000
+        await vault.addDuration(duration, weight)
+    
+        // get the index of the newly added duration
+        let index = (await vault.getDurations()).length - 1
+
+        // wait until timestamp is passed
+        while (await now() <= timestamp) {
+            await vault.setDuration(index, duration, weight)
+        }
+
+        // remove the added duration, resetting the state
+        await vault.removeDuration(index)
     }
 
     async function getRewardDebt(amount: BigNumber, weight: number) {
