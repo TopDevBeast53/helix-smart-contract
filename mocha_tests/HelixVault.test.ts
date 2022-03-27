@@ -97,6 +97,48 @@ describe('Vault', () => {
         expect(deposit.withdrawn).to.be.false
     })
 
+    it('vault: update deposit', async () => {
+        // First create a new deposit
+        let amount = expandTo18Decimals(100)
+        let durationIndex = 0
+        let id = 0
+
+        // create the new deposit
+        await vault.deposit(amount, durationIndex, id); 
+
+        // check that it was correctly created
+        let depositIds = await vault.getDepositIds(owner.address)
+        expect(depositIds[0]).to.eq(1)
+
+        let expectedWeight = 50;  // 5%
+
+        let deposit = await vault.deposits(depositIds[0])
+        expect(deposit.depositor).to.eq(owner.address)
+        expect(deposit.amount).to.eq(amount)
+        expect(deposit.weight).to.eq(expectedWeight)
+        // Don't check timestamps
+        expect(deposit.rewardDebt).to.eq(await getRewardDebt(amount, expectedWeight))
+        expect(deposit.withdrawn).to.be.false
+
+        // Then update the deposit and test the change
+        id = 1
+        await vault.deposit(amount, durationIndex, id); 
+
+        // check that it was correctly created
+        depositIds = await vault.getDepositIds(owner.address)
+        expect(depositIds[0]).to.eq(1)
+
+        const newAmount = amount.mul(2)
+
+        deposit = await vault.deposits(depositIds[0])
+        expect(deposit.depositor).to.eq(owner.address)
+        expect(deposit.amount).to.eq(newAmount)
+        expect(deposit.weight).to.eq(expectedWeight)
+        // Don't check timestamps
+        expect(deposit.rewardDebt).to.eq(await getRewardDebt(newAmount, expectedWeight))
+        expect(deposit.withdrawn).to.be.false
+    })
+
     function print(str: string) {
         if (verbose) console.log(str)
     }

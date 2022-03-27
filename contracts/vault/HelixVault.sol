@@ -75,7 +75,7 @@ contract HelixVault is Ownable {
 
     modifier isValidId(uint id) {
         require(id != 0, 'HelixVault: DEPOSIT ID 0 IS RESERVED');
-        require(id < depositId, 'HelixVault: INVALID DEPOSIT ID');
+        require(id <= depositId, 'HelixVault: INVALID DEPOSIT ID');
         _;
     }
 
