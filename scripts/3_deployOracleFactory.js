@@ -8,7 +8,6 @@
 const { ethers } = require(`hardhat`)
 
 const contracts = require('./constants/contracts')
-const initials = require('./constants/initials')
 const env = require('./constants/env')
 
 const overrides = {
@@ -34,7 +33,7 @@ async function main() {
     //    Calls to createPair fail if Oracle Factory not registered
     console.log(`------ Register Oracle Factory with Factory ---------`)
 
-    const Factory = await ethers.getContractFactory(`AuraFactory`)
+    const Factory = await ethers.getContractFactory(`HelixFactory`)
     const factory = Factory.attach(factoryAddress)
     await factory.setOracleFactory(oracleFactory.address, overrides)
 

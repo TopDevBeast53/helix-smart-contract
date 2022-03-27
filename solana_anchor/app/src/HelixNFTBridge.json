@@ -1,0 +1,40 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "getBridgeToSolanaEvent",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "externalTokenID",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "externalOwnerID",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct HelixNFTBridge.BridgeToSolana",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]  
+}

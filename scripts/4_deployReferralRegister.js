@@ -3,14 +3,14 @@
  *
  * command for deploy on bsc-testnet: 
  * 
- *      `npx hardhat run scripts/4_deployReferralRegister.js --network testnetBSC`
+ *      npx hardhat run scripts/4_deployReferralRegister.js --network testnetBSC
  */
 const { ethers, network } = require(`hardhat`);
 const contracts = require("./constants/contracts")
 const initials = require("./constants/initials")
 const env = require("./constants/env")
 
-const AuraTokenAddress = contracts.auraToken[env.network];
+const HelixTokenAddress = contracts.helixToken[env.network];
 const StakingFeePercent = initials.REFERRAL_STAKING_FEE_PERCENT[env.network];
 const SwapFeePercent = initials.REFERRAL_SWAP_FEE_PERCENT[env.network];
 
@@ -23,17 +23,17 @@ async function main() {
 
     console.log(`------ Start deploying Referral Register contract ---------`);
     const ReferralRegister = await ethers.getContractFactory(`ReferralRegister`);
-    ref = await ReferralRegister.deploy(AuraTokenAddress, StakingFeePercent, SwapFeePercent);
+    ref = await ReferralRegister.deploy(HelixTokenAddress, StakingFeePercent, SwapFeePercent);
     await ref.deployTransaction.wait();
     console.log(`Referral Register deployed to ${ref.address}`);
 
-    console.log(`------ Add Referral Register as Minter to AuraToken ---------`);
-    const AuraToken = await ethers.getContractFactory(`AuraToken`);
-    const auraToken = AuraToken.attach(AuraTokenAddress);
+    console.log(`------ Add Referral Register as Minter to HelixToken ---------`);
+    const HelixToken = await ethers.getContractFactory(`HelixToken`);
+    const helixToken = HelixToken.attach(HelixTokenAddress);
 
-    let tx = await auraToken.addMinter(ref.address);
+    let tx = await helixToken.addMinter(ref.address);
     await tx.wait();
-    console.log(`Success to add Minter to AuraToken`)
+    console.log(`Success to add Minter to HelixToken`)
 }
 
  main()

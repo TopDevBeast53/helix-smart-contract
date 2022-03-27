@@ -23,7 +23,7 @@ module.exports = {
         97: '0x7167a81a3a158Fc0383124Bd7e4d4e43f2b728b8',
     },
     //who will collect the fees
-    autoAuraTreasuryAddress: {
+    autoHelixTreasuryAddress: {
         56: '',
         97: '0x7167a81a3a158Fc0383124Bd7e4d4e43f2b728b8',
     },

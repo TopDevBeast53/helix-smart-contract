@@ -10,9 +10,9 @@ const contracts = require("./constants/contracts")
 const env = require("./constants/env")
 require("dotenv").config();
 
-// AURA-BUSD : 0xB024cd9a1Fe32D615ee6EF7137E355A422b3d9d7
+// HELIX-BUSD : 0xB024cd9a1Fe32D615ee6EF7137E355A422b3d9d7
 const MasterChefAddress = contracts.masterChef[env.network];
-const AuraLPTokenAddress = "0xB024cd9a1Fe32D615ee6EF7137E355A422b3d9d7"; // update LP token address
+const HelixLPTokenAddress = "0xB024cd9a1Fe32D615ee6EF7137E355A422b3d9d7"; // update LP token address
 const LPDepositValue = 822;
 
 async function main() {
@@ -23,10 +23,10 @@ async function main() {
     const IMasterChef = await ethers.getContractFactory("MasterChef");
     const masterChef = IMasterChef.attach(MasterChefAddress).connect(admin);
     
-    const IAuraLPToken = await ethers.getContractFactory("AuraLP");
-    const auraLPToken = IAuraLPToken.attach(AuraLPTokenAddress).connect(admin);
+    const IHelixLPToken = await ethers.getContractFactory("HelixLP");
+    const helixLPToken = IHelixLPToken.attach(HelixLPTokenAddress).connect(admin);
 
-    const transaction = await masterChef.add(LPDepositValue, auraLPToken.address, true, {nonce: nonce, gasLimit: 3000000});
+    const transaction = await masterChef.add(LPDepositValue, helixLPToken.address, true, {nonce: nonce, gasLimit: 3000000});
     console.log(await transaction.wait());
 
     console.log("PID of the added LP Token:", await masterChef.poolLength());

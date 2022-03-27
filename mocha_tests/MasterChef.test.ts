@@ -3,7 +3,7 @@ import { solidity, MockProvider, createFixtureLoader, deployContract } from 'leg
 import { Contract } from 'legacy-ethers'
 import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
 import { MaxUint256 } from 'legacy-ethers/constants'
-import AuraPair from '../build/contracts/AuraPair.json'
+import HelixPair from '../build/contracts/HelixPair.json'
 
 import { fullExchangeFixture } from './shared/fixtures'
 import { mineBlocks } from './shared/utilities'
@@ -27,7 +27,7 @@ describe('MasterChef', () => {
     const [wallet] = provider.getWallets()
     const loadFixture = createFixtureLoader(provider, [wallet])
   
-    let auraToken: Contract
+    let helixToken: Contract
     let chef: Contract
     let token0: Contract
     let token1: Contract
@@ -36,7 +36,7 @@ describe('MasterChef', () => {
   
     beforeEach(async function() {
       const fixture = await loadFixture(fullExchangeFixture)
-      auraToken = fixture.auraToken
+      helixToken = fixture.helixToken
       chef = fixture.chef
       router = fixture.router
       factory = fixture.factory
@@ -46,17 +46,17 @@ describe('MasterChef', () => {
         // Locally create the pair
         await factory.createPair(tokenA.address, tokenB.address, overrides)
         const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
-        const pair = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
+        const pair = new Contract(pairAddress, JSON.stringify(HelixPair.abi), provider).connect(wallet)
 
         const token0Address = (await pair.token0()).address
         token0 = tokenA.address === token0Address ? tokenB : tokenA
         token1 = tokenA.address === token0Address ? tokenA : tokenB
 
-      await auraToken.addMinter(chef.address)
+      await helixToken.addMinter(chef.address)
     })
 
     it('masterChef: chef is minter', async () => {
-      const isChefMinter = await auraToken.isMinter(chef.address);
+      const isChefMinter = await helixToken.isMinter(chef.address);
       expect(isChefMinter).to.eq(true);
     })
 
@@ -77,7 +77,7 @@ describe('MasterChef', () => {
       )
 
       const pairAddress = await factory.getPair(token0.address, token1.address)
-      const lpToken = new Contract(pairAddress, JSON.stringify(AuraPair.abi), provider).connect(wallet)
+      const lpToken = new Contract(pairAddress, JSON.stringify(HelixPair.abi), provider).connect(wallet)
 
       const balanceOfPair = await lpToken.balanceOf(wallet.address);
       expect(balanceOfPair).to.eq(99000);
@@ -95,34 +95,34 @@ describe('MasterChef', () => {
       await mineBlocks(100, provider);
 
       // Withdraw LP token from chef & ensure rewards have been given
-      const auraBalanceBefore = await auraToken.balanceOf(wallet.address);
+      const helixBalanceBefore = await helixToken.balanceOf(wallet.address);
       const previousBalanceOfLp = await lpToken.balanceOf(wallet.address);
       expect(previousBalanceOfLp).to.eq(0);
-      expect(auraBalanceBefore).to.eq("100000000000000000000000000");
+      expect(helixBalanceBefore).to.eq("100000000000000000000000000");
 
       await chef.withdraw(1, 99000);
 
-      const newAuraBalance = await auraToken.balanceOf(wallet.address);
+      const newHelixBalance = await helixToken.balanceOf(wallet.address);
       const newBalanceOfLp = await lpToken.balanceOf(wallet.address);
       expect(newBalanceOfLp).to.eq(99000);
-      expect(newAuraBalance).to.eq("100002690639999999999999998");
+      expect(newHelixBalance).to.eq("100002690639999999999999998");
     });
 
-    it('masterChef: stake aura', async () => {
+    it('masterChef: stake helix', async () => {
       // Chef must already have a pool with id = 0 which is responsible
-      // for staking aura
+      // for staking helix
       
       // Prepare
-      await auraToken.approve(chef.address, "10000000000000000000000000");
+      await helixToken.approve(chef.address, "10000000000000000000000000");
 
       // Stake
       await chef.enterStaking("1000000000000000000000000");
-      const userBalanceAfterStaking = await auraToken.balanceOf(wallet.address);
+      const userBalanceAfterStaking = await helixToken.balanceOf(wallet.address);
       expect(userBalanceAfterStaking).to.eq("99000000000000000000000000");
 
       // Unstake
       await chef.leaveStaking("1000000000000000000000000");
-      const userBalanceAfterUnStaking = await auraToken.balanceOf(wallet.address);
+      const userBalanceAfterUnStaking = await helixToken.balanceOf(wallet.address);
       expect(userBalanceAfterUnStaking).to.eq("100000039960000000000000000");
     });
 })

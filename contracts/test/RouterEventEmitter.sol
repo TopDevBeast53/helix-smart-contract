@@ -1,7 +1,7 @@
 //SPDX-License-Identifier:MIT
 pragma solidity >=0.8.0;
 
-import '../interfaces/IAuraV2Router01.sol';
+import '../interfaces/IHelixV2Router01.sol';
 
 contract RouterEventEmitter {
     event Amounts(uint[] amounts);
@@ -17,7 +17,7 @@ contract RouterEventEmitter {
         uint deadline
     ) external {
         (bool success, bytes memory returnData) = router.delegatecall(abi.encodeWithSelector(
-            IAuraV2Router01(router).swapExactTokensForTokens.selector, amountIn, amountOutMin, path, to, deadline
+            IHelixV2Router01(router).swapExactTokensForTokens.selector, amountIn, amountOutMin, path, to, deadline
         ));
         assert(success);
         emit Amounts(abi.decode(returnData, (uint[])));
@@ -32,7 +32,7 @@ contract RouterEventEmitter {
         uint deadline
     ) external {
         (bool success, bytes memory returnData) = router.delegatecall(abi.encodeWithSelector(
-            IAuraV2Router01(router).swapTokensForExactTokens.selector, amountOut, amountInMax, path, to, deadline
+            IHelixV2Router01(router).swapTokensForExactTokens.selector, amountOut, amountInMax, path, to, deadline
         ));
         assert(success);
         emit Amounts(abi.decode(returnData, (uint[])));
@@ -46,7 +46,7 @@ contract RouterEventEmitter {
         uint deadline
     ) external payable {
         (bool success, bytes memory returnData) = router.delegatecall(abi.encodeWithSelector(
-            IAuraV2Router01(router).swapExactETHForTokens.selector, amountOutMin, path, to, deadline
+            IHelixV2Router01(router).swapExactETHForTokens.selector, amountOutMin, path, to, deadline
         ));
         assert(success);
         emit Amounts(abi.decode(returnData, (uint[])));
@@ -61,7 +61,7 @@ contract RouterEventEmitter {
         uint deadline
     ) external {
         (bool success, bytes memory returnData) = router.delegatecall(abi.encodeWithSelector(
-            IAuraV2Router01(router).swapTokensForExactETH.selector, amountOut, amountInMax, path, to, deadline
+            IHelixV2Router01(router).swapTokensForExactETH.selector, amountOut, amountInMax, path, to, deadline
         ));
         assert(success);
         emit Amounts(abi.decode(returnData, (uint[])));
@@ -76,7 +76,7 @@ contract RouterEventEmitter {
         uint deadline
     ) external {
         (bool success, bytes memory returnData) = router.delegatecall(abi.encodeWithSelector(
-            IAuraV2Router01(router).swapExactTokensForETH.selector, amountIn, amountOutMin, path, to, deadline
+            IHelixV2Router01(router).swapExactTokensForETH.selector, amountIn, amountOutMin, path, to, deadline
         ));
         assert(success);
         emit Amounts(abi.decode(returnData, (uint[])));
@@ -90,7 +90,7 @@ contract RouterEventEmitter {
         uint deadline
     ) external payable {
         (bool success, bytes memory returnData) = router.delegatecall(abi.encodeWithSelector(
-            IAuraV2Router01(router).swapETHForExactTokens.selector, amountOut, path, to, deadline
+            IHelixV2Router01(router).swapETHForExactTokens.selector, amountOut, path, to, deadline
         ));
         assert(success);
         emit Amounts(abi.decode(returnData, (uint[])));

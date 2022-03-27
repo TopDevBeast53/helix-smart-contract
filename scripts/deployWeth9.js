@@ -1,5 +1,5 @@
 /*
- * @dev Deployment script for Aura Factory contract.
+ * @dev Deployment script for Helix Factory contract.
  *
  * Run from project root using:
  *     npx hardhat run scripts/deployWeth9.js --network testnetBSC

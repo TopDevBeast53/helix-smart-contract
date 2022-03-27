@@ -1,5 +1,5 @@
 /**
- * @dev Interaction script for deployed Aura Migrator contract.
+ * @dev Interaction script for deployed Helix Migrator contract.
  * 
  * Run from project root using: 
  *      npx hardhat run scripts/interactMigrator.js --network testnetBSC
@@ -12,11 +12,11 @@ const maxInt = ethers.constants.MaxUint256;
 const rpc = 'https://data-seed-prebsc-1-s1.binance.org:8545';
 
 const Name = {
-    Factory: 'AuraFactory',
-    Router: 'AuraRouterV1',
-    Migrator: 'AuraMigrator',
+    Factory: 'HelixFactory',
+    Router: 'HelixRouterV1',
+    Migrator: 'HelixMigrator',
     Token: 'TestToken',
-    Pair: 'AuraPair',
+    Pair: 'HelixPair',
 }
 
 const Address = {
@@ -34,7 +34,7 @@ const overrides = {
 }
 
 async function main() {
-    if (verbose) { console.log(`interact with Aura Migrator deployed at ${short(Address.Migrator)}`); }
+    if (verbose) { console.log(`interact with Helix Migrator deployed at ${short(Address.Migrator)}`); }
 
     const provider = getProvider();
     const [owner, user] = getWallets(provider);
