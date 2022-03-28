@@ -5,7 +5,7 @@ Solana NFT bridge system enables users to bridge NFTs on solana to binance netwo
 ## Main Functions
 
 - Initialize: Admin can initialize the state  variable by calling this function.
-- TransferIn: User can bridge owned NFT from Solana to Binance network.
+- TransferIn: User can bridge owned NFT from Solana to Binance network so the ownership of the NFT changed from user to program.
 - TransferOut: Admin will transfer NFTs ownership back to the user which are bridged from Binance
 
 ## Installation
