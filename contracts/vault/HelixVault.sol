@@ -157,7 +157,7 @@ contract HelixVault is Ownable {
         d.weight = durations[index].weight;
         d.depositTimestamp = block.timestamp;
         d.withdrawTimestamp = block.timestamp + durations[index].duration;
-        d.rewardDebt = _getRewardDebt(d.amount, d.weight);
+        d.rewardDebt = _getReward(d.amount, d.weight);
         d.withdrawn = false;
 
         // Relay the deposit id to the user's account
@@ -173,14 +173,14 @@ contract HelixVault is Ownable {
         require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
         require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
-        uint pending = _getRewardDebt(d.amount, d.weight);
+        uint pending = _getReward(d.amount, d.weight);
         if (pending > 0) {
             TransferHelper.safeTransfer(address(rewardToken), msg.sender, pending);
         }
         TransferHelper.safeTransferFrom(address(token), msg.sender, address(this), amount);
 
         d.amount += amount;
-        d.rewardDebt = _getRewardDebt(d.amount, d.weight);
+        d.rewardDebt = _getReward(d.amount, d.weight);
 
         emit UpdateDeposit(msg.sender, id, amount, d.amount);
     }
@@ -196,7 +196,7 @@ contract HelixVault is Ownable {
        
         // collect rewards
         updatePool();
-        uint pending = _getRewardDebt(d.amount, d.weight);
+        uint pending = _getReward(d.amount, d.weight);
         if(pending > 0) {
             TransferHelper.safeTransfer(address(rewardToken), msg.sender, pending);
         }
@@ -205,7 +205,7 @@ contract HelixVault is Ownable {
             d.withdrawn = true;
         } else {
             d.amount -= amount;
-            d.rewardDebt = _getRewardDebt(d.amount, d.weight);
+            d.rewardDebt = _getReward(d.amount, d.weight);
         }
 
         TransferHelper.safeTransfer(address(token), msg.sender, amount);
@@ -213,8 +213,7 @@ contract HelixVault is Ownable {
     }
 
     // View function to see pending Reward on frontend.
-    function pendingReward(uint id) external view returns (uint) {
-        require(id < depositId, 'HelixVault: INVALID ID');
+    function pendingReward(uint id) external view isValidId(id) returns (uint) {
         Deposit storage d = deposits[id];
         require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
         require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
@@ -226,21 +225,20 @@ contract HelixVault is Ownable {
             uint reward = multiplier * rewardPerBlock;
             _accTokenPerShare += reward * PRECISION_FACTOR / lpSupply;
         }
-        return _getRewardDebt(d.amount, d.weight, _accTokenPerShare) - d.rewardDebt;
+        return _getReward(d.amount, d.weight, _accTokenPerShare) - d.rewardDebt;
     }
 
-    function claimReward(uint id) external {
-        require(id < depositId, 'HelixVault: INVALID ID');
+    function claimReward(uint id) external isValidId(id) {
         Deposit storage d = deposits[id];
         require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
         require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
         updatePool();
-        uint pending = _getRewardDebt(d.amount, d.weight) - d.rewardDebt;
+        uint pending = _getReward(d.amount, d.weight) - d.rewardDebt;
         if (pending > 0) {
             TransferHelper.safeTransfer(address(rewardToken), msg.sender, pending);
         }
-        d.rewardDebt = _getRewardDebt(d.amount, d.weight);
+        d.rewardDebt = _getReward(d.amount, d.weight);
     } 
 
     // Update reward variables of the given pool to be up-to-date.
@@ -269,13 +267,13 @@ contract HelixVault is Ownable {
         }
     }
 
-    // Used internally for computing reward debts
-    function _getRewardDebt(uint amount, uint weight) private view returns(uint rewardDebt) {
-        rewardDebt = _getRewardDebt(amount, weight, accTokenPerShare);
+    // Used internally for computing reward and reward debts
+    function _getReward(uint amount, uint weight) private view returns(uint reward) {
+        reward = _getReward(amount, weight, accTokenPerShare);
     }
 
-    function _getRewardDebt(uint amount, uint weight, uint _accTokenPerShare) private view returns(uint rewardDebt) {
-        rewardDebt = amount * weight * _accTokenPerShare / PRECISION_FACTOR / WEIGHT_PERCENT;
+    function _getReward(uint amount, uint weight, uint _accTokenPerShare) private view returns(uint reward) {
+        reward = amount * weight * _accTokenPerShare / PRECISION_FACTOR / WEIGHT_PERCENT;
     }
 
     // Get the user's deposit ids which are used for accessing their deposits

@@ -338,7 +338,7 @@ describe('Vault', () => {
         expect(deposit.amount).to.eq(amount)
         expect(deposit.weight).to.eq(expectedWeight)
         // Don't check timestamps
-        expect(deposit.rewardDebt).to.eq(await getRewardDebt(amount, expectedWeight))
+        expect(deposit.rewardDebt).to.eq(await getReward(amount, expectedWeight))
         expect(deposit.withdrawn).to.be.false
 
         // check that funds were transfered to the vault
@@ -407,7 +407,7 @@ describe('Vault', () => {
         expect(deposit.amount).to.eq(amount)
         expect(deposit.weight).to.eq(expectedWeight)
         // Don't check timestamps
-        expect(deposit.rewardDebt).to.eq(await getRewardDebt(amount, expectedWeight))
+        expect(deposit.rewardDebt).to.eq(await getReward(amount, expectedWeight))
         expect(deposit.withdrawn).to.be.false
         
         // Then update the deposit and test the change
@@ -429,7 +429,7 @@ describe('Vault', () => {
         expect(deposit.amount).to.eq(newAmount)
         expect(deposit.weight).to.eq(expectedWeight)
         // Don't check timestamps
-        expect(deposit.rewardDebt).to.eq(await getRewardDebt(newAmount, expectedWeight))
+        expect(deposit.rewardDebt).to.eq(await getReward(newAmount, expectedWeight))
         expect(deposit.withdrawn).to.be.false
     })
 
@@ -536,6 +536,202 @@ describe('Vault', () => {
         await expect(vault.withdraw(amount, id)).to.be.revertedWith('HelixVault: TOKENS ARE LOCKED')
     })
 
+    it('vault: withdraw', async () => {
+        // Add the smallest possible duration so that a withdrawl can be made by the test
+        const duration = 1
+        const weight = 1000
+        await vault.addDuration(duration, weight)
+
+        // make a deposit
+        let amount = expandTo18Decimals(100)
+        let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
+        let id = 0
+        await vault.deposit(amount, durationIndex, id)
+        
+        // get the most recent deposit id
+        id = await vault.depositId()
+   
+        // and use that to get the withdraw timestamp
+        let deposit = await vault.deposits(id)
+        const expectedWithdrawTimestamp = deposit.withdrawTimestamp
+
+        // wait until that timestamp has passed
+        await waitUntil(expectedWithdrawTimestamp)
+
+        // record balance before withdrawal to confirm withdrawal
+        const prevBalance = await helixToken.balanceOf(wallet0.address)
+
+        // record pending reward which should be transferred to user during withdrawal
+        const pending = await getReward(deposit.amount, deposit.weight)
+
+        // div by 1 * 10 ^ 18 to handle rounding errors
+        const expectedBalance = amount.add(prevBalance).add(pending).div(expandTo18Decimals(1))
+
+        // withdraw
+        await vault.withdraw(amount, id)
+
+        // check that funds were transferred
+        const actualBalance = (await helixToken.balanceOf(wallet0.address)).div(expandTo18Decimals(1))
+        expect(actualBalance).to.eq(expectedBalance)
+
+        // check that deposit is marked as withdrawn
+        deposit = await vault.deposits(id)
+        expect(deposit.withdrawn).to.be.true
+    })
+
+    it('vault: pending reward fails if called with invalid id', async () => {
+        // invalid because no deposits have been made
+        const invalidId = 1
+        await expect(vault.pendingReward(invalidId)).to.be.revertedWith('HelixVault: INVALID DEPOSIT ID')
+    })
+
+    it('vault: pending reward fails if caller is not depositor', async () => {
+        // first deposit to vault as wallet0 resulting in depositId == 1
+        let amount = expandTo18Decimals(100)
+        let durationIndex = 0
+        let id = 0
+        await vault.deposit(amount, durationIndex, id); 
+
+        // get the most recent depositId
+        id = await vault.depositId()
+        await expect(_vault.pendingReward(id)).to.be.revertedWith('HelixVault: CALLER IS NOT DEPOSITOR')
+    })
+
+    it('vault: pending reward fails if deposit is already withdrawn', async () => {
+        // Add the smallest possible duration so that a withdrawl can be made by the test
+        const duration = 1
+        const weight = 1000
+        await vault.addDuration(duration, weight)
+
+        // first deposit to vault as wallet0 resulting in depositId == 1
+        let amount = expandTo18Decimals(100)
+        let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
+        let id = 0
+        await vault.deposit(amount, durationIndex, id); 
+
+        // get the most recent depositId
+        id = await vault.depositId()
+
+        // use that to get the withdraw timestamp
+        let deposit = await vault.deposits(id)
+        const withdrawTimestamp = deposit.withdrawTimestamp
+
+        // and wait until withdrawal can be made
+        await waitUntil(withdrawTimestamp)
+
+        // make a withdrawal, marking the deposit as withdrawn
+        await vault.withdraw(amount, id)
+
+        // expect call to fail since deposit is withdrawn
+        await expect(vault.pendingReward(id)).to.be.revertedWith('HelixVault: TOKENS ARE ALREADY WITHDRAWN')
+    })
+
+    it('vault: pending reward', async () => {
+        // first, take the preliminary steps to make a vaild pendingRequest call
+
+        // Add the smallest possible duration so that a withdrawl can be made by the test
+        const duration = 1
+        const weight = 1000
+        await vault.addDuration(duration, weight)
+
+        // first deposit to vault as wallet0 resulting in depositId == 1
+        let amount = expandTo18Decimals(100)
+        let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
+        let id = 0
+        await vault.deposit(amount, durationIndex, id); 
+
+        // get the most recent depositId
+        id = await vault.depositId()
+
+        // use that to get the withdraw timestamp
+        let deposit = await vault.deposits(id)
+        const withdrawTimestamp = deposit.withdrawTimestamp
+
+        // and wait until withdrawal can be made
+        await waitUntil(withdrawTimestamp)
+
+        // now, calculate the expected reward
+        /*
+        const blockNumber = (await provider.getBlockNumber()) + 1
+        let _accTokenPerShare = parseInt(await getAccTokenPerShare(blockNumber))
+        const lastRewardBlock = await vault.lastRewardBlock()
+        const lpSupply = await helixToken.balanceOf(vault.address)
+
+        // make sure that "if" condition is entered
+        expect(blockNumber).to.be.above(lastRewardBlock)
+        expect(lpSupply).to.not.eq(0)
+
+        // inside the "if" condition
+        const multiplier = await vault.getMultiplier(lastRewardBlock, blockNumber)
+        print(`mult ${multiplier}`)
+        const reward = multiplier * (await vault.rewardPerBlock())
+        print(`reward ${reward}`)
+        const precisionFactor = await vault.PRECISION_FACTOR()
+        print(`accTok before ${_accTokenPerShare}`)
+        _accTokenPerShare += reward * precisionFactor / lpSupply
+        print(`accTok after  ${_accTokenPerShare}`)
+
+        // _getReward 
+        const weightPercent = await vault.WEIGHT_PERCENT()
+        print(`weight % ${weightPercent}`)
+        const getRewardResult = amount.div(expandTo18Decimals(1)).mul(weight).mul(_accTokenPerShare).div(precisionFactor).div(weightPercent)
+        print(`res ${getRewardResult}`)
+
+        const expectedReward = getRewardResult.sub(deposit.rewardDebt)
+
+        expect(await vault.pendingReward(id)).to.eq(expectedReward)
+        */
+
+        expect(await vault.pendingReward(id)).to.be.above(0)
+    })
+
+    it('vault: claim reward fails if called with invalid id', async () => {
+        // invalid because no deposits have been made
+        const invalidId = 1
+        await expect(vault.claimReward(invalidId)).to.be.revertedWith('HelixVault: INVALID DEPOSIT ID')
+    })
+
+    it('vault: claim reward fails if caller is not depositor', async () => {
+        // first deposit to vault as wallet0 resulting in depositId == 1
+        let amount = expandTo18Decimals(100)
+        let durationIndex = 0
+        let id = 0
+        await vault.deposit(amount, durationIndex, id); 
+
+        // get the most recent depositId
+        id = await vault.depositId()
+        await expect(_vault.claimReward(id)).to.be.revertedWith('HelixVault: CALLER IS NOT DEPOSITOR')
+    })
+
+    it('vault: claim reward fails if deposit is already withdrawn', async () => {
+        // Add the smallest possible duration so that a withdrawl can be made by the test
+        const duration = 1
+        const weight = 1000
+        await vault.addDuration(duration, weight)
+
+        // first deposit to vault as wallet0 resulting in depositId == 1
+        let amount = expandTo18Decimals(100)
+        let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
+        let id = 0
+        await vault.deposit(amount, durationIndex, id); 
+
+        // get the most recent depositId
+        id = await vault.depositId()
+
+        // use that to get the withdraw timestamp
+        let deposit = await vault.deposits(id)
+        const withdrawTimestamp = deposit.withdrawTimestamp
+
+        // and wait until withdrawal can be made
+        await waitUntil(withdrawTimestamp)
+
+        // make a withdrawal, marking the deposit as withdrawn
+        await vault.withdraw(amount, id)
+
+        // expect call to fail since deposit is withdrawn
+        await expect(vault.claimReward(id)).to.be.revertedWith('HelixVault: TOKENS ARE ALREADY WITHDRAWN')
+    })
+
     async function getAccTokenPerShare(blockNumber: number) {
         const multiplier = await vault.getMultiplier(await vault.lastRewardBlock(), blockNumber)
         const _rewardPerBlock = await vault.rewardPerBlock() // preface with _ avoid name conflict with global rewardPerBlock
@@ -577,7 +773,7 @@ describe('Vault', () => {
         await vault.removeDuration(index)
     }
 
-    async function getRewardDebt(amount: BigNumber, weight: number) {
+    async function getReward(amount: BigNumber, weight: number) {
         const accTokenPerShare = await vault.accTokenPerShare()
         const precisionFactor = await vault.PRECISION_FACTOR()
         const weightPercent = await vault.WEIGHT_PERCENT()
