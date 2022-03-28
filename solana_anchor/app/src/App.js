@@ -7,9 +7,6 @@ import {
   getOrCreateAssociatedTokenAccount,
   TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
-import idl from "./solana_anchor.json";
-import compiledBridge from "./HelixNFTBridge.json";
-
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
 import {
   useWallet,
@@ -20,6 +17,13 @@ import {
   WalletModalProvider,
   WalletMultiButton,
 } from "@solana/wallet-adapter-react-ui";
+import { Web3ReactProvider } from '@web3-react/core';
+import { InjectedConnector } from '@web3-react/injected-connector'
+import { ethers } from 'ethers';
+import { useWeb3React } from '@web3-react/core'
+import idl from "./solana_anchor.json";
+import compiledBridge from "./HelixNFTBridge.json";
+
 require("@solana/wallet-adapter-react-ui/styles.css");
 
 const wallets = [
@@ -33,6 +37,7 @@ const opts = {
 
 const programID = new PublicKey(process.env.REACT_APP_PROGRAM_ID);
 const NETWORK = process.env.REACT_APP_SOLANA_NETWORK;
+const POLLING_INTERVAL = 12000;
 
 function App() {
   const [connection, setConnection] = useState(null);
@@ -40,6 +45,11 @@ function App() {
   const [events, setEvents] = useState([]);
   const wallet = useWallet();
   const secretKeyString = process.env.REACT_APP_PRIVATE_KEY;
+  const injected = new InjectedConnector({
+    supportedChainIds: [1, 3, 4, 5, 42, 56, 97, 1337],
+  });
+  const { activate, deactivate, account } = useWeb3React();
+
   async function getProvider() {
     setConnection(new Connection(NETWORK, opts.preflightCommitment));
 
@@ -179,6 +189,13 @@ function App() {
     return (
       <div className="App">
         <div>
+          <div>
+              Account: {account}
+              {account 
+                  ? <button onClick={() => deactivate()}>Disconnect</button> 
+                  : <button onClick={() => activate(injected)}>Connect</button>
+              }
+          </div>
           <h2>Data from Solana</h2>
           {nfts != null &&
             nfts.map((n, i) => {
@@ -209,11 +226,19 @@ function App() {
   }
 }
 
+const getLibrary = (provider) => {
+  const library = new ethers.providers.Web3Provider(provider);
+  library.pollingInterval = POLLING_INTERVAL;
+  return library;
+};
+
 const AppWithProvider = () => (
   <ConnectionProvider endpoint={NETWORK}>
     <WalletProvider wallets={wallets} autoConnect>
       <WalletModalProvider>
+      <Web3ReactProvider getLibrary={getLibrary}>
         <App />
+        </Web3ReactProvider>
       </WalletModalProvider>
     </WalletProvider>
   </ConnectionProvider>
