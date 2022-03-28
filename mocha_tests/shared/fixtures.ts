@@ -24,6 +24,7 @@ import AutoHelix from '../../build/contracts/AutoHelix.json'
 import HelixChefNFT from '../../build/contracts/HelixChefNFT.json'
 import HelixLP from '../../build/contracts/HelixLP.json'
 import HelixNFTBridge from '../../build/contracts/HelixNFTBridge.json'
+import HelixVault from '../../build/contracts/HelixVault.json'
 
 const addresses = require('../../scripts/constants/addresses')
 const initials = require('../../scripts/constants/initials')
@@ -50,6 +51,10 @@ const helixChefNFTLastRewardBlock = initials.NFTCHEF_LAST_REWARD_BLOCK[env.netwo
 const swapRewardsSplitRewardPercent = initials.SPLIT_REWARD_PERCENT[env.network]
 const swapRewardsHelixRewardPercent = initials.HELIX_REWARD_PERCENT[env.network]
 const swapRewardsApRewardPercent = initials.HP_REWARD_PERCENT[env.network]
+
+const helixVaultRewardPerBlock = initials.HELIX_VAULT_REWARD_PER_BLOCK[env.network]
+const helixVaultStartBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
+const helixVaultBonusEndBlock = initials.HELIX_VAULT_BONUS_END_BLOCK[env.network]
 
 const overrides = {
     gasLimit: 9999999
@@ -80,6 +85,7 @@ interface FullExchangeFixture {
     externalRouter: Contract
     migrator: Contract
     tokenTools: Contract
+    vault: Contract
 }
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
@@ -184,6 +190,18 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // 12 deploy token tools
     const tokenTools = await deployContract(wallet, TokenTools, [], overrides)
 
+    // 14 deploy helix vault
+    const vault = await deployContract(wallet, HelixVault, 
+        [
+            helixToken.address,
+            helixToken.address,
+            helixVaultRewardPerBlock,
+            helixVaultStartBlock,
+            helixVaultBonusEndBlock
+        ], 
+        overrides
+    )
+
     return {
         tokenA,
         tokenB,
@@ -209,5 +227,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         externalRouter,
         migrator, 
         tokenTools,
+        vault,
     }
 }
