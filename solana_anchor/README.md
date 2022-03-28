@@ -2,11 +2,11 @@
 
 Solana NFT bridge system enables users to bridge NFTs on solana to binance network and vice versa.
 
-## Functionality
+## Main Functions
 
-- A manager can initialize bridge system by calling initialize method
-- A user can bridge his NFT holding on solana to binance network 
-- Contribute a UI for admin to manage the program owned NFTs 
+- Initialize: Admin can initialize the state  variable by calling this function.
+- TransferIn: User can bridge owned NFT from Solana to Binance network.
+- TransferOut: Admin will transfer NFTs ownership back to the user which are bridged from Binance
 
 ## Installation
 
@@ -24,6 +24,15 @@ And install any additional JavaScript dependencies:
 yarn install
 ```
 
+## Admin Panel
+Admin can check the program owned NFTS and transfer the ownership back to the user.
+
+### Functionality
+- Admin can initialize the state by clicking <code>Initialize</code> button.
+- Admin can check the list of NFTs bridged by users.
+- Admin can transfer NFTs back to the user which are bridged by clicking <code>Bridge To Solana</code> button.
+
+### Install & Run
 To run the admin page:
 
 ```sh
@@ -37,7 +46,7 @@ In a separate terminal, start a local network. If you're running solana for the 
 ```sh
 solana-keygen new
 ```
-After installing a program, you can use the anchor CLI to build and emit an IDL, from which clients can be generated.:
+After installing a program, you can use the anchor CLI to build.:
 
 ```sh
 anchor build
