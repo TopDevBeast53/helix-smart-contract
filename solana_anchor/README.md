@@ -25,7 +25,7 @@ yarn install
 ```
 
 ## Admin Panel
-Admin can check the program owned NFTS and transfer the ownership back to the user.
+Admin can check the program owned NFTs and transfer the ownership back to the user.
 
 ### Functionality
 - Admin can initialize the state by clicking <code>Initialize</code> button.
