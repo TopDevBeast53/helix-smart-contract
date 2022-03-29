@@ -70,7 +70,7 @@ contract VipPresale is ReentrancyGuard {
     // Unsold tickets out of the maximum that have been reserved to users
     // Used to prevent promising more tickets to users than are available
     // ticketsReserved = (sum(user.maxTicket) for user in whitelist)
-    // and ticketsReserved <= ticketsAvailable <= MAX_TICKETS
+    // and ticketsReserved <= ticketsAvailable <= MAX_TICKET
     uint public ticketsReserved;
 
     struct User {
@@ -118,16 +118,16 @@ contract VipPresale is ReentrancyGuard {
     /* 
      * @param _presaleToken address of the token being sold
      * @param _exchangeToken address of the token being exchanged for `presaleToken`
-     * @param _number of tickets a purchaser receives in exchange for 1 `exchangeToken`
      * @param _treasury address that receives funds deposited in exchange for tickets
+     * @param _exchangeRate number of tickets a purchaser receives in exchange for 1 `exchangeToken`
      * @param _maxTickets number of tickets available at the start of the sale
      */
     constructor(
         address _presaleToken, 
         address _exchangeToken,
+        address _treasury, 
         uint _exchangeRate, 
-        uint _treasury, 
-        uint _maxTickets
+        uint _maxTicket
     ) 
         isValidAddress(_presaleToken)
         isValidAddress(_exchangeToken)
@@ -136,7 +136,7 @@ contract VipPresale is ReentrancyGuard {
         presaleToken = IERC20(_presaleToken);
         exchangeToken = IERC20(_exchangeToken);
         exchangeRate = _exchangeRate;
-        treasury = _treasury
+        treasury = _treasury;
 
         isOwner[msg.sender] = true;
         owners.push(msg.sender);
@@ -149,8 +149,8 @@ contract VipPresale is ReentrancyGuard {
         START_SUB_PHASE = 1;
         SUB_PHASE_DURATION = 91 days;   // (91 days ~= 3 months) and (91 days * 4 ~= 1 year)
 
-        MAX_TICKETS = _maxTickets;
-        ticketsAvailable = _maxTickets;
+        MAX_TICKET = _maxTicket;
+        ticketsAvailable = _maxTicket;
 
         MINIMUM_TICKET_PURCHASE = 1;
     }
@@ -178,7 +178,7 @@ contract VipPresale is ReentrancyGuard {
     }
 
     // validate that `purchaser` is eligible to purchase `amount` of tickets
-    function _preValidatePurchase(address purchaser, uint smount) private view isValidAddress(purchaser) {
+    function _preValidatePurchase(address purchaser, uint amount) private view isValidAddress(purchaser) {
         require(phase >= START_PHASE, "VipPresale: SALE HAS NOT STARTED");
         require(whitelist[purchaser], "VipPresale: PURCHASER IS NOT WHITELISTED");
         require(amount >= MINIMUM_TICKET_PURCHASE, "VipPresale: AMOUNT IS LESS THAN MINIMUM TICKET PURCHASE");
@@ -190,6 +190,12 @@ contract VipPresale is ReentrancyGuard {
         if (phase == MAX_PHASE) {
             require(block.timestamp < phaseEndTimestamp, "VipPresale: SALE HAS ENDED");
         }
+    }
+
+    // get the `cost` in `exchangeToken` for `amount` of tickets
+    function getCost(uint amount) public pure returns(uint cost) {
+        // TODO replace with actual formula
+        cost = amount;
     }
 
     // add a new owner to the contract, only callable by an existing owner
@@ -245,10 +251,10 @@ contract VipPresale is ReentrancyGuard {
    
     // used externally to grant users permission to purchase maxTickets
     // such that user[i] can purchase maxTickets[i] many tickets for i in range users.length
-    function whitelistAdd(address[] users, uint[] maxTickets) external onlyOwner {
-        require(users.length == maxTickets.length, "VipPresale: USERS AND MAX TICKETS MUST HAVE SAME LENGTH");
-        for (uint i = 0; i < users.length; i++) {
-            address user = users[i];
+    function whitelistAdd(address[] calldata _users, uint[] calldata maxTickets) external onlyOwner {
+        require(_users.length == maxTickets.length, "VipPresale: USERS AND MAX TICKETS MUST HAVE SAME LENGTH");
+        for (uint i = 0; i < _users.length; i++) {
+            address user = _users[i];
             uint maxTicket = maxTickets[i];
             _whitelistAdd(user, maxTicket);
         }
