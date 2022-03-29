@@ -192,10 +192,32 @@ contract VipPresale is ReentrancyGuard {
         }
     }
 
-    // get the `cost` in `exchangeToken` for `amount` of tickets
-    function getCost(uint amount) public pure returns(uint cost) {
+    // get `amountOut` of `tokenOut` for `amountIn` of tickets
+    function getAmountOut(uint amountIn, address tokenOut) public view returns(uint amountOut) {
         // TODO replace with actual formula
-        cost = amount;
+        amountOut = amountIn;
+    }
+
+    // used to destroy `presaleToken` equivalant in value to `amount` of tickets
+    // should only be used after phase 2 ends
+    function burnTickets(uint amount) external view onlyOwner { 
+        _removeTickets(address(0), amount);
+    }
+
+    // used to withdraw `presaleToken` equivalent in value to `amount` of tickets
+    // should only be used after phase 2 ends
+    function withdrawTickets(address to, uint amount) external view onlyOwner {
+        _removeTickets(to, amount);
+    }
+
+    function _removeTickets(address to, uint amount) private view {
+        // remove tickets from circulation
+        require(amount <= ticketsAvailable, "VipPresale: INSUFFICIENT TICKET BALANCE TO REMOVE");
+        ticketsAvailable -= amount;
+
+        // and remove an equivalent value of `presaleToken` from circulation
+        tokenAmount = getAmountOut(amount, presaleToken);
+        presaleToken.safeTransfer(to, tokenAmount);
     }
 
     // add a new owner to the contract, only callable by an existing owner
