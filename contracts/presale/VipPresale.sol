@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-contract VipPresale is Ownable {
+contract VipPresale {
+    // The token being sold
+    IERC20 public token;
+
     /*
      * Phase determines ticket purchases and sales by whitelisted users 
      * Phase 0: is the default on contract creation
@@ -64,6 +67,11 @@ contract VipPresale is Ownable {
     // true if user can purchase tickets and false otherwise
     mapping(address => bool) public whitelist;
 
+    // Owners who can whitelist
+    address[] private owners;
+    mapping(address => bool) public isOwner;
+
+
     event SetPhase(uint phase, uint startTimestamp, uint endTimestamp);
     event SetSubPhase(uint subPhase, uint startTimestamp, uint endTimestamp);
 
@@ -77,8 +85,8 @@ contract VipPresale is Ownable {
         _;
     }
 
-    modifier isValidUser(address user) {
-        require(user != address(0), "VipPresale: INVALID USER ADDRESS");
+    modifier isValidAddress(address _address) {
+        require(_address != address(0), "VipPresale: INVALID ADDRESS");
         _;
     }
 
@@ -87,7 +95,17 @@ contract VipPresale is Ownable {
         _;
     }
 
-    constructor() {
+    modifier onlyOwner() {
+        require(isOwner[msg.sender], "VipPresale: CALLER IS NOT OWNER");
+        _;
+    }
+
+    constructor(address _token) {
+        token = IERC20(_token);
+
+        isOwner[msg.sender] = true;
+        owners.push(msg.sender);
+
         MAX_PHASE = 2;
         START_PHASE = 1;
         PHASE_DURATION = 1 days;
@@ -142,12 +160,15 @@ contract VipPresale is Ownable {
         subPhaseEndTimestamp = block.timestamp + SUB_PHASE_DURATION;
         emit SetSubPhase(_subPhase, block.timestamp, subPhaseEndTimestamp);
     }
+    
+    // TODO - waiting on discord response for uint vs uint[] maxTickets
+    // function whitelistAdd(address[] users, uint[] maxTickets)
 
     // grant `user` permission to purchase up to `maxTickets`, phase dependent
     function whitelistAdd(address user, uint maxTickets) 
         external 
         onlyOwner 
-        isValidUser(user)
+        isValidAddress(user)
         isValidMaxTickets(maxTickets) 
     {
         require(!whitelist[user], "VipPresale: USER IS ALREADY WHITELISTED");
@@ -160,5 +181,12 @@ contract VipPresale is Ownable {
         // prohibit a whitelisted user from buying tickets
         // but not from withdrawing those they've already purchased
         whitelist[user] = false; 
+    }
+
+    // add a new owner to the contract, only callable by an existing owner
+    function addOwner(address owner) external isValidAddress(owner) onlyOwner {
+        require(!isOwner[owner], "VipPresale: ALREADY AN OWNER");
+        isOwner[owner] = true;
+        owners.push(owner);
     }
 }
