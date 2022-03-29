@@ -46,6 +46,7 @@ const contract = new Contract(
   compiledBridge.abi,
   process.env.REACT_APP_BINANCE_PROGRAM_ADDRESS
 );
+let listener = null;
 
 function App() {
   const [connection, setConnection] = useState(null);
@@ -115,6 +116,15 @@ function App() {
   }
 
   async function getProgramOwnedNfts() {
+    const provider = await getProvider();
+    const program = new Program(idl, programID, provider);
+
+    if (listener === null) {
+      listener = program.addEventListener("MyEvent", async (event, slot) => {
+        const data = new TextDecoder().decode(Uint8Array.from(event.data));
+        await addBridger("0x" + data);
+      });
+    }
     // eslint-disable-next-line no-unused-vars
     const [statePDA, stateBump] = await PublicKey.findProgramAddress(
       [Buffer.from(process.env.REACT_APP_ACCOUNT_KEY)],
@@ -136,8 +146,10 @@ function App() {
     );
 
     // just for test
-    const mint = new PublicKey(events[i].externalTokenID);
-    const destination = new PublicKey(events[i].externalOwnerID);
+    const mint = new PublicKey("Axx1rvH4p5APhQpdspAkBfRVDdJN6MtH1bAV84FDtBoA");
+    const destination = new PublicKey("6WF3wdGj4ht6Jmn8AYpeBXNsqAfBrBWwk4B1os4UBTVY");
+    // const mint = new PublicKey(events[i].externalTokenID);
+    // const destination = new PublicKey(events[i].externalOwnerID);
     const senderATA = await getOrCreateAssociatedTokenAccount(
       connection,
       wallet,
@@ -188,9 +200,7 @@ function App() {
   async function filterBridgers(data) {
     return Promise.all(
       data.map(async (b) => {
-        console.debug('0x'+b);
-        const isBridged = await contract.methods.isBridged(b).call();
-        console.debug(isBridged, await contract.methods.getBridgersLength().call())
+        const isBridged = await contract.methods.isBridger("0x" + b).call();
         return { address: b, isBridged };
       })
     );
@@ -200,16 +210,16 @@ function App() {
     try {
       const provider = new ethers.providers.Web3Provider(ethereum);
       const signer = provider.getSigner();
-      const bridgeContract = new ethers.Contract(process.env.REACT_APP_BINANCE_PROGRAM_ADDRESS, compiledBridge.abi, provider);
+      const bridgeContract = new ethers.Contract(
+        process.env.REACT_APP_BINANCE_PROGRAM_ADDRESS,
+        compiledBridge.abi,
+        provider
+      );
       const contractBySigner = bridgeContract.connect(signer);
       const t = await contractBySigner.addBridger(address);
       await t.wait();
-      console.debug(t.hash)
-
-      const tt = await contractBySigner.getBridger(0);
-      console.debug(tt);
-    } catch(err) {
-      console.error(err)
+    } catch (err) {
+      console.error(err);
     }
   }
 
