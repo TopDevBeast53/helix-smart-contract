@@ -2,13 +2,23 @@
 pragma solidity >= 0.8.0;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
-contract VipPresale {
-    // Token being sold
-    IERC20 public token;
+contract VipPresale is ReentrancyGuard {
+    using SafeERC20 for IERC20;
 
-    // Number of tickets a buyer gets per wei
-    uint public rate;
+    // Token being sold in Presale
+    IERC20 public presaleToken;
+
+    // Token sold in exchage to purchase `presaleToken`
+    IERC20 public exchangeToken;
+
+    // Minimum number of tickets that can be purchased at a time
+    uint public MINIMUM_TICKET_PURCHASE;
+
+    // Number of tickets a purchaser gets per `exchangeToken`
+    uint public exchangeRate;
 
     // Address that receives funds deposited in exchange for tickets
     address public treasury;
@@ -77,7 +87,6 @@ contract VipPresale {
     address[] private owners;
     mapping(address => bool) public isOwner;
 
-
     event SetPhase(uint phase, uint startTimestamp, uint endTimestamp);
     event SetSubPhase(uint subPhase, uint startTimestamp, uint endTimestamp);
 
@@ -107,16 +116,26 @@ contract VipPresale {
     }
 
     /* 
-     * @param _token address of the token being sold
-     * @param _rate number of tickets a buyer gets per wei
+     * @param _presaleToken address of the token being sold
+     * @param _exchangeToken address of the token being exchanged for `presaleToken`
+     * @param _number of tickets a purchaser receives in exchange for 1 `exchangeToken`
      * @param _treasury address that receives funds deposited in exchange for tickets
+     * @param _maxTickets number of tickets available at the start of the sale
      */
-    constructor(address _token, uint _rate, uint _treasury) 
-        isValidAddress(_token)
+    constructor(
+        address _presaleToken, 
+        address _exchangeToken,
+        uint _exchangeRate, 
+        uint _treasury, 
+        uint _maxTickets
+    ) 
+        isValidAddress(_presaleToken)
+        isValidAddress(_exchangeToken)
         isValidAddress(_treasury)
     {
-        token = IERC20(_token);
-        rate = _rate;
+        presaleToken = IERC20(_presaleToken);
+        exchangeToken = IERC20(_exchangeToken);
+        exchangeRate = _exchangeRate;
         treasury = _treasury
 
         isOwner[msg.sender] = true;
@@ -130,7 +149,54 @@ contract VipPresale {
         START_SUB_PHASE = 1;
         SUB_PHASE_DURATION = 91 days;   // (91 days ~= 3 months) and (91 days * 4 ~= 1 year)
 
-        MAX_TICKETS = 50000;
+        MAX_TICKETS = _maxTickets;
+        ticketsAvailable = _maxTickets;
+
+        MINIMUM_TICKET_PURCHASE = 1;
+    }
+
+    // purchase `amount` of tickets
+    function purchase(uint amount) external nonReentrant payable {
+        // update to the latest phase, if necessary
+        updatePhase();
+   
+        // validate the purchase 
+        _preValidatePurchase(msg.sender, amount);
+
+        // get the cost in `exchangeToken` to purchase `amount` of tickets
+        uint cost = getCost(amount); 
+
+        // the caller must approve spending `cost` of `otherToken`
+        // in exchange for `amount` of tickets
+        exchangeToken.safeApprove(address(this), cost);
+        exchangeToken.safeTransferFrom(msg.sender, treasury, cost);
+
+        users[msg.sender].purchased += amount;
+        users[msg.sender].balance += amount;
+
+        ticketsAvailable -= amount;
+    }
+
+    // validate that `purchaser` is eligible to purchase `amount` of tickets
+    function _preValidatePurchase(address purchaser, uint smount) private view isValidAddress(purchaser) {
+        require(phase >= START_PHASE, "VipPresale: SALE HAS NOT STARTED");
+        require(whitelist[purchaser], "VipPresale: PURCHASER IS NOT WHITELISTED");
+        require(amount >= MINIMUM_TICKET_PURCHASE, "VipPresale: AMOUNT IS LESS THAN MINIMUM TICKET PURCHASE");
+        require(amount <= ticketsAvailable, "VipPresale: TICKETS ARE SOLD OUT");
+        require(
+            users[purchaser].purchased + amount <= users[purchaser].maxTicket, 
+            "VipPresale: AMOUNT EXCEEDS MAX TICKET LIMIT"
+        );
+        if (phase == MAX_PHASE) {
+            require(block.timestamp < phaseEndTimestamp, "VipPresale: SALE HAS ENDED");
+        }
+    }
+
+    // add a new owner to the contract, only callable by an existing owner
+    function addOwner(address owner) external isValidAddress(owner) onlyOwner {
+        require(!isOwner[owner], "VipPresale: ALREADY AN OWNER");
+        isOwner[owner] = true;
+        owners.push(owner);
     }
 
     // called periodically and, if sufficient time has elapsed, update the phase
@@ -197,19 +263,15 @@ contract VipPresale {
         require(!whitelist[user], "VipPresale: USER IS ALREADY WHITELISTED");
         whitelist[user] = true;
         users[user].maxTicket = maxTicket;
+
+        require(ticketsReserved + maxTicket <= ticketsAvailable, "VipPresale: INADEQUATE TICKETS FOR ALL USERS");
+        ticketsReserved += maxTicket;
     }
 
     // revoke `user` permission to purchase tickets
     function whitelistRemove(address user) external onlyOwner {
         // prohibit a whitelisted user from buying tickets
         // but not from withdrawing those they've already purchased
-        whitelist[user] = false; 
-    }
-
-    // add a new owner to the contract, only callable by an existing owner
-    function addOwner(address owner) external isValidAddress(owner) onlyOwner {
-        require(!isOwner[owner], "VipPresale: ALREADY AN OWNER");
-        isOwner[owner] = true;
-        owners.push(owner);
+        whitelist[user] = false;
     }
 } 
