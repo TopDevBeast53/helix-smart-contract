@@ -22,6 +22,7 @@ import { InjectedConnector } from '@web3-react/injected-connector'
 import { ethers } from 'ethers';
 import { useWeb3React } from '@web3-react/core'
 import idl from "./solana_anchor.json";
+import * as _ from "lodash";
 import compiledBridge from "./HelixNFTBridge.json";
 
 require("@solana/wallet-adapter-react-ui/styles.css");
@@ -43,18 +44,32 @@ function App() {
   const [connection, setConnection] = useState(null);
   const [nfts, setNfts] = useState([]);
   const [events, setEvents] = useState([]);
+  const [bridgers, setBridgers] = useState([]);
   const wallet = useWallet();
   const secretKeyString = process.env.REACT_APP_PRIVATE_KEY;
   const injected = new InjectedConnector({
     supportedChainIds: [1, 3, 4, 5, 42, 56, 97, 1337],
   });
   const { activate, deactivate, account } = useWeb3React();
+  Contract.setProvider(process.env.REACT_APP_BINANCE_NETWORK);
+  const contract = new Contract(
+    compiledBridge.abi,
+    process.env.REACT_APP_BINANCE_PROGRAM_ADDRESS
+  );
 
   async function getProvider() {
     setConnection(new Connection(NETWORK, opts.preflightCommitment));
 
     const provider = new Provider(connection, wallet, opts.preflightCommitment);
     return provider;
+  }
+
+  async function filterBridgers() {
+    return Promise.all(bridgers.map(async (b) => {
+      const isBridged = await contract.methods.isBridged(b).call();
+      console.debug('what', isBridged)
+      return {b, isBridged};
+    }))
   }
 
   useEffect(() => {
@@ -67,11 +82,21 @@ function App() {
           return n.token.toString() === e.externalTokenID
         })
       })
-      setEvents(filteredEvents, nfts);
+      setEvents(filteredEvents);
     }
-
     loadInit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet]);
+
+  useEffect(() => {
+    async function loadInit() {
+      setBridgers(_.map(_.uniqBy(nfts, 'bsc'), 'bsc'));
+      const test = await filterBridgers();
+      console.debug('what?', test, bridgers);
+    }
+    loadInit()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nfts])
 
   function deserializeAccountInfo(buffer) {
     if (!buffer) {
@@ -108,11 +133,6 @@ function App() {
   }
 
   async function getQueuedEvents() {
-    Contract.setProvider(process.env.REACT_APP_BINANCE_NETWORK);
-    const contract = new Contract(
-      compiledBridge.abi,
-      process.env.REACT_APP_BINANCE_PROGRAM_ADDRESS
-    );
     return await contract.methods.getBridgeToSolanaEvents().call();
   }
 
