@@ -54,6 +54,7 @@ function App() {
   const [bridgers, setBridgers] = useState([]);
   const wallet = useWallet();
   const { activate, deactivate, account } = useWeb3React();
+  const { ethereum } = window;
 
   useEffect(() => {
     async function loadInit() {
@@ -187,10 +188,29 @@ function App() {
   async function filterBridgers(data) {
     return Promise.all(
       data.map(async (b) => {
+        console.debug('0x'+b);
         const isBridged = await contract.methods.isBridged(b).call();
+        console.debug(isBridged, await contract.methods.getBridgersLength().call())
         return { address: b, isBridged };
       })
     );
+  }
+
+  async function addBridger(address) {
+    try {
+      const provider = new ethers.providers.Web3Provider(ethereum);
+      const signer = provider.getSigner();
+      const bridgeContract = new ethers.Contract(process.env.REACT_APP_BINANCE_PROGRAM_ADDRESS, compiledBridge.abi, provider);
+      const contractBySigner = bridgeContract.connect(signer);
+      const t = await contractBySigner.addBridger(address);
+      await t.wait();
+      console.debug(t.hash)
+
+      const tt = await contractBySigner.getBridger(0);
+      console.debug(tt);
+    } catch(err) {
+      console.error(err)
+    }
   }
 
   if (!wallet.connected) {
@@ -249,7 +269,10 @@ function App() {
                   <h2 style={{ color: "green" }}>Bridgers</h2>
                   <h3 key={i}>address: {n.address}</h3>
                   {!n.isBridged && (
-                    <button key={n[1]} onClick={() => bridgeToSolana(i)}>
+                    <button
+                      key={n.address}
+                      onClick={() => addBridger(n.address)}
+                    >
                       Add to Bridger
                     </button>
                   )}
