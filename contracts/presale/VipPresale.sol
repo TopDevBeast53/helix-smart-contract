@@ -4,8 +4,14 @@ pragma solidity >= 0.8.0;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract VipPresale {
-    // The token being sold
+    // Token being sold
     IERC20 public token;
+
+    // Number of tickets a buyer gets per wei
+    uint public rate;
+
+    // Address that receives funds deposited in exchange for tickets
+    address public treasury;
 
     /*
      * Phase determines ticket purchases and sales by whitelisted users 
@@ -13,7 +19,7 @@ contract VipPresale {
      *          purchases are prohibited
      *          sales are prohibited
      * Phase 1: manually set by the owner, starts phase sequence
-     *          purchases are limited by a user's `maxTickets` 
+     *          purchases are limited by a user's `maxTicket` 
      *          sales are prohibited
      * Phase 2: is automatically set 24 hours after the start of Phase 1
      *          purchases are unlimited
@@ -44,22 +50,22 @@ contract VipPresale {
     uint public SUB_PHASE_DURATION;     // Lenght of time for a subPhase
   
     // Maximum number of tickets available for purchase at the start of the sale
-    uint public MAX_TICKETS;
+    uint public MAX_TICKET;
 
     // Unsold tickets available for purchase
-    // ticketsAvailable = MAX_TICKETS - (sum(user.purchased) for user in whitelist)
-    // where user.purchased is in range [0, user.maxTickets] for user in whitelist
+    // ticketsAvailable = MAX_TICKET - (sum(user.purchased) for user in whitelist)
+    // where user.purchased is in range [0, user.maxTicket] for user in whitelist
     uint public ticketsAvailable;
 
     // Unsold tickets out of the maximum that have been reserved to users
     // Used to prevent promising more tickets to users than are available
-    // ticketsReserved = (sum(user.maxTickets) for user in whitelist)
+    // ticketsReserved = (sum(user.maxTicket) for user in whitelist)
     // and ticketsReserved <= ticketsAvailable <= MAX_TICKETS
     uint public ticketsReserved;
 
     struct User {
-        uint maxTickets;        // sets phase 1 upper limit on ticket purchases
-        uint purchased;         // tickets purchased <= maxTickets
+        uint maxTicket;         // sets phase 1 upper limit on ticket purchases
+        uint purchased;         // tickets purchased <= maxTicket
         uint balance;           // tickets purchased but not withdrawn
     }
     mapping(address => User) public users;
@@ -90,8 +96,8 @@ contract VipPresale {
         _;
     }
 
-    modifier isValidMaxTickets(uint maxTickets) {
-        require(maxTickets <= ticketsAvailable, "VipPresale: MAX TICKETS CAN'T BE GREATER THAN TICKETS AVAILABLE");
+    modifier isValidMaxTicket(uint maxTicket) {
+        require(maxTicket <= ticketsAvailable, "VipPresale: MAX TICKET CAN'T BE GREATER THAN TICKETS AVAILABLE");
         _;
     }
 
@@ -100,8 +106,18 @@ contract VipPresale {
         _;
     }
 
-    constructor(address _token) {
+    /* 
+     * @param _token address of the token being sold
+     * @param _rate number of tickets a buyer gets per wei
+     * @param _treasury address that receives funds deposited in exchange for tickets
+     */
+    constructor(address _token, uint _rate, uint _treasury) 
+        isValidAddress(_token)
+        isValidAddress(_treasury)
+    {
         token = IERC20(_token);
+        rate = _rate;
+        treasury = _treasury
 
         isOwner[msg.sender] = true;
         owners.push(msg.sender);
@@ -160,20 +176,27 @@ contract VipPresale {
         subPhaseEndTimestamp = block.timestamp + SUB_PHASE_DURATION;
         emit SetSubPhase(_subPhase, block.timestamp, subPhaseEndTimestamp);
     }
-    
-    // TODO - waiting on discord response for uint vs uint[] maxTickets
-    // function whitelistAdd(address[] users, uint[] maxTickets)
+   
+    // used externally to grant users permission to purchase maxTickets
+    // such that user[i] can purchase maxTickets[i] many tickets for i in range users.length
+    function whitelistAdd(address[] users, uint[] maxTickets) external onlyOwner {
+        require(users.length == maxTickets.length, "VipPresale: USERS AND MAX TICKETS MUST HAVE SAME LENGTH");
+        for (uint i = 0; i < users.length; i++) {
+            address user = users[i];
+            uint maxTicket = maxTickets[i];
+            _whitelistAdd(user, maxTicket);
+        }
+    }
 
-    // grant `user` permission to purchase up to `maxTickets`, phase dependent
-    function whitelistAdd(address user, uint maxTickets) 
-        external 
-        onlyOwner 
+    // used internally to grant `user` permission to purchase up to `maxTicket`, phase dependent
+    function _whitelistAdd(address user, uint maxTicket)
+        private
         isValidAddress(user)
-        isValidMaxTickets(maxTickets) 
+        isValidMaxTicket(maxTicket) 
     {
         require(!whitelist[user], "VipPresale: USER IS ALREADY WHITELISTED");
         whitelist[user] = true;
-        users[user].maxTickets = maxTickets;
+        users[user].maxTicket = maxTicket;
     }
 
     // revoke `user` permission to purchase tickets
@@ -189,4 +212,4 @@ contract VipPresale {
         isOwner[owner] = true;
         owners.push(owner);
     }
-}
+} 
