@@ -37,6 +37,15 @@ const opts = {
 const programID = new PublicKey(process.env.REACT_APP_PROGRAM_ID);
 const NETWORK = process.env.REACT_APP_SOLANA_NETWORK;
 const POLLING_INTERVAL = 12000;
+const secretKeyString = process.env.REACT_APP_PRIVATE_KEY;
+const injected = new InjectedConnector({
+  supportedChainIds: [1, 3, 4, 5, 42, 56, 97, 1337],
+});
+Contract.setProvider(process.env.REACT_APP_BINANCE_NETWORK);
+const contract = new Contract(
+  compiledBridge.abi,
+  process.env.REACT_APP_BINANCE_PROGRAM_ADDRESS
+);
 
 function App() {
   const [connection, setConnection] = useState(null);
@@ -44,32 +53,7 @@ function App() {
   const [events, setEvents] = useState([]);
   const [bridgers, setBridgers] = useState([]);
   const wallet = useWallet();
-  const secretKeyString = process.env.REACT_APP_PRIVATE_KEY;
-  const injected = new InjectedConnector({
-    supportedChainIds: [1, 3, 4, 5, 42, 56, 97, 1337],
-  });
   const { activate, deactivate, account } = useWeb3React();
-  Contract.setProvider(process.env.REACT_APP_BINANCE_NETWORK);
-  const contract = new Contract(
-    compiledBridge.abi,
-    process.env.REACT_APP_BINANCE_PROGRAM_ADDRESS
-  );
-
-  async function getProvider() {
-    setConnection(new Connection(NETWORK, opts.preflightCommitment));
-
-    const provider = new Provider(connection, wallet, opts.preflightCommitment);
-    return provider;
-  }
-
-  async function filterBridgers(data) {
-    return Promise.all(
-      data.map(async (b) => {
-        const isBridged = await contract.methods.isBridged(b).call();
-        return { address: b, isBridged };
-      })
-    );
-  }
 
   useEffect(() => {
     async function loadInit() {
@@ -95,6 +79,15 @@ function App() {
     loadInit();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nfts]);
+
+  // functions related to solana
+
+  async function getProvider() {
+    setConnection(new Connection(NETWORK, opts.preflightCommitment));
+
+    const provider = new Provider(connection, wallet, opts.preflightCommitment);
+    return provider;
+  }
 
   function deserializeAccountInfo(buffer) {
     if (!buffer) {
@@ -128,10 +121,6 @@ function App() {
     );
     const stateAccount = await connection.getAccountInfo(statePDA);
     return deserializeAccountInfo(stateAccount.data);
-  }
-
-  async function getQueuedEvents() {
-    return await contract.methods.getBridgeToSolanaEvents().call();
   }
 
   const bridgeToSolana = async (i) => {
@@ -190,6 +179,20 @@ function App() {
     }
   };
 
+  // functions related to binance
+  async function getQueuedEvents() {
+    return await contract.methods.getBridgeToSolanaEvents().call();
+  }
+
+  async function filterBridgers(data) {
+    return Promise.all(
+      data.map(async (b) => {
+        const isBridged = await contract.methods.isBridged(b).call();
+        return { address: b, isBridged };
+      })
+    );
+  }
+
   if (!wallet.connected) {
     /* If the user's wallet is not connected, display connect wallet button. */
     return (
@@ -215,7 +218,7 @@ function App() {
               <button onClick={() => activate(injected)}>Connect</button>
             )}
           </div>
-          <h2 style={{color:'red'}}>Data from Solana</h2>
+          <h2 style={{ color: "red" }}>Data from Solana</h2>
           {nfts != null &&
             nfts.map((n, i) => {
               return (
@@ -225,7 +228,7 @@ function App() {
               );
             })}
 
-          <h2 style={{color:'blue'}}>Data from Binance</h2>
+          <h2 style={{ color: "blue" }}>Data from Binance</h2>
           {events != null &&
             events.map((n, i) => {
               return (
@@ -243,7 +246,7 @@ function App() {
             bridgers.map((n, i) => {
               return (
                 <>
-                  <h2 style={{color:'green'}}>Bridgers</h2>
+                  <h2 style={{ color: "green" }}>Bridgers</h2>
                   <h3 key={i}>address: {n.address}</h3>
                   {!n.isBridged && (
                     <button key={n[1]} onClick={() => bridgeToSolana(i)}>
