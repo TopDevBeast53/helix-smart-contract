@@ -5,11 +5,8 @@ import { Program, Provider, web3 } from "@project-serum/anchor";
 import Contract from "web3-eth-contract";
 import {
   getOrCreateAssociatedTokenAccount,
-  TOKEN_PROGRAM_ID
+  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import idl from "./solana_anchor.json";
-import compiledBridge from "./HelixNFTBridge.json";
-
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
 import {
   useWallet,
@@ -20,11 +17,17 @@ import {
   WalletModalProvider,
   WalletMultiButton,
 } from "@solana/wallet-adapter-react-ui";
+import { Web3ReactProvider } from "@web3-react/core";
+import { InjectedConnector } from "@web3-react/injected-connector";
+import { ethers } from "ethers";
+import { useWeb3React } from "@web3-react/core";
+import idl from "./solana_anchor.json";
+import * as _ from "lodash";
+import compiledBridge from "./HelixNFTBridge.json";
+
 require("@solana/wallet-adapter-react-ui/styles.css");
 
-const wallets = [
-  new PhantomWalletAdapter(),
-];
+const wallets = [new PhantomWalletAdapter()];
 
 const { Keypair } = web3;
 const opts = {
@@ -33,19 +36,26 @@ const opts = {
 
 const programID = new PublicKey(process.env.REACT_APP_PROGRAM_ID);
 const NETWORK = process.env.REACT_APP_SOLANA_NETWORK;
+const POLLING_INTERVAL = 12000;
+const secretKeyString = process.env.REACT_APP_PRIVATE_KEY;
+const injected = new InjectedConnector({
+  supportedChainIds: [1, 3, 4, 5, 42, 56, 97, 1337],
+});
+Contract.setProvider(process.env.REACT_APP_BINANCE_NETWORK);
+const contract = new Contract(
+  compiledBridge.abi,
+  process.env.REACT_APP_BINANCE_PROGRAM_ADDRESS
+);
+let listener = null;
 
 function App() {
   const [connection, setConnection] = useState(null);
   const [nfts, setNfts] = useState([]);
   const [events, setEvents] = useState([]);
+  const [bridgers, setBridgers] = useState([]);
   const wallet = useWallet();
-  const secretKeyString = process.env.REACT_APP_PRIVATE_KEY;
-  async function getProvider() {
-    setConnection(new Connection(NETWORK, opts.preflightCommitment));
-
-    const provider = new Provider(connection, wallet, opts.preflightCommitment);
-    return provider;
-  }
+  const { activate, deactivate, account } = useWeb3React();
+  const { ethereum } = window;
 
   useEffect(() => {
     async function loadInit() {
@@ -54,14 +64,32 @@ function App() {
       const allEvents = await getQueuedEvents();
       const filteredEvents = allEvents.filter((e) => {
         return nfts.some((n) => {
-          return n.token.toString() === e.externalTokenID
-        })
-      })
-      setEvents(filteredEvents, nfts);
+          return n.token.toString() === e.externalTokenID;
+        });
+      });
+      setEvents(filteredEvents);
     }
-
     loadInit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet]);
+
+  useEffect(() => {
+    async function loadInit() {
+      const bridges = _.map(_.uniqBy(nfts, "bsc"), "bsc");
+      setBridgers(await filterBridgers(bridges));
+    }
+    loadInit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nfts]);
+
+  // functions related to solana
+
+  async function getProvider() {
+    setConnection(new Connection(NETWORK, opts.preflightCommitment));
+
+    const provider = new Provider(connection, wallet, opts.preflightCommitment);
+    return provider;
+  }
 
   function deserializeAccountInfo(buffer) {
     if (!buffer) {
@@ -88,6 +116,15 @@ function App() {
   }
 
   async function getProgramOwnedNfts() {
+    const provider = await getProvider();
+    const program = new Program(idl, programID, provider);
+
+    if (listener === null) {
+      listener = program.addEventListener("MyEvent", async (event, slot) => {
+        const data = new TextDecoder().decode(Uint8Array.from(event.data));
+        await addBridger("0x" + data);
+      });
+    }
     // eslint-disable-next-line no-unused-vars
     const [statePDA, stateBump] = await PublicKey.findProgramAddress(
       [Buffer.from(process.env.REACT_APP_ACCOUNT_KEY)],
@@ -95,15 +132,6 @@ function App() {
     );
     const stateAccount = await connection.getAccountInfo(statePDA);
     return deserializeAccountInfo(stateAccount.data);
-  }
-
-  async function getQueuedEvents() {
-    Contract.setProvider(process.env.REACT_APP_BINANCE_NETWORK);
-    const contract = new Contract(
-      compiledBridge.abi,
-      process.env.REACT_APP_BINANCE_PROGRAM_ADDRESS
-    );
-    return await contract.methods.getBridgeToSolanaEvents().call();
   }
 
   const bridgeToSolana = async (i) => {
@@ -118,8 +146,10 @@ function App() {
     );
 
     // just for test
-    const mint = new PublicKey(events[i].externalTokenID);
-    const destination = new PublicKey(events[i].externalOwnerID);
+    const mint = new PublicKey("Axx1rvH4p5APhQpdspAkBfRVDdJN6MtH1bAV84FDtBoA");
+    const destination = new PublicKey("6WF3wdGj4ht6Jmn8AYpeBXNsqAfBrBWwk4B1os4UBTVY");
+    // const mint = new PublicKey(events[i].externalTokenID);
+    // const destination = new PublicKey(events[i].externalOwnerID);
     const senderATA = await getOrCreateAssociatedTokenAccount(
       connection,
       wallet,
@@ -155,10 +185,41 @@ function App() {
       });
 
       console.debug("account: ");
-      alert('success!');
+      alert("success!");
     } catch (err) {
-      alert('error: nft not exist');
+      alert("error: nft not exist");
       console.debug("Transaction error: ", err);
+    }
+  };
+
+  // functions related to binance
+  async function getQueuedEvents() {
+    return await contract.methods.getBridgeToSolanaEvents().call();
+  }
+
+  async function filterBridgers(data) {
+    return Promise.all(
+      data.map(async (b) => {
+        const isBridged = await contract.methods.isBridger("0x" + b).call();
+        return { address: b, isBridged };
+      })
+    );
+  }
+
+  async function addBridger(address) {
+    try {
+      const provider = new ethers.providers.Web3Provider(ethereum);
+      const signer = provider.getSigner();
+      const bridgeContract = new ethers.Contract(
+        process.env.REACT_APP_BINANCE_PROGRAM_ADDRESS,
+        compiledBridge.abi,
+        provider
+      );
+      const contractBySigner = bridgeContract.connect(signer);
+      const t = await contractBySigner.addBridger(address);
+      await t.wait();
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -179,7 +240,15 @@ function App() {
     return (
       <div className="App">
         <div>
-          <h2>Data from Solana</h2>
+          <div>
+            Account: {account}
+            {account ? (
+              <button onClick={() => deactivate()}>Disconnect</button>
+            ) : (
+              <button onClick={() => activate(injected)}>Connect</button>
+            )}
+          </div>
+          <h2 style={{ color: "red" }}>Data from Solana</h2>
           {nfts != null &&
             nfts.map((n, i) => {
               return (
@@ -189,7 +258,7 @@ function App() {
               );
             })}
 
-          <h2>Data from Binance</h2>
+          <h2 style={{ color: "blue" }}>Data from Binance</h2>
           {events != null &&
             events.map((n, i) => {
               return (
@@ -197,11 +266,29 @@ function App() {
                   <h3 key={i}>
                     token: {n.externalTokenID}, owner: {n[1]}
                   </h3>
-                  <button key={n[1]} onClick={() => bridgeToSolana(i)}>Bridge To Solana</button>
+                  <button key={n[1]} onClick={() => bridgeToSolana(i)}>
+                    Bridge To Solana
+                  </button>
                 </>
               );
             })}
-
+          {bridgers != null &&
+            bridgers.map((n, i) => {
+              return (
+                <>
+                  <h2 style={{ color: "green" }}>Bridgers</h2>
+                  <h3 key={i}>address: {n.address}</h3>
+                  {!n.isBridged && (
+                    <button
+                      key={n.address}
+                      onClick={() => addBridger(n.address)}
+                    >
+                      Add to Bridger
+                    </button>
+                  )}
+                </>
+              );
+            })}
           {events == null && <h3>No bridged NFTS</h3>}
         </div>
       </div>
@@ -209,11 +296,19 @@ function App() {
   }
 }
 
+const getLibrary = (provider) => {
+  const library = new ethers.providers.Web3Provider(provider);
+  library.pollingInterval = POLLING_INTERVAL;
+  return library;
+};
+
 const AppWithProvider = () => (
   <ConnectionProvider endpoint={NETWORK}>
     <WalletProvider wallets={wallets} autoConnect>
       <WalletModalProvider>
-        <App />
+        <Web3ReactProvider getLibrary={getLibrary}>
+          <App />
+        </Web3ReactProvider>
       </WalletModalProvider>
     </WalletProvider>
   </ConnectionProvider>

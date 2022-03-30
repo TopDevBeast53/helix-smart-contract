@@ -168,6 +168,28 @@
       }
     }
   ],
+  "events": [
+    {
+      "name": "MyEvent",
+      "fields": [
+        {
+          "name": "data",
+          "type": {
+            "array": [
+              "u8",
+              40
+            ]
+          },
+          "index": false
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "index": true
+        }
+      ]
+    }
+  ],
   "errors": [
     {
       "code": 300,
