@@ -31,13 +31,13 @@ contract PublicPresale is ReentrancyGuard {
     // where user.purchased is in range [0, user.maxTicket] for user in whitelist
     uint public ticketsAvailable;
 
-    // Token exchanged to purchase tickets
+    // Token exchanged to purchase tickets, i.e. BUSD
     IERC20 public inputToken;
 
     // Number of tickets a user gets per `inputToken`
     uint public INPUT_RATE;
 
-    // Token being sold in presale and redeemable by exchanging tickets 
+    // Token being sold in presale and redeemable by exchanging tickets, i.e. HELIX
     IERC20 public outputToken;
 
     // Number of `outputTokens` a user gets per ticket
@@ -134,14 +134,16 @@ contract PublicPresale is ReentrancyGuard {
 
         // get the `inputTokenAmount` in `inputToken` to purchase `amount` of tickets
         uint tokenAmount = getAmountOut(amount, inputToken); 
+
         require(
             tokenAmount <= inputToken.balanceOf(msg.sender), 
             "PublicPresale: INSUFFICIENT CALLER TOKEN BALANCE"
         );
+        require(
+            tokenAmount <= inputToken.allowance(msg.sender, address(this)), 
+            "PublicPresale: INSUFFICIENT ALLOWANCE"
+        );
 
-        // the caller must approve spending `cost` of `otherToken`
-        // in exchange for `amount` of tickets
-        inputToken.safeApprove(address(this), tokenAmount);
         inputToken.safeTransferFrom(msg.sender, treasury, tokenAmount);
 
         // transfer purchase to user
@@ -189,6 +191,7 @@ contract PublicPresale is ReentrancyGuard {
     // amount of `outputToken` equivalent in value to `amount` to `to`
     function _remove(address to, uint amount) private {
         // proceed only if the removal is valid
+        // note that only owners can make removals
         require(isPaused, "PublicPresale: SALE IS NOT PAUSED");
         require(amount <= ticketsAvailable, "PublicPresale: INSUFFICIENT TICKETS AVAILABLE TO REMOVE");
 
@@ -218,12 +221,12 @@ contract PublicPresale is ReentrancyGuard {
     }
     
     // used to end the sale manually
-    function pause() external view onlyOwner {
+    function pause() external onlyOwner {
         isPaused = true;
     }
     
     // safety switch if accidentally paused
-    function unpause() external view onlyOwner {
+    function unpause() external onlyOwner {
         isPaused = false;
     }
 
@@ -249,18 +252,12 @@ contract PublicPresale is ReentrancyGuard {
         emit SetPurchasePhase(phase, block.timestamp, purchasePhaseEndTimestamp);
     }
    
-    // used externally to grant multiple `_users` permission to purchase tickets 
-    // during phase 1
+    // used externally to grant multiple `_users` permission to purchase tickets during phase 1
     function whitelistAdd(address[] calldata _users) external onlyOwner {
         for (uint i = 0; i < _users.length; i++) {
-            _whitelistAdd(_users[i], maxTicket);
+            address user = _users[i]; 
+            whitelist[user] = true;
         }
-    }
-
-    // used internally to grant `user` permission to purchase tickets during phase 1 
-    function _whitelistAdd(address user) private isValidAddress(user) {
-        require(!whitelist[user], "PublicPresale: USER IS ALREADY WHITELISTED");
-        whitelist[user] = true;
     }
 
     // revoke permission for `user` to purchase tickets
