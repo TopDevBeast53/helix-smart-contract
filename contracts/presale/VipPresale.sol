@@ -5,104 +5,128 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
+/*
+ * Allow whitelisted users to purchase outputToken using inputToken via the medium of tickets
+ * Purchasing tickets with the inputToken is mediated by the INPUT_RATE and
+ * withdrawing tickets for the outputToken is mediated by the OUTPUT_RATE
+ * 
+ * Purchasing occurs over 2 purchase phases:
+ *  1: purchases are limited by a maxTicket account attribute
+ *  2: purchases are unlimited
+ * 
+ * Further purchases are prohibited after purchase phase 2 ends
+ * The withdraw phase begins after the purchase phase ends
+ * 
+ * Withdrawing occurs over 4 withdraw phases:
+ *  1: withrawals are limited to 25% of tickets purchased
+ *  2: withrawals are limited to 50% of tickets purchased
+ *  3: withrawals are limited to 75% of tickets purchased
+ *  4: withrawals are unlimited
+ */
 contract VipPresale is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    // Token being sold in Presale
-    IERC20 public presaleToken;
+    // Information about whitelisted users tickets
+    struct User {
+        uint maxTicket;         // sets purchase phase 1 upper limit on ticket purchases
+        uint purchased;         // tickets purchased, invariant: purchased <= maxTicket
+        uint balance;           // tickets purchased but not withdrawn
+    }
 
-    // Token sold in exchage to purchase `presaleToken`
-    IERC20 public exchangeToken;
+    // Maximum number of tickets available for purchase at the start of the sale
+    uint public TICKET_MAX;
 
     // Minimum number of tickets that can be purchased at a time
     uint public MINIMUM_TICKET_PURCHASE;
 
-    // Number of tickets a user gets per `exchangeToken`
-    uint public EXCHANGE_RATE;
-
-    // Number of `presaleTokens` a user gets per ticket
-    uint public PRESALE_RATE;
-
-    // Address that receives funds deposited in exchange for tickets
-    address public treasury;
-
-    /*
-     * Phase determines ticket purchases and sales by whitelisted users 
-     * Phase 0: is the default on contract creation
-     *          purchases are prohibited
-     *          sales are prohibited
-     * Phase 1: manually set by the owner, starts phase sequence
-     *          purchases are limited by a user's `maxTicket` 
-     *          sales are prohibited
-     * Phase 2: is automatically set 24 hours after the start of Phase 1
-     *          purchases are unlimited
-     *          sales are limited by subPhase 
-     */
-    uint public MAX_PHASE;              // Highest phase attainable
-    uint public START_PHASE;            // Phase which starts automatic sequence
-    uint public phase;                  // Current phase
-    uint public phaseEndTimestamp;      // End timestamp after which the current phase has ended
-    uint public PHASE_DURATION;         // Length of time for a phase
-    
-    /* 
-     * SubPhase determines ticket sales by whitelisted users during Phase 2
-     * SubPhase 0: default on contract creation, nothing happens
-     * SubPhase 1: started manually by the owner, starts subPhase sequence
-     * SubPhase 2: users may sell up to 25% of their purchased tickets
-     * SubPhase 3: users may sell up to 50% of their purchased tickets
-     * SubPhase 4: users may sell up to 75% of their purchased tickets
-     * SubPhase 5: users may sell up to 100% of their purchased tickets
-     * 
-     * After subPhase 1, subsequent subPhases automatically begin `SUB_PHASE_DURATION` 
-     * after the start of the previous subPhase
-     */
-    uint public MAX_SUB_PHASE;          // Highest subPhase attainable
-    uint public START_SUB_PHASE;        // SubPhase which starts automatic sequence
-    uint public subPhase;               // Current subPhase
-    uint public subPhaseEndTimestamp;   // End timestamp after which the current subPhase has ended
-    uint public SUB_PHASE_DURATION;     // Length of time for a subPhase
-    
-    // relates a subPhase to the percent of tickets a user may withdraw during that subPhase
-    mapping (uint => uint) public subPhaseWithdrawPercent;
-  
-    // Maximum number of tickets available for purchase at the start of the sale
-    uint public MAX_TICKET;
-
     // Unsold tickets available for purchase
-    // ticketsAvailable = MAX_TICKET - (sum(user.purchased) for user in whitelist)
+    // ticketsAvailable = TICKET_MAX - (sum(user.purchased) for user in whitelist)
     // where user.purchased is in range [0, user.maxTicket] for user in whitelist
     uint public ticketsAvailable;
 
     // Unsold tickets out of the maximum that have been reserved to users
     // Used to prevent promising more tickets to users than are available
     // ticketsReserved = (sum(user.maxTicket) for user in whitelist)
-    // and ticketsReserved <= ticketsAvailable <= MAX_TICKET
+    // and ticketsReserved <= ticketsAvailable <= TICKET_MAX
     uint public ticketsReserved;
 
-    struct User {
-        uint maxTicket;         // sets phase 1 upper limit on ticket purchases
-        uint purchased;         // tickets purchased <= maxTicket
-        uint balance;           // tickets purchased but not withdrawn
-    }
-    mapping(address => User) public users;
+    // Token exchanged to purchase tickets
+    IERC20 public inputToken;
+
+    // Number of tickets a user gets per `inputToken`
+    uint public INPUT_RATE;
+
+    // Token being sold in presale and redeemable by exchanging tickets 
+    IERC20 public outputToken;
+
+    // Number of `outputTokens` a user gets per ticket
+    uint public OUTPUT_RATE;
+
+    // Address that receives `inputToken`s sold in exchange for tickets
+    address public treasury;
+
+    /*
+     * Purchase phase determines ticket purchases using `inputToken` by whitelisted users 
+     *  0: is the default on contract creation
+     *     purchases are prohibited
+     *  1: manually set by the owner
+     *     purchases are limited by a user's `maxTicket` 
+     *  2: begins automatically PURCHASE_PHASE_DURATION after the start of purchase phase 1
+     *     purchases are unlimited
+     */
+    uint public PURCHASE_PHASE_START;           // Phase when purchasing starts
+    uint public PURCHASE_PHASE_END;             // Last phase before purchasing ends
+    uint public PURCHASE_PHASE_DURATION;        // Length of time for a purchasePhase
+    uint public purchasePhase;                  // Current purchasePhase
+    uint public purchasePhaseEndTimestamp;      // Timestamp after which the current purchasePhase has ended
     
+    /* 
+     * Withdraw phase determines ticket withdrawals for `outputToken` by whitelisted users
+     *  0: default on contract creation
+     *     sales are prohibited
+     *  1: started manually by the owner 
+     *     sales are prohibited
+     *  2: withdraw up to 25% of purchased tickets
+     *  3: withdraw up to 50% of purchased tickets
+     *  4: withdraw up to 75% of purchased tickets
+     *  5: withdraw up to 100% of purchased tickets
+     * 
+     * After withdraw phase 1 is started, subsequent withdraw phases automatically 
+     * begin `WITHDRAW_PHASE_DURATION` after the start of the previous withdraw phase
+     */
+    uint public WITHDRAW_PHASE_START;           // Phase when withdrawing starts 
+    uint public WITHDRAW_PHASE_END;             // Last withdraw phase, does not end withdrawing
+    uint public WITHDRAW_PHASE_DURATION;        // Length of time for a withdrawPhase
+    uint public withdrawPhase;                  // Current withdrawPhase
+    uint public withdrawPhaseEndTimestamp;      // Timestamp after which the current withdrawPhase has ended
+
+    uint public WITHDRAW_PERCENT;               // Used as the denominator when calculating withdraw percent
+
+    // Owners who can whitelist users
+    address[] private owners;
+
+    // true if address is an owner and false otherwise
+    mapping(address => bool) public isOwner;
+
     // true if user can purchase tickets and false otherwise
     mapping(address => bool) public whitelist;
 
-    // Owners who can whitelist
-    address[] private owners;
-    mapping(address => bool) public isOwner;
+    // relates user addresses to their struct
+    mapping(address => User) public users;
+    
+    // relates a withdrawPhase to the percent of purchased tickets a user may withdraw during that withdrawPhase
+    mapping (uint => uint) public withdrawPhasePercent;
+    
+    event SetPurchasePhase(uint purchasePhase, uint startTimestamp, uint endTimestamp);
+    event SetWithdrawPhase(uint withdrawPhase, uint startTimestamp, uint endTimestamp);
 
-    event SetPhase(uint phase, uint startTimestamp, uint endTimestamp);
-    event SetSubPhase(uint subPhase, uint startTimestamp, uint endTimestamp);
-
-    modifier isValidPhase(uint _phase) {
-        require(_phase <= MAX_PHASE, "VipPresale: PHASE CAN'T BE GREATER THAN MAX_PHASE");
+    modifier isValidPurchasePhase(uint phase) {
+        require(phase <= PURCHASE_PHASE_END, "VipPresale: PHASE EXCEEDS PURCHASE PHASE END");
         _;
     }
 
-    modifier isValidSubPhase(uint _subPhase) {
-        require(_subPhase <= MAX_SUB_PHASE, "VipPresale: SUB PHASE CAN'T BE GREATER THAN MAX_SUB_PHASE");
+    modifier isValidWithdrawPhase(uint phase) {
+        require(phase <= WITHDRAW_PHASE_END, "VipPresale: PHASE EXCEEDS WITHDRAW PHASE END");
         _;
     }
 
@@ -111,84 +135,72 @@ contract VipPresale is ReentrancyGuard {
         _;
     }
 
-    modifier isValidMaxTicket(uint maxTicket) {
-        require(maxTicket <= ticketsAvailable, "VipPresale: MAX TICKET CAN'T BE GREATER THAN TICKETS AVAILABLE");
-        _;
-    }
-
     modifier onlyOwner() {
         require(isOwner[msg.sender], "VipPresale: CALLER IS NOT OWNER");
         _;
     }
 
-    /* 
-     * @param _presaleToken address of the token being sold
-     * @param _exchangeToken address of the token being exchanged for `presaleToken`
-     * @param _treasury address that receives funds deposited in exchange for tickets
-     * @param _PRESALE_RATE number of `presaleTokens` a user receives in exchange for 1 ticket
-     * @param _EXCHANGE_RATE number of tickets a user receives in exchange for 1 `exchangeToken`
-     * @param _maxTickets number of tickets available at the start of the sale
-     */
     constructor(
-        address _presaleToken, 
-        address _exchangeToken,
-        address _treasury, 
-        uint _PRESALE_RATE,
-        uint _EXCHANGE_RATE, 
-        uint _maxTicket
+        address _inputToken,
+        uint _INPUT_RATE, 
+        address _outputToken, 
+        uint _OUTPUT_RATE,
+        address _treasury
     ) 
-        isValidAddress(_presaleToken)
-        isValidAddress(_exchangeToken)
+        isValidAddress(_inputToken)
+        isValidAddress(_outputToken)
         isValidAddress(_treasury)
     {
-        presaleToken = IERC20(_presaleToken);
-        exchangeToken = IERC20(_exchangeToken);
-        treasury = _treasury;
+        inputToken = IERC20(_inputToken);
+        INPUT_RATE = _INPUT_RATE;
 
-        PRESALE_RATE = _PRESALE_RATE;
-        EXCHANGE_RATE = _EXCHANGE_RATE;
+        outputToken = IERC20(_outputToken);
+        OUTPUT_RATE = _OUTPUT_RATE;
+
+        treasury = _treasury;
 
         isOwner[msg.sender] = true;
         owners.push(msg.sender);
 
-        MAX_PHASE = 2;
-        START_PHASE = 1;
-        PHASE_DURATION = 1 days;
-
-        MAX_SUB_PHASE = 5;
-        START_SUB_PHASE = 1;
-        SUB_PHASE_DURATION = 91 days;   // (91 days ~= 3 months) and (91 days * 4 ~= 1 year)
-
-        MAX_TICKET = _maxTicket;
-        ticketsAvailable = _maxTicket;
-
+        TICKET_MAX = 50000;
+        ticketsAvailable = 50000;
+        require(TICKET_MAX == ticketsAvailable, "VipPresale: INITIAL TICKET AMOUNTS MUST MATCH");
         MINIMUM_TICKET_PURCHASE = 1;
 
-        subPhaseWithdrawPercent[2] = 25;       // 25%
-        subPhaseWithdrawPercent[3] = 50;       // 50%
-        subPhaseWithdrawPercent[4] = 75;       // 75%
-        subPhaseWithdrawPercent[5] = 100;      // 100%
+        PURCHASE_PHASE_END = 2;
+        PURCHASE_PHASE_START = 1;
+        PURCHASE_PHASE_DURATION = 1 days;
+
+        WITHDRAW_PHASE_END = 5;
+        WITHDRAW_PHASE_START = 1;
+        WITHDRAW_PHASE_DURATION = 91 days;  // (91 days ~= 3 months) and (91 days * 4 ~= 1 year)
+
+        WITHDRAW_PERCENT = 100;
+        withdrawPhasePercent[2] = 25;       // 25%
+        withdrawPhasePercent[3] = 50;       // 50%
+        withdrawPhasePercent[4] = 75;       // 75%
+        withdrawPhasePercent[5] = 100;      // 100%
     }
 
     // purchase `amount` of tickets
     function purchase(uint amount) external nonReentrant {
-        // update to the latest phase, if necessary
-        updatePhase();
+        // update to the latest purchasePhase, if necessary
+        updatePurchasePhase();
    
         // validate the purchase 
         _validatePurchase(msg.sender, amount);
 
-        // get the `exchangeTokenAmount` in `exchangeToken` to purchase `amount` of tickets
-        uint tokenAmount = getAmountOut(amount, exchangeToken); 
+        // get the `inputTokenAmount` in `inputToken` to purchase `amount` of tickets
+        uint tokenAmount = getAmountOut(amount, inputToken); 
         require(
-            tokenAmount <= exchangeToken.balanceOf(msg.sender), 
+            tokenAmount <= inputToken.balanceOf(msg.sender), 
             "VipPresale: INSUFFICIENT TOKEN BALANCE"
         );
 
         // the caller must approve spending `cost` of `otherToken`
         // in exchange for `amount` of tickets
-        exchangeToken.safeApprove(address(this), tokenAmount);
-        exchangeToken.safeTransferFrom(msg.sender, treasury, tokenAmount);
+        inputToken.safeApprove(address(this), tokenAmount);
+        inputToken.safeTransferFrom(msg.sender, treasury, tokenAmount);
 
         users[msg.sender].purchased += amount;
         users[msg.sender].balance += amount;
@@ -198,44 +210,44 @@ contract VipPresale is ReentrancyGuard {
 
     // validate that `user` is eligible to purchase `amount` of tickets
     function _validatePurchase(address user, uint amount) private view isValidAddress(user) {
-        require(phase >= START_PHASE, "VipPresale: SALE HAS NOT STARTED");
+        require(purchasePhase >= PURCHASE_PHASE_START, "VipPresale: SALE HAS NOT STARTED");
         require(whitelist[user], "VipPresale: USER IS NOT WHITELISTED");
         require(amount >= MINIMUM_TICKET_PURCHASE, "VipPresale: AMOUNT IS LESS THAN MINIMUM TICKET PURCHASE");
         require(amount <= ticketsAvailable, "VipPresale: TICKETS ARE SOLD OUT");
-        if (phase == START_PHASE) { 
+        if (purchasePhase == PURCHASE_PHASE_START) { 
             require(
                 users[user].purchased + amount <= users[user].maxTicket, 
                 "VipPresale: AMOUNT EXCEEDS MAX TICKET LIMIT"
             );
         } else {
-            require(block.timestamp < phaseEndTimestamp, "VipPresale: SALE HAS ENDED");
+            require(block.timestamp < purchasePhaseEndTimestamp, "VipPresale: SALE HAS ENDED");
         }
     }
 
     // get `amountOut` of `tokenOut` for `amountIn` of tickets
     function getAmountOut(uint amountIn, IERC20 tokenOut) public view returns(uint amountOut) {
-        if (address(tokenOut) == address(presaleToken)) {
-            amountOut = amountIn * PRESALE_RATE;
-        } else if (address(tokenOut) == address(exchangeToken)) {
-            amountOut = amountIn * EXCHANGE_RATE;
+        if (address(tokenOut) == address(outputToken)) {
+            amountOut = amountIn * OUTPUT_RATE;
+        } else if (address(tokenOut) == address(inputToken)) {
+            amountOut = amountIn * INPUT_RATE;
         } else {
             amountOut = 0;
         }
     }
 
-    // used to destroy `presaleToken` equivalant in value to `amount` of tickets
-    // should only be used after phase 2 ends
+    // used to destroy `outputToken` equivalant in value to `amount` of tickets
+    // should only be used after purchasePhase 2 ends
     function burn(uint amount) external onlyOwner { 
         _remove(address(0), amount);
     }
 
-    // used to withdraw `presaleToken` equivalent in value to `amount` of tickets to `to`
+    // used to withdraw `outputToken` equivalent in value to `amount` of tickets to `to`
     function withdraw(uint amount) external {
         _remove(msg.sender, amount);
     }
 
     // used internally to remove `amount` of tickets from circulation and transfer an 
-    // amount of `presaleToken` equivalent in value to `amount` to `to`
+    // amount of `outputToken` equivalent in value to `amount` to `to`
     function _remove(address to, uint amount) private {
         _validateRemoval(msg.sender, amount);
 
@@ -249,9 +261,9 @@ contract VipPresale is ReentrancyGuard {
             users[msg.sender].balance -= amount;
         }
 
-        // remove an equivalent value of `presaleToken` from the contract and to `to`
-        uint tokenAmount = getAmountOut(amount, presaleToken);
-        presaleToken.safeTransfer(to, tokenAmount);     // Implicitly require a sufficient token balance
+        // remove an equivalent value of `outputToken` from the contract and to `to`
+        uint tokenAmount = getAmountOut(amount, outputToken);
+        outputToken.safeTransfer(to, tokenAmount);     // Implicitly require a sufficient token balance
     }
 
     // validate whether `amount` of tickets are removable by address `by`
@@ -266,9 +278,9 @@ contract VipPresale is ReentrancyGuard {
             // owner can, at any time, remove all of the tokens available
             maxAmount = ticketsAvailable;
         } else {
-            // Max number of tickets user can withdraw as a function of subPhase and 
+            // Max number of tickets user can withdraw as a function of withdrawPhase and 
             // number of tickets purchased
-            uint allowed = users[by].purchased * subPhaseWithdrawPercent[subPhase] / 100;
+            uint allowed = users[by].purchased * withdrawPhasePercent[withdrawPhase] / WITHDRAW_PERCENT;
 
             // Number of tickets remaining in their balance
             uint balance = users[by].balance;
@@ -291,48 +303,48 @@ contract VipPresale is ReentrancyGuard {
         owners.push(owner);
     }
 
-    // called periodically and, if sufficient time has elapsed, update the phase
-    function updatePhase() private {
-        if (phase >= START_PHASE) {
-            if (phase < MAX_PHASE && block.timestamp >= phaseEndTimestamp) {
-                _setPhase(phase + 1);
+    // called periodically and, if sufficient time has elapsed, update the purchasePhase
+    function updatePurchasePhase() private {
+        if (purchasePhase >= PURCHASE_PHASE_START) {
+            if (purchasePhase < PURCHASE_PHASE_END && block.timestamp >= purchasePhaseEndTimestamp) {
+                _setPurchasePhase(purchasePhase + 1);
             }
         }
     }
 
-    // used externally to update from phase 0 to phase 1
-    // should only ever be called to set phase == 1
-    function setPhase(uint _phase) external onlyOwner isValidPhase(_phase) {
-        _setPhase(_phase);
+    // used externally to update from purchasePhase 0 to purchasePhase 1
+    // should only ever be called to set purchasePhase == 1
+    function setPurchasePhase(uint phase) external onlyOwner isValidPurchasePhase(phase) {
+        _setPurchasePhase(phase);
     }
 
-    // used internally to update phases
-    function _setPhase(uint _phase) private {
-        phase = _phase;
-        phaseEndTimestamp = block.timestamp + PHASE_DURATION;
-        emit SetPhase(_phase, block.timestamp, phaseEndTimestamp);
+    // used internally to update purchasePhases
+    function _setPurchasePhase(uint phase) private {
+        purchasePhase = phase;
+        purchasePhaseEndTimestamp = block.timestamp + PURCHASE_PHASE_DURATION;
+        emit SetPurchasePhase(phase, block.timestamp, purchasePhaseEndTimestamp);
     }
 
-    // called periodically and, if sufficient time has elapsed, update the subPhase
-    function updateSubPhase() private {
-        if (subPhase >= START_SUB_PHASE) {
-            if (subPhase < MAX_SUB_PHASE && block.timestamp >= subPhaseEndTimestamp) {
-                _setSubPhase(subPhase + 1);
+    // called periodically and, if sufficient time has elapsed, update the withdrawPhase
+    function updateWithdrawPhase() private {
+        if (withdrawPhase >= WITHDRAW_PHASE_START) {
+            if (withdrawPhase < WITHDRAW_PHASE_END && block.timestamp >= withdrawPhaseEndTimestamp) {
+                _setWithdrawPhase(withdrawPhase + 1);
             }
         }
     }
 
-    // used externally to update from subPhase 0 to subPhase 1
-    // should only ever be called to set subPhase == 1
-    function setSubPhase(uint _subPhase) external onlyOwner isValidSubPhase(_subPhase) {
-        _setSubPhase(_subPhase);
+    // used externally to update from withdrawPhase 0 to withdrawPhase 1
+    // should only ever be called to set withdrawPhase == 1
+    function setWithdrawPhase(uint phase) external onlyOwner isValidWithdrawPhase(phase) {
+        _setWithdrawPhase(phase);
     }
 
-    // used internally to update subPhases
-    function _setSubPhase(uint _subPhase) private {
-        subPhase = _subPhase;
-        subPhaseEndTimestamp = block.timestamp + SUB_PHASE_DURATION;
-        emit SetSubPhase(_subPhase, block.timestamp, subPhaseEndTimestamp);
+    // used internally to update withdrawPhases
+    function _setWithdrawPhase(uint phase) private {
+        withdrawPhase = phase;
+        withdrawPhaseEndTimestamp = block.timestamp + WITHDRAW_PHASE_DURATION;
+        emit SetWithdrawPhase(phase, block.timestamp, withdrawPhaseEndTimestamp);
     }
    
     // used externally to grant users permission to purchase maxTickets
@@ -346,12 +358,12 @@ contract VipPresale is ReentrancyGuard {
         }
     }
 
-    // used internally to grant `user` permission to purchase up to `maxTicket`, phase dependent
+    // used internally to grant `user` permission to purchase up to `maxTicket`, purchasePhase dependent
     function _whitelistAdd(address user, uint maxTicket)
         private
         isValidAddress(user)
-        isValidMaxTicket(maxTicket) 
     {
+        require(maxTicket <= ticketsAvailable, "VipPresale: MAX TICKET CAN'T BE GREATER THAN TICKETS AVAILABLE");
         require(!whitelist[user], "VipPresale: USER IS ALREADY WHITELISTED");
         whitelist[user] = true;
         users[user].maxTicket = maxTicket;
@@ -362,7 +374,7 @@ contract VipPresale is ReentrancyGuard {
 
     // revoke `user` permission to purchase tickets
     function whitelistRemove(address user) external onlyOwner {
-        // prohibit a whitelisted user from buying tickets
+        // prohibit a whitelisted user from purchasing tickets
         // but not from withdrawing those they've already purchased
         whitelist[user] = false;
     }
