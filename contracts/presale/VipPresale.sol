@@ -164,7 +164,7 @@ contract VipPresale is ReentrancyGuard {
     }
 
     // purchase `amount` of tickets
-    function purchase(uint amount) external nonReentrant payable {
+    function purchase(uint amount) external nonReentrant {
         // update to the latest phase, if necessary
         updatePhase();
    
@@ -173,6 +173,10 @@ contract VipPresale is ReentrancyGuard {
 
         // get the `exchangeTokenAmount` in `exchangeToken` to purchase `amount` of tickets
         uint exchangeTokenAmount = getAmountOut(amount, exchangeToken); 
+        require(
+            exchangeTokenAmount <= exchangeToken.balanceOf(msg.sender), 
+            "VipPresale: INSUFFICIENT TOKEN BALANCE"
+        );
 
         // the caller must approve spending `cost` of `otherToken`
         // in exchange for `amount` of tickets
@@ -191,11 +195,12 @@ contract VipPresale is ReentrancyGuard {
         require(whitelist[user], "VipPresale: USER IS NOT WHITELISTED");
         require(amount >= MINIMUM_TICKET_PURCHASE, "VipPresale: AMOUNT IS LESS THAN MINIMUM TICKET PURCHASE");
         require(amount <= ticketsAvailable, "VipPresale: TICKETS ARE SOLD OUT");
-        require(
-            users[user].purchased + amount <= users[user].maxTicket, 
-            "VipPresale: AMOUNT EXCEEDS MAX TICKET LIMIT"
-        );
-        if (phase == MAX_PHASE) {
+        if (phase == START_PHASE) { 
+            require(
+                users[user].purchased + amount <= users[user].maxTicket, 
+                "VipPresale: AMOUNT EXCEEDS MAX TICKET LIMIT"
+            );
+        } else {
             require(block.timestamp < phaseEndTimestamp, "VipPresale: SALE HAS ENDED");
         }
     }
