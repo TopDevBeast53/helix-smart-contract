@@ -103,7 +103,7 @@ contract VipPresale is ReentrancyGuard {
     uint public WITHDRAW_PERCENT;               // Used as the denominator when calculating withdraw percent
 
     // Owners who can whitelist users
-    address[] private owners;
+    address[] public owners;
 
     // true if address is an owner and false otherwise
     mapping(address => bool) public isOwner;
@@ -142,19 +142,19 @@ contract VipPresale is ReentrancyGuard {
 
     constructor(
         address _inputToken,
-        uint _INPUT_RATE, 
         address _outputToken, 
-        uint _OUTPUT_RATE,
-        address _treasury
+        address _treasury,
+        uint _INPUT_RATE, 
+        uint _OUTPUT_RATE
     ) 
         isValidAddress(_inputToken)
         isValidAddress(_outputToken)
         isValidAddress(_treasury)
     {
         inputToken = IERC20(_inputToken);
-        INPUT_RATE = _INPUT_RATE;
-
         outputToken = IERC20(_outputToken);
+
+        INPUT_RATE = _INPUT_RATE;
         OUTPUT_RATE = _OUTPUT_RATE;
 
         treasury = _treasury;
@@ -167,27 +167,27 @@ contract VipPresale is ReentrancyGuard {
         require(TICKET_MAX == ticketsAvailable, "VipPresale: INITIAL TICKET AMOUNTS MUST MATCH");
         MINIMUM_TICKET_PURCHASE = 1;
 
-        PURCHASE_PHASE_END = 2;
         PURCHASE_PHASE_START = 1;
+        PURCHASE_PHASE_END = 2;
         PURCHASE_PHASE_DURATION = 1 days;
 
-        WITHDRAW_PHASE_END = 5;
         WITHDRAW_PHASE_START = 1;
+        WITHDRAW_PHASE_END = 5;
         WITHDRAW_PHASE_DURATION = 91 days;  // (91 days ~= 3 months) and (91 days * 4 ~= 1 year)
 
-        WITHDRAW_PERCENT = 100;
         withdrawPhasePercent[2] = 25;       // 25%
         withdrawPhasePercent[3] = 50;       // 50%
         withdrawPhasePercent[4] = 75;       // 75%
         withdrawPhasePercent[5] = 100;      // 100%
+        WITHDRAW_PERCENT = 100;             // the denominator, withdrawPhasePercent[x]/WITHDRAW_PERCENT
     }
 
     // purchase `amount` of tickets
     function purchase(uint amount) external nonReentrant {
-        // update to the latest purchasePhase, if necessary
-        updatePurchasePhase();
+        // want to be in the latest phase
+        _updatePurchasePhase();
    
-        // validate the purchase 
+        // proceed only if the purchase is valid
         _validatePurchase(msg.sender, amount);
 
         // get the `inputTokenAmount` in `inputToken` to purchase `amount` of tickets
@@ -249,6 +249,10 @@ contract VipPresale is ReentrancyGuard {
     // used internally to remove `amount` of tickets from circulation and transfer an 
     // amount of `outputToken` equivalent in value to `amount` to `to`
     function _remove(address to, uint amount) private {
+        // want to be in the latest phase
+        _updateWithdrawPhase();
+
+        // proceed only if the removal is valid
         _validateRemoval(msg.sender, amount);
 
         if (isOwner[msg.sender]) {
@@ -261,7 +265,7 @@ contract VipPresale is ReentrancyGuard {
             users[msg.sender].balance -= amount;
         }
 
-        // remove an equivalent value of `outputToken` from the contract and to `to`
+        // get the `tokenAmount` equivalent in value to `amount` of tickets
         uint tokenAmount = getAmountOut(amount, outputToken);
         outputToken.safeTransfer(to, tokenAmount);     // Implicitly require a sufficient token balance
     }
@@ -303,8 +307,13 @@ contract VipPresale is ReentrancyGuard {
         owners.push(owner);
     }
 
+    // return the address array of registered owners
+    function getOwners() external view returns(address[] memory) {
+        return owners;
+    }
+
     // called periodically and, if sufficient time has elapsed, update the purchasePhase
-    function updatePurchasePhase() private {
+    function _updatePurchasePhase() private {
         if (purchasePhase >= PURCHASE_PHASE_START) {
             if (purchasePhase < PURCHASE_PHASE_END && block.timestamp >= purchasePhaseEndTimestamp) {
                 _setPurchasePhase(purchasePhase + 1);
@@ -326,7 +335,7 @@ contract VipPresale is ReentrancyGuard {
     }
 
     // called periodically and, if sufficient time has elapsed, update the withdrawPhase
-    function updateWithdrawPhase() private {
+    function _updateWithdrawPhase() private {
         if (withdrawPhase >= WITHDRAW_PHASE_START) {
             if (withdrawPhase < WITHDRAW_PHASE_END && block.timestamp >= withdrawPhaseEndTimestamp) {
                 _setWithdrawPhase(withdrawPhase + 1);
@@ -347,8 +356,8 @@ contract VipPresale is ReentrancyGuard {
         emit SetWithdrawPhase(phase, block.timestamp, withdrawPhaseEndTimestamp);
     }
    
-    // used externally to grant users permission to purchase maxTickets
-    // such that user[i] can purchase maxTickets[i] many tickets for i in range users.length
+    // used externally to grant multiple `_users` permission to purchase `maxTickets`
+    // such that _users[i] can purchase maxTickets[i] many tickets for i in range _users.length
     function whitelistAdd(address[] calldata _users, uint[] calldata maxTickets) external onlyOwner {
         require(_users.length == maxTickets.length, "VipPresale: USERS AND MAX TICKETS MUST HAVE SAME LENGTH");
         for (uint i = 0; i < _users.length; i++) {
@@ -359,10 +368,7 @@ contract VipPresale is ReentrancyGuard {
     }
 
     // used internally to grant `user` permission to purchase up to `maxTicket`, purchasePhase dependent
-    function _whitelistAdd(address user, uint maxTicket)
-        private
-        isValidAddress(user)
-    {
+    function _whitelistAdd(address user, uint maxTicket) private isValidAddress(user) {
         require(maxTicket <= ticketsAvailable, "VipPresale: MAX TICKET CAN'T BE GREATER THAN TICKETS AVAILABLE");
         require(!whitelist[user], "VipPresale: USER IS ALREADY WHITELISTED");
         whitelist[user] = true;
@@ -372,7 +378,7 @@ contract VipPresale is ReentrancyGuard {
         ticketsReserved += maxTicket;
     }
 
-    // revoke `user` permission to purchase tickets
+    // revoke permission for `user` to purchase tickets
     function whitelistRemove(address user) external onlyOwner {
         // prohibit a whitelisted user from purchasing tickets
         // but not from withdrawing those they've already purchased
