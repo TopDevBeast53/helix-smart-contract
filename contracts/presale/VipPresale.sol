@@ -17,7 +17,7 @@ contract VipPresale is ReentrancyGuard {
     // Minimum number of tickets that can be purchased at a time
     uint public MINIMUM_TICKET_PURCHASE;
 
-    // Number of tickets a purchaser gets per `exchangeToken`
+    // Number of tickets a user gets per `exchangeToken`
     uint public exchangeRate;
 
     // Address that receives funds deposited in exchange for tickets
@@ -57,7 +57,10 @@ contract VipPresale is ReentrancyGuard {
     uint public START_SUB_PHASE;        // SubPhase which starts automatic sequence
     uint public subPhase;               // Current subPhase
     uint public subPhaseEndTimestamp;   // End timestamp after which the current subPhase has ended
-    uint public SUB_PHASE_DURATION;     // Lenght of time for a subPhase
+    uint public SUB_PHASE_DURATION;     // Length of time for a subPhase
+    
+    // relates a subPhase to the percent of tickets a user may withdraw during that subPhase
+    mapping (uint => uint) public subPhaseWithdrawPercent;
   
     // Maximum number of tickets available for purchase at the start of the sale
     uint public MAX_TICKET;
@@ -119,7 +122,7 @@ contract VipPresale is ReentrancyGuard {
      * @param _presaleToken address of the token being sold
      * @param _exchangeToken address of the token being exchanged for `presaleToken`
      * @param _treasury address that receives funds deposited in exchange for tickets
-     * @param _exchangeRate number of tickets a purchaser receives in exchange for 1 `exchangeToken`
+     * @param _exchangeRate number of tickets a user receives in exchange for 1 `exchangeToken`
      * @param _maxTickets number of tickets available at the start of the sale
      */
     constructor(
@@ -153,6 +156,11 @@ contract VipPresale is ReentrancyGuard {
         ticketsAvailable = _maxTicket;
 
         MINIMUM_TICKET_PURCHASE = 1;
+
+        subPhaseWithdrawPercent[2] = 25;       // 25%
+        subPhaseWithdrawPercent[3] = 50;       // 50%
+        subPhaseWithdrawPercent[4] = 75;       // 75%
+        subPhaseWithdrawPercent[5] = 100;      // 100%
     }
 
     // purchase `amount` of tickets
@@ -161,15 +169,15 @@ contract VipPresale is ReentrancyGuard {
         updatePhase();
    
         // validate the purchase 
-        _preValidatePurchase(msg.sender, amount);
+        _validatePurchase(msg.sender, amount);
 
-        // get the cost in `exchangeToken` to purchase `amount` of tickets
-        uint cost = getCost(amount); 
+        // get the `exchangeTokenAmount` in `exchangeToken` to purchase `amount` of tickets
+        uint exchangeTokenAmount = getAmountOut(amount, exchangeToken); 
 
         // the caller must approve spending `cost` of `otherToken`
         // in exchange for `amount` of tickets
-        exchangeToken.safeApprove(address(this), cost);
-        exchangeToken.safeTransferFrom(msg.sender, treasury, cost);
+        exchangeToken.safeApprove(address(this), exchangeTokenAmount);
+        exchangeToken.safeTransferFrom(msg.sender, treasury, exchangeTokenAmount);
 
         users[msg.sender].purchased += amount;
         users[msg.sender].balance += amount;
@@ -177,14 +185,14 @@ contract VipPresale is ReentrancyGuard {
         ticketsAvailable -= amount;
     }
 
-    // validate that `purchaser` is eligible to purchase `amount` of tickets
-    function _preValidatePurchase(address purchaser, uint amount) private view isValidAddress(purchaser) {
+    // validate that `user` is eligible to purchase `amount` of tickets
+    function _validatePurchase(address user, uint amount) private view isValidAddress(user) {
         require(phase >= START_PHASE, "VipPresale: SALE HAS NOT STARTED");
-        require(whitelist[purchaser], "VipPresale: PURCHASER IS NOT WHITELISTED");
+        require(whitelist[user], "VipPresale: USER IS NOT WHITELISTED");
         require(amount >= MINIMUM_TICKET_PURCHASE, "VipPresale: AMOUNT IS LESS THAN MINIMUM TICKET PURCHASE");
         require(amount <= ticketsAvailable, "VipPresale: TICKETS ARE SOLD OUT");
         require(
-            users[purchaser].purchased + amount <= users[purchaser].maxTicket, 
+            users[user].purchased + amount <= users[user].maxTicket, 
             "VipPresale: AMOUNT EXCEEDS MAX TICKET LIMIT"
         );
         if (phase == MAX_PHASE) {
@@ -193,33 +201,72 @@ contract VipPresale is ReentrancyGuard {
     }
 
     // get `amountOut` of `tokenOut` for `amountIn` of tickets
-    function getAmountOut(uint amountIn, address tokenOut) public view returns(uint amountOut) {
+    function getAmountOut(uint amountIn, IERC20 tokenOut) public view returns(uint amountOut) {
         // TODO replace with actual formula
         amountOut = amountIn;
     }
 
     // used to destroy `presaleToken` equivalant in value to `amount` of tickets
     // should only be used after phase 2 ends
-    function burnTickets(uint amount) external view onlyOwner { 
-        _removeTickets(address(0), amount);
+    function burn(uint amount) external onlyOwner { 
+        _remove(address(0), amount);
     }
 
-    // used to withdraw `presaleToken` equivalent in value to `amount` of tickets
-    // should only be used after phase 2 ends
-    function withdrawTickets(address to, uint amount) external view onlyOwner {
-        _removeTickets(to, amount);
+    // used to withdraw `presaleToken` equivalent in value to `amount` of tickets to `to`
+    function withdraw(uint amount) external {
+        _remove(msg.sender, amount);
     }
 
-    function _removeTickets(address to, uint amount) private view {
-        // remove tickets from circulation
-        require(amount <= ticketsAvailable, "VipPresale: INSUFFICIENT TICKET BALANCE TO REMOVE");
-        ticketsAvailable -= amount;
+    // used internally to remove `amount` of tickets from circulation and transfer an 
+    // amount of `presaleToken` equivalent in value to `amount` to `to`
+    function _remove(address to, uint amount) private {
+        _validateRemoval(msg.sender, amount);
 
-        // and remove an equivalent value of `presaleToken` from circulation
-        tokenAmount = getAmountOut(amount, presaleToken);
-        presaleToken.safeTransfer(to, tokenAmount);
+        if (isOwner[msg.sender]) {
+            // if the caller is an owner, they won't have purchased tickets
+            // so we need to decrease the tickets available by the amount being removed
+            ticketsAvailable -= amount;
+        } else {
+            // otherwise, the user will have purchased tickets and the tickets available
+            // will already have been updated so we only need to decrease their balance
+            users[msg.sender].balance -= amount;
+        }
+
+        // remove an equivalent value of `presaleToken` from the contract and to `to`
+        uint tokenAmount = getAmountOut(amount, presaleToken);
+        presaleToken.safeTransfer(to, tokenAmount);     // Implicitly require a sufficient token balance
     }
 
+    // validate whether `amount` of tickets are removable by address `by`
+    function _validateRemoval(address by, uint amount) private view {
+        require(amount <= ticketsAvailable, "VipPresale: INSUFFICIENT CONTRACT BALANCE TO REMOVE");
+        require(amount <= maxRemovable(by), "VipPresale: INSUFFICIENT ACCOUNT BALACE TO REMOVE");
+    }
+
+    // returns `maxAmount` removable by address `by`
+    function maxRemovable(address by) public view returns(uint maxAmount) {
+        if (isOwner[by]) {
+            // owner can, at any time, remove all of the tokens available
+            maxAmount = ticketsAvailable;
+        } else {
+            // Max number of tickets user can withdraw as a function of subPhase and 
+            // number of tickets purchased
+            uint allowed = users[by].purchased * subPhaseWithdrawPercent[subPhase] / 100;
+
+            // Number of tickets remaining in their balance
+            uint balance = users[by].balance;
+    
+            // Can only only withdraw the max allowed if they have a large enough balance
+            maxAmount = balance < allowed ? balance : allowed;
+        }
+    }
+
+    // returns true if `amount` is removable by address `by`
+    function isRemovable(address by, uint amount) external view returns(bool) {
+        _validateRemoval(by, amount);
+        return true;
+    }
+ 
     // add a new owner to the contract, only callable by an existing owner
     function addOwner(address owner) external isValidAddress(owner) onlyOwner {
         require(!isOwner[owner], "VipPresale: ALREADY AN OWNER");
