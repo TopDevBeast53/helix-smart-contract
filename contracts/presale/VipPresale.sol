@@ -18,7 +18,10 @@ contract VipPresale is ReentrancyGuard {
     uint public MINIMUM_TICKET_PURCHASE;
 
     // Number of tickets a user gets per `exchangeToken`
-    uint public exchangeRate;
+    uint public EXCHANGE_RATE;
+
+    // Number of `presaleTokens` a user gets per ticket
+    uint public PRESALE_RATE;
 
     // Address that receives funds deposited in exchange for tickets
     address public treasury;
@@ -122,14 +125,16 @@ contract VipPresale is ReentrancyGuard {
      * @param _presaleToken address of the token being sold
      * @param _exchangeToken address of the token being exchanged for `presaleToken`
      * @param _treasury address that receives funds deposited in exchange for tickets
-     * @param _exchangeRate number of tickets a user receives in exchange for 1 `exchangeToken`
+     * @param _PRESALE_RATE number of `presaleTokens` a user receives in exchange for 1 ticket
+     * @param _EXCHANGE_RATE number of tickets a user receives in exchange for 1 `exchangeToken`
      * @param _maxTickets number of tickets available at the start of the sale
      */
     constructor(
         address _presaleToken, 
         address _exchangeToken,
         address _treasury, 
-        uint _exchangeRate, 
+        uint _PRESALE_RATE,
+        uint _EXCHANGE_RATE, 
         uint _maxTicket
     ) 
         isValidAddress(_presaleToken)
@@ -138,8 +143,10 @@ contract VipPresale is ReentrancyGuard {
     {
         presaleToken = IERC20(_presaleToken);
         exchangeToken = IERC20(_exchangeToken);
-        exchangeRate = _exchangeRate;
         treasury = _treasury;
+
+        PRESALE_RATE = _PRESALE_RATE;
+        EXCHANGE_RATE = _EXCHANGE_RATE;
 
         isOwner[msg.sender] = true;
         owners.push(msg.sender);
@@ -172,16 +179,16 @@ contract VipPresale is ReentrancyGuard {
         _validatePurchase(msg.sender, amount);
 
         // get the `exchangeTokenAmount` in `exchangeToken` to purchase `amount` of tickets
-        uint exchangeTokenAmount = getAmountOut(amount, exchangeToken); 
+        uint tokenAmount = getAmountOut(amount, exchangeToken); 
         require(
-            exchangeTokenAmount <= exchangeToken.balanceOf(msg.sender), 
+            tokenAmount <= exchangeToken.balanceOf(msg.sender), 
             "VipPresale: INSUFFICIENT TOKEN BALANCE"
         );
 
         // the caller must approve spending `cost` of `otherToken`
         // in exchange for `amount` of tickets
-        exchangeToken.safeApprove(address(this), exchangeTokenAmount);
-        exchangeToken.safeTransferFrom(msg.sender, treasury, exchangeTokenAmount);
+        exchangeToken.safeApprove(address(this), tokenAmount);
+        exchangeToken.safeTransferFrom(msg.sender, treasury, tokenAmount);
 
         users[msg.sender].purchased += amount;
         users[msg.sender].balance += amount;
@@ -207,8 +214,13 @@ contract VipPresale is ReentrancyGuard {
 
     // get `amountOut` of `tokenOut` for `amountIn` of tickets
     function getAmountOut(uint amountIn, IERC20 tokenOut) public view returns(uint amountOut) {
-        // TODO replace with actual formula
-        amountOut = amountIn;
+        if (address(tokenOut) == address(presaleToken)) {
+            amountOut = amountIn * PRESALE_RATE;
+        } else if (address(tokenOut) == address(exchangeToken)) {
+            amountOut = amountIn * EXCHANGE_RATE;
+        } else {
+            amountOut = 0;
+        }
     }
 
     // used to destroy `presaleToken` equivalant in value to `amount` of tickets
