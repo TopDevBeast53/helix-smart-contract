@@ -50,13 +50,13 @@ contract VipPresale is ReentrancyGuard {
     // and ticketsReserved <= ticketsAvailable <= TICKET_MAX
     uint public ticketsReserved;
 
-    // Token exchanged to purchase tickets
+    // Token exchanged to purchase tickets, i.e. BUSD
     IERC20 public inputToken;
 
     // Number of tickets a user gets per `inputToken`
     uint public INPUT_RATE;
 
-    // Token being sold in presale and redeemable by exchanging tickets 
+    // Token being sold in presale and redeemable by exchanging tickets, i.e. HELIX
     IERC20 public outputToken;
 
     // Number of `outputTokens` a user gets per ticket
@@ -192,14 +192,16 @@ contract VipPresale is ReentrancyGuard {
 
         // get the `inputTokenAmount` in `inputToken` to purchase `amount` of tickets
         uint tokenAmount = getAmountOut(amount, inputToken); 
+
         require(
             tokenAmount <= inputToken.balanceOf(msg.sender), 
             "VipPresale: INSUFFICIENT TOKEN BALANCE"
         );
+        require(
+            tokenAmount <= inputToken.allowance(msg.sender, address(this)),
+            "VipPresale: INSUFFICIENT ALLOWANCE"
+        );
 
-        // the caller must approve spending `cost` of `otherToken`
-        // in exchange for `amount` of tickets
-        inputToken.safeApprove(address(this), tokenAmount);
         inputToken.safeTransferFrom(msg.sender, treasury, tokenAmount);
 
         users[msg.sender].purchased += amount;
