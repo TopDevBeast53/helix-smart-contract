@@ -25,7 +25,7 @@ module.exports = {
     },
     autoHelix: { // Auto Pool
         56: '',
-        97: '0xD73de6D03F00Caf62b30C906344F45C4B0fA8FcA',
+        97: '0xC28F43D3C967bD42eff53cCecCeaCF09f09a6C64',
     },
     smartChef: { // manual Pool
         56: '',

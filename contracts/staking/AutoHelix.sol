@@ -14,7 +14,7 @@ contract AutoHelix is Ownable, Pausable {
     struct UserInfo {
         uint256 shares; // number of shares for a user
         uint256 lastDepositedTime; // keeps track of deposited time for potential penalty
-        uint256 HelixAtLastUserAction; // keeps track of Helix deposited at the last user action
+        uint256 helixAtLastUserAction; // keeps track of Helix deposited at the last user action
         uint256 lastUserActionTime; // keeps track of the last user action time
     }
 
@@ -95,7 +95,7 @@ contract AutoHelix is Ownable, Pausable {
 
         totalShares = totalShares + currentShares;
 
-        user.HelixAtLastUserAction = user.shares * balanceOf() / totalShares;
+        user.helixAtLastUserAction = user.shares * balanceOf() / totalShares;
         user.lastUserActionTime = block.timestamp;
 
         _earn();
@@ -276,9 +276,9 @@ contract AutoHelix is Ownable, Pausable {
         }
 
         if (user.shares > 0) {
-            user.HelixAtLastUserAction = user.shares * balanceOf() / totalShares;
+            user.helixAtLastUserAction = user.shares * balanceOf() / totalShares;
         } else {
-            user.HelixAtLastUserAction = 0;
+            user.helixAtLastUserAction = 0;
         }
 
         user.lastUserActionTime = block.timestamp;
