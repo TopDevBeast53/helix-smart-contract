@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '../interfaces/IERC20.sol';
+import '../libraries/SafeERC20.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 /*
@@ -42,6 +42,12 @@ contract PublicPresale is ReentrancyGuard {
 
     // Number of `outputTokens` a user gets per ticket
     uint public OUTPUT_RATE;
+
+    // Number of decimals on the `inputToken` used for calculating ticket exchange rates
+    uint public INPUT_TOKEN_DECIMALS;
+
+    // Number of decimals on the `outputToken` used for calculating ticket exchange rates
+    uint public OUTPUT_TOKEN_DECIMALS;
 
     // Address that receives `inputToken`s sold in exchange for tickets
     address public treasury;
@@ -114,6 +120,9 @@ contract PublicPresale is ReentrancyGuard {
         isOwner[msg.sender] = true;
         owners.push(msg.sender);
 
+        INPUT_TOKEN_DECIMALS = 1e18;
+        OUTPUT_TOKEN_DECIMALS = 1e18;
+
         TICKET_MAX = 20000;
         ticketsAvailable = 20000;
         require(TICKET_MAX == ticketsAvailable, "PublicPresale: INITIAL TICKET AMOUNTS MUST MATCH");
@@ -166,10 +175,10 @@ contract PublicPresale is ReentrancyGuard {
 
     // get `amountOut` of `tokenOut` for `amountIn` of tickets
     function getAmountOut(uint amountIn, IERC20 tokenOut) public view returns(uint amountOut) {
-        if (address(tokenOut) == address(outputToken)) {
-            amountOut = amountIn * OUTPUT_RATE;
+        if (address(tokenOut) == address(inputToken)) {
+            amountOut = amountIn * INPUT_RATE * INPUT_TOKEN_DECIMALS;
         } else if (address(tokenOut) == address(inputToken)) {
-            amountOut = amountIn * INPUT_RATE;
+            amountOut = amountIn * OUTPUT_RATE * OUTPUT_TOKEN_DECIMALS;
         } else {
             amountOut = 0;
         }
@@ -178,18 +187,27 @@ contract PublicPresale is ReentrancyGuard {
     // used to destroy `outputToken` equivalant in value to `amount` of tickets
     // should only be used after purchasePhase 2 ends
     function burn(uint amount) external onlyOwner { 
-        _remove(address(0), amount);
+        // remove `amount` of tickets 
+        _remove(amount);
+
+        uint tokenAmount = getAmountOut(amount, outputToken);
+        outputToken.burn(address(this), tokenAmount);
     }
 
     // used to withdraw `outputToken` equivalent in value to `amount` of tickets to `to`
     // should only be used after purchasePhase 2 ends
     function withdraw(uint amount) external onlyOwner {
-        _remove(msg.sender, amount);
+        // remove `amount` of tickets 
+        _remove(amount);
+
+        // transfer to `to` the `tokenAmount` equivalent in value to `amount` of tickets
+        uint tokenAmount = getAmountOut(amount, outputToken);
+        outputToken.safeTransfer(msg.sender, tokenAmount);
     }
 
     // used internally to remove `amount` of tickets from circulation and transfer an 
     // amount of `outputToken` equivalent in value to `amount` to `to`
-    function _remove(address to, uint amount) private {
+    function _remove(uint amount) private {
         // proceed only if the removal is valid
         // note that only owners can make removals
         require(isPaused, "PublicPresale: SALE IS NOT PAUSED");
@@ -197,10 +215,6 @@ contract PublicPresale is ReentrancyGuard {
 
         // decrease the tickets available by the amount being removed
         ticketsAvailable -= amount;
-
-        // transfer to `to` the `tokenAmount` equivalent in value to `amount` of tickets
-        uint tokenAmount = getAmountOut(amount, outputToken);
-        outputToken.safeTransfer(to, tokenAmount);     // Implicitly require a sufficient token balance
     }
 
     // returns true if `amount` is removable by address `by`
