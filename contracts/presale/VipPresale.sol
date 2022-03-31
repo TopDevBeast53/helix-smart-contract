@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '../interfaces/IERC20.sol';
+import '../libraries/SafeERC20.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 /*
@@ -61,6 +61,12 @@ contract VipPresale is ReentrancyGuard {
 
     // Number of `outputTokens` a user gets per ticket
     uint public OUTPUT_RATE;
+    
+    // Number of decimals on the `inputToken` used for calculating ticket exchange rates
+    uint public INPUT_TOKEN_DECIMALS;
+
+    // Number of decimals on the `outputToken` used for calculating ticket exchange rates
+    uint public OUTPUT_TOKEN_DECIMALS;
 
     // Address that receives `inputToken`s sold in exchange for tickets
     address public treasury;
@@ -167,6 +173,9 @@ contract VipPresale is ReentrancyGuard {
         isOwner[msg.sender] = true;
         owners.push(msg.sender);
 
+        INPUT_TOKEN_DECIMALS = 1e18;
+        OUTPUT_TOKEN_DECIMALS = 1e18;
+
         TICKET_MAX = 50000;
         ticketsAvailable = TICKET_MAX;
         MINIMUM_TICKET_PURCHASE = 1;
@@ -205,7 +214,6 @@ contract VipPresale is ReentrancyGuard {
             tokenAmount <= inputToken.allowance(msg.sender, address(this)),
             "VipPresale: INSUFFICIENT ALLOWANCE"
         );
-
         inputToken.safeTransferFrom(msg.sender, treasury, tokenAmount);
 
         users[msg.sender].purchased += amount;
@@ -233,10 +241,10 @@ contract VipPresale is ReentrancyGuard {
 
     // get `amountOut` of `tokenOut` for `amountIn` of tickets
     function getAmountOut(uint amountIn, IERC20 tokenOut) public view returns(uint amountOut) {
-        if (address(tokenOut) == address(outputToken)) {
-            amountOut = amountIn * OUTPUT_RATE;
-        } else if (address(tokenOut) == address(inputToken)) {
-            amountOut = amountIn * INPUT_RATE;
+        if (address(tokenOut) == address(inputToken)) {
+            amountOut = amountIn * INPUT_RATE * INPUT_TOKEN_DECIMALS;
+        } else if (address(tokenOut) == address(outputToken)) {
+            amountOut = amountIn * OUTPUT_RATE * OUTPUT_TOKEN_DECIMALS;
         } else {
             amountOut = 0;
         }
@@ -245,20 +253,29 @@ contract VipPresale is ReentrancyGuard {
     // used to destroy `outputToken` equivalant in value to `amount` of tickets
     // should only be used after purchasePhase 2 ends
     function burn(uint amount) external onlyOwner { 
-        _remove(address(0), amount);
+        // remove `amount` of tickets
+        _remove(amount);
+
+        // get the `tokenAmount` equivalent in value to `amount` of tickets
+        uint tokenAmount = getAmountOut(amount, outputToken);
+        outputToken.burn(address(this), tokenAmount);
     }
 
     // used to withdraw `outputToken` equivalent in value to `amount` of tickets to `to`
     function withdraw(uint amount) external {
-        _remove(msg.sender, amount);
-    }
-
-    // used internally to remove `amount` of tickets from circulation and transfer an 
-    // amount of `outputToken` equivalent in value to `amount` to `to`
-    function _remove(address to, uint amount) private {
         // want to be in the latest phase
         _updateWithdrawPhase();
 
+        // remove `amount` of tickets
+        _remove(amount);
+
+        // get the `tokenAmount` equivalent in value to `amount` of tickets
+        uint tokenAmount = getAmountOut(amount, outputToken);
+        outputToken.safeTransfer(msg.sender, tokenAmount);
+    }
+
+    // used internally to remove `amount` of tickets from circulation
+    function _remove(uint amount) private {
         // proceed only if the removal is valid
         _validateRemoval(msg.sender, amount);
 
@@ -271,10 +288,6 @@ contract VipPresale is ReentrancyGuard {
             // will already have been updated so we only need to decrease their balance
             users[msg.sender].balance -= amount;
         }
-
-        // get the `tokenAmount` equivalent in value to `amount` of tickets
-        uint tokenAmount = getAmountOut(amount, outputToken);
-        outputToken.safeTransfer(to, tokenAmount);     // Implicitly require a sufficient token balance
     }
 
     // validate whether `amount` of tickets are removable by address `by`

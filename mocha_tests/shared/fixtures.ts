@@ -218,6 +218,8 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         ], 
         overrides
     )
+    // presale must be registered as helixToken minter to be able to burn tokens
+    await helixToken.addMinter(vipPresale.address)
 
     return {
         tokenA,
