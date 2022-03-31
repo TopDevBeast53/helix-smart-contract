@@ -10,9 +10,9 @@ const contracts = require("./constants/contracts")
 const env = require("./constants/env")
 require("dotenv").config();
 
-// HELIX-BUSD : 0xB024cd9a1Fe32D615ee6EF7137E355A422b3d9d7
+// HELIX-BUSD : 0xf2E8F8697539394089CBF666425924a26B8A88da
 const MasterChefAddress = contracts.masterChef[env.network];
-const HelixLPTokenAddress = "0xB024cd9a1Fe32D615ee6EF7137E355A422b3d9d7"; // update LP token address
+const HelixLPTokenAddress = "0xf2E8F8697539394089CBF666425924a26B8A88da"; // update LP token address
 const LPDepositValue = 822;
 
 async function main() {

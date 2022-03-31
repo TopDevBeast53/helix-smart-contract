@@ -1,31 +1,35 @@
 module.exports = {
     factory: {
         56: '',
-        97: '0xB758D7eA6D88D6671B3d2E722f0f684aD91228Ff',
+        97: '0x8C6163E3894Dc031206838fc6b716681dcd0Ced2',
     },
     router: {
         56: '',
-        97: '0x7EDB3C28Ed8a7637F106cD1A2D35c21F9b29eC50',
+        97: '0xb18C4afD256899aB1E60f752ac92b4D930f5292c',
     },
     helixToken: {
         56: '',
-        97: '0xaca8FcF3b462a4eb37a79411F6d6d6ee36F40ff9',
+        97: '0x373d65f5437B98DC3050Fa73fd47cC745a395891',
     },
     oracleFactory: {
         56: '',
-        97: '0xDf0c6aE8D765d85FaCbbf212042f77A740DD62c4',
+        97: '0xF090AEeF8891B73e23D370a1C1B9d14178f12E22',
     },
     referralRegister: {
         56: '',
-        97: '0x1F881C1b4420aFEB67196E1E7b66545f5AC6AeFA',
+        97: '0x9B3F49B35CddA8ea9CfF26720Fd52766a7cA18E0',
     },
     masterChef: {
         56: '',
-        97: '0x284c5B64De386abD8Aa59485AC610bCC803DCeB4',
+        97: '0xb6BCd3139C4A3d75c34960854E102e801DB4e932',
     },
-    autoHelix: {
+    autoHelix: { // Auto Pool
         56: '',
-        97: '0x75739a7cDF104Ee8c33F3913FAf5cD123Cb04D69',
+        97: '0xD73de6D03F00Caf62b30C906344F45C4B0fA8FcA',
+    },
+    smartChef: { // manual Pool
+        56: '',
+        97: '0x3FE7361A4fd2A976Ae0Af6D47f16Fe4034124cB5',
     },
     helixNFT: {
         56: '',
@@ -58,6 +62,10 @@ module.exports = {
     helixVault: {
         56: '',
         97: '0x34D7730f3f5D1fD4e89690567a229d2580347C7e',
+    },
+    multicall2: {
+        56: '',
+        97: '0x0cc0d1C3CECFD88eDA86bb2aA5b8D422960e62Db',
     },
     helixNFTImpl: {
         56: '',
