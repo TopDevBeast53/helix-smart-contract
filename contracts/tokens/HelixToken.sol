@@ -20,6 +20,11 @@ contract HelixToken is BEP20("Helix", "HELIX") {
         return true;
     }
 
+    // @dev Destroys `amount` tokens from `account`, reducing the total supply.
+    function burn(address account, uint256 amount) public onlyMinter {
+        _burn(account, amount);
+    }
+
     // Copied and modified from YAM code:
     // https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernanceStorage.sol
     // https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernance.sol

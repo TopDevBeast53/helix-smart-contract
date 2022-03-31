@@ -115,4 +115,24 @@ module.exports = {
         56: 1000000000,
         97: 1000000000,
     },
+
+    // --------- VIP Presale --------- //
+
+    // BUSD per ticket
+    VIP_PRESALE_INPUT_RATE : {
+        56: 5,
+        97: 5,
+    },
+
+    // HELIX per ticket
+    VIP_PRESALE_OUTPUT_RATE : {
+        56: 400,
+        97: 400,
+    },
+
+    // Amount of HELIX to fund VIP Presale contract with
+    VIP_PRESALE_INITIAL_BALANCE : {
+        56: 20000000,       // 20,000,000
+        97: 20000000,       // 20,000,000
+    },
 }
