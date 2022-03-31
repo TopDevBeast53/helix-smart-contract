@@ -39,7 +39,7 @@ contract SmartChef is Ownable {
     // The block number when Helix mining ends.
     uint256 public bonusEndBlock;
     // limit 100 Helix
-    uint256 public limitAmount = 100000000000000000000;
+    uint256 public limitAmount;
 
     // The precision factor
     uint256 public PRECISION_FACTOR;
@@ -54,14 +54,15 @@ contract SmartChef is Ownable {
         IBEP20 _rewardToken,
         uint256 _rewardPerBlock,
         uint256 _startBlock,
-        uint256 _bonusEndBlock
+        uint256 _bonusEndBlock,
+        uint256 _limitAmount
     ) {
         helixToken = _helix;
         rewardToken = _rewardToken;
         rewardPerBlock = _rewardPerBlock;
         startBlock = _startBlock;
         bonusEndBlock = _bonusEndBlock;
-
+        limitAmount = _limitAmount;
 
         uint256 decimalsRewardToken = uint256(rewardToken.decimals());
         require(decimalsRewardToken < 30, "Must be inferior to 30");

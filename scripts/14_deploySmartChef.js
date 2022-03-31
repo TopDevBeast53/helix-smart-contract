@@ -14,10 +14,14 @@
  *      2. Add `SmartChef` as minter to `HelixToken`
  */
  const { ethers, network } = require(`hardhat`);
+ const {BigNumber} = require("ethers");
  const contracts = require("./constants/contracts")
- const addresses = require("./constants/addresses")
  const initials = require("./constants/initials")
  const env = require("./constants/env")
+
+ function expandTo18Decimals(n) {
+     return (new BigNumber.from(n)).mul((new BigNumber.from(10)).pow(18))
+ }
  
  const StakingTokenAddress = contracts.helixToken[env.network];
  const RewardTokenAddress = contracts.helixToken[env.network];
@@ -25,6 +29,7 @@
  const StartBlock = initials.SMARTCHEF_START_BLOCK[env.network];
  const EndBlock = initials.SMARTCHEF_END_BLOCK[env.network];
  const RewardPerBlock = initials.SMARTCHEF_REWARD_PER_BLOCK[env.network];
+ const limitAmount = expandTo18Decimals(1000000000);
  
  async function main() {
  
@@ -40,7 +45,8 @@
      /*REWARD token address=*/RewardTokenAddress,
      /*reward amount per block=*/RewardPerBlock,
      /*start block=*/StartBlock,
-     /*end block=*/EndBlock, {nonce: nonce});
+     /*end block=*/EndBlock,
+     /*limitAmount=*/limitAmount, {nonce: nonce});
      await chef.deployTransaction.wait();
      console.log(`Smart Chef deployed to ${chef.address}`);
  

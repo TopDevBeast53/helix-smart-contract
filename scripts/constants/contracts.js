@@ -29,7 +29,7 @@ module.exports = {
     },
     smartChef: { // manual Pool
         56: '',
-        97: '0x3FE7361A4fd2A976Ae0Af6D47f16Fe4034124cB5',
+        97: '0x35A3Fd0870B3dC69aB3C413B0761745944173AD2',
     },
     helixNFT: {
         56: '',
