@@ -135,4 +135,24 @@ module.exports = {
         56: 20000000,       // 20,000,000
         97: 20000000,       // 20,000,000
     },
+
+    // --------- Public Presale --------- //
+
+    // BUSD per ticket
+    PUBLIC_PRESALE_INPUT_RATE : {
+        56: 100,
+        97: 100,
+    },
+
+    // HELIX per ticket
+    PUBLIC_PRESALE_OUTPUT_RATE : {
+        56: 5000,
+        97: 5000,
+    },
+
+    // Amount of HELIX to fund Public Presale contract with
+    PUBLIC_PRESALE_INITIAL_BALANCE : {
+        56: 105000000,       // 105,000,000
+        97: 105000000,       // 105,000,000
+    },
 }
