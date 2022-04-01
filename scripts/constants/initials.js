@@ -155,4 +155,13 @@ module.exports = {
         56: 105000000,       // 105,000,000
         97: 100000000,       // 100,000,000, using this value so that 100,000,000 % 20,000 == 0
     },
+
+    // --------- Public Presale --------- //
+
+    // Amount of HELIX to fund AirDrop contract with
+    AIRDROP_INITIAL_BALANCE : {
+        56: 125000000,       // 125,000,000
+        97: 125000000,       // 125,000,000
+    },
+
 }
