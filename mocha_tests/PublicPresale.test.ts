@@ -25,7 +25,7 @@ const overrides = {
 }
 
 const SECONDS_PER_DAY = 86400
-const wallet1InitialBalance = 1000
+const wallet1InitialBalance = 10000
 
 const verbose = true
 
@@ -56,15 +56,16 @@ describe('Public Presale', () => {
         tokenB = fullExchange.tokenB
         helixToken = fullExchange.helixToken
 
-        // Fund presale with reward tokens
-        await helixToken.transfer(publicPresale.address, expandTo18Decimals(initialBalance))
+        // Make self a helix token minter and mint to public presale initial balance
+        await helixToken.addMinter(wallet0.address)
+        await helixToken.mint(publicPresale.address, expandTo18Decimals(initialBalance))
 
-        // Fund user with input token so they can make urchases
+        // Fund user with input token so they can make purchases
         await tokenA.transfer(wallet1.address, expandTo18Decimals(wallet1InitialBalance))
 
         // Pre-approve the presale to spend caller's funds
         await helixToken.approve(publicPresale.address, MaxUint256)
-    
+
         // create the wallet 1 owned contracts
         publicPresale1 = new Contract(publicPresale.address, JSON.stringify(PublicPresale.abi), provider).connect(wallet1)   
         tokenA1 = new Contract(tokenA.address, JSON.stringify(TestToken.abi), provider).connect(wallet1)   
@@ -99,31 +100,18 @@ describe('Public Presale', () => {
 
     it('publicPresale: whitelist add', async () => {
         const users = [wallet1.address, wallet2.address]
-        const wallet1MaxTicket = 50
-        const wallet2MaxTicket = 100
-        const maxTickets = [wallet1MaxTicket, wallet2MaxTicket]
         
-        await publicPresale.whitelistAdd(users, maxTickets)
+        await publicPresale.whitelistAdd(users)
 
         // users should be whitelisted
         expect(await publicPresale.whitelist(wallet1.address)).to.be.true
         expect(await publicPresale.whitelist(wallet2.address)).to.be.true
-
-        // users should have max tickets set
-        expect((await publicPresale.users(wallet1.address)).maxTicket).to.eq(wallet1MaxTicket)
-        expect((await publicPresale.users(wallet2.address)).maxTicket).to.eq(wallet2MaxTicket)
-
-        // presale reserved tickets should be incremented
-        expect(await publicPresale.ticketsReserved()).to.eq(wallet1MaxTicket + wallet2MaxTicket)
     })
 
     it('publicPresale: whitelist remove', async () => {
         // first add users
         const users = [wallet1.address, wallet2.address]
-        const wallet1MaxTicket = 50
-        const wallet2MaxTicket = 100
-        const maxTickets = [wallet1MaxTicket, wallet2MaxTicket]
-        await publicPresale.whitelistAdd(users, maxTickets)
+        await publicPresale.whitelistAdd(users)
 
         // remove wallet 1
         await publicPresale.whitelistRemove(wallet1.address)
@@ -150,8 +138,8 @@ describe('Public Presale', () => {
         const expectedOutputTokenOutAmountIn0 = 0
         const expectedUnrecognizedTokenOutAmountIn0 = 0
 
-        const expectedInputTokenOutAmountIn1 = expandTo18Decimals(5)
-        const expectedOutputTokenOutAmountIn1 = expandTo18Decimals(400)
+        const expectedInputTokenOutAmountIn1 = expandTo18Decimals(100)
+        const expectedOutputTokenOutAmountIn1 = expandTo18Decimals(5000)
         const expectedUnrecognizedTokenOutAmountIn1 = 0
     
         // get amount out returns the number of tokens per ticket
@@ -191,51 +179,9 @@ describe('Public Presale', () => {
         expect(await publicPresale.purchasePhase()).to.eq(2)
     })
 
-    it('publicPresale: set withdraw phase', async () => {
-        await publicPresale.setWithdrawPhase(0);
-        expect(await publicPresale.withdrawPhase()).to.eq(0)
-
-        await publicPresale.setWithdrawPhase(1);
-        expect(await publicPresale.withdrawPhase()).to.eq(1)
-
-        await publicPresale.setWithdrawPhase(2);
-        expect(await publicPresale.withdrawPhase()).to.eq(2)
-
-        await publicPresale.setWithdrawPhase(3);
-        expect(await publicPresale.withdrawPhase()).to.eq(3)
-
-        await publicPresale.setWithdrawPhase(4);
-        expect(await publicPresale.withdrawPhase()).to.eq(4)
-
-        await publicPresale.setWithdrawPhase(5);
-        expect(await publicPresale.withdrawPhase()).to.eq(5)
-    })
-
-    it('publicPresale: max removable by owner when unpaused', async () => {
-        const owner = wallet0.address
-        await publicPresale.unpause()
-        const expectedAmount = 0
-        expect(await publicPresale.maxRemovable(owner)).to.eq(expectedAmount)
-    })
-
-    it('publicPresale: max removable by owner when paused', async () => {
-        const owner = wallet0.address
-        await publicPresale.pause()
-        const expectedAmount = await publicPresale.ticketsAvailable()
-        expect(await publicPresale.maxRemovable(owner)).to.eq(expectedAmount)
-    })
-
-    it('publicPresale: max removable by user when paused', async () => {
-        const user = wallet1.address
-        await publicPresale.pause()
-        const expectedAmount = 0
-        expect(await publicPresale.maxRemovable(user)).to.eq(expectedAmount)
-    })
-
     it('publicPresale: purchase in phase 1', async () => {
         const inputToken = tokenA.address 
         const user = wallet1.address            // account to whitelist
-        const maxTicket = 100                   // allotment to whitelisted user
         const amount = 100                      // number of tickets purchased by user
         const purchasePhase = 1
 
@@ -245,13 +191,16 @@ describe('Public Presale', () => {
         // expected ticket balance after purchase
         const expectedTicketsAvailable = prevTicketBalance - amount
 
-        // use to check updated balance after purchase
-        const prevInputTokenBalance = await tokenA.balanceOf(user)
-    
         // expected input token balance after purchase
-        const expectedInputTokenBalance = prevInputTokenBalance.sub(expandTo18Decimals(amount * inputRate))
+        const prevUserInputTokenBalance = await tokenA.balanceOf(user)
+        const expectedUserInputTokenBalance = prevUserInputTokenBalance.sub(expandTo18Decimals(amount * inputRate))
 
-        await publicPresale.whitelistAdd([user], [maxTicket])
+        // expected output token balance after purchase
+        const prevUserOutputTokenBalance = await helixToken.balanceOf(user)
+        const expectedUserOutputTokenBalance = prevUserOutputTokenBalance.add(expandTo18Decimals(amount * outputRate))
+
+        // in phase 1, user needs to be whitelisted to purchase
+        await publicPresale.whitelistAdd([user])
 
         await publicPresale.setPurchasePhase(purchasePhase)
 
@@ -261,29 +210,23 @@ describe('Public Presale', () => {
         // and have wallet1 pre-approve spending that token amount
         await tokenA1.approve(publicPresale.address, tokenAmount)
 
-        // have wallet1  purchase their max ticket allotment
+        // have wallet1 purchase their tickets
         await publicPresale1.purchase(amount)
 
         // expect wallet1 balance of input to decrease by the tokenAmount
-        expect(await tokenA.balanceOf(user)).to.eq(expectedInputTokenBalance)
+        expect(await tokenA.balanceOf(user)).to.eq(expectedUserInputTokenBalance)
 
-        // expect user's tickets purchased and balance to increase by amount
-        // note, this is the user's first purchase so 0 + amount == amount
-        expect((await publicPresale.users(user)).purchased).to.eq(amount)
-        expect((await publicPresale.users(user)).balance).to.eq(amount)
+        // expect wallet1 balance of output token to increase
+        expect(await helixToken.balanceOf(user)).to.eq(expectedUserOutputTokenBalance)
 
         // and expect the total tickes available in the contract to have decreased by amount
         expect(await publicPresale.ticketsAvailable()).to.eq(expectedTicketsAvailable)
     })
 
     it('publicPresale: purchase in phase 2', async () => {
-        // only difference from purchase in phase 1 is we set to phase 2 and 
-        // user successfully purchases more than their whitelisted allotment 
-
         const inputToken = tokenA.address 
         const user = wallet1.address            // account to whitelist
-        const maxTicket = 100                   // allotment to whitelisted user
-        const amount = 200                      // number of tickets purchased by user
+        const amount = 100                      // number of tickets purchased by user
         const purchasePhase = 2
 
         // use to check the updated ticket balance after purchase
@@ -292,13 +235,15 @@ describe('Public Presale', () => {
         // expected ticket balance after purchase
         const expectedTicketsAvailable = prevTicketBalance - amount
 
-        // use to check updated balance after purchase
-        const prevInputTokenBalance = await tokenA.balanceOf(user)
-    
         // expected input token balance after purchase
-        const expectedInputTokenBalance = prevInputTokenBalance.sub(expandTo18Decimals(amount * inputRate))
+        const prevUserInputTokenBalance = await tokenA.balanceOf(user)
+        const expectedUserInputTokenBalance = prevUserInputTokenBalance.sub(expandTo18Decimals(amount * inputRate))
 
-        await publicPresale.whitelistAdd([user], [maxTicket])
+        // expected output token balance after purchase
+        const prevUserOutputTokenBalance = await helixToken.balanceOf(user)
+        const expectedUserOutputTokenBalance = prevUserOutputTokenBalance.add(expandTo18Decimals(amount * outputRate))
+
+        // in phase 2, user does not need to be whitelisted to purchase
 
         await publicPresale.setPurchasePhase(purchasePhase)
 
@@ -308,235 +253,17 @@ describe('Public Presale', () => {
         // and have wallet1 pre-approve spending that token amount
         await tokenA1.approve(publicPresale.address, tokenAmount)
 
-        // have wallet1  purchase their max ticket allotment
+        // have wallet1 purchase their tickets
         await publicPresale1.purchase(amount)
 
         // expect wallet1 balance of input to decrease by the tokenAmount
-        expect(await tokenA.balanceOf(user)).to.eq(expectedInputTokenBalance)
+        expect(await tokenA.balanceOf(user)).to.eq(expectedUserInputTokenBalance)
 
-        // expect user's tickets purchased and balance to increase by amount
-        // note, this is the user's first purchase so 0 + amount == amount
-        expect((await publicPresale.users(user)).purchased).to.eq(amount)
-        expect((await publicPresale.users(user)).balance).to.eq(amount)
+        // expect wallet1 balance of output token to increase
+        expect(await helixToken.balanceOf(user)).to.eq(expectedUserOutputTokenBalance)
 
         // and expect the total tickes available in the contract to have decreased by amount
         expect(await publicPresale.ticketsAvailable()).to.eq(expectedTicketsAvailable)
-    })
-
-    it('publicPresale: withdraw 25% of purchase in phase 2', async () => {
-        const inputToken = tokenA.address 
-        const outputToken = helixToken.address 
-        const user = wallet1.address            // account to whitelist
-        const maxTicket = 100                   // allotment to whitelisted user
-        const purchasePhase = 1                 // allow up to maxTicket purchase
-        const purchaseAmount = 100              // number of tickets purchased by user
-        const withdrawPhase = 2                 // allow up to 25% purchased withdrawal
-        const withdrawAmount = 25               // amount withdrawn by user
-        const withdrawPercent = 0.25            // max percent withdrawable in this withdraw phase
-    
-        // expect the number of tickets a user has purchased to stay the same after withdrawals
-        const expectedUserTicketPurchased = purchaseAmount;
-
-        // expect the user's ticket balance to decrease after withdrawls
-        const expectedUserTicketBalance = purchaseAmount - withdrawAmount;
-  
-        // the number of output tokens we expect the user to have withdrawn
-        const expectedOutputTokenDifference = await publicPresale.getAmountOut(withdrawAmount, outputToken)
-
-        // expect the user's token balance to increase in outputTokens 
-        const expectedUserTokenBalance = (await helixToken.balanceOf(user)).add(expectedOutputTokenDifference)
-
-        // and expect the contract's outputToken balance to decrease by the same amount
-        const expectedPresaleTokenBalance = (await helixToken.balanceOf(publicPresale.address)).sub(expectedOutputTokenDifference)
-
-        // check that the test varibles are set correctly
-        expect(withdrawAmount).to.not.be.above(purchaseAmount * withdrawPercent)
-
-        // make a purchase
-
-        await publicPresale.whitelistAdd([user], [maxTicket])
-        await publicPresale.setPurchasePhase(purchasePhase)
-
-        const tokenAmount = await publicPresale.getAmountOut(purchaseAmount, inputToken)
-        await tokenA1.approve(publicPresale.address, tokenAmount)
-
-        await publicPresale1.purchase(purchaseAmount)
-
-        // now make a withdrawal
-
-        // first set the correct phase
-        await publicPresale.setWithdrawPhase(withdrawPhase)
-
-        // withdraw as user
-        await publicPresale1.withdraw(withdrawAmount)
-
-        // check that the updated amounts match the expectations
-        expect((await publicPresale.users(user)).purchased).to.eq(expectedUserTicketPurchased)
-        expect((await publicPresale.users(user)).balance).to.eq(expectedUserTicketBalance)
-        expect(await helixToken.balanceOf(user)).to.eq(expectedUserTokenBalance)
-        expect(await helixToken.balanceOf(publicPresale.address)).to.eq(expectedPresaleTokenBalance)
-    })
-
-    it('publicPresale: withdraw 50% of purchase in phase 3', async () => {
-        const inputToken = tokenA.address 
-        const outputToken = helixToken.address 
-        const user = wallet1.address            // account to whitelist
-        const maxTicket = 100                   // allotment to whitelisted user
-        const purchasePhase = 1                 // allow up to maxTicket purchase
-        const purchaseAmount = 100              // number of tickets purchased by user
-        const withdrawPhase = 3                 // allow up to 25% purchased withdrawal
-        const withdrawAmount = 50               // amount withdrawn by user
-        const withdrawPercent = 0.50            // max percent withdrawable in this withdraw phase
-    
-        // expect the number of tickets a user has purchased to stay the same after withdrawals
-        const expectedUserTicketPurchased = purchaseAmount;
-
-        // expect the user's ticket balance to decrease after withdrawls
-        const expectedUserTicketBalance = purchaseAmount - withdrawAmount;
-  
-        // the number of outputtokens we expect the user to have withdrawn
-        const expectedOutputTokenDifference = await publicPresale.getAmountOut(withdrawAmount, outputToken)
-
-        // expect the user's token balance to increase in outputTokens 
-        const expectedUserTokenBalance = (await helixToken.balanceOf(user)).add(expectedOutputTokenDifference)
-
-        // and expect the contract's outputToken balance to decrease by the same amount
-        const expectedPresaleTokenBalance = (await helixToken.balanceOf(publicPresale.address)).sub(expectedOutputTokenDifference)
-
-        // check that the test varibles are set correctly
-        expect(withdrawAmount).to.not.be.above(purchaseAmount * withdrawPercent)
-
-        // make a purchase
-
-        await publicPresale.whitelistAdd([user], [maxTicket])
-        await publicPresale.setPurchasePhase(purchasePhase)
-
-        const tokenAmount = await publicPresale.getAmountOut(purchaseAmount, inputToken)
-        await tokenA1.approve(publicPresale.address, tokenAmount)
-
-        await publicPresale1.purchase(purchaseAmount)
-
-        // make a withdrawal
-
-        // first set the correct phase
-        await publicPresale.setWithdrawPhase(withdrawPhase)
-
-        // withdraw as user
-        await publicPresale1.withdraw(withdrawAmount)
-
-        // check that the updated amounts match the expectations
-        expect((await publicPresale.users(user)).purchased).to.eq(expectedUserTicketPurchased)
-        expect((await publicPresale.users(user)).balance).to.eq(expectedUserTicketBalance)
-        expect(await helixToken.balanceOf(user)).to.eq(expectedUserTokenBalance)
-        expect(await helixToken.balanceOf(publicPresale.address)).to.eq(expectedPresaleTokenBalance)
-    })
-
-    it('publicPresale: withdraw 75% of purchase in phase 4', async () => {
-        const inputToken = tokenA.address 
-        const outputToken = helixToken.address 
-        const user = wallet1.address            // account to whitelist
-        const maxTicket = 100                   // allotment to whitelisted user
-        const purchasePhase = 1                 // allow up to maxTicket purchase
-        const purchaseAmount = 100              // number of tickets purchased by user
-        const withdrawPhase = 4                 // allow up to 25% purchased withdrawal
-        const withdrawAmount = 75               // amount withdrawn by user
-        const withdrawPercent = 0.75            // max percent withdrawable in this withdraw phase
-    
-        // expect the number of tickets a user has purchased to stay the same after withdrawals
-        const expectedUserTicketPurchased = purchaseAmount;
-
-        // expect the user's ticket balance to decrease after withdrawls
-        const expectedUserTicketBalance = purchaseAmount - withdrawAmount;
-  
-        // the number of outputtokens we expect the user to have withdrawn
-        const expectedOutputTokenDifference = await publicPresale.getAmountOut(withdrawAmount, outputToken)
-
-        // expect the user's token balance to increase in outputTokens 
-        const expectedUserTokenBalance = (await helixToken.balanceOf(user)).add(expectedOutputTokenDifference)
-
-        // and expect the contract's outputToken balance to decrease by the same amount
-        const expectedPresaleTokenBalance = (await helixToken.balanceOf(publicPresale.address)).sub(expectedOutputTokenDifference)
-
-        // check that the test varibles are set correctly
-        expect(withdrawAmount).to.not.be.above(purchaseAmount * withdrawPercent)
-
-        // make a purchase
-
-        await publicPresale.whitelistAdd([user], [maxTicket])
-        await publicPresale.setPurchasePhase(purchasePhase)
-
-        const tokenAmount = await publicPresale.getAmountOut(purchaseAmount, inputToken)
-        await tokenA1.approve(publicPresale.address, tokenAmount)
-
-        await publicPresale1.purchase(purchaseAmount)
-
-        // make a withdrawal
-
-        // first set the correct phase
-        await publicPresale.setWithdrawPhase(withdrawPhase)
-
-        // withdraw as user
-        await publicPresale1.withdraw(withdrawAmount)
-
-        // check that the updated amounts match the expectations
-        expect((await publicPresale.users(user)).purchased).to.eq(expectedUserTicketPurchased)
-        expect((await publicPresale.users(user)).balance).to.eq(expectedUserTicketBalance)
-        expect(await helixToken.balanceOf(user)).to.eq(expectedUserTokenBalance)
-        expect(await helixToken.balanceOf(publicPresale.address)).to.eq(expectedPresaleTokenBalance)
-    })
-
-    it('publicPresale: withdraw 100% of purchase in phase 5', async () => {
-        const inputToken = tokenA.address 
-        const outputToken = helixToken.address 
-        const user = wallet1.address            // account to whitelist
-        const maxTicket = 100                   // allotment to whitelisted user
-        const purchasePhase = 1                 // allow up to maxTicket purchase
-        const purchaseAmount = 100              // number of tickets purchased by user
-        const withdrawPhase = 5                 // allow up to 25% purchased withdrawal
-        const withdrawAmount = 100               // amount withdrawn by user
-        const withdrawPercent = 1            // max percent withdrawable in this withdraw phase
-    
-        // expect the number of tickets a user has purchased to stay the same after withdrawals
-        const expectedUserTicketPurchased = purchaseAmount;
-
-        // expect the user's ticket balance to decrease after withdrawls
-        const expectedUserTicketBalance = purchaseAmount - withdrawAmount;
-  
-        // the number of outputtokens we expect the user to have withdrawn
-        const expectedOutputTokenDifference = await publicPresale.getAmountOut(withdrawAmount, outputToken)
-
-        // expect the user's token balance to increase in outputTokens 
-        const expectedUserTokenBalance = (await helixToken.balanceOf(user)).add(expectedOutputTokenDifference)
-
-        // and expect the contract's outputToken balance to decrease by the same amount
-        const expectedPresaleTokenBalance = (await helixToken.balanceOf(publicPresale.address)).sub(expectedOutputTokenDifference)
-
-        // check that the test varibles are set correctly
-        expect(withdrawAmount).to.not.be.above(purchaseAmount * withdrawPercent)
-
-        // make a purchase
-
-        await publicPresale.whitelistAdd([user], [maxTicket])
-        await publicPresale.setPurchasePhase(purchasePhase)
-
-        const tokenAmount = await publicPresale.getAmountOut(purchaseAmount, inputToken)
-        await tokenA1.approve(publicPresale.address, tokenAmount)
-
-        await publicPresale1.purchase(purchaseAmount)
-
-        // make a withdrawal
-
-        // first set the correct phase
-        await publicPresale.setWithdrawPhase(withdrawPhase)
-
-        // withdraw as user
-        await publicPresale1.withdraw(withdrawAmount)
-
-        // check that the updated amounts match the expectations
-        expect((await publicPresale.users(user)).purchased).to.eq(expectedUserTicketPurchased)
-        expect((await publicPresale.users(user)).balance).to.eq(expectedUserTicketBalance)
-        expect(await helixToken.balanceOf(user)).to.eq(expectedUserTokenBalance)
-        expect(await helixToken.balanceOf(publicPresale.address)).to.eq(expectedPresaleTokenBalance)
     })
 
     it('publicPresale: burn all tickets while paused as owner', async () => {
@@ -549,8 +276,8 @@ describe('Public Presale', () => {
         await publicPresale.pause()
 
         // Remove all tokens and tickets
-        const maxTicket = await publicPresale.maxRemovable(owner)
-        await publicPresale.burn(maxTicket)
+        const ticketsAvailable = await publicPresale.ticketsAvailable()
+        await publicPresale.burn(ticketsAvailable)
 
         expect(await helixToken.balanceOf(publicPresale.address)).to.eq(expectedTokenBalance)
         expect(await publicPresale.ticketsAvailable()).to.eq(expectedTicketBalance)
@@ -563,15 +290,15 @@ describe('Public Presale', () => {
 
         const owner = wallet0.address
         const outputToken = helixToken.address
-        const maxTicket = await publicPresale.maxRemovable(owner)
-        const maxTokens = await publicPresale.getAmountOut(maxTicket, outputToken)
+        const ticketsAvailable = await publicPresale.ticketsAvailable()
+        const tokens = await publicPresale.getAmountOut(ticketsAvailable, outputToken)
 
-        const expectedOwnerTokenBalance = (await helixToken.balanceOf(owner)).add(maxTokens)
+        const expectedOwnerTokenBalance = (await helixToken.balanceOf(owner)).add(tokens)
         const expectedPresaleTokenBalance = 0
         const expectedTicketBalance = 0
        
         // Remove all tokens and tickets
-        await publicPresale.withdraw(maxTicket)
+        await publicPresale.withdraw(ticketsAvailable)
 
         expect(await helixToken.balanceOf(owner)).to.eq(expectedOwnerTokenBalance)
         expect(await helixToken.balanceOf(publicPresale.address)).to.eq(expectedPresaleTokenBalance)

@@ -124,8 +124,7 @@ contract PublicPresale is ReentrancyGuard {
         OUTPUT_TOKEN_DECIMALS = 1e18;
 
         TICKET_MAX = 20000;
-        ticketsAvailable = 20000;
-        require(TICKET_MAX == ticketsAvailable, "PublicPresale: INITIAL TICKET AMOUNTS MUST MATCH");
+        ticketsAvailable = TICKET_MAX;
         MINIMUM_TICKET_PURCHASE = 1;
 
         PURCHASE_PHASE_START = 1;
@@ -142,21 +141,22 @@ contract PublicPresale is ReentrancyGuard {
         _validatePurchase(msg.sender, amount);
 
         // get the `inputTokenAmount` in `inputToken` to purchase `amount` of tickets
-        uint tokenAmount = getAmountOut(amount, inputToken); 
+        uint inputTokenAmount = getAmountOut(amount, inputToken); 
 
+        // pay for the `amount` of tickets
         require(
-            tokenAmount <= inputToken.balanceOf(msg.sender), 
+            inputTokenAmount <= inputToken.balanceOf(msg.sender), 
             "PublicPresale: INSUFFICIENT CALLER TOKEN BALANCE"
         );
         require(
-            tokenAmount <= inputToken.allowance(msg.sender, address(this)), 
+            inputTokenAmount <= inputToken.allowance(msg.sender, address(this)), 
             "PublicPresale: INSUFFICIENT ALLOWANCE"
         );
+        inputToken.safeTransferFrom(msg.sender, treasury, inputTokenAmount);
 
-        inputToken.safeTransferFrom(msg.sender, treasury, tokenAmount);
-
-        // transfer purchase to user
-        outputToken.safeTransfer(msg.sender, tokenAmount);
+        // transfer `amount` of tickets to user
+        uint outputTokenAmount = getAmountOut(amount, outputToken);
+        outputToken.safeTransfer(msg.sender, outputTokenAmount);
         
         // and update the contract's remaining tickets
         ticketsAvailable -= amount;
@@ -177,7 +177,7 @@ contract PublicPresale is ReentrancyGuard {
     function getAmountOut(uint amountIn, IERC20 tokenOut) public view returns(uint amountOut) {
         if (address(tokenOut) == address(inputToken)) {
             amountOut = amountIn * INPUT_RATE * INPUT_TOKEN_DECIMALS;
-        } else if (address(tokenOut) == address(inputToken)) {
+        } else if (address(tokenOut) == address(outputToken)) {
             amountOut = amountIn * OUTPUT_RATE * OUTPUT_TOKEN_DECIMALS;
         } else {
             amountOut = 0;

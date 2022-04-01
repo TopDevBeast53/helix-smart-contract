@@ -153,6 +153,6 @@ module.exports = {
     // Amount of HELIX to fund Public Presale contract with
     PUBLIC_PRESALE_INITIAL_BALANCE : {
         56: 105000000,       // 105,000,000
-        97: 105000000,       // 105,000,000
+        97: 100000000,       // 100,000,000, using this value so that 100,000,000 % 20,000 == 0
     },
 }
