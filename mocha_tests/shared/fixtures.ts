@@ -26,6 +26,8 @@ import HelixLP from '../../build/contracts/HelixLP.json'
 import HelixNFTBridge from '../../build/contracts/HelixNFTBridge.json'
 import HelixVault from '../../build/contracts/HelixVault.json'
 import VipPresale from '../../build/contracts/VipPresale.json'
+import PublicPresale from '../../build/contracts/PublicPresale.json'
+import AirDrop from '../../build/contracts/AirDrop.json'
 
 const addresses = require('../../scripts/constants/addresses')
 const initials = require('../../scripts/constants/initials')
@@ -60,6 +62,9 @@ const helixVaultBonusEndBlock = initials.HELIX_VAULT_BONUS_END_BLOCK[env.network
 const vipPresaleInputRate = initials.VIP_PRESALE_INPUT_RATE[env.network]
 const vipPresaleOutputRate = initials.VIP_PRESALE_OUTPUT_RATE[env.network]
 
+const publicPresaleInputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.network]
+const publicPresaleOutputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.network]
+
 const overrides = {
     gasLimit: 9999999
 }
@@ -91,6 +96,8 @@ interface FullExchangeFixture {
     tokenTools: Contract
     vault: Contract
     vipPresale: Contract
+    publicPresale: Contract
+    airDrop: Contract
 }
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
@@ -210,16 +217,41 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // 14 deploy vip presale contract
     const vipPresale = await deployContract(wallet, VipPresale, 
         [
-            tokenA.address,         // inputToken, stand-in for BUSD
-            helixToken.address,     // outputToken, the presale token
-            wallet.address,         // treasury, address that receives inputToken
-            vipPresaleInputRate,    // # inputToken per ticket
-            vipPresaleOutputRate    // # outputToken per ticket
+            tokenA.address,             // inputToken, stand-in for BUSD
+            helixToken.address,         // outputToken, the presale token
+            wallet.address,             // treasury, address that receives inputToken
+            vipPresaleInputRate,        // # inputToken per ticket
+            vipPresaleOutputRate        // # outputToken per ticket
         ], 
         overrides
     )
     // presale must be registered as helixToken minter to be able to burn tokens
     await helixToken.addMinter(vipPresale.address)
+
+    // 15 deploy public presale contract
+    const publicPresale = await deployContract(wallet, PublicPresale, 
+        [
+            tokenA.address,             // inputToken, stand-in for BUSD
+            helixToken.address,         // outputToken, the presale token
+            wallet.address,             // treasury, address that receives inputToken
+            publicPresaleInputRate,     // # inputToken per ticket
+            publicPresaleOutputRate     // # outputToken per ticket
+        ], 
+        overrides
+    )
+    // presale must be registered as helixToken minter to be able to burn tokens
+    await helixToken.addMinter(publicPresale.address)
+
+    // 16 deploy airdrop presale contract
+    const airDrop = await deployContract(wallet, AirDrop, 
+        [
+            "AirDrop",              // contract name
+            helixToken.address,     // outputToken, the presale token
+        ], 
+        overrides
+    )
+    // presale must be registered as helixToken minter to be able to burn tokens
+    await helixToken.addMinter(airDrop.address)
 
     return {
         tokenA,
@@ -248,5 +280,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         tokenTools,
         vault,
         vipPresale,
+        publicPresale,
+        airDrop,
     }
 }

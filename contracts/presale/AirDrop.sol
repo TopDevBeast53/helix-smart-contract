@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '../interfaces/IERC20.sol';
+import '../libraries/SafeERC20.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 /*
@@ -102,26 +102,21 @@ contract AirDrop is ReentrancyGuard {
 
     // used to destroy `amount` of token
     function burn(uint amount) external onlyOwner { 
-        _remove(address(0), amount);
+        _validateRemoval(msg.sender, amount);
+        token.burn(address(this), amount);
     }
 
     // used to withdraw `amount` of token to caller's address
     function withdraw(uint amount) external {
-        _remove(msg.sender, amount);
-    }
-
-    // used internally to remove `amount` of tokens from contract and transfer to `to`
-    function _remove(address to, uint amount) private {
         // want to be in the latest phase
         _updateWithdrawPhase();
 
-        // proceed only if the removal is valid
         _validateRemoval(msg.sender, amount);
 
         if (!isOwner[msg.sender]) {
             users[msg.sender].balance -= amount;
         }
-        token.safeTransfer(to, amount);     // Implicitly require a sufficient token balance
+        token.safeTransfer(msg.sender, amount);
     }
 
     // validate whether `amount` of tokens are removable by address `by`
