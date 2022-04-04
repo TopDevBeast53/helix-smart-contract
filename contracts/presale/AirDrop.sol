@@ -131,19 +131,8 @@ contract AirDrop is ReentrancyGuard {
             // if paused owner can remove all tokens, otherwise they can't remove tokens
             maxAmount = isPaused ? tokenBalance() : 0;
         } else {
-            if (isPaused) {
-                maxAmount = 0;
-            } else {
-                // Max number of tokens user can withdraw as a function of withdrawPhase and 
-                // number of tokens airdropped
-                uint allowed = users[by].airdropped * withdrawPhasePercent[withdrawPhase] / WITHDRAW_PERCENT;
-
-                // Number of tokens remaining in their balance
-                uint balance = users[by].balance;
-        
-                // Can only withdraw the max allowed if they have a large enough balance
-                maxAmount = balance < allowed ? balance : allowed;
-            }
+            // user can remove up to their balance
+            maxAmount = isPaused ? 0 : users[by].balance;
         }
     }
 
