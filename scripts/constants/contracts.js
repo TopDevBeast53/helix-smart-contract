@@ -69,7 +69,7 @@ module.exports = {
     },
     vipPresale: {
         56: '',
-        97: '0x445e350b14AF31a70E5a1FB6EBE000F7b5242af2',
+        97: '0x3c5281A44e30bA282792750fd274213530044911',
     },
     helixNFTImpl: {
         56: '',
