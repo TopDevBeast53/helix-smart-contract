@@ -148,6 +148,18 @@ module.exports = {
         97: '0x59201fb8cb2D61118B280c8542127331DD141654',     // Deployer address for testing
     },
 
+    // Length of time between purchase phases
+    VIP_PRESALE_PURCHASE_PHASE_DURATION: {
+        56: 0,
+        97: 86400,     // 86400 == 1 day
+    },
+
+    // Length of time between withdraw phases
+    VIP_PRESALE_WITHDRAW_PHASE_DURATION: {
+        56: 0,
+        97: 7862400,     // 91 days, 86400 == 1 day
+    },
+
     // Amount of OUTPUT TOKEN to fund VIP Presale contract with
     // don't forget to multiply by 1e18
     VIP_PRESALE_INITIAL_BALANCE : {
@@ -169,18 +181,30 @@ module.exports = {
         97: 5000,
     },
 
+    // Length of time between purchase phases
+    PUBLIC_PRESALE_PURCHASE_PHASE_DURATION: {
+        56: 0,
+        97: 1800,     // 30 minutes, 86400 == 1 day
+    },
+
     // Amount of HELIX to fund Public Presale contract with
     PUBLIC_PRESALE_INITIAL_BALANCE : {
         56: 105000000,       // 105,000,000
         97: 100000000,       // 100,000,000, using this value so that 100,000,000 % 20,000 == 0
     },
 
-    // --------- Public Presale --------- //
+    // --------- Airdrop Presale --------- //
 
     // Amount of HELIX to fund AirDrop contract with
     AIRDROP_INITIAL_BALANCE : {
         56: 125000000,       // 125,000,000
         97: 125000000,       // 125,000,000
+    },
+
+    // Length of time between withdraw phases
+    AIRDROP_WITHDRAW_PHASE_DURATION: {
+        56: 0,
+        97: 7862400,     // 91 days, 86400 == 1 day
     },
 
 }
