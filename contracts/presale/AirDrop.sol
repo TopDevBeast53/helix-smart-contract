@@ -109,7 +109,7 @@ contract AirDrop is ReentrancyGuard {
     // used to withdraw `amount` of token to caller's address
     function withdraw(uint amount) external {
         // want to be in the latest phase
-        _updateWithdrawPhase();
+        updateWithdrawPhase();
 
         _validateRemoval(msg.sender, amount);
 
@@ -170,9 +170,9 @@ contract AirDrop is ReentrancyGuard {
     }
 
     // called periodically and, if sufficient time has elapsed, update the withdrawPhase
-    function _updateWithdrawPhase() private {
-        if (withdrawPhase >= WITHDRAW_PHASE_START) {
-            if (withdrawPhase < WITHDRAW_PHASE_END && block.timestamp >= withdrawPhaseEndTimestamp) {
+    function updateWithdrawPhase() public {
+        if (block.timestamp >= withdrawPhaseEndTimestamp) {
+            if (withdrawPhase >= WITHDRAW_PHASE_START && withdrawPhase < WITHDRAW_PHASE_END) {
                 _setWithdrawPhase(withdrawPhase + 1);
             }
         }
