@@ -33,31 +33,31 @@ module.exports = {
     },
     helixNFT: {
         56: '',
-        97: '0xddB4d5e2e2dE380F6fCEb3e15F61e26c51dC0B19',
+        97: '0x39bB1d97cac44a837049eE109483886C27A3800C',
     },
     helixNFTChef: {
         56: '',
-        97: '0x02C4816B3933a8256cD586f0abc9534B9fe59EcB',
+        97: '0xe4c1ace1fC31c9bBD1BC13e6c13E8aaB5bE050b6',
     },
     helixNFTBridge: {
         56: '',
-        97: '0x3360df5D8f61b6cA62E41E71c283bC35103DD33a',
+        97: '0xa5df536596434205A3084270A312b32eC47a902d',
     },
     hpToken: {
         56: '',
-        97: '0x789397aDa219d3901A78a7ba8301e585DC5175c3',
+        97: '0x5F4924C33a343eFDfb11FF77F0c54136afd6bEcD',
     },
     swapRewards: {
         56: '',
-        97: '0x03Adb56848da571fE976bD2Ab8D0b82e6ba98aFE',
+        97: '0xC2E722B1a33ea27b00082B19eec604519321e621',
     },
     helixMigrator: {
         56: '',
-        97: '0xf3DC97598517e7B19Ac6831c7f644319C47B4575',
+        97: '0x59a7838455B0BfF92d7e5E505E91C9eBb051B2fd',
     },
     tokenTools: {
         56: '',
-        97: '0x00BF5CCBf5915A009F8dd96fA5c08Ae13E7d62B5',
+        97: '0xb425e95078fbeF2eCdDea8046c07dDd5C3552ad5',
     },
     helixVault: {
         56: '',
