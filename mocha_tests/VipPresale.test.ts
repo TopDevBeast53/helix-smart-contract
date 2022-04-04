@@ -97,6 +97,25 @@ describe('VIP Presale', () => {
         expect(owners[1]).to.eq(wallet1.address)
     })
 
+    it('vipPresale: add owner with invalid address fails', async () => {
+        const invalidAddress = constants.AddressZero
+        await expect(vipPresale.addOwner(invalidAddress))
+            .to.be.revertedWith("VipPresale: INVALID ADDRESS")
+    })
+
+    it('vipPresale: add owner as non-owner fails', async () => {
+        // we call the contract as wallet1, a non-owner
+        await expect(vipPresale1.addOwner(wallet2.address))
+            .to.be.revertedWith("VipPresale: CALLER IS NOT OWNER")
+    })
+
+    it('vipPresale: add owner as duplicate fails', async () => {
+        const preexistingOwner = wallet0.address 
+        // wallet 0 is already an owner by default because they were the contract creator
+        await expect(vipPresale.addOwner(preexistingOwner))
+            .to.be.revertedWith("VipPresale: ALREADY AN OWNER")
+    })
+
     it('vipPresale: whitelist add', async () => {
         const users = [wallet1.address, wallet2.address]
         const wallet1MaxTicket = 50
@@ -117,6 +136,58 @@ describe('VIP Presale', () => {
         expect(await vipPresale.ticketsReserved()).to.eq(wallet1MaxTicket + wallet2MaxTicket)
     })
 
+    it('vipPresale: whitelist add as non-owner fails', async () => {
+        const users = [wallet1.address, wallet2.address]
+        const wallet1MaxTicket = 50
+        const wallet2MaxTicket = 100
+        const maxTickets = [wallet1MaxTicket, wallet2MaxTicket]
+
+        // we call the contract as wallet1, a non-owner
+        await expect(vipPresale1.whitelistAdd(users, maxTickets))
+            .to.be.revertedWith("VipPresale: CALLER IS NOT OWNER")
+    })
+
+    it('vipPresale: whitelist add with unequal argument arrays fails', async () => {
+        const users = [wallet1.address, wallet2.address]
+        const wallet1MaxTicket = 50
+        const maxTickets = [wallet1MaxTicket]
+
+        await expect(vipPresale.whitelistAdd(users, maxTickets))
+            .to.be.revertedWith("VipPresale: USERS AND MAX TICKETS MUST HAVE SAME LENGTH")
+    })
+
+    it('vipPresale: whitelist add with invalid user address fails', async () => {
+        const invalidUser1Address = constants.AddressZero
+        const users = [invalidUser1Address, wallet2.address]
+        const wallet1MaxTicket = 50
+        const wallet2MaxTicket = 100
+        const maxTickets = [wallet1MaxTicket, wallet2MaxTicket]
+
+        await expect(vipPresale.whitelistAdd(users, maxTickets))
+            .to.be.revertedWith("VipPresale: INVALID ADDRESS")
+    })
+
+    it('vipPresale: whitelist add with too large user max ticket fails', async () => {
+        const users = [wallet1.address, wallet2.address]
+        const wallet1MaxTicket = MaxUint256
+        const wallet2MaxTicket = 100
+        const maxTickets = [wallet1MaxTicket, wallet2MaxTicket]
+
+        await expect(vipPresale.whitelistAdd(users, maxTickets))
+            .to.be.revertedWith("VipPresale: MAX TICKET CAN'T BE GREATER THAN TICKETS AVAILABLE")
+    })
+
+    it('vipPresale: whitelist add with duplicate user fails', async () => {
+        // note that both addresses are the same
+        const users = [wallet1.address, wallet1.address]
+        const wallet1MaxTicket = 50
+        const wallet2MaxTicket = 100
+        const maxTickets = [wallet1MaxTicket, wallet2MaxTicket]
+
+        await expect(vipPresale.whitelistAdd(users, maxTickets))
+            .to.be.revertedWith("VipPresale: USER IS ALREADY WHITELISTED")
+    })
+
     it('vipPresale: whitelist remove', async () => {
         // first add users
         const users = [wallet1.address, wallet2.address]
@@ -135,6 +206,19 @@ describe('VIP Presale', () => {
         await vipPresale.whitelistRemove(wallet2.address)
         expect(await vipPresale.whitelist(wallet1.address)).to.be.false
         expect(await vipPresale.whitelist(wallet2.address)).to.be.false
+    })
+
+    it('vipPresale: whitelist remove as non-owner fails', async () => {
+        // first add users
+        const users = [wallet1.address, wallet2.address]
+        const wallet1MaxTicket = 50
+        const wallet2MaxTicket = 100
+        const maxTickets = [wallet1MaxTicket, wallet2MaxTicket]
+        await vipPresale.whitelistAdd(users, maxTickets)
+
+        // calling as wallet1
+        await expect(vipPresale1.whitelistRemove(wallet2.address))
+            .to.be.revertedWith("VipPresale: CALLER IS NOT OWNER")
     })
 
     it('vipPresale: get amount out', async () => {  
@@ -174,10 +258,21 @@ describe('VIP Presale', () => {
         expect(await vipPresale.isPaused()).to.be.true
     })
 
+    it('vipPresale: pause as non-owner fails', async () => {
+        await expect(vipPresale1.pause())
+            .to.be.revertedWith("VipPresale: CALLER IS NOT OWNER")
+    })
+
     it('vipPresale: unpause', async () => {
         await vipPresale.pause()
         await vipPresale.unpause()
         expect(await vipPresale.isPaused()).to.be.false
+    })
+
+    it('vipPresale: uppause as non-owner fails', async () => {
+        await vipPresale.pause()
+        await expect(vipPresale1.unpause())
+            .to.be.revertedWith("VipPresale: CALLER IS NOT OWNER")
     })
 
     it('vipPresale: set purchase phase', async () => {
@@ -189,6 +284,30 @@ describe('VIP Presale', () => {
 
         await vipPresale.setPurchasePhase(2);
         expect(await vipPresale.purchasePhase()).to.eq(2)
+    })
+
+    it('vipPresale: set purchase phase as non-owner fails', async () => {
+        // wallet 1 is not an owner
+        await expect(vipPresale1.setPurchasePhase(0))
+            .to.be.revertedWith("VipPresale: CALLER IS NOT OWNER")
+    })
+
+    it('vipPresale: set purchase phase with invalid phase fails', async () => {
+        const invalidPhase = (await vipPresale.PURCHASE_PHASE_END()).toNumber() + 1
+        await expect(vipPresale.setPurchasePhase(invalidPhase))
+            .to.be.revertedWith("VipPresale: PHASE EXCEEDS PURCHASE PHASE END")
+    })
+
+    it('vipPresale: set purchase phase emits set purchase phase event', async () => {
+        const phase = 0
+        const phaseDuration = (await vipPresale.PURCHASE_PHASE_DURATION()).toNumber()
+        await expect(vipPresale.setPurchasePhase(phase))
+            .to.emit(vipPresale, "SetPurchasePhase")
+            .withArgs(
+               phase,
+               Math.trunc(Date.now() / 1000),
+               Math.trunc(Date.now() / 1000) + phaseDuration
+            )
     })
 
     it('vipPresale: set withdraw phase', async () => {
@@ -211,6 +330,30 @@ describe('VIP Presale', () => {
         expect(await vipPresale.withdrawPhase()).to.eq(5)
     })
 
+    it('vipPresale: set withdraw phase as non-owner fails', async () => {
+        // wallet 1 is not an owner
+        await expect(vipPresale1.setWithdrawPhase(0))
+            .to.be.revertedWith("VipPresale: CALLER IS NOT OWNER")
+    })
+
+    it('vipPresale: set withdraw phase with invalid phase fails', async () => {
+        const invalidPhase = (await vipPresale.WITHDRAW_PHASE_END()).toNumber() + 1
+        await expect(vipPresale.setWithdrawPhase(invalidPhase))
+            .to.be.revertedWith("VipPresale: PHASE EXCEEDS WITHDRAW PHASE END")
+    })
+
+    it('vipPresale: set withdraw phase emits set withdraw phase event', async () => {
+        const phase = 0
+        const phaseDuration = (await vipPresale.WITHDRAW_PHASE_DURATION()).toNumber()
+        await expect(vipPresale.setWithdrawPhase(phase))
+            .to.emit(vipPresale, "SetWithdrawPhase")
+            .withArgs(
+               phase,
+               Math.trunc(Date.now() / 1000),
+               Math.trunc(Date.now() / 1000) + phaseDuration
+            )
+    })
+
     it('vipPresale: max removable by owner when unpaused', async () => {
         const owner = wallet0.address
         await vipPresale.unpause()
@@ -223,6 +366,45 @@ describe('VIP Presale', () => {
         await vipPresale.pause()
         const expectedAmount = await vipPresale.ticketsAvailable()
         expect(await vipPresale.maxRemovable(owner)).to.eq(expectedAmount)
+    })
+
+    it('vipPresale: max removable by user when unpaused', async () => {
+        const user = wallet1.address
+        const maxTicket = 50
+        
+        // user must be whitelisted
+        const users = [user]
+        const maxTickets = [maxTicket]
+        await vipPresale.whitelistAdd(users, maxTickets)
+
+        // must be in purchase phase
+        const purchasePhase = 2
+        await vipPresale.setPurchasePhase(purchasePhase)
+
+        // user must give presale permission to transfer tokens 
+        await tokenA1.approve(vipPresale.address, MaxUint256)
+
+        // user must purchase tickets
+        // purchase as wallet 1
+        await vipPresale1.purchase(maxTicket)
+
+        // must be in withdraw phase
+        const withdrawPhase = 5
+        await vipPresale.setWithdrawPhase(withdrawPhase)
+
+        // guarantee that the contract is unpaused
+        await vipPresale.unpause()
+
+        // confirm max is the same as balance before withdrawal
+        const expectedAmountBeforeWithdrawal = 50
+        expect(await vipPresale.maxRemovable(user)).to.eq(expectedAmountBeforeWithdrawal)
+
+        // withdraw half of the users tokens
+        await vipPresale1.withdraw(20)
+
+        // confirm that max is reduced after withdrawal
+        const expectedAmountAfterWithdrawal = 30
+        expect(await vipPresale.maxRemovable(user)).to.eq(expectedAmountAfterWithdrawal)
     })
 
     it('vipPresale: max removable by user when paused', async () => {
@@ -556,6 +738,12 @@ describe('VIP Presale', () => {
         expect(await vipPresale.ticketsAvailable()).to.eq(expectedTicketBalance)
     })
 
+    it('vipPresale: burn called by non-owner fails', async () => {
+        // wallet 1 is a non-owner
+        await expect(vipPresale1.burn(0))
+            .to.be.revertedWith("VipPresale: CALLER IS NOT OWNER")
+    })
+
     it('vipPresale: withdraw all tickets while paused as owner', async () => {
         // Must be paused to withdraw as owner
         // must pause before getting maxTokens or else maxTokens == 0
@@ -577,7 +765,7 @@ describe('VIP Presale', () => {
         expect(await helixToken.balanceOf(vipPresale.address)).to.eq(expectedPresaleTokenBalance)
         expect(await vipPresale.ticketsAvailable()).to.eq(expectedTicketBalance)
     })
-
+    
     function print(str: string) {
         if (verbose) console.log(str)
     }

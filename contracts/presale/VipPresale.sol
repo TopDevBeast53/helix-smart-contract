@@ -299,22 +299,11 @@ contract VipPresale is ReentrancyGuard {
     // returns `maxAmount` removable by address `by`
     function maxRemovable(address by) public view returns(uint maxAmount) {
         if (isOwner[by]) {
-            // owner can, at any time, remove all of the tokens available
+            // owner can remove all of the tokens available
             maxAmount = isPaused ? ticketsAvailable : 0;
         } else {
-            if (isPaused) {
-                maxAmount = 0;
-            } else {
-                // Max number of tickets user can withdraw as a function of withdrawPhase and 
-                // number of tickets purchased
-                uint allowed = users[by].purchased * withdrawPhasePercent[withdrawPhase] / WITHDRAW_PERCENT;
-
-                // Number of tickets remaining in their balance
-                uint balance = users[by].balance;
-        
-                // Can only only withdraw the max allowed if they have a large enough balance
-                maxAmount = balance < allowed ? balance : allowed;
-            }
+            // user can withdraw up to their balance
+            maxAmount = isPaused ? 0 : users[by].balance;
         }
     }
 

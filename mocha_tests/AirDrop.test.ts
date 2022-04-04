@@ -83,6 +83,17 @@ describe('AirDrop Presale', () => {
         expect(owners[1]).to.eq(wallet1.address)
     })
 
+    it('airDrop: add owner as non-owner fails', async () => {
+        await expect(airDrop1.addOwner(wallet2.address))
+            .to.be.revertedWith('AirDrop: CALLER IS NOT OWNER')
+    })
+
+    it('airDrop: add owner duplicate fails', async () => {
+        // wallet 0 is added as owner on contract creation
+        await expect(airDrop.addOwner(wallet0.address))
+            .to.be.revertedWith('AirDrop: ALREADY AN OWNER')
+    })
+
     it('airDrop: airdrop add', async () => {
         const users = [wallet1.address, wallet2.address]
         const wallet1Amount = 50
@@ -98,6 +109,35 @@ describe('AirDrop Presale', () => {
         // and have a balance
         expect((await airDrop.users(wallet1.address)).balance).to.eq(wallet1Amount)
         expect((await airDrop.users(wallet2.address)).balance).to.eq(wallet2Amount)
+    })
+
+    it('airDrop: airdrop add as non-owner fails', async () => {
+        const users = [wallet1.address, wallet2.address]
+        const wallet1Amount = 50
+        const wallet2Amount = 100
+        const amounts = [wallet1Amount, wallet2Amount]
+        
+        await expect(airDrop1.airdropAdd(users, amounts))
+            .to.be.revertedWith('AirDrop: CALLER IS NOT OWNER')
+    })
+
+    it('airDrop: airdrop add with unequal argument arrays fails', async () => {
+        const users = [wallet1.address, wallet2.address]
+        const wallet1Amount = 50
+        const amounts = [wallet1Amount]
+        
+        await expect(airDrop.airdropAdd(users, amounts))
+            .to.be.revertedWith('AirDrop: USERS AND AMOUNTS MUST HAVE SAME LENGTH')
+    })
+
+    it('airDrop: airdrop add user with too many tokens fails', async () => {
+        const users = [wallet1.address, wallet2.address]
+        const wallet1Amount = MaxUint256
+        const wallet2Amount = 100
+        const amounts = [wallet1Amount, wallet2Amount]
+        
+        await expect(airDrop.airdropAdd(users, amounts))
+            .to.be.revertedWith("AirDrop: AMOUNT CAN'T BE GREATER THAN TOKENS AVAILABLE")
     })
 
     it('airDrop: airdrop remove', async () => {
@@ -121,9 +161,28 @@ describe('AirDrop Presale', () => {
         expect((await airDrop.users(wallet2.address)).balance).to.eq(0)
     })
 
+    it('airDrop: airdrop remove as non-owner fails', async () => {
+        // first airdrop funds
+        const users = [wallet1.address, wallet2.address]
+        const wallet1Amount = 50
+        const wallet2Amount = 100
+        const amounts = [wallet1Amount, wallet2Amount]
+
+        await airDrop.airdropAdd(users, amounts)
+    
+        // then expect to fail
+        await expect(airDrop1.airdropRemove(wallet1.address, wallet1Amount))
+            .to.be.revertedWith('AirDrop: CALLER IS NOT OWNER')
+    })
+
     it('airDrop: pause', async () => {
         await airDrop.pause()
         expect(await airDrop.isPaused()).to.be.true
+    })
+
+    it('airDrop: pause as non-owner fails', async () => {
+        await expect(airDrop1.pause())
+            .to.be.revertedWith('AirDrop: CALLER IS NOT OWNER')
     })
 
     it('airDrop: unpause', async () => {
@@ -132,6 +191,10 @@ describe('AirDrop Presale', () => {
         expect(await airDrop.isPaused()).to.be.false
     })
 
+    it('airDrop: unpause as non-owner fails', async () => {
+        await expect(airDrop1.unpause())
+            .to.be.revertedWith('AirDrop: CALLER IS NOT OWNER')
+    })
 
     it('airDrop: set withdraw phase', async () => {
         await airDrop.setWithdrawPhase(0);
@@ -151,6 +214,30 @@ describe('AirDrop Presale', () => {
 
         await airDrop.setWithdrawPhase(5);
         expect(await airDrop.withdrawPhase()).to.eq(5)
+    })
+
+    it('airDrop: set withdraw phase as non-owner fails', async () => {
+        const phase = 0
+        await expect(airDrop1.setWithdrawPhase(phase))
+            .to.be.revertedWith('AirDrop: CALLER IS NOT OWNER')
+    })
+
+    it('airDrop: set withdraw phase with invalid phase fails', async () => {
+        const invalidPhase = (await airDrop.WITHDRAW_PHASE_END()).toNumber() + 1
+        await expect(airDrop.setWithdrawPhase(invalidPhase))
+            .to.be.revertedWith('AirDrop: PHASE EXCEEDS WITHDRAW PHASE END')
+    })
+
+    it('airDrop: set withdraw phase emits set withdraw phase event', async () => {
+        const phase = 0
+        const phaseDuration = (await airDrop.WITHDRAW_PHASE_DURATION()).toNumber()
+        await expect(airDrop.setWithdrawPhase(phase))
+            .to.emit(airDrop, "SetWithdrawPhase")
+            .withArgs(
+                phase,
+                Math.trunc(Date.now() / 1000),
+                Math.trunc(Date.now() / 1000) + phaseDuration
+            )
     })
 
     it('airDrop: max removable by owner when unpaused', async () => {
