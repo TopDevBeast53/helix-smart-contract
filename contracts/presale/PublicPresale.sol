@@ -124,7 +124,7 @@ contract PublicPresale is ReentrancyGuard {
         INPUT_TOKEN_DECIMALS = 1e18;
         OUTPUT_TOKEN_DECIMALS = 1e18;
 
-        TICKET_MAX = 20000;
+        TICKET_MAX = 21000;
         ticketsAvailable = TICKET_MAX;
         MINIMUM_TICKET_PURCHASE = 1;
 
