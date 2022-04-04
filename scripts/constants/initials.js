@@ -169,6 +169,24 @@ module.exports = {
 
     // --------- Public Presale --------- //
 
+    // Input token address
+    PUBLIC_PRESALE_INPUT_TOKEN: {
+        56: '', // Expect BUSD for mainnet
+        97: '0xBe5D153b1A9e82E35d1e5f4Da8805E088c344482',   // Test Token A for testing
+    },
+
+    // Input token address
+    PUBLIC_PRESALE_OUTPUT_TOKEN: {
+        56: '', // Expect HELIX for mainnet
+        97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
+    },
+
+    // Treasury address
+    PUBLIC_PRESALE_TREASURY: {
+        56: '',
+        97: '0x59201fb8cb2D61118B280c8542127331DD141654',     // Deployer address for testing
+    },
+
     // BUSD per ticket
     PUBLIC_PRESALE_INPUT_RATE : {
         56: 100,
@@ -188,9 +206,10 @@ module.exports = {
     },
 
     // Amount of HELIX to fund Public Presale contract with
+    // don't forget to multiply by 1e18
     PUBLIC_PRESALE_INITIAL_BALANCE : {
         56: 105000000,       // 105,000,000
-        97: 105000000,       // 100,000,000, using this value so that 100,000,000 % 20,000 == 0
+        97: 105000000,       // 105,000,000
     },
 
     // --------- Airdrop Presale --------- //
