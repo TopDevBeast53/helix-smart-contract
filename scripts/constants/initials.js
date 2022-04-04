@@ -124,7 +124,7 @@ module.exports = {
         97: '0xBe5D153b1A9e82E35d1e5f4Da8805E088c344482',   // Test Token A for testing
     },
 
-    // Input token address
+    // Output token address
     VIP_PRESALE_OUTPUT_TOKEN: {
         56: '', // Expect HELIX for mainnet
         97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
@@ -175,7 +175,7 @@ module.exports = {
         97: '0xBe5D153b1A9e82E35d1e5f4Da8805E088c344482',   // Test Token A for testing
     },
 
-    // Input token address
+    // Output token address
     PUBLIC_PRESALE_OUTPUT_TOKEN: {
         56: '', // Expect HELIX for mainnet
         97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
@@ -214,7 +214,20 @@ module.exports = {
 
     // --------- Airdrop Presale --------- //
 
+    // contract name
+    AIRDROP_NAME: {
+        56: '',
+        97: 'HODL AIRDROP'
+    },
+
+    // token address
+    AIRDROP_TOKEN: {
+        56: '', // Expect HELIX for mainnet
+        97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
+    },
+
     // Amount of HELIX to fund AirDrop contract with
+    // don't forget to multiply by 1e18
     AIRDROP_INITIAL_BALANCE : {
         56: 125000000,       // 125,000,000
         97: 125000000,       // 125,000,000
@@ -225,5 +238,4 @@ module.exports = {
         56: 0,
         97: 7862400,     // 91 days, 86400 == 1 day
     },
-
 }

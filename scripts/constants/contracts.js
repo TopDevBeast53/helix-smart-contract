@@ -75,7 +75,10 @@ module.exports = {
         56: '',
         97: '0x931A92dfC07908f68B70D7dC4868E18e8BA20F6b',
     },
-
+    airDrop: {
+        56: '',
+        97: '0xDdD75FD481b9738CbD73694d9509A9f365b2e1Bb',
+    },
     helixNFTImpl: {
         56: '',
         97: '',
