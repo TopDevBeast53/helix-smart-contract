@@ -18,6 +18,8 @@ const outputTokenAddress = initials.VIP_PRESALE_OUTPUT_TOKEN[env.network]   // H
 const treasuryAddress = initials.VIP_PRESALE_TREASURY[env.network]
 const inputRate = initials.VIP_PRESALE_INPUT_RATE[env.network]
 const outputRate = initials.VIP_PRESALE_OUTPUT_RATE[env.network]
+const purchasePhaseDuration = initials.VIP_PRESALE_PURCHASE_PHASE_DURATION[env.network]
+const withdrawPhaseDuration = initials.VIP_PRESALE_WITHDRAW_PHASE_DURATION[env.network]
 
 // Define contract settings
 const initialBalance = initials.VIP_PRESALE_INITIAL_BALANCE[env.network]
@@ -34,7 +36,9 @@ async function main() {
         outputTokenAddress,
         treasuryAddress,
         inputRate,
-        outputRate
+        outputRate,
+        purchasePhaseDuration,
+        withdrawPhaseDuration
     )     
     await contract.deployTransaction.wait()
     console.log(`Vip Presale deployed to ${contract.address}`)

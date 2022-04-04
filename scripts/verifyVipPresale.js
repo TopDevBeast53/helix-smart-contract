@@ -21,6 +21,8 @@ const outputTokenAddress = initials.VIP_PRESALE_OUTPUT_TOKEN[env.network]   // H
 const treasuryAddress = initials.VIP_PRESALE_TREASURY[env.network]
 const inputRate = initials.VIP_PRESALE_INPUT_RATE[env.network]
 const outputRate = initials.VIP_PRESALE_OUTPUT_RATE[env.network]
+const purchasePhaseDuration = initials.VIP_PRESALE_PURCHASE_PHASE_DURATION[env.network]
+const withdrawPhaseDuration = initials.VIP_PRESALE_WITHDRAW_PHASE_DURATION[env.network]
 
 async function main() {
     console.log(`Verify VIP Presale contract`);
@@ -32,7 +34,9 @@ async function main() {
                 outputTokenAddress,
                 treasuryAddress,
                 inputRate,
-                outputRate
+                outputRate,
+                purchasePhaseDuration,
+                withdrawPhaseDuration
             ]
     })
     console.log('done');
