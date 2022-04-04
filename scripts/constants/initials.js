@@ -118,6 +118,18 @@ module.exports = {
 
     // --------- VIP Presale --------- //
 
+    // Input token address
+    VIP_PRESALE_INPUT_TOKEN: {
+        56: '', // Expect BUSD for mainnet
+        97: '0xBe5D153b1A9e82E35d1e5f4Da8805E088c344482',   // Test Token A for testing
+    },
+
+    // Input token address
+    VIP_PRESALE_OUTPUT_TOKEN: {
+        56: '', // Expect HELIX for mainnet
+        97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
+    },
+
     // BUSD per ticket
     VIP_PRESALE_INPUT_RATE : {
         56: 5,
@@ -130,9 +142,16 @@ module.exports = {
         97: 400,
     },
 
-    // Amount of HELIX to fund VIP Presale contract with
+    // Treasury address
+    VIP_PRESALE_TREASURY: {
+        56: '',
+        97: '0x59201fb8cb2D61118B280c8542127331DD141654',     // Deployer address for testing
+    },
+
+    // Amount of OUTPUT TOKEN to fund VIP Presale contract with
+    // don't forget to multiply by 1e18
     VIP_PRESALE_INITIAL_BALANCE : {
-        56: 20000000,       // 20,000,000
+        56: '',
         97: 20000000,       // 20,000,000
     },
 
