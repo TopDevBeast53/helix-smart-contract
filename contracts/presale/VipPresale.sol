@@ -198,7 +198,7 @@ contract VipPresale is ReentrancyGuard {
     // purchase `amount` of tickets
     function purchase(uint amount) external nonReentrant {
         // want to be in the latest phase
-        _updatePurchasePhase();
+        updatePurchasePhase();
    
         // proceed only if the purchase is valid
         _validatePurchase(msg.sender, amount);
@@ -264,7 +264,7 @@ contract VipPresale is ReentrancyGuard {
     // used to withdraw `outputToken` equivalent in value to `amount` of tickets to `to`
     function withdraw(uint amount) external {
         // want to be in the latest phase
-        _updateWithdrawPhase();
+        updateWithdrawPhase();
 
         // remove `amount` of tickets
         _remove(amount);
@@ -335,9 +335,9 @@ contract VipPresale is ReentrancyGuard {
     }
 
     // called periodically and, if sufficient time has elapsed, update the purchasePhase
-    function _updatePurchasePhase() private {
-        if (purchasePhase >= PURCHASE_PHASE_START) {
-            if (purchasePhase < PURCHASE_PHASE_END && block.timestamp >= purchasePhaseEndTimestamp) {
+    function updatePurchasePhase() public {
+        if (block.timestamp >= purchasePhaseEndTimestamp) {
+            if (purchasePhase >= PURCHASE_PHASE_START && purchasePhase < PURCHASE_PHASE_END) {
                 _setPurchasePhase(purchasePhase + 1);
             }
         }
@@ -357,9 +357,9 @@ contract VipPresale is ReentrancyGuard {
     }
 
     // called periodically and, if sufficient time has elapsed, update the withdrawPhase
-    function _updateWithdrawPhase() private {
-        if (withdrawPhase >= WITHDRAW_PHASE_START) {
-            if (withdrawPhase < WITHDRAW_PHASE_END && block.timestamp >= withdrawPhaseEndTimestamp) {
+    function updateWithdrawPhase() public {
+        if (block.timestamp >= withdrawPhaseEndTimestamp) {
+            if (withdrawPhase >= WITHDRAW_PHASE_START && withdrawPhase < WITHDRAW_PHASE_END) {
                 _setWithdrawPhase(withdrawPhase + 1);
             }
         }
