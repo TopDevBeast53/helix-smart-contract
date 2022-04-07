@@ -44,7 +44,7 @@ contract AirDrop is ReentrancyGuard {
      */
     uint public WITHDRAW_PHASE_START;           // Phase when withdrawing starts 
     uint public WITHDRAW_PHASE_END;             // Last withdraw phase, does not end withdrawing
-    uint public WITHDRAW_PHASE_DURATION;        // Length of time for a withdrawPhase
+    uint public WITHDRAW_PHASE_DURATION;        // Length of time for a withdrawPhase, 86400 == 1 day
     uint public withdrawPhase;                  // Current withdrawPhase
     uint public withdrawPhaseEndTimestamp;      // Timestamp after which the current withdrawPhase has ended
 
@@ -82,7 +82,7 @@ contract AirDrop is ReentrancyGuard {
         _;
     }
 
-    constructor(string memory _name, address _token) isValidAddress(_token) {
+    constructor(string memory _name, address _token, uint _WITHDRAW_PHASE_DURATION) isValidAddress(_token) {
         name = _name;
         token = IERC20(_token);
 
@@ -91,7 +91,7 @@ contract AirDrop is ReentrancyGuard {
 
         WITHDRAW_PHASE_START = 1;
         WITHDRAW_PHASE_END = 5;
-        WITHDRAW_PHASE_DURATION = 91 days;  // (91 days ~= 3 months) and (91 days * 4 ~= 1 year)
+        WITHDRAW_PHASE_DURATION = _WITHDRAW_PHASE_DURATION;
 
         withdrawPhasePercent[2] = 25;       // 25%
         withdrawPhasePercent[3] = 50;       // 50%
@@ -131,8 +131,19 @@ contract AirDrop is ReentrancyGuard {
             // if paused owner can remove all tokens, otherwise they can't remove tokens
             maxAmount = isPaused ? tokenBalance() : 0;
         } else {
-            // user can remove up to their balance
-            maxAmount = isPaused ? 0 : users[by].balance;
+            if (isPaused) {
+                maxAmount = 0;
+            } else {
+                // Max number of tokens user can withdraw as a function of withdrawPhase and 
+                // number of tokens airdropped
+                uint allowed = users[by].airdropped * withdrawPhasePercent[withdrawPhase] / WITHDRAW_PERCENT;
+
+                // Number of tokens remaining in their balance
+                uint balance = users[by].balance;
+        
+                // Can only withdraw the max allowed if they have a large enough balance
+                maxAmount = balance < allowed ? balance : allowed;
+            }
         }
     }
 
@@ -170,9 +181,13 @@ contract AirDrop is ReentrancyGuard {
     }
 
     // called periodically and, if sufficient time has elapsed, update the withdrawPhase
+    function updateWithdrawPhase() external {
+        _updateWithdrawPhase();
+    }
+
     function _updateWithdrawPhase() private {
-        if (withdrawPhase >= WITHDRAW_PHASE_START) {
-            if (withdrawPhase < WITHDRAW_PHASE_END && block.timestamp >= withdrawPhaseEndTimestamp) {
+        if (block.timestamp >= withdrawPhaseEndTimestamp) {
+            if (withdrawPhase >= WITHDRAW_PHASE_START && withdrawPhase < WITHDRAW_PHASE_END) {
                 _setWithdrawPhase(withdrawPhase + 1);
             }
         }

@@ -63,7 +63,7 @@ contract PublicPresale is ReentrancyGuard {
      */
     uint public PURCHASE_PHASE_START;           // Phase when purchasing starts
     uint public PURCHASE_PHASE_END;             // Last phase before purchasing ends
-    uint public PURCHASE_PHASE_DURATION;        // Length of time for a purchasePhase
+    uint public PURCHASE_PHASE_DURATION;        // Length of time for a purchasePhase, 86400 == 1 day
     uint public purchasePhase;                  // Current purchasePhase
     uint public purchasePhaseEndTimestamp;      // Timestamp after which the current purchasePhase has ended
 
@@ -103,7 +103,8 @@ contract PublicPresale is ReentrancyGuard {
         address _outputToken, 
         address _treasury,
         uint _INPUT_RATE, 
-        uint _OUTPUT_RATE
+        uint _OUTPUT_RATE,
+        uint _PURCHASE_PHASE_DURATION
     ) 
         isValidAddress(_inputToken)
         isValidAddress(_outputToken)
@@ -123,13 +124,13 @@ contract PublicPresale is ReentrancyGuard {
         INPUT_TOKEN_DECIMALS = 1e18;
         OUTPUT_TOKEN_DECIMALS = 1e18;
 
-        TICKET_MAX = 20000;
+        TICKET_MAX = 21000;
         ticketsAvailable = TICKET_MAX;
         MINIMUM_TICKET_PURCHASE = 1;
 
         PURCHASE_PHASE_START = 1;
         PURCHASE_PHASE_END = 2;
-        PURCHASE_PHASE_DURATION = 30 minutes;
+        PURCHASE_PHASE_DURATION = _PURCHASE_PHASE_DURATION;
     }
 
     // purchase `amount` of tickets
@@ -245,9 +246,13 @@ contract PublicPresale is ReentrancyGuard {
     }
 
     // called periodically and, if sufficient time has elapsed, update the purchasePhase
+    function updatePurchasePhase() external {
+        _updatePurchasePhase();
+    }
+
     function _updatePurchasePhase() private {
-        if (purchasePhase >= PURCHASE_PHASE_START) {
-            if (purchasePhase < PURCHASE_PHASE_END && block.timestamp >= purchasePhaseEndTimestamp) {
+        if (block.timestamp >= purchasePhaseEndTimestamp) {
+            if (purchasePhase >= PURCHASE_PHASE_START && purchasePhase < PURCHASE_PHASE_END) {
                 _setPurchasePhase(purchasePhase + 1);
             }
         }

@@ -118,6 +118,18 @@ module.exports = {
 
     // --------- VIP Presale --------- //
 
+    // Input token address
+    VIP_PRESALE_INPUT_TOKEN: {
+        56: '', // Expect BUSD for mainnet
+        97: '0xBe5D153b1A9e82E35d1e5f4Da8805E088c344482',   // Test Token A for testing
+    },
+
+    // Output token address
+    VIP_PRESALE_OUTPUT_TOKEN: {
+        56: '', // Expect HELIX for mainnet
+        97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
+    },
+
     // BUSD per ticket
     VIP_PRESALE_INPUT_RATE : {
         56: 5,
@@ -130,13 +142,50 @@ module.exports = {
         97: 400,
     },
 
-    // Amount of HELIX to fund VIP Presale contract with
+    // Treasury address
+    VIP_PRESALE_TREASURY: {
+        56: '',
+        97: '0x59201fb8cb2D61118B280c8542127331DD141654',     // Deployer address for testing
+    },
+
+    // Length of time between purchase phases
+    VIP_PRESALE_PURCHASE_PHASE_DURATION: {
+        56: 0,
+        97: 86400,     // 86400 == 1 day
+    },
+
+    // Length of time between withdraw phases
+    VIP_PRESALE_WITHDRAW_PHASE_DURATION: {
+        56: 0,
+        97: 7862400,     // 91 days, 86400 == 1 day
+    },
+
+    // Amount of OUTPUT TOKEN to fund VIP Presale contract with
+    // don't forget to multiply by 1e18
     VIP_PRESALE_INITIAL_BALANCE : {
-        56: 20000000,       // 20,000,000
+        56: '',
         97: 20000000,       // 20,000,000
     },
 
     // --------- Public Presale --------- //
+
+    // Input token address
+    PUBLIC_PRESALE_INPUT_TOKEN: {
+        56: '', // Expect BUSD for mainnet
+        97: '0xBe5D153b1A9e82E35d1e5f4Da8805E088c344482',   // Test Token A for testing
+    },
+
+    // Output token address
+    PUBLIC_PRESALE_OUTPUT_TOKEN: {
+        56: '', // Expect HELIX for mainnet
+        97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
+    },
+
+    // Treasury address
+    PUBLIC_PRESALE_TREASURY: {
+        56: '',
+        97: '0x59201fb8cb2D61118B280c8542127331DD141654',     // Deployer address for testing
+    },
 
     // BUSD per ticket
     PUBLIC_PRESALE_INPUT_RATE : {
@@ -150,18 +199,43 @@ module.exports = {
         97: 5000,
     },
 
-    // Amount of HELIX to fund Public Presale contract with
-    PUBLIC_PRESALE_INITIAL_BALANCE : {
-        56: 105000000,       // 105,000,000
-        97: 100000000,       // 100,000,000, using this value so that 100,000,000 % 20,000 == 0
+    // Length of time between purchase phases
+    PUBLIC_PRESALE_PURCHASE_PHASE_DURATION: {
+        56: 0,
+        97: 1800,     // 30 minutes, 86400 == 1 day
     },
 
-    // --------- Public Presale --------- //
+    // Amount of HELIX to fund Public Presale contract with
+    // don't forget to multiply by 1e18
+    PUBLIC_PRESALE_INITIAL_BALANCE : {
+        56: 105000000,       // 105,000,000
+        97: 105000000,       // 105,000,000
+    },
+
+    // --------- Airdrop Presale --------- //
+
+    // contract name
+    AIRDROP_NAME: {
+        56: '',
+        97: 'HODL AIRDROP'
+    },
+
+    // token address
+    AIRDROP_TOKEN: {
+        56: '', // Expect HELIX for mainnet
+        97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
+    },
 
     // Amount of HELIX to fund AirDrop contract with
+    // don't forget to multiply by 1e18
     AIRDROP_INITIAL_BALANCE : {
         56: 125000000,       // 125,000,000
         97: 125000000,       // 125,000,000
     },
 
+    // Length of time between withdraw phases
+    AIRDROP_WITHDRAW_PHASE_DURATION: {
+        56: 0,
+        97: 7862400,     // 91 days, 86400 == 1 day
+    },
 }

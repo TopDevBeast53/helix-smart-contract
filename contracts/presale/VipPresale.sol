@@ -82,7 +82,7 @@ contract VipPresale is ReentrancyGuard {
      */
     uint public PURCHASE_PHASE_START;           // Phase when purchasing starts
     uint public PURCHASE_PHASE_END;             // Last phase before purchasing ends
-    uint public PURCHASE_PHASE_DURATION;        // Length of time for a purchasePhase
+    uint public PURCHASE_PHASE_DURATION;        // Length of time for a purchasePhase, 86400 == 1 day
     uint public purchasePhase;                  // Current purchasePhase
     uint public purchasePhaseEndTimestamp;      // Timestamp after which the current purchasePhase has ended
     
@@ -102,7 +102,7 @@ contract VipPresale is ReentrancyGuard {
      */
     uint public WITHDRAW_PHASE_START;           // Phase when withdrawing starts 
     uint public WITHDRAW_PHASE_END;             // Last withdraw phase, does not end withdrawing
-    uint public WITHDRAW_PHASE_DURATION;        // Length of time for a withdrawPhase
+    uint public WITHDRAW_PHASE_DURATION;        // Length of time for a withdrawPhase, 86400 == 1 day
     uint public withdrawPhase;                  // Current withdrawPhase
     uint public withdrawPhaseEndTimestamp;      // Timestamp after which the current withdrawPhase has ended
 
@@ -156,7 +156,9 @@ contract VipPresale is ReentrancyGuard {
         address _outputToken, 
         address _treasury,
         uint _INPUT_RATE, 
-        uint _OUTPUT_RATE
+        uint _OUTPUT_RATE,
+        uint _PURCHASE_PHASE_DURATION,
+        uint _WITHDRAW_PHASE_DURATION
     ) 
         isValidAddress(_inputToken)
         isValidAddress(_outputToken)
@@ -182,11 +184,11 @@ contract VipPresale is ReentrancyGuard {
 
         PURCHASE_PHASE_START = 1;
         PURCHASE_PHASE_END = 2;
-        PURCHASE_PHASE_DURATION = 1 days;
+        PURCHASE_PHASE_DURATION = _PURCHASE_PHASE_DURATION;
 
         WITHDRAW_PHASE_START = 1;
         WITHDRAW_PHASE_END = 5;
-        WITHDRAW_PHASE_DURATION = 91 days;  // (91 days ~= 3 months) and (91 days * 4 ~= 1 year)
+        WITHDRAW_PHASE_DURATION = _WITHDRAW_PHASE_DURATION;
 
         withdrawPhasePercent[2] = 25;       // 25%
         withdrawPhasePercent[3] = 50;       // 50%
@@ -302,8 +304,19 @@ contract VipPresale is ReentrancyGuard {
             // owner can remove all of the tokens available
             maxAmount = isPaused ? ticketsAvailable : 0;
         } else {
-            // user can withdraw up to their balance
-            maxAmount = isPaused ? 0 : users[by].balance;
+            if (isPaused) {
+                maxAmount = 0;
+            } else {
+                // Max number of tickets user can withdraw as a function of withdrawPhase and 
+                // number of tickets purchased
+                uint allowed = users[by].purchased * withdrawPhasePercent[withdrawPhase] / WITHDRAW_PERCENT;
+
+                // Number of tickets remaining in their balance
+                uint balance = users[by].balance;
+        
+                // Can only only withdraw the max allowed if they have a large enough balance
+                maxAmount = balance < allowed ? balance : allowed;
+            }
         }
     }
 
@@ -335,9 +348,13 @@ contract VipPresale is ReentrancyGuard {
     }
 
     // called periodically and, if sufficient time has elapsed, update the purchasePhase
+    function updatePurchasePhase() external {
+        _updatePurchasePhase();
+    }
+
     function _updatePurchasePhase() private {
-        if (purchasePhase >= PURCHASE_PHASE_START) {
-            if (purchasePhase < PURCHASE_PHASE_END && block.timestamp >= purchasePhaseEndTimestamp) {
+        if (block.timestamp >= purchasePhaseEndTimestamp) {
+            if (purchasePhase >= PURCHASE_PHASE_START && purchasePhase < PURCHASE_PHASE_END) {
                 _setPurchasePhase(purchasePhase + 1);
             }
         }
@@ -357,9 +374,13 @@ contract VipPresale is ReentrancyGuard {
     }
 
     // called periodically and, if sufficient time has elapsed, update the withdrawPhase
+    function updateWithdrawPhase() external {
+        _updateWithdrawPhase();
+    }
+
     function _updateWithdrawPhase() private {
-        if (withdrawPhase >= WITHDRAW_PHASE_START) {
-            if (withdrawPhase < WITHDRAW_PHASE_END && block.timestamp >= withdrawPhaseEndTimestamp) {
+        if (block.timestamp >= withdrawPhaseEndTimestamp) {
+            if (withdrawPhase >= WITHDRAW_PHASE_START && withdrawPhase < WITHDRAW_PHASE_END) {
                 _setWithdrawPhase(withdrawPhase + 1);
             }
         }

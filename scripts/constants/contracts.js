@@ -67,6 +67,18 @@ module.exports = {
         56: '',
         97: '0x0cc0d1C3CECFD88eDA86bb2aA5b8D422960e62Db',
     },
+    vipPresale: {
+        56: '',
+        97: '0x3c5281A44e30bA282792750fd274213530044911',
+    },
+    publicPresale: {
+        56: '',
+        97: '0x931A92dfC07908f68B70D7dC4868E18e8BA20F6b',
+    },
+    airDrop: {
+        56: '',
+        97: '0xDdD75FD481b9738CbD73694d9509A9f365b2e1Bb',
+    },
     helixNFTImpl: {
         56: '',
         97: '',
