@@ -2,7 +2,7 @@
  * @dev Used to (re)build all required referrences between deployed contracts
  * 
  * Run from project root using:
- *     npx hardhat run scripts/deploymentHelper.js --network testnetBSC
+ *     npx hardhat run scripts/16_deploymentHelper.js --network testnetBSC
  */
 
 const verbose = true

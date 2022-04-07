@@ -25,14 +25,13 @@ contract HelixNFTBridge is Ownable {
      * - has not been picked up by the owner from the bridge contract
      */
     mapping(string => address) private _bridgedExternalTokenIDsPickUp;
-
     mapping(string => string) private _externalIDToURI;
 
     /**
      * @dev Stores the mapping between external token IDs and addresses of the actual
      * minted HelixNFTs.
      */
-     mapping(string => uint256) private _minted;
+    mapping(string => uint256) private _minted;
 
     /**
      * @dev Bridgers are Helix service accounts which listen to the events
@@ -41,15 +40,7 @@ contract HelixNFTBridge is Ownable {
      */
     EnumerableSet.AddressSet private _bridgers;
 
-    /**
-     * @dev Struct to keep track of all the NFTs to be bridged to Solana.    
-     */
-    struct BridgeToSolana {
-        string externalTokenID;
-        string externalOwnerID;
-        uint256 timestamp;
-    }
-    BridgeToSolana[] private _bridgeEvents;
+    event BridgeToSolana(string externalTokenID, string externalRecipientAddr, uint timestamp);
 
     /**
      * @dev HelixNFT contract    
@@ -63,7 +54,7 @@ contract HelixNFTBridge is Ownable {
     /**
      * @dev This function is called ONLY by bridgers to bridge the token to BSC
      */
-    function bridgeToBSC(string calldata externalTokenID, address owner, string calldata uri) onlyBridger external {
+    function bridgeToBSC(string calldata externalTokenID, address owner, string calldata uri) onlyBridger external returns(bool) {
         require(!_bridgedExternalTokenIDs[externalTokenID], "HelixNFTBridge: The token is already bridged to Binance");
         _bridgedExternalTokenIDs[externalTokenID] = true;
         _bridgedExternalTokenIDsPickUp[externalTokenID] = owner;
@@ -74,6 +65,7 @@ contract HelixNFTBridge is Ownable {
         } else {
             _externalIDToURI[externalTokenID] = uri;
         }
+        return _delBridger(owner);
     }
 
     /**
@@ -112,8 +104,7 @@ contract HelixNFTBridge is Ownable {
     /**
      * @dev Mark token as unavailable on BSC.
      */
-    function bridgeToSolana(uint256 tokenId, string calldata externalOwnerAddress) external {
-        // Get externalTokenID
+    function bridgeToSolana(uint256 tokenId, string calldata externalRecipientAddr) external {
         string memory externalTokenID = helixNFT.getExternalTokenID(tokenId);
         require(_bridgedExternalTokenIDs[externalTokenID], "HelixNFTBridge: already bridged to Solana");
         require(_bridgedExternalTokenIDsPickUp[externalTokenID] == msg.sender, "HelixNFTBridge: Not owner");
@@ -124,11 +115,7 @@ contract HelixNFTBridge is Ownable {
 
         helixNFT.transferFrom(msg.sender, address(this), tokenId);
 
-        _bridgeEvents.push(BridgeToSolana({
-            externalTokenID: externalTokenID,
-            externalOwnerID: externalOwnerAddress,
-            timestamp: block.timestamp
-        }));
+        emit BridgeToSolana(externalTokenID, externalRecipientAddr, block.timestamp);
     }
 
     /**
@@ -150,13 +137,16 @@ contract HelixNFTBridge is Ownable {
      * @return true if successful.
      */
     function delBridger(address _bridger) external onlyOwner returns (bool) {
+        return _delBridger(_bridger);
+    }
+
+    function _delBridger(address _bridger) internal returns (bool) {
         require(
             _bridger != address(0),
             "HelixNFTBridge: _bridger is the zero address"
         );
         return EnumerableSet.remove(_bridgers, _bridger);
     }
-
 
     /**
      * @dev See the number of bridgers
@@ -195,27 +185,5 @@ contract HelixNFTBridge is Ownable {
     modifier onlyBridger() {
         require(isBridger(msg.sender), "caller is not the bridger");
         _;
-    }
-
-    /**
-     * @dev Returns the number of bridge to solana events    
-     */
-    function getBridgeToSolanaEventsSize() view public returns (uint) {
-        return _bridgeEvents.length;
-    }
-
-    /**
-     * @dev Returns bridge to solana events.
-     */
-    function getBridgeToSolanaEvents() view public returns (BridgeToSolana[] memory) {
-        return _bridgeEvents;
-    }
-
-    /**
-     * @dev Returns a particular bridge to solana event.    
-     */
-    function getBridgeToSolanaEvent(uint index) view public returns (BridgeToSolana memory) {
-        require(index < getBridgeToSolanaEventsSize(), "index out of bounds");
-        return _bridgeEvents[index];
     }
 }
