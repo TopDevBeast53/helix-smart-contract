@@ -61,7 +61,7 @@ module.exports = {
     },
     helixVault: {
         56: '',
-        97: '0x34D7730f3f5D1fD4e89690567a229d2580347C7e',
+        97: '0x4592Bc7C6f98611b4EB01A1e931574DbbE6F345e',
     },
     multicall2: {
         56: '',

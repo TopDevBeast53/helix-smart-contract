@@ -14,9 +14,9 @@ const initials = require('./constants/initials')
 
 // Define contract constructor arguments
 const helixTokenAddress = contracts.helixToken[env.network]
-const rewardPerBlock = initials.VAULT_REWARD_PER_BLOCK[env.network]
-const startBlock = initials.VAULT_START_BLOCK[env.network]
-const bonusEndBlock = initials.VAULT_BONUS_END_BLOCK[env.network]
+const rewardPerBlock = initials.HELIX_VAULT_REWARD_PER_BLOCK[env.network]
+const startBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
+const bonusEndBlock = initials.HELIX_VAULT_BONUS_END_BLOCK[env.network]
 
 async function main() {
     const [deployer] = await ethers.getSigners();
