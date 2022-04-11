@@ -1,6 +1,7 @@
 // SPDX-License-Identifer: MIT
 pragma solidity >= 0.8.0;
 
+import '../interfaces/IMasterChef.sol';
 import '../interfaces/IERC20.sol';
 import '../libraries/SafeERC20.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
@@ -17,15 +18,16 @@ import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
  */
 contract YieldAndUnderlyingSwap {
     using SafeERC20 for IERC20;
+        
+    // Chef contract used for generating yield on lpToken
+    IMasterChef public chef;
 
-    // Liquidity token held and earning yield by seller to be recieved by buyer after duration
-    IERC20 public lpToken;
-    
-    // Token exchanged by buyer to seller for lpToken
+    // Token exchanged by buyer to seller for lpToken, i.e. HELIX
     IERC20 public exToken;
 
     // Information about an opened auction
     struct Auction {
+        IERC20 lpToken;             // Liquidity token plus yield being sold
         address seller;             // Address that opened this auction and that is selling amount of lpToken
         address buyer;              // Address with the current highest bid
         uint amount;                // Amount of lpToken being sold in this auction
@@ -88,11 +90,11 @@ contract YieldAndUnderlyingSwap {
         _;
     }
 
-    constructor(address _lpToken, address _exToken) 
-        isValidAddress(_lpToken)
+    constructor(address _chef, address _exToken) 
+        isValidAddress(_chef)
         isValidAddress(_exToken)
     {
-        lpToken = IERC20(_lpToken);
+        chef = IERC20(_chef);
         exToken = IERC20(_exToken);
 
         MAX_OPEN_DURATION = 30 days;
@@ -101,7 +103,15 @@ contract YieldAndUnderlyingSwap {
 
     // Called externally to open a new auction
     // `bid` sets the minimum, starting bid
-    function open(uint amount, uint ask, uint bid, uint openDuration, uint lockDuration) external {
+    function open(
+        IERC20 lpToken, 
+        uint amount, 
+        uint ask, 
+        uint bid, 
+        uint openDuration, 
+        uint lockDuration
+    ) external {
+        require(address(lpToken) != address(0), "YieldAndUnderlyingSwap: INVALID LP TOKEN");
         require(amount > 0, "YieldAndUnderlyingSwap: INVALID AMOUNT");
         require(ask > 0, "YieldAndUnderlyingSwap: INVALID ASK");
         require(bid < ask, "YieldAndUnderlyingSwap: INVALID BID");
@@ -119,6 +129,8 @@ contract YieldAndUnderlyingSwap {
         // Open the auction
         uint id = auctionId++;
         Auction storage auction = auctions[id];
+
+        auction.lpToken = lpToken;
         auction.amount = amount;
         auction.ask = ask;
         auction.openUntilTimestamp = block.timestamp + openDuration;
@@ -239,7 +251,7 @@ contract YieldAndUnderlyingSwap {
 
             if (auction.buyer == address(0)) {
                 // If no bids have been placed return the seller their deposited funds
-                lpToken.safeTransfer(auction.seller, auction.amount);
+                auction.lpToken.safeTransfer(auction.seller, auction.amount);
             } else {
                 // Otherwise, pay the seller the highest bid
                 exToken.safeTransfer(auction.seller, auction.bid);
@@ -262,7 +274,7 @@ contract YieldAndUnderlyingSwap {
         require(block.timestamp > auction.lockUntilTimestamp, "YieldAndUnderlyingSwap: WITHDRAW IS LOCKED");
 
         auction.isWithdrawn = true; 
-        lpToken.safeTransfer(auction.buyer, auction.amount);
+        auction.lpToken.safeTransfer(auction.buyer, auction.amount);
 
         emit Withdrawn(id);
     }
