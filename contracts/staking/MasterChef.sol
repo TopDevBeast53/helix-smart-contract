@@ -118,6 +118,11 @@ contract MasterChef is Ownable, IMasterChef {
         return poolInfo.length;
     }
 
+    // Return the lpToken address associated with poolId _pid
+    function getLpToken(uint256 _pid) external view returns(address) {
+        return address(poolInfo[_pid].lpToken);
+    }
+
     function withdrawDevAndRefFee() public{
         require(lastBlockDevWithdraw < block.number, 'wait for new block');
         uint256 multiplier = getMultiplier(lastBlockDevWithdraw, block.number);
@@ -264,6 +269,31 @@ contract MasterChef is Ownable, IMasterChef {
         refRegister.recordStakingRewardWithdrawal(msg.sender, pending);
         emit Withdraw(msg.sender, _pid, _amount);
     }
+
+    // Withdraw msg.senders deposited LP tokens from MasterChef and send the withdrawal to `to`
+    // WARNING funds sent to `to` will be inaccessible to msg.sender
+    function withdrawTo(uint256 _pid, uint256 _amount, address to) public {
+        require (_pid != 0, 'withdraw HelixToken by unstaking');
+
+        PoolInfo storage pool = poolInfo[_pid];
+        UserInfo storage user = userInfo[_pid][msg.sender];
+
+        require(user.amount >= _amount, "MasterChef: INVALID WITHDRAW TO AMOUNT");
+
+        updatePool(_pid);
+
+        uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
+        safeHelixTokenTransfer(to, pending);
+
+        user.amount = user.amount - (_amount);
+        user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
+        TransferHelper.safeTransfer(address(pool.lpToken), to, _amount);
+
+        refRegister.recordStakingRewardWithdrawal(msg.sender, pending);
+
+        emit Withdraw(msg.sender, _pid, _amount);
+    }
+
 
     // Stake HelixToken tokens to MasterChef
     function enterStaking(uint256 _amount) public {
