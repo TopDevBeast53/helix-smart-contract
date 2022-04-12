@@ -9,12 +9,12 @@ import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 /*
  * P2P swap for sellers to sell liquidity tokens and their yield after being locked
  * for a duration. Sellers open a swap and set the amount of liquidity tokens to
- * sell, the minimum bid, the starting ask, the duration of bidding on the swap, and 
- * the duration liquidity tokens are locked after bidding has closed. Buyers can accept
- * the ask or make a bid. If no bid or ask has been accepted before bidding ends the 
- * highest bidder is selected. When bidding ends the seller recieves the highest bid 
- * and the liquidity tokens are locked until the lock duration expires, after which 
- * the buyer can withdraw their liquidity tokens plus their earned yield. 
+ * sell, the starting ask, and the duration liquidity tokens are locked after bidding 
+ * has closed. Buyers can accept the ask or make a bid. Bidding remains open until the
+ * seller accepts a bid or a buyer accepts the ask. When bidding closes, the seller 
+ * recieves the bid or ask and the liquidity tokens are locked and staked until the 
+ * lock duration expires, after which the buyer can withdraw their liquidity tokens 
+ * plus the earned yield on those tokens.
  */
 contract YieldAndUnderlyingSwap is ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -168,7 +168,7 @@ contract YieldAndUnderlyingSwap is ReentrancyGuard {
         Swap storage swap = swaps[_swapId];
 
         require(swap.isOpen, "YieldAndUnderlyingSwap: SWAP IS CLOSED");
-        require(msg.sender != swap.seller, "YieldAndUnderlyingSwap: SELLER CAN'T BID ON OWN SWAP");
+        require(msg.sender != swap.seller, "YieldAndUnderlyingSwap: SELLER CAN'T BID ON THEIR OWN SWAP");
         require(!_hasBid(_swapId), "YieldAndUnderlyingSwap: CALLER HAS ALREADY BID");
         require(amount <= exToken.balanceOf(msg.sender), "INSUFFICIENT EXCHANGE TOKEN BALANCE TO MAKE BID");
         require(
@@ -176,8 +176,12 @@ contract YieldAndUnderlyingSwap is ReentrancyGuard {
             "YieldAndUnderlyingSwap: INSUFFICIENT EXCHANGE TOKEN ALLOWANCE TO MAKE BID"
         );
 
-        // Lock the buyer's funds while the swap is open
+        // Lock the bidder's funds while the swap is open or until they withdraw
         exToken.safeTransferFrom(msg.sender, address(this), amount);
+        
+        // and stake the bidder's funds while locked
+        exToken.approve(address(chef), amount);
+        chef.enterStaking(amount);
 
         // Open the bid
         uint _bidId = bidId++;
@@ -196,12 +200,12 @@ contract YieldAndUnderlyingSwap is ReentrancyGuard {
         emit BidMade(_bidId);
     }
 
-    // Called externally by a buyer to change the amount they're willing to bid
+    // Called externally by a buyer to change the amount locked and bid
+    // Set amount to 0 to withdraw completely
     function setBid(uint _bidId, uint amount) external isValidBidId(bidId) {
         Bid storage bid = bids[_bidId];
         Swap storage swap = swaps[bid.swapId];
 
-        require(swap.isOpen, "YieldAndUnderlyingSwap: SWAP IS CLOSED");
         require(msg.sender == bid.bidder, "YieldAndUnderlyingSwap: CALLER IS NOT THE BIDDER");
 
         if (amount > bid.amount) {
@@ -218,12 +222,17 @@ contract YieldAndUnderlyingSwap is ReentrancyGuard {
                 "YieldAndUnderlyingSwap: INSUFFICIENT EXCHANGE TOKEN ALLOWANCE TO SET BID"
             );
 
+            // transfer funds from the bidder to this contract
             exToken.transferFrom(msg.sender, address(this), amountToAdd);
+
+            // and stake the bid
+            exToken.approve(address(chef), amountToAdd);
+            chef.enterStaking(amountToAdd);
         } else if (amount < bid.amount) {
             // Otherwise, if decreasing the amount being bid,
             // return the difference between previous amount and amount
             uint amountToRemove = bid.amount - amount;
-            exToken.transfer(msg.sender, amountToRemove);
+            chef.leaveStakingTo(amountToRemove, msg.sender);
         }
 
         emit BidSet(_bidId);
@@ -243,9 +252,9 @@ contract YieldAndUnderlyingSwap is ReentrancyGuard {
         swap.lockUntilTimestamp = block.timestamp + swap.lockDuration;
 
         // Send the seller their funds
-        exToken.safeTransfer(msg.sender, bid.amount);
+        chef.leaveStakingTo(bid.amount, msg.sender);
 
-        // Stake the accepted amount
+        // Stake the accepted bid amount
         chef.deposit(swap.poolId, bid.amount);
 
         emit BidAccepted(_bidId);
@@ -270,7 +279,7 @@ contract YieldAndUnderlyingSwap is ReentrancyGuard {
         // send funds directly from buyer to seller
         exToken.safeTransferFrom(msg.sender, swap.seller, swap.ask);
 
-        // Stake the accepted amount
+        // Stake the accepted ask amount
         chef.deposit(swap.poolId, swap.ask);
 
         emit AskAccepted(_swapId);

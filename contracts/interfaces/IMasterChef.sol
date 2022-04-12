@@ -12,6 +12,8 @@ interface IMasterChef {
 
     function leaveStaking(uint256 _amount) external;
 
+    function leaveStakingTo(uint256 _amount, address to) external;
+
     function pendingHelixToken(uint256 _pid, address _user) external view returns (uint256);
 
     function userInfo(uint256 _pid, address _user) external view returns (uint256, uint256);

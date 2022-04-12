@@ -335,6 +335,27 @@ contract MasterChef is Ownable, IMasterChef {
         emit Withdraw(msg.sender, 0, _amount);
     }
 
+    // Withdraw HelixToken tokens from STAKING as msg.sender and transfer the unstaked tokens to `to`
+    // WARNING funds sent to `to` will be inaccessible to msg.sender
+    function leaveStakingTo(uint256 _amount, address to) public {
+        PoolInfo storage pool = poolInfo[0];
+        UserInfo storage user = userInfo[0][msg.sender];
+        require(user.amount >= _amount, "MasterChef: INVALID AMOUNT TO UNSTAKE");
+        updatePool(0);
+        uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
+        if(pending > 0) {
+            safeHelixTokenTransfer(to, pending);
+            refRegister.recordStakingRewardWithdrawal(to, pending);
+        }
+        if(_amount > 0) {
+            user.amount = user.amount - (_amount);
+            TransferHelper.safeTransfer(address(pool.lpToken), to, _amount);
+            depositedHelix = depositedHelix - (_amount);
+        }
+        user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
+        emit Withdraw(msg.sender, 0, _amount);
+    }
+
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function emergencyWithdraw(uint256 _pid) public {
         PoolInfo storage pool = poolInfo[_pid];
