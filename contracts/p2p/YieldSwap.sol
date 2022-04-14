@@ -17,7 +17,7 @@ import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
  * the lock duration expires, after which the buyer can withdraw their liquidity tokens 
  * plus the earned yield on those tokens.
  */
-contract YieldAndUnderlyingSwap is Ownable, ReentrancyGuard {
+contract YieldSwap is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
         
     // Chef contract used to generate yield on lpToken
