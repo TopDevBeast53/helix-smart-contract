@@ -23,9 +23,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     // Chef contract used to generate yield on lpToken
     IMasterChef public chef;
 
-    // Used to check if a Swap's bids are helixToken and then to stake the bids
-    IERC20 public helixToken;
-
     // Maximum duration in seconds that a swap can be locked before allowing withdrawal, 86400 == 1 day
     uint public MAX_LOCK_DURATION;
 
@@ -76,14 +73,18 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     // Max amount that a "fee" can be set to and 
     // the denominator used when calculating percentages
     // if MAX_FEE_PERCENT == 1000, then fees are out of 1000
-    // and if fee == 50 that's 5% and if fee == 500 that's 50%
+    // so if fee == 50 that's 5% and if fee == 500 that's 50%
     uint public MAX_FEE_PERCENT;
 
     // Map a seller address to the swaps it's opened 
     mapping(address => uint[]) public swapIds;
 
-    // Map a buyer address to the bids it's made
+    // Map a bidder address to the bids it's made
     mapping(address => uint[]) public bidIds;
+
+    // Used for cheap lookup for whether an address has bid on a Swap 
+    // True if the address has bid on the swapId and false otherwise
+    mapping(address => mapping(uint => bool)) public hasBidOnSwap;
 
     // Emitted when a new swap is opened 
     event SwapOpened(uint indexed id);
@@ -124,14 +125,12 @@ contract YieldSwap is Ownable, ReentrancyGuard {
 
     constructor(
         IMasterChef _chef, 
-        IERC20 _helixToken, 
         address _treasury,
         uint _MAX_LOCK_DURATION
     ) {
         require(address(_chef) != address(0), "YieldSwap: INVALID MASTER CHEF ADDRESS");
 
         chef = _chef;
-        helixToken = _helixToken;
         treasury = _treasury;
 
         MAX_LOCK_DURATION = _MAX_LOCK_DURATION;
@@ -152,7 +151,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         require(poolId < chef.poolLength(), "YieldSwap: INVALID POOL ID");
 
         IERC20 lpToken = IERC20(chef.getLpToken(poolId));
-        _depositLpToken(lpToken, poolId, amount);
+        _verify(lpToken, msg.sender, amount);
 
         // Open the swap
         uint _swapId = ++swapId;
@@ -173,8 +172,8 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
 
     // Called by seller to update the swap's ask
-    function setAsk(uint _swapId, uint ask) external isValidSwapId(_swapId) {
-        Swap storage swap = swaps[_swapId];
+    function setAsk(uint _swapId, uint ask) external {
+        Swap storage swap = _getSwap(_swapId);
 
         require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
         require(msg.sender == swap.seller, "YieldSwap: ONLY SELLER CAN SET ASK");
@@ -184,8 +183,8 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
     
     // Called by seller to close the swap and withdraw their lpTokens
-    function swapClose(uint _swapId) external isValidSwapId(_swapId) {
-        Swap storage swap = swaps[_swapId];
+    function swapClose(uint _swapId) external {
+        Swap storage swap = _getSwap(_swapId);
 
         require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
         require(msg.sender == swap.seller, "YieldSwap: ONLY SELLER CAN SET ASK");
@@ -196,15 +195,14 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         emit SwapClosed(_swapId);
     }
 
-    // Make a bid on an open swap
-    function makeBid(uint _swapId, uint amount) external isValidSwapId(_swapId) {
-        Swap storage swap = swaps[_swapId];
+    // Make a new bid on an open swap
+    function makeBid(uint _swapId, uint amount) external {
+        Swap storage swap = _getSwap(_swapId);
 
         require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
         require(msg.sender != swap.seller, "YieldSwap: SELLER CAN'T BID ON THEIR OWN SWAP");
-        require(_getBidId(_swapId) == 0, "YieldSwap: CALLER HAS ALREADY BID");
-        
-        _depositExToken(swap.exToken, amount);
+        require(hasBidOnSwap[msg.sender][_swapId] == false, "YieldSwap: CALLER HAS ALREADY MADE BID");
+        _verify(swap.exToken, msg.sender, amount);
 
         // Open the bid
         uint _bidId = ++bidId;
@@ -214,106 +212,88 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         bid.swapId = _swapId;
         bid.amount = amount;
 
-        // Add the bid to the swap
+        // Reflect the new bid in the swap
         swap.bidIds.push(_bidId);
 
-        // Reflect the bid in the buyer's list of bids
+        // Reflect the new bid in the buyer's list of bids
         bidIds[msg.sender].push(_bidId);
+
+        // Reflect that the user has bid on this swap
+        hasBidOnSwap[msg.sender][_swapId] = true;
 
         emit BidMade(_bidId);
     }
 
-    // Called externally by a buyer while bidding is open to set the amount being bid
-    function setBid(uint _bidId, uint amount) external isValidBidId(bidId) {
-        Bid storage bid = bids[_bidId];
-        Swap storage swap = swaps[bid.swapId];
+    // Called externally by a bidder while bidding is open to set the amount being bid
+    function setBid(uint _bidId, uint amount) external {
+        Bid storage bid = _getBid(_bidId);
+        Swap storage swap = _getSwap(bid.swapId);
     
         require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
         require(msg.sender == bid.bidder, "YieldSwap: CALLER IS NOT THE BIDDER");
+        _verify(swap.exToken, msg.sender, amount);
 
-        if (amount > bid.amount) {
-            uint amountToDeposit = amount - bid.amount;
-            bid.amount += amountToDeposit;
-            _depositExToken(swap.exToken, amountToDeposit);
-        } else if (amount < bid.amount) {
-            uint amountToWithdraw = bid.amount - amount;
-            bid.amount -= amountToWithdraw;
-            _withdrawExToken(swap.exToken, msg.sender, amountToWithdraw); 
-        }
+        bid.amount = amount;
 
         emit BidSet(_bidId);
     }
 
-    // Called externally by a bidder after bidding is closed to withdraw their bid
-    function withdrawBid(uint _bidId) external isValidBidId(_bidId) {
-        Bid storage bid = bids[_bidId];
-        Swap storage swap = swaps[bid.swapId];
-
-        require(!swap.isOpen, "YieldSwap: SWAP IS OPEN");
-        require(msg.sender != swap.buyer, "YieldSwap: BUYER CAN'T WITHDRAW BID");
-        require(msg.sender == bid.bidder, "YieldSwap: CALLER IS NOT BIDDER");
-        require(bid.amount != 0, "YieldSwap: CALLER HAS NO BID");
-    
-        _withdrawExToken(swap.exToken, msg.sender, bid.amount);
-        bid.amount = 0;
-
-        emit BidWithdrawn(_bidId);
-    }
-
     // Called externally by the seller to accept the bid and close the swap
-    function acceptBid(uint _bidId) external isValidBidId(_bidId) {
-        Bid storage bid = bids[_bidId];
-        Swap storage swap = swaps[bid.swapId];
-
-        require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
+    function acceptBid(uint _bidId) external {
+        Bid storage bid = _getBid(_bidId);
+        Swap storage swap = _getSwap(bid.swapId);
         require(msg.sender == swap.seller, "YieldSwap: ONLY SELLER CAN ACCEPT BID");
 
-        swap.isOpen = false;
-        swap.buyer = bid.bidder;
-        swap.lockUntilTimestamp = block.timestamp + swap.lockDuration;
-        
-        // Send the seller their funds minus the fee sent to the treasury
-        (uint sellerAmount, uint treasuryAmount) = _applySellerFee(bid.amount);
-        _withdrawExToken(swap.exToken, msg.sender, sellerAmount);
-        _withdrawExToken(swap.exToken, treasury, treasuryAmount);
+        _accept(swap, msg.sender, bid.bidder, swap.ask);
 
         emit BidAccepted(_bidId);
     }
 
     // Called by a buyer to accept the ask and close the swap
-    function acceptAsk(uint _swapId) external isValidSwapId(_swapId) {
-        Swap storage swap = swaps[_swapId];
+    function acceptAsk(uint _swapId) external {
+        Swap storage swap = _getSwap(_swapId);
 
-        require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
-        require(msg.sender != swap.seller, "YieldSwap: ONLY BUYER CAN ACCEPT ASK");
-        require(swap.ask <= swap.exToken.balanceOf(msg.sender), "INSUFFICIENT EXCHANGE TOKEN BALANCE TO ACCEPT ASK");
-        require(
-            swap.ask <= swap.exToken.allowance(msg.sender, address(this)),
-            "YieldSwap: INSUFFICIENT ALLOWANCE TO ACCEPT ASK"
-        );
+        require(msg.sender != swap.seller, "YieldSwap: SELLER CAN'T ACCEPT ASK");
 
-        swap.isOpen = false;
-        swap.buyer = msg.sender;
-        swap.lockUntilTimestamp = block.timestamp + swap.lockDuration;
+        _accept(swap, swap.seller, msg.sender, swap.ask);
 
-        // Send the seller their funds minus the fee sent to the treasury
-        (uint sellerAmount, uint treasuryAmount) = _applySellerFee(swap.ask);
-        _withdrawExToken(swap.exToken, swap.seller, sellerAmount);
-        _withdrawExToken(swap.exToken, treasury, treasuryAmount);
-   
-        // If the buyer has made a bid, return the bid amount to them
-        uint _bidId = _getBidId(_swapId);
-        if (_bidId != 0) {
-            uint bidAmount = bids[_bidId].amount; 
-            _withdrawExToken(swap.exToken, msg.sender, bidAmount);
-        }
- 
         emit AskAccepted(_swapId);
     } 
 
+    // Called internally to accept a bid or an ask, perform the
+    // necessary checks, and transfer funds
+    function _accept(
+        Swap memory swap,
+        address seller,
+        address buyer,
+        uint exAmount
+    ) private {
+        require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
+
+        IERC20 lpToken = swap.lpToken;
+        _verify(lpToken, seller, swap.amount);
+
+        IERC20 exToken = swap.exToken;
+        _verify(exToken, buyer, exAmount);
+
+        swap.isOpen = false;
+        swap.buyer = buyer;
+        swap.lockUntilTimestamp = block.timestamp + swap.lockDuration;
+
+        // Lock and stake lpAmount of the seller's lpToken
+        uint lpAmount = swap.amount;
+        lpToken.transferFrom(seller, address(this), lpAmount);
+        chef.deposit(swap.poolId, lpAmount);
+        
+        // Transfer exAmount from the buyer to the seller minus the treasury fee
+        (uint sellerAmount, uint treasuryAmount) = _applySellerFee(exAmount);
+        exToken.transferFrom(buyer, treasury, treasuryAmount);
+        exToken.transferFrom(buyer, seller, sellerAmount);
+    }
+
     // Called externally to send swap buyer their purchased lpTokens plus yield
-    function withdrawPurchase(uint _swapId) external isValidSwapId(_swapId) {
-        Swap storage swap = swaps[_swapId];
+    function withdrawPurchase(uint _swapId) external {
+        Swap storage swap = _getSwap(_swapId);
 
         require(!swap.isOpen, "YieldSwap: SWAP IS OPEN");
         require(!swap.isWithdrawn, "YieldSwap: SWAP HAS BEEN WITHDRAWN");
@@ -344,8 +324,8 @@ contract YieldSwap is Ownable, ReentrancyGuard {
 
     // Return the bid with the highest bid amount made on _swapId
     // If there are tied highest bids, choose the one that was made first
-    function getMaxBid(uint _swapId) external view isValidSwapId(_swapId) returns(Bid memory maxBid) {
-        Swap storage swap = swaps[_swapId];
+    function getMaxBid(uint _swapId) external view returns(Bid memory maxBid) {
+        Swap storage swap = _getSwap(_swapId);
         uint[] memory _bidIds = swap.bidIds;
 
         for (uint id = 1; id <= _bidIds.length; id++) {
@@ -354,58 +334,41 @@ contract YieldSwap is Ownable, ReentrancyGuard {
             }
         }
     }
-
-    // Transfer amount of lpToken from msg.sender and stake them in poolId
-    function _depositLpToken(IERC20 lpToken, uint poolId, uint amount) private {
-        require(amount <= lpToken.balanceOf(msg.sender), "INSUFFICIENT LP TOKEN BALANCE TO OPEN");
+    
+    // verify that _address has amount of token in balance
+    // and that _address has approved this contract to transfer amount
+    function _verify(IERC20 token, address _address, uint amount) private view {
+        require(amount <= token.balanceOf(_address), "INSUFFICIENT TOKEN BALANCE");
         require(
-            amount <= lpToken.allowance(msg.sender, address(this)),
-            "YieldSwap: INSUFFICIENT LP TOKEN ALLOWANCE TO OPEN"
+            amount <= token.allowance(_address, address(this)),
+            "YieldSwap: INSUFFICIENT TOKEN ALLOWANCE"
         );
-
-        lpToken.safeTransferFrom(msg.sender, address(this), amount);
-        chef.deposit(poolId, amount);
     }
 
-    // Transfer amount of exToken from msg.sender and, if possible, stake the amount
-    function _depositExToken(IERC20 exToken, uint amount) private {
-        require(amount <= exToken.balanceOf(msg.sender), "INSUFFICIENT EXCHANGE TOKEN BALANCE TO MAKE BID");
-        require(
-            amount <= exToken.allowance(msg.sender, address(this)),
-            "YieldSwap: INSUFFICIENT EXCHANGE TOKEN ALLOWANCE TO MAKE BID"
-        );
-
-        exToken.safeTransferFrom(msg.sender, address(this), amount);
-        if (address(exToken) == address(helixToken)) {
-            exToken.approve(address(chef), amount);
-            chef.enterStaking(amount);
-        }     
+    function getSwap(uint _swapId) external view returns(Swap memory) {
+        return _getSwap(_swapId);
     }
 
-    // Transfer amount of exToken to msg.sender and ustake, if necessary
-    function _withdrawExToken(IERC20 exToken, address to, uint amount) private {
-        if (address(exToken) == address(helixToken)) {
-            chef.leaveStakingTo(amount, to);
-        } else {
-            exToken.transfer(to, amount);
-        }
+    function _getSwap(uint _swapId) 
+        private 
+        view 
+        isValidSwapId(_swapId) 
+        returns(Swap storage) 
+    {
+        return swaps[_swapId];
     }
 
-    // If msg.sender has made a bid on swapId return the bidId, otherwise return 0
-    function _getBidId(uint _swapId) private view returns(uint) {
-        uint[] memory _bidIds = bidIds[msg.sender];
-
-        for (uint id = 0; id <= _bidIds.length; id++) {
-            if (_swapId == bids[id].swapId) {
-                return id;
-            }
-        }
-        return 0;
+    function getBid(uint _bidId) external view returns(Bid memory) {
+        return _getBid(_bidId);
     }
 
-    function setHelixToken(IERC20 _helixToken) external onlyOwner {
-        require(address(_helixToken) != address(0), "YieldSwap: INVALID HELIX TOKEN ADDRESS");
-        helixToken = _helixToken;
+    function _getBid(uint _bidId) 
+        private 
+        view 
+        isValidBidId(_bidId) 
+        returns(Bid storage) 
+    {
+        return bids[_bidId];
     }
 
     function setTreasury(address _treasury) external onlyOwner {
