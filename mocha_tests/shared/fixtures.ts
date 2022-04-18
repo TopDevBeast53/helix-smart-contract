@@ -28,6 +28,7 @@ import HelixVault from '../../build/contracts/HelixVault.json'
 import VipPresale from '../../build/contracts/VipPresale.json'
 import PublicPresale from '../../build/contracts/PublicPresale.json'
 import AirDrop from '../../build/contracts/AirDrop.json'
+import YieldSwap from '../../build/contracts/YieldSwap.json'
 
 const addresses = require('../../scripts/constants/addresses')
 const initials = require('../../scripts/constants/initials')
@@ -70,6 +71,9 @@ const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHAS
 
 const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.network]
 
+const yieldSwapTreasury = initials.YIELD_SWAP_TREASURY[env.network]
+const yieldSwapMaxLockDuration = initials.YIELD_SWAP_MAX_LOCK_DURATION[env.network]
+
 const overrides = {
     gasLimit: 9999999
 }
@@ -103,6 +107,7 @@ interface FullExchangeFixture {
     vipPresale: Contract
     publicPresale: Contract
     airDrop: Contract
+    yieldSwap: Contract
 }
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
@@ -262,6 +267,16 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // presale must be registered as helixToken minter to be able to burn tokens
     await helixToken.addMinter(airDrop.address)
 
+    // 17 deploy yield swap contract
+    const yieldSwap = await deployContract(wallet, YieldSwap, 
+        [
+            chef.address,                   // chef used for earning lpToken yield
+            wallet.address,                 // treasury used for receiving buy/sell fees
+            yieldSwapMaxLockDuration,       // maximum length of time (in seconds) a swap can be locked for
+        ], 
+        overrides
+    )
+
     return {
         tokenA,
         tokenB,
@@ -291,5 +306,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         vipPresale,
         publicPresale,
         airDrop,
+        yieldSwap,
     }
 }

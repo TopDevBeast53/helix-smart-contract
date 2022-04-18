@@ -238,4 +238,17 @@ module.exports = {
         56: 0,
         97: 7862400,     // 91 days, 86400 == 1 day
     },
+
+    // --------- Airdrop Presale --------- //
+
+    // contract name
+    YIELD_SWAP_TREASURY: {
+        56: '',
+        97: '0x59201fb8cb2D61118B280c8542127331DD141654',
+    },
+
+    YIELD_SWAP_MAX_LOCK_DURATION: {
+        56: 0,
+        97: 31536000,       // 1 year in seconds: (86400 seconds per day) * (365 days)
+    },
 }
