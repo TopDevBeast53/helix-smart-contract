@@ -47,14 +47,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         uint amount;                // Amount of exToken bidder is offering in exchange for amount of lpToken and yield
     }
 
-    // Current swap id, the number of swaps opened, 
-    // and for swapId i where i in range(0, swapId], i indexes a Swap in swaps
-    uint public swapId;
-
-    // Current bid id, the number of bids made,
-    // and for bidId i where i in range(0, bidId], i indexes a Bid in bids 
-    uint public bidId;
-
     // Array of all swaps opened
     Swap[] public swaps;
 
@@ -114,12 +106,14 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     event PurchaseWithdrawn(uint indexed id);
 
     modifier isValidSwapId(uint id) {
-        require(0 < id && id <= swapId, "YieldSwap: INVALID SWAP ID");
+        require(swaps.length != 0, "YieldSwap: NO SWAP OPENED");
+        require(id < swaps.length, "YieldSwap: INVALID SWAP ID");
         _;
     }
 
     modifier isValidBidId(uint id) {
-        require(0 < id && id <= bidId, "YieldSwap: INVALID BID ID");
+        require(bids.length != 0, "YieldSwap: NO BID MADE");
+        require(id < bids.length, "YieldSwap: INVALID BID ID");
         _;
     }
 
@@ -138,7 +132,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
 
     // Called externally to open a new swap
-    function swapOpen(
+    function openSwap(
         IERC20 exToken,         // Token paid by buyer to seller in exchange for lpToken
         uint poolId,            // Id of pool to access lpToken from and stake lpToken into
         uint amount,            // Amount of lpToken to swap
@@ -154,17 +148,21 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         _verify(lpToken, msg.sender, amount);
 
         // Open the swap
-        uint _swapId = ++swapId;
-        Swap storage swap = swaps[_swapId];
-
+        Swap memory swap;
         swap.lpToken = lpToken;
         swap.exToken = exToken;
+        swap.seller = msg.sender;
         swap.amount = amount;
         swap.ask = ask;
         swap.lockDuration = lockDuration;
         swap.poolId = poolId;
         swap.isOpen = true;
-        
+
+        // Add it to the swaps array
+        swaps.push(swap);
+
+        uint _swapId = _getSwapId();
+
         // Reflect the created swap id in the user's account
         swapIds[msg.sender].push(_swapId);
 
@@ -183,15 +181,13 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
     
     // Called by seller to close the swap and withdraw their lpTokens
-    function swapClose(uint _swapId) external {
+    function closeSwap(uint _swapId) external {
         Swap storage swap = _getSwap(_swapId);
 
         require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
-        require(msg.sender == swap.seller, "YieldSwap: ONLY SELLER CAN SET ASK");
+        require(msg.sender == swap.seller, "YieldSwap: ONLY SELLER CAN CLOSE SWAP");
 
         swap.isOpen = false;
-        chef.withdraw(swap.poolId, swap.amount);
-
         emit SwapClosed(_swapId);
     }
 
@@ -204,24 +200,27 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         require(hasBidOnSwap[msg.sender][_swapId] == false, "YieldSwap: CALLER HAS ALREADY MADE BID");
         _verify(swap.exToken, msg.sender, amount);
 
-        // Open the bid
-        uint _bidId = ++bidId;
-        Bid storage bid = bids[_bidId];
-
+        // Open the swap
+        Bid memory bid;
         bid.bidder = msg.sender;
         bid.swapId = _swapId;
         bid.amount = amount;
 
+        // Add it to the bids array
+        bids.push(bid);
+
+        uint bidId = _getBidId();
+
         // Reflect the new bid in the swap
-        swap.bidIds.push(_bidId);
+        swap.bidIds.push(bidId);
 
         // Reflect the new bid in the buyer's list of bids
-        bidIds[msg.sender].push(_bidId);
+        bidIds[msg.sender].push(bidId);
 
         // Reflect that the user has bid on this swap
         hasBidOnSwap[msg.sender][_swapId] = true;
 
-        emit BidMade(_bidId);
+        emit BidMade(bidId);
     }
 
     // Called externally by a bidder while bidding is open to set the amount being bid
@@ -244,7 +243,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         Swap storage swap = _getSwap(bid.swapId);
         require(msg.sender == swap.seller, "YieldSwap: ONLY SELLER CAN ACCEPT BID");
 
-        _accept(swap, msg.sender, bid.bidder, swap.ask);
+        _accept(swap, msg.sender, bid.bidder, bid.amount);
 
         emit BidAccepted(_bidId);
     }
@@ -252,7 +251,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     // Called by a buyer to accept the ask and close the swap
     function acceptAsk(uint _swapId) external {
         Swap storage swap = _getSwap(_swapId);
-
         require(msg.sender != swap.seller, "YieldSwap: SELLER CAN'T ACCEPT ASK");
 
         _accept(swap, swap.seller, msg.sender, swap.ask);
@@ -263,7 +261,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     // Called internally to accept a bid or an ask, perform the
     // necessary checks, and transfer funds
     function _accept(
-        Swap memory swap,
+        Swap storage swap,
         address seller,
         address buyer,
         uint exAmount
@@ -282,7 +280,10 @@ contract YieldSwap is Ownable, ReentrancyGuard {
 
         // Lock and stake lpAmount of the seller's lpToken
         uint lpAmount = swap.amount;
-        lpToken.transferFrom(seller, address(this), lpAmount);
+        lpToken.safeTransferFrom(seller, address(this), lpAmount);
+
+        // Approve the chef contract to enable deposit and stake lpToken
+        lpToken.approve(address(chef), lpAmount);
         chef.deposit(swap.poolId, lpAmount);
         
         // Transfer exAmount from the buyer to the seller minus the treasury fee
@@ -338,11 +339,47 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     // verify that _address has amount of token in balance
     // and that _address has approved this contract to transfer amount
     function _verify(IERC20 token, address _address, uint amount) private view {
-        require(amount <= token.balanceOf(_address), "INSUFFICIENT TOKEN BALANCE");
+        require(amount <= token.balanceOf(_address), "YieldSwap: INSUFFICIENT TOKEN BALANCE");
         require(
             amount <= token.allowance(_address, address(this)),
             "YieldSwap: INSUFFICIENT TOKEN ALLOWANCE"
         );
+    }
+
+    function getSwapIds(address _address) external view returns(uint[] memory) {
+        return swapIds[_address];
+    }
+
+    function getBidIds(address _address) external view returns(uint[] memory) {
+        return bidIds[_address];
+    }
+
+    // Get the current swap id such that 
+    // for swapId i in range[0, swaps.length) i indexes a Swap in swaps
+    function getSwapId() external view returns(uint) {
+        return _getSwapId();
+    }
+
+    function _getSwapId() private view returns(uint) {
+        if (swaps.length != 0) {
+            return swaps.length - 1;
+        } else {
+            return 0;
+        }
+    }
+
+    // Get the current bid id such that 
+    // for bid id i in range[0, bids.length) i indexes a Bid in bids 
+    function getBidId() external view returns(uint) {
+        return _getBidId();
+    }
+
+    function _getBidId() private view returns(uint) {
+        if (bids.length != 0) {
+            return bids.length - 1;
+        } else {
+            return 0;
+        }
     }
 
     function getSwap(uint _swapId) external view returns(Swap memory) {
@@ -386,10 +423,18 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         buyerFee = _buyerFee;
     }
 
+    function applySellerFee(uint amount) external view returns(uint sellerAmount, uint treasuryAmount) {
+        (sellerAmount, treasuryAmount) = _applySellerFee(amount);
+    }
+
     // Apply the seller fee and get the amounts that go to the seller and to the treasury
     function _applySellerFee(uint amount) private view returns(uint sellerAmount, uint treasuryAmount) {
         treasuryAmount = amount * sellerFee / MAX_FEE_PERCENT;
         sellerAmount = amount - treasuryAmount;
+    }
+
+    function applyBuyerFee(uint amount) external view returns(uint buyerAmount, uint treasuryAmount) {
+        (buyerAmount, treasuryAmount) = _applyBuyerFee(amount);
     }
 
     // Apply the buyer fee and get the amounts that go to the buyer and to the treasury
