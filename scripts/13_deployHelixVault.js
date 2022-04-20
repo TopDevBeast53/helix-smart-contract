@@ -24,17 +24,23 @@ async function main() {
 
     console.log(`Deploy Helix Vault`);
     const ContractFactory = await ethers.getContractFactory('HelixVault');
-    const contract = await ContractFactory.deploy(
+    const vaultContract = await ContractFactory.deploy(
         helixTokenAddress,       // token
-        helixTokenAddress,       // receipt token
         rewardPerBlock,
         startBlock,
         bonusEndBlock
     );     
-    await contract.deployTransaction.wait();
+    await vaultContract.deployTransaction.wait();
     
-    console.log(`Helix Vault deployed to ${contract.address}`);
-    console.log('Done');
+    console.log(`Helix Vault deployed to ${vaultContract.address}`);
+    
+    console.log(`------ Add MasterChef as Minter to HelixToken ---------`);
+    const HelixToken = await ethers.getContractFactory(`HelixToken`);
+    const helixToken = HelixToken.attach(helixTokenAddress);
+
+    let tx = await helixToken.addMinter(vaultContract.address, {gasLimit: 3000000});
+    await tx.wait();
+    console.log(`Done!`)
 }
 
 main()

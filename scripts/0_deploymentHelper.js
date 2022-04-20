@@ -34,6 +34,7 @@ const helixLPAddress = contracts.hpToken[env.network]
 const swapRewardsAddress = contracts.swapRewards[env.network]
 const migratorAddress = contracts.helixMigrator[env.network]
 const tokenToolsAddress = contracts.tokenTools[env.network]
+const helixVaultAddress = contracts.helixVault[env.network]
 
 let wallet
 let factory
@@ -51,6 +52,8 @@ let helixLP
 let swapRewards
 let migrator
 let tokenTools
+let helixVault
+
 
 // build all require connections between contracts
 async function main() {
@@ -134,16 +137,20 @@ async function loadContracts() {
     helixLP = await IHelixLP.attach(helixLPAddress).connect(wallet)
 
     print(`load swap rewards: ${swapRewardsAddress}`)
-    ISwapRewards = await ethers.getContractFactory('SwapRewards')
+    const ISwapRewards = await ethers.getContractFactory('SwapRewards')
     swapRewards = await ISwapRewards.attach(swapRewardsAddress).connect(wallet)
 
     print(`load migrator: ${migratorAddress}`)
-    IMigrator = await ethers.getContractFactory('HelixMigrator')
+    const IMigrator = await ethers.getContractFactory('HelixMigrator')
     migrator = await IMigrator.attach(migratorAddress).connect(wallet)
 
     print(`load token tools: ${tokenToolsAddress}`)
-    ITokenTools = await ethers.getContractFactory('TokenTools')
+    const ITokenTools = await ethers.getContractFactory('TokenTools')
     tokenTools = await ITokenTools.attach(tokenToolsAddress).connect(wallet)
+
+    print(`load helix vault: ${helixVaultAddress}`)
+    const IHelixVault = await ethers.getContractFactory('HelixVault')
+    helixVault = await IHelixVault.attach(helixVaultAddress).connect(wallet)
 
     print('\n')
 }
@@ -182,6 +189,10 @@ async function initHelixToken() {
 
     print(`register swap rewards as helix token minter`)
     await helixToken.addMinter(swapRewards.address, overrides)
+    print(`done`)
+
+    print(`register helix vault as helix token minter`)
+    await helixToken.addMinter(helixVault.address, overrides)
     print(`done`)
 
     print(`\n`)

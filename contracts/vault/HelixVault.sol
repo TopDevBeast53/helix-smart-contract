@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import '../interfaces/IBEP20.sol';
+import "../tokens/HelixToken.sol";
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
@@ -43,10 +43,10 @@ contract HelixVault is Ownable {
     uint public depositId;    
 
     // Token deposited and withdrawn in the vault
-    IBEP20 public token;
+    HelixToken public helixToken;
 
-    // Token being rewarded for storing `token` in the vault
-    IBEP20 public rewardToken;
+    
+    // IBEP20 public rewardToken;
 
     // Rate at which `token`s are created per block.
     uint public rewardPerBlock;
@@ -100,14 +100,12 @@ contract HelixVault is Ownable {
     }
 
     constructor(
-        IBEP20 _token,
-        IBEP20 _rewardToken,
+        HelixToken _helixToken,
         uint _rewardPerBlock,
         uint _startBlock,
         uint _bonusEndBlock
     ) {
-        token = _token;
-        rewardToken = _rewardToken;
+        helixToken = _helixToken;
         rewardPerBlock = _rewardPerBlock;
 
         bonusEndBlock = _bonusEndBlock;
@@ -120,7 +118,7 @@ contract HelixVault is Ownable {
         durations.push(Duration(540 days, 500));
         durations.push(Duration(720 days, 1000));
                                 
-        uint decimalsRewardToken = uint(rewardToken.decimals());
+        uint decimalsRewardToken = uint(helixToken.decimals());
         require(decimalsRewardToken < 30, 'HelixVault: REWARD TOKEN MUST HAVE LESS THAN 30 DECIMALS');
 
         PRECISION_FACTOR = uint(10**(uint(30) - decimalsRewardToken));
@@ -146,8 +144,7 @@ contract HelixVault is Ownable {
 
     // Used internally to create a new deposit and lock `amount` of token for `index` 
     function _newDeposit(uint amount, uint index) private isValidIndex(index) {
-        TransferHelper.safeTransferFrom(address(token), msg.sender, address(this), amount);
-            
+        helixToken.transferFrom(msg.sender, address(this), amount);
         // Get the new id of this deposit and create the deposit object
         uint id = ++depositId;
 
@@ -175,10 +172,9 @@ contract HelixVault is Ownable {
 
         uint pending = _getReward(d.amount, d.weight);
         if (pending > 0) {
-            TransferHelper.safeTransfer(address(rewardToken), msg.sender, pending);
+            helixToken.transfer(msg.sender, pending);
         }
-        TransferHelper.safeTransferFrom(address(token), msg.sender, address(this), amount);
-
+        helixToken.transferFrom(msg.sender, address(this), amount);
         d.amount += amount;
         d.rewardDebt = _getReward(d.amount, d.weight);
 
@@ -198,7 +194,7 @@ contract HelixVault is Ownable {
         updatePool();
         uint pending = _getReward(d.amount, d.weight);
         if(pending > 0) {
-            TransferHelper.safeTransfer(address(rewardToken), msg.sender, pending);
+            helixToken.transfer(msg.sender, pending);
         }
 
         if(d.amount == amount) {
@@ -207,8 +203,7 @@ contract HelixVault is Ownable {
             d.amount -= amount;
             d.rewardDebt = _getReward(d.amount, d.weight);
         }
-
-        TransferHelper.safeTransfer(address(token), msg.sender, amount);
+        helixToken.transfer(msg.sender, amount);
         emit Withdraw(msg.sender, amount);
     }
 
@@ -219,7 +214,7 @@ contract HelixVault is Ownable {
         require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
         uint _accTokenPerShare = accTokenPerShare;
-        uint lpSupply = token.balanceOf(address(this));
+        uint lpSupply = helixToken.balanceOf(address(this));
         if (block.number > lastRewardBlock && lpSupply != 0) {
             uint multiplier = getMultiplier(lastRewardBlock, block.number);
             uint reward = multiplier * rewardPerBlock;
@@ -236,7 +231,7 @@ contract HelixVault is Ownable {
         updatePool();
         uint pending = _getReward(d.amount, d.weight) - d.rewardDebt;
         if (pending > 0) {
-            TransferHelper.safeTransfer(address(rewardToken), msg.sender, pending);
+            helixToken.transfer(msg.sender, pending);
         }
         d.rewardDebt = _getReward(d.amount, d.weight);
     } 
@@ -246,10 +241,11 @@ contract HelixVault is Ownable {
         if (block.number <= lastRewardBlock) {
             return;
         }
-        uint balance = token.balanceOf(address(this));
+        uint balance = helixToken.balanceOf(address(this));
         if (balance > 0) {
             uint multiplier = getMultiplier(lastRewardBlock, block.number);
             uint reward = multiplier * rewardPerBlock;
+            helixToken.mint(address(this), reward);
             accTokenPerShare += reward * PRECISION_FACTOR / balance;
         }
         lastRewardBlock = block.number;
@@ -289,8 +285,8 @@ contract HelixVault is Ownable {
 
     // Withdraw reward. EMERGENCY ONLY.
     function emergencyRewardWithdraw(uint _amount) external onlyOwner {
-        require(_amount <= rewardToken.balanceOf(address(this)), 'HelixVault: INSUFFICIENT REWARD TOKENS IN VAULT');
-        TransferHelper.safeTransfer(address(rewardToken), msg.sender, _amount);
+        require(_amount <= helixToken.balanceOf(address(this)), 'HelixVault: INSUFFICIENT REWARD TOKENS IN VAULT');
+        helixToken.transfer(msg.sender, _amount);
     }
     
     function getDurations() external view returns(Duration[] memory) {
