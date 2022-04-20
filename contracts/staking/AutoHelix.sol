@@ -121,7 +121,7 @@ contract AutoHelix is Ownable, Pausable {
         uint256 currentPerformanceFee = bal * performanceFee / 10000;
         TransferHelper.safeTransfer(address(token), treasury, currentPerformanceFee); 
 
-        uint256 currentCallFee = bal * callFee * 10000;
+        uint256 currentCallFee = bal * callFee / 10000;
         TransferHelper.safeTransfer(address(token), msg.sender, currentCallFee);
 
         _earn();
