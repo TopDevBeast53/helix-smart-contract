@@ -41,7 +41,8 @@ contract HelixNFTBridge is Ownable {
     EnumerableSet.AddressSet private _bridgers;
 
     event BridgeToSolana(string externalTokenID, string externalRecipientAddr, uint timestamp);
-
+    event AddBridger(address indexed user);
+    
     /**
      * @dev HelixNFT contract    
      */
@@ -128,6 +129,7 @@ contract HelixNFTBridge is Ownable {
             _bridger != address(0),
             "HelixNFTBridge: _bridger is the zero address"
         );
+        emit AddBridger(_bridger);
         return EnumerableSet.add(_bridgers, _bridger);
     }
 
