@@ -6,6 +6,18 @@ interface IMasterChef {
 
     function withdraw(uint256 _pid, uint256 _amount) external;
 
+    function bucketDeposit(uint256 _bucketId, uint256 _poolId, uint256 _amount) external;
+
+    function bucketWithdraw(uint256 _bucketId, uint256 _poolId, uint256 _amount) external;
+
+    function bucketWithdrawAmountTo(address _recipient, uint256 _bucketId, uint256 _poolId, uint256 _amount) external;
+
+    function bucketWithdrawYieldTo(address _recipient, uint256 _bucketId, uint256 _poolId, uint256 _yield) external;
+
+    function updateBucket(uint256 _bucketId, uint256 _poolId) external;
+
+    function getBucketYield(uint256 _bucketId, uint256 _poolId) external view returns(uint256 yield);
+
     function enterStaking(uint256 _amount) external;
 
     function leaveStaking(uint256 _amount) external;

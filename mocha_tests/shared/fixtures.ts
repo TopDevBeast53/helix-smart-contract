@@ -72,6 +72,7 @@ const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHAS
 const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.network]
 
 const yieldSwapTreasury = initials.YIELD_SWAP_TREASURY[env.network]
+const yieldSwapMinLockDuration = initials.YIELD_SWAP_MIN_LOCK_DURATION[env.network]
 const yieldSwapMaxLockDuration = initials.YIELD_SWAP_MAX_LOCK_DURATION[env.network]
 
 const overrides = {
@@ -272,6 +273,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         [
             chef.address,                   // chef used for earning lpToken yield
             wallet.address,                 // treasury used for receiving buy/sell fees
+            yieldSwapMinLockDuration,       // minimum length of time (in seconds) a swap can be locked for
             yieldSwapMaxLockDuration,       // maximum length of time (in seconds) a swap can be locked for
         ], 
         overrides
