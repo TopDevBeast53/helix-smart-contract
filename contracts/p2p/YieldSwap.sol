@@ -260,6 +260,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     function acceptBid(uint _bidId) external {
         Bid storage bid = _getBid(_bidId);
         Swap storage swap = _getSwap(bid.swapId);
+
         require(msg.sender == swap.seller, "YieldSwap: ONLY SELLER CAN ACCEPT BID");
         require(bid.isOpen == true, "YieldSwap: BID IS CLOSED");
 
@@ -356,7 +357,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         }
     }
     
-    // verify that _address has amount of token in balance
+    // Verify that _address has amount of token in balance
     // and that _address has approved this contract to transfer amount
     function _verify(IERC20 token, address _address, uint amount) private view {
         require(amount <= token.balanceOf(_address), "YieldSwap: INSUFFICIENT TOKEN BALANCE");
@@ -366,10 +367,12 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         );
     }
 
+    // Return the array of swapIds made by _address
     function getSwapIds(address _address) external view returns(uint[] memory) {
         return swapIds[_address];
     }
 
+    // Return the array of bidIds made by _address
     function getBidIds(address _address) external view returns(uint[] memory) {
         return bidIds[_address];
     }
@@ -402,6 +405,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         }
     }
 
+    // Return the swap associated with the given bidId
     function getSwap(uint _swapId) external view returns(Swap memory) {
         return _getSwap(_swapId);
     }
@@ -414,7 +418,8 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     {
         return swaps[_swapId];
     }
-
+    
+    // Return the bid associated with the given bidId
     function getBid(uint _bidId) external view returns(Bid memory) {
         return _getBid(_bidId);
     }
@@ -443,21 +448,21 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         buyerFee = _buyerFee;
     }
 
+    // Apply the seller fee and get the amounts that go to the seller and to the treasury
     function applySellerFee(uint amount) external view returns(uint sellerAmount, uint treasuryAmount) {
         (sellerAmount, treasuryAmount) = _applySellerFee(amount);
     }
 
-    // Apply the seller fee and get the amounts that go to the seller and to the treasury
     function _applySellerFee(uint amount) private view returns(uint sellerAmount, uint treasuryAmount) {
         treasuryAmount = amount * sellerFee / MAX_FEE_PERCENT;
         sellerAmount = amount - treasuryAmount;
     }
 
+    // Apply the buyer fee and get the amounts that go to the buyer and to the treasury
     function applyBuyerFee(uint amount) external view returns(uint buyerAmount, uint treasuryAmount) {
         (buyerAmount, treasuryAmount) = _applyBuyerFee(amount);
     }
 
-    // Apply the buyer fee and get the amounts that go to the buyer and to the treasury
     function _applyBuyerFee(uint amount) private view returns(uint buyerAmount, uint treasuryAmount) {
         treasuryAmount = amount * buyerFee / MAX_FEE_PERCENT;
         buyerAmount = amount - treasuryAmount;
