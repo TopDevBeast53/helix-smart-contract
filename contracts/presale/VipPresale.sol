@@ -10,9 +10,10 @@ import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
  * Purchasing tickets with the inputToken is mediated by the INPUT_RATE and
  * withdrawing tickets for the outputToken is mediated by the OUTPUT_RATE
  * 
- * Purchasing occurs over 2 purchase phases:
+ * Purchasing occurs over 3 purchase phases:
  *  1: purchases are limited by a maxTicket account attribute
  *  2: purchases are unlimited
+ *  3: purchases are prohibited
  * 
  * Further purchases are prohibited after purchase phase 2 ends
  * The withdraw phase begins after the purchase phase ends
@@ -183,7 +184,7 @@ contract VipPresale is ReentrancyGuard {
         MINIMUM_TICKET_PURCHASE = 1;
 
         PURCHASE_PHASE_START = 1;
-        PURCHASE_PHASE_END = 2;
+        PURCHASE_PHASE_END = 3;
         PURCHASE_PHASE_DURATION = _PURCHASE_PHASE_DURATION;
 
         WITHDRAW_PHASE_START = 1;
@@ -236,9 +237,8 @@ contract VipPresale is ReentrancyGuard {
                 users[user].purchased + amount <= users[user].maxTicket, 
                 "VipPresale: AMOUNT EXCEEDS MAX TICKET LIMIT"
             );
-        } else {
-            require(block.timestamp < purchasePhaseEndTimestamp, "VipPresale: SALE HAS ENDED");
         }
+        require(purchasePhase < PURCHASE_PHASE_END, "VipPresale: SALE HAS ENDED");
     }
 
     // get `amountOut` of `tokenOut` for `amountIn` of tickets
