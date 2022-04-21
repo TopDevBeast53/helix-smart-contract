@@ -114,7 +114,7 @@ contract LpSwap is Ownable, ReentrancyGuard {
         IERC20 toBuyerToken,    // Token being sold in this swap by seller to buyer
         IERC20 toSellerToken,   // Token being sold in this swap by buyer to seller
         uint amount,            // Amount of toBuyerToken to sell
-        uint ask,               // Amount of toSellerToken seller is asking to sell toBuyerToken for
+        uint ask                // Amount of toSellerToken seller is asking to sell toBuyerToken for
     ) external {
         require(address(toBuyerToken) != address(0), "LpSwap: INVALID TO BUYER TOKEN ADDRESS");
         require(address(toSellerToken) != address(0), "LpSwap: INVALID TO SELLER TOKEN ADDRESS");
@@ -228,7 +228,7 @@ contract LpSwap is Ownable, ReentrancyGuard {
         require(msg.sender == swap.seller, "LpSwap: ONLY SELLER CAN ACCEPT BID");
         require(bid.isOpen == true, "LpSwap: BID IS CLOSED");
 
-        _accept(swap, msg.sender, bid.bidder, bid.swapId, bid.amount);
+        _accept(swap, msg.sender, bid.bidder, bid.amount);
 
         bid.isOpen = false;
         emit BidAccepted(_bidId);
@@ -239,7 +239,7 @@ contract LpSwap is Ownable, ReentrancyGuard {
         Swap storage swap = _getSwap(_swapId);
         require(msg.sender != swap.seller, "LpSwap: SELLER CAN'T ACCEPT ASK");
 
-        _accept(swap, swap.seller, msg.sender, _swapId, swap.ask);
+        _accept(swap, swap.seller, msg.sender, swap.ask);
 
         emit AskAccepted(_swapId);
     } 
@@ -250,24 +250,27 @@ contract LpSwap is Ownable, ReentrancyGuard {
         Swap storage swap,
         address seller,
         address buyer,
-        uint swapId,
         uint toSellerAmount
     ) private {
         require(swap.isOpen, "LpSwap: SWAP IS CLOSED");
 
+        // Verify that the buyer and seller can both cover the swap
         IERC20 toBuyerToken = swap.toBuyerToken;
         _verify(toBuyerToken, seller, swap.amount);
 
         IERC20 toSellerToken = swap.toSellerToken;
         _verify(toSellerToken, buyer, toSellerAmount);
 
+        // Update the swap's status
         swap.isOpen = false;
         swap.buyer = buyer;
 
+        // Seller pays the buyer and pays their swap fees
         (uint buyerAmount, uint buyerTreasuryFee) = _applySellerFee(swap.amount);
         toBuyerToken.safeTransferFrom(seller, buyer, buyerAmount);
         toBuyerToken.safeTransferFrom(seller, treasury, buyerTreasuryFee);
 
+        // Buyer pays the seller and pays their swap fees
         (uint sellerAmount, uint sellerTreasuryFee) = _applyBuyerFee(toSellerAmount);
         toSellerToken.safeTransferFrom(buyer, seller, sellerAmount);
         toSellerToken.safeTransferFrom(buyer, treasury, sellerTreasuryFee);

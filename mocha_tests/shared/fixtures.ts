@@ -29,6 +29,7 @@ import VipPresale from '../../build/contracts/VipPresale.json'
 import PublicPresale from '../../build/contracts/PublicPresale.json'
 import AirDrop from '../../build/contracts/AirDrop.json'
 import YieldSwap from '../../build/contracts/YieldSwap.json'
+import LpSwap from '../../build/contracts/LpSwap.json'
 
 const addresses = require('../../scripts/constants/addresses')
 const initials = require('../../scripts/constants/initials')
@@ -109,6 +110,7 @@ interface FullExchangeFixture {
     publicPresale: Contract
     airDrop: Contract
     yieldSwap: Contract
+    lpSwap: Contract
 }
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
@@ -217,7 +219,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const vault = await deployContract(wallet, HelixVault, 
         [
             helixToken.address,
-            helixToken.address,
             helixVaultRewardPerBlock,
             helixVaultStartBlock,
             helixVaultBonusEndBlock
@@ -279,6 +280,9 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         overrides
     )
 
+    // 18 deploy lp swap contract with treasury address argument
+    const lpSwap = await deployContract(wallet, LpSwap, [wallet.address], overrides)
+
     return {
         tokenA,
         tokenB,
@@ -309,5 +313,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         publicPresale,
         airDrop,
         yieldSwap,
+        lpSwap,
     }
 }
