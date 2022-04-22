@@ -692,16 +692,110 @@ describe('VIP Presale', () => {
         expect(await helixToken.balanceOf(user)).to.eq(expectedUserTokenBalance)
         expect(await helixToken.balanceOf(vipPresale.address)).to.eq(expectedPresaleTokenBalance)
 
-        // check that the user's withdrawn amount is updated
-        const withdrawn = (await vipPresale.users(user)).withdrawn
-        expect(withdrawn).to.eq(purchaseAmount * withdrawPercent)
-    
         // check that the user can't withdraw any more this phase
         expect(await vipPresale.maxRemovable(user)).to.eq(0)
 
         // try to withdraw again, expect to fail
         await expect(vipPresale1.withdraw(withdrawAmount))
             .to.be.revertedWith("VipPresale: INSUFFICIENT ACCOUNT BALANCE TO REMOVE")
+    })
+
+    it('vipPresale: withdraws across multiple phases', async () => {
+        const inputToken = tokenA.address 
+        const outputToken = helixToken.address 
+        const user = wallet1.address            // account to whitelist
+        const maxTicket = 100                   // allotment to whitelisted user
+        const purchasePhase = 1                 // allow up to maxTicket purchase
+        const purchaseAmount = 100              // number of tickets purchased by user
+        let withdrawPhase = 2                 // allow up to 25% purchased withdrawal
+        let withdrawAmount = 25               // amount withdrawn by user
+        let withdrawPercent = 0.25            // max percent withdrawable in this withdraw phase
+    
+        // expect the number of tickets a user has purchased to stay the same after withdrawals
+        const expectedUserTicketPurchased = purchaseAmount;
+
+        // expect the user's ticket balance to decrease after withdrawls
+        const expectedUserTicketBalance = purchaseAmount - withdrawAmount;
+  
+        // the number of outputtokens we expect the user to have withdrawn
+        const expectedOutputTokenDifference = await vipPresale.getAmountOut(withdrawAmount, outputToken)
+
+        // expect the user's token balance to increase in outputTokens 
+        const expectedUserTokenBalance = (await helixToken.balanceOf(user)).add(expectedOutputTokenDifference)
+
+        // and expect the contract's outputToken balance to decrease by the same amount
+        const expectedPresaleTokenBalance = (await helixToken.balanceOf(vipPresale.address)).sub(expectedOutputTokenDifference)
+
+        // check that the test varibles are set correctly
+        expect(withdrawAmount).to.not.be.above(purchaseAmount * withdrawPercent)
+
+        // make a purchase
+
+        await vipPresale.whitelistAdd([user], [maxTicket])
+        await vipPresale.setPurchasePhase(purchasePhase)
+
+        const tokenAmount = await vipPresale.getAmountOut(purchaseAmount, inputToken)
+        await tokenA1.approve(vipPresale.address, tokenAmount)
+
+        await vipPresale1.purchase(purchaseAmount)
+
+        // make a withdrawal
+
+        // first set the correct phase
+        await vipPresale.setWithdrawPhase(withdrawPhase)
+
+        // withdraw as user
+        await vipPresale1.withdraw(withdrawAmount)
+
+        // check that the updated amounts match the expectations
+        expect((await vipPresale.users(user)).purchased).to.eq(expectedUserTicketPurchased)
+        expect((await vipPresale.users(user)).balance).to.eq(expectedUserTicketBalance)
+        expect(await helixToken.balanceOf(user)).to.eq(expectedUserTokenBalance)
+        expect(await helixToken.balanceOf(vipPresale.address)).to.eq(expectedPresaleTokenBalance)
+
+        expect(await vipPresale.maxRemovable(user)).to.eq(0)
+
+        // go to next withdraw phase
+        withdrawPhase = 3
+        withdrawPercent = 0.25
+
+        await vipPresale.setWithdrawPhase(withdrawPhase)
+
+        // the user should only be able to remove up to 50% in this phase
+        // since they removed 25% last phase they have 25% left to withdraw this phase
+        expect(await vipPresale.maxRemovable(user)).to.eq(25)
+
+        // and check phase 4
+        withdrawPhase = 4
+        await vipPresale.setWithdrawPhase(withdrawPhase)
+
+        // they should be able to remove up to 75% of total purchase this phase
+        // user didn't withdraw last phase 
+        // but did withdraw 25% in first phase
+        // leaving 75% - 25% = 50% available to witdraw
+        expect(await vipPresale.maxRemovable(user)).to.eq(50)
+
+        // withdraw as user
+        withdrawAmount = 50
+        await vipPresale1.withdraw(withdrawAmount)
+
+        // they've withdrawn max amount and should not be able to withdraw more this phase
+        expect(await vipPresale.maxRemovable(user)).to.eq(0)
+
+        // and check phase 5
+        withdrawPhase = 5
+        await vipPresale.setWithdrawPhase(withdrawPhase)
+
+        // user has withdrawn 75% of total purchase
+        // should have only 25% left to withdraw
+        expect(await vipPresale.maxRemovable(user)).to.eq(25)
+
+        // withdraw the remainder as user
+        withdrawAmount = 25
+        await vipPresale1.withdraw(withdrawAmount)
+
+        // should be nothing left to withdraw
+        expect(await vipPresale.maxRemovable(user)).to.eq(0)
     })
 
     it('vipPresale: withdraw 50% of purchase in phase 3', async () => {
