@@ -211,7 +211,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const vault = await deployContract(wallet, HelixVault, 
         [
             helixToken.address,
-            helixToken.address,
             helixVaultRewardPerBlock,
             helixVaultStartBlock,
             helixVaultBonusEndBlock

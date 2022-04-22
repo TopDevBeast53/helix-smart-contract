@@ -284,6 +284,9 @@ describe('VIP Presale', () => {
 
         await vipPresale.setPurchasePhase(2);
         expect(await vipPresale.purchasePhase()).to.eq(2)
+
+        await vipPresale.setPurchasePhase(3);
+        expect(await vipPresale.purchasePhase()).to.eq(3)
     })
 
     it('vipPresale: set purchase phase as non-owner fails', async () => {
@@ -503,6 +506,29 @@ describe('VIP Presale', () => {
 
         // and expect the total tickes available in the contract to have decreased by amount
         expect(await vipPresale.ticketsAvailable()).to.eq(expectedTicketsAvailable)
+    })
+
+    it('vipPresale: purchase in phase 3 fails', async () => {
+        // purchases in phase 3 should be prohibited
+
+        const inputToken = tokenA.address 
+        const user = wallet1.address            // account to whitelist
+        const maxTicket = 100                   // allotment to whitelisted user
+        const amount = 200                      // number of tickets purchased by user
+        const purchasePhase = 3
+
+        await vipPresale.whitelistAdd([user], [maxTicket])
+
+        await vipPresale.setPurchasePhase(purchasePhase)
+
+        const tokenAmount = await vipPresale.getAmountOut(amount, inputToken)
+
+        // and have wallet1 pre-approve spending that token amount
+        await tokenA1.approve(vipPresale.address, tokenAmount)
+
+        // have wallet1  purchase their max ticket allotment
+        await expect(vipPresale1.purchase(amount))
+            .to.be.revertedWith("VipPresale: SALE HAS ENDED")
     })
 
     it('vipPresale: withdraw 25% of purchase in phase 2', async () => {
