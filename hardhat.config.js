@@ -45,6 +45,12 @@ module.exports = {
       gas: 2100000,
       accounts: resolveTestNetBSCAccounts(),
     },
+    mainnetBSC: {
+      url: "https://bsc-dataseed1.binance.org",
+      chainId: 56,
+      gasPrice: 20000000000,
+      accounts: resolveTestNetBSCAccounts(),
+    },
   },
   solidity: {
     compilers:[
