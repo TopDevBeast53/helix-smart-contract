@@ -32,9 +32,8 @@ contract VipPresale is ReentrancyGuard {
         uint maxTicket;         // sets purchase phase 1 upper limit on ticket purchases
         uint purchased;         // tickets purchased, purchase phase 1 invariant: purchased <= maxTicket
         uint balance;           // tickets purchased but not withdrawn
-        uint withdrawn2;        // amount withdrawn in withdraw phase 2 (25% purchased max)
-        uint withdrawn3;        // amount withdrawn in withdraw phase 3 (50% purchased max)
-        uint withdrawn4;        // amount withdrawn in withdraw phase 4 (75% purchased max)
+        uint withdrawPhase;     // used for tracking amount `withdrawn` in a given withdraw phase
+        uint withdrawn;         // amount already withdrawn in this `withdrawPhase`
     }
 
     // Maximum number of tickets available for purchase at the start of the sale
@@ -297,15 +296,9 @@ contract VipPresale is ReentrancyGuard {
             // otherwise, the user will have purchased tickets and the tickets available
             // will already have been updated so we only need to decrease their balance
             users[msg.sender].balance -= amount;
-    
+
             // update the amount withdrawn in this phase
-            if (withdrawPhase == 2) {
-                users[msg.sender].withdrawn2 += amount;
-            } else if (withdrawPhase == 3) {
-                users[msg.sender].withdrawn3 += amount;
-            } else if (withdrawPhase == 4) {
-                users[msg.sender].withdrawn4 += amount;
-            }
+            _setUserWithdrawn(msg.sender, amount);
         }
     }
 
@@ -317,7 +310,7 @@ contract VipPresale is ReentrancyGuard {
             "VipPresale: INSUFFICIENT CONTRACT BALANCE TO REMOVE"
         );
         // Check that `by` has enough purchased tickeds to remove `amount`
-        require(amount <= _maxRemovable(by), "VipPresale: INSUFFICIENT ACCOUNT BALACE TO REMOVE");
+        require(amount <= _maxRemovable(by), "VipPresale: INSUFFICIENT ACCOUNT BALANCE TO REMOVE");
     }
 
     // returns `maxAmount` removable by address `by`
@@ -333,15 +326,8 @@ contract VipPresale is ReentrancyGuard {
             if (isPaused) {
                 maxAmount = 0;
             } else {
-                // Get the amount already withdrawn in this withdraw phase
-                uint withdrawn;
-                if (withdrawPhase == 2) {
-                    withdrawn = users[by].withdrawn2;
-                } else if (withdrawPhase == 3) {
-                    withdrawn = users[by].withdrawn3;
-                } else if (withdrawPhase == 4) {
-                    withdrawn = users[by].withdrawn4;
-                }
+                // the number of tickets already withdrawn in this phase
+                uint withdrawn = _getUserWithdrawn(by);
 
                 // Max number of tickets user can withdraw as a function of withdrawPhase and number of tickets purchased
                 // minus the tickets already withdrawn
@@ -353,6 +339,24 @@ contract VipPresale is ReentrancyGuard {
                 // Can only only withdraw the max allowed if they have a large enough balance
                 maxAmount = balance < allowed ? balance : allowed;
             }
+        }
+    }
+
+    // used internally to record how much the user has withdrawn in the current phase
+    // to prevent withdrawing more than the allowed amount
+    function _setUserWithdrawn(address _address, uint amount) private {
+        if (users[_address].withdrawPhase != withdrawPhase) {
+            users[_address].withdrawPhase = withdrawPhase;
+            users[_address].withdrawn = amount;
+        } else {
+            users[_address].withdrawn += amount;
+        }
+    }
+    // used internally to get the amount the user has already withdrawn in the current phase
+    // to prevent withdrawing more than the allowed amount
+    function _getUserWithdrawn(address _address) private view returns(uint withdrawn) {
+        if (users[_address].withdrawPhase == withdrawPhase) {
+            withdrawn = users[_address].withdrawn;
         }
     }
 
@@ -462,5 +466,20 @@ contract VipPresale is ReentrancyGuard {
         // prohibit a whitelisted user from purchasing tickets
         // but not from withdrawing those they've already purchased
         whitelist[user] = false;
+    }
+
+    // used externally by owner to set the max amount of tickets purchase-able by `user`
+    function whitelistSetMaxTicket(address _user, uint maxTicket) external onlyOwner {
+        require(whitelist[_user], "VipPresale: USER ISN'T WHITELISTED");
+        User storage user = users[_user];
+
+        // Un-reserve the previously reserved amount of tickets, to replace with new maxTicket
+        ticketsReserved -= user.maxTicket;
+
+        // and check that new maxTicket is a valid amount
+        require(ticketsReserved + maxTicket <= ticketsAvailable, "VipPresale: INADEQUATE TICKETS FOR ALL USERS");
+
+        user.maxTicket = maxTicket;
+        ticketsReserved += maxTicket;
     }
 } 
