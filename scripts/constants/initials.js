@@ -138,7 +138,7 @@ module.exports = {
 
     // Treasury address that receives input token (BUSD) purchases
     VIP_PRESALE_TREASURY: {
-        56: '0x1b21890a24E3aeAa23cA536e27421F6C06866809',
+        56: '0x0C7AB1234357c1D46F00F653f703E354A5C2a714',
         97: '0x59201fb8cb2D61118B280c8542127331DD141654',     // Deployer address for testing
     },
 
