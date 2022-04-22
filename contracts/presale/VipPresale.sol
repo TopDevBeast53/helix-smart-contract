@@ -32,8 +32,6 @@ contract VipPresale is ReentrancyGuard {
         uint maxTicket;         // sets purchase phase 1 upper limit on ticket purchases
         uint purchased;         // tickets purchased, purchase phase 1 invariant: purchased <= maxTicket
         uint balance;           // tickets purchased but not withdrawn
-        uint withdrawPhase;     // used for tracking amount `withdrawn` in a given withdraw phase
-        uint withdrawn;         // amount already withdrawn in this `withdrawPhase`
     }
 
     // Maximum number of tickets available for purchase at the start of the sale
@@ -258,7 +256,6 @@ contract VipPresale is ReentrancyGuard {
         }
     }
 
-
     // used to destroy `outputToken` equivalant in value to `amount` of tickets
     // should only be used after purchasePhase 2 ends
     function burn(uint amount) external onlyOwner { 
@@ -296,9 +293,6 @@ contract VipPresale is ReentrancyGuard {
             // otherwise, the user will have purchased tickets and the tickets available
             // will already have been updated so we only need to decrease their balance
             users[msg.sender].balance -= amount;
-
-            // update the amount withdrawn in this phase
-            _setUserWithdrawn(msg.sender, amount);
         }
     }
 
@@ -326,8 +320,8 @@ contract VipPresale is ReentrancyGuard {
             if (isPaused) {
                 maxAmount = 0;
             } else {
-                // the number of tickets already withdrawn in this phase
-                uint withdrawn = _getUserWithdrawn(by);
+                // the number of tickets already withdrawn 
+                uint withdrawn = users[by].purchased - users[by].balance;
 
                 // Max number of tickets user can withdraw as a function of withdrawPhase and number of tickets purchased
                 // minus the tickets already withdrawn
@@ -339,24 +333,6 @@ contract VipPresale is ReentrancyGuard {
                 // Can only only withdraw the max allowed if they have a large enough balance
                 maxAmount = balance < allowed ? balance : allowed;
             }
-        }
-    }
-
-    // used internally to record how much the user has withdrawn in the current phase
-    // to prevent withdrawing more than the allowed amount
-    function _setUserWithdrawn(address _address, uint amount) private {
-        if (users[_address].withdrawPhase != withdrawPhase) {
-            users[_address].withdrawPhase = withdrawPhase;
-            users[_address].withdrawn = amount;
-        } else {
-            users[_address].withdrawn += amount;
-        }
-    }
-    // used internally to get the amount the user has already withdrawn in the current phase
-    // to prevent withdrawing more than the allowed amount
-    function _getUserWithdrawn(address _address) private view returns(uint withdrawn) {
-        if (users[_address].withdrawPhase == withdrawPhase) {
-            withdrawn = users[_address].withdrawn;
         }
     }
 
