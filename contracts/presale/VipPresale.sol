@@ -303,6 +303,7 @@ contract VipPresale is ReentrancyGuard {
             _getAmountOut(amount, outputToken) <= outputToken.balanceOf(address(this)), 
             "VipPresale: INSUFFICIENT CONTRACT BALANCE TO REMOVE"
         );
+        require(amount > 0, "VipPresale: AMOUNT MUST BE GREATER THAN 0 TO REMOVE");
         // Check that `by` has enough purchased tickeds to remove `amount`
         require(amount <= _maxRemovable(by), "VipPresale: INSUFFICIENT ACCOUNT BALANCE TO REMOVE");
     }
