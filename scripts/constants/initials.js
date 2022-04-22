@@ -120,14 +120,8 @@ module.exports = {
 
     // Input token address
     VIP_PRESALE_INPUT_TOKEN: {
-        56: '', // Expect BUSD for mainnet
+        56: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56',   // BUSD https://bscscan.com/address/0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56
         97: '0xa34365267e9795FC1fe34b31cB0b0112d5667e8F',   // Test Token A for testing
-    },
-
-    // Output token address
-    VIP_PRESALE_OUTPUT_TOKEN: {
-        56: '', // Expect HELIX for mainnet
-        97: '0xeB101767DFF4dbb08001459C8098E73C67C4A4e1',   // Test Token B for testing
     },
 
     // BUSD per ticket
@@ -142,28 +136,28 @@ module.exports = {
         97: 400,
     },
 
-    // Treasury address
+    // Treasury address that receives input token (BUSD) purchases
     VIP_PRESALE_TREASURY: {
-        56: '',
+        56: '0x0C7AB1234357c1D46F00F653f703E354A5C2a714',
         97: '0x59201fb8cb2D61118B280c8542127331DD141654',     // Deployer address for testing
     },
 
-    // Length of time between purchase phases
+    // Length of time in seconds between purchase phases
     VIP_PRESALE_PURCHASE_PHASE_DURATION: {
-        56: 0,
-        97: 300,     // 86400 == 1 day
+        56: 86400,      // 1 day (86400 seconds)
+        97: 300,        // 5 minutes
     },
 
     // Length of time between withdraw phases
     VIP_PRESALE_WITHDRAW_PHASE_DURATION: {
-        56: 0,
-        97: 300,     // 91 days, 86400 == 1 day
+        56: 7862400,    // 91 days (86400 seconds per day * 91 days)
+        97: 300,        // 5 minutes
     },
 
     // Amount of OUTPUT TOKEN to fund VIP Presale contract with
     // don't forget to multiply by 1e18
     VIP_PRESALE_INITIAL_BALANCE : {
-        56: '',
+        56: 20000000,       // 20,000,000
         97: 20000000,       // 20,000,000
     },
 
