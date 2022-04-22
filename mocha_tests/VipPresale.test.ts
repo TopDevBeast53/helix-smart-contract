@@ -188,6 +188,60 @@ describe('VIP Presale', () => {
             .to.be.revertedWith("VipPresale: USER IS ALREADY WHITELISTED")
     })
 
+    it('vipPresale: whitelist set max ticket as non-owner fails', async () => {
+        // wallet 1 is not an owner
+        await expect(vipPresale1.whitelistSetMaxTicket(wallet1.address, 100))
+            .to.be.revertedWith("VipPresale: CALLER IS NOT OWNER")
+    })
+
+    it('vipPresale: whitelist set max ticket without whitelist user first fails', async () => {
+        await expect(vipPresale.whitelistSetMaxTicket(wallet1.address, 100))
+            .to.be.revertedWith("VipPresale: USER ISN'T WHITELISTED")
+    })
+
+    it('vipPresale: whitelist set max ticket', async () => {
+        // first do an add
+        const users = [wallet1.address, wallet2.address]
+        const wallet1MaxTicket = 50
+        const wallet2MaxTicket = 100
+        const maxTickets = [wallet1MaxTicket, wallet2MaxTicket]
+        
+        await vipPresale.whitelistAdd(users, maxTickets)
+
+        // users should be whitelisted
+        expect(await vipPresale.whitelist(wallet1.address)).to.be.true
+        expect(await vipPresale.whitelist(wallet2.address)).to.be.true
+
+        // users should have max tickets set
+        expect((await vipPresale.users(wallet1.address)).maxTicket).to.eq(wallet1MaxTicket)
+        expect((await vipPresale.users(wallet2.address)).maxTicket).to.eq(wallet2MaxTicket)
+
+        // presale reserved tickets should be incremented
+        expect(await vipPresale.ticketsReserved()).to.eq(wallet1MaxTicket + wallet2MaxTicket)
+
+        // now update wallet 1 max ticket
+        const newWallet1MaxTicket = 100
+        await vipPresale.whitelistSetMaxTicket(wallet1.address, newWallet1MaxTicket)
+    
+        // check that the amount of tickets reserved is correctly updated
+        let expectedTicketsReserved = newWallet1MaxTicket + wallet2MaxTicket
+        expect(await vipPresale.ticketsReserved()).to.eq(expectedTicketsReserved)
+
+        // check that wallet 1 max ticket amount is updated
+        expect((await vipPresale.users(wallet1.address)).maxTicket).to.eq(newWallet1MaxTicket)
+
+        // now update wallet 2 max ticket
+        const newWallet2MaxTicket = 50
+        await vipPresale.whitelistSetMaxTicket(wallet2.address, newWallet2MaxTicket)
+    
+        // check that the amount of tickets reserved is correctly updated
+        expectedTicketsReserved = newWallet1MaxTicket + newWallet2MaxTicket
+        expect(await vipPresale.ticketsReserved()).to.eq(expectedTicketsReserved)
+
+        // check that wallet 2 max ticket amount is updated
+        expect((await vipPresale.users(wallet2.address)).maxTicket).to.eq(newWallet2MaxTicket)
+    })
+
     it('vipPresale: whitelist remove', async () => {
         // first add users
         const users = [wallet1.address, wallet2.address]
@@ -638,16 +692,16 @@ describe('VIP Presale', () => {
         expect(await helixToken.balanceOf(user)).to.eq(expectedUserTokenBalance)
         expect(await helixToken.balanceOf(vipPresale.address)).to.eq(expectedPresaleTokenBalance)
 
-        // check that the user's withdrawn2 amount is updated
-        const withdrawn2 = (await vipPresale.users(user)).withdrawn2
-        expect(withdrawn2).to.eq(purchaseAmount * withdrawPercent)
+        // check that the user's withdrawn amount is updated
+        const withdrawn = (await vipPresale.users(user)).withdrawn
+        expect(withdrawn).to.eq(purchaseAmount * withdrawPercent)
     
         // check that the user can't withdraw any more this phase
         expect(await vipPresale.maxRemovable(user)).to.eq(0)
 
         // try to withdraw again, expect to fail
         await expect(vipPresale1.withdraw(withdrawAmount))
-            .to.be.revertedWith("VipPresale: INSUFFICIENT ACCOUNT BALACE TO REMOVE")
+            .to.be.revertedWith("VipPresale: INSUFFICIENT ACCOUNT BALANCE TO REMOVE")
     })
 
     it('vipPresale: withdraw 50% of purchase in phase 3', async () => {
