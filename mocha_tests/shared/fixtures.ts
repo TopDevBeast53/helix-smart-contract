@@ -74,6 +74,8 @@ const overrides = {
     gasLimit: 9999999
 }
 
+const billion = 1000000000
+
 interface FullExchangeFixture {
     tokenA: Contract
     tokenB: Contract
@@ -107,12 +109,12 @@ interface FullExchangeFixture {
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
     // 0 deploy tokens
-    const tokenA = await deployContract(wallet, TestToken, ['Test Token A', 'TTA', expandTo18Decimals(100000)], overrides)
-    const tokenB = await deployContract(wallet, TestToken, ['Test Token B', 'TTB', expandTo18Decimals(100000)], overrides)
-    const tokenC = await deployContract(wallet, TestToken, ['Test Token C', 'TTC', expandTo18Decimals(100000)], overrides)
-    const tokenD = await deployContract(wallet, TestToken, ['Test Token D', 'TTD', expandTo18Decimals(100000)], overrides)
-    const tokenE = await deployContract(wallet, TestToken, ['Test Token E', 'TTE', expandTo18Decimals(100000)], overrides)
-    const tokenF = await deployContract(wallet, TestToken, ['Test Token F', 'TTF', expandTo18Decimals(100000)], overrides)
+    const tokenA = await deployContract(wallet, TestToken, ['Test Token A', 'TTA', expandTo18Decimals(1 * billion)], overrides)
+    const tokenB = await deployContract(wallet, TestToken, ['Test Token B', 'TTB', expandTo18Decimals(1 * billion)], overrides)
+    const tokenC = await deployContract(wallet, TestToken, ['Test Token C', 'TTC', expandTo18Decimals(1 * billion)], overrides)
+    const tokenD = await deployContract(wallet, TestToken, ['Test Token D', 'TTD', expandTo18Decimals(1 * billion)], overrides)
+    const tokenE = await deployContract(wallet, TestToken, ['Test Token E', 'TTE', expandTo18Decimals(1 * billion)], overrides)
+    const tokenF = await deployContract(wallet, TestToken, ['Test Token F', 'TTF', expandTo18Decimals(1 * billion)], overrides)
 
     const WETH = await deployContract(wallet, WETH9, [], overrides)
 

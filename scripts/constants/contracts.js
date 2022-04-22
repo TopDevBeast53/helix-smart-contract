@@ -69,7 +69,7 @@ module.exports = {
     },
     vipPresale: {
         56: '',
-        97: '0x3c5281A44e30bA282792750fd274213530044911',
+        97: '0x562BeA868BE7951b2f27C5825770CF5BE393d36F',
     },
     publicPresale: {
         56: '',

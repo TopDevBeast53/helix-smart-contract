@@ -121,13 +121,13 @@ module.exports = {
     // Input token address
     VIP_PRESALE_INPUT_TOKEN: {
         56: '', // Expect BUSD for mainnet
-        97: '0xBe5D153b1A9e82E35d1e5f4Da8805E088c344482',   // Test Token A for testing
+        97: '0xa34365267e9795FC1fe34b31cB0b0112d5667e8F',   // Test Token A for testing
     },
 
     // Output token address
     VIP_PRESALE_OUTPUT_TOKEN: {
         56: '', // Expect HELIX for mainnet
-        97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
+        97: '0xeB101767DFF4dbb08001459C8098E73C67C4A4e1',   // Test Token B for testing
     },
 
     // BUSD per ticket
@@ -151,13 +151,13 @@ module.exports = {
     // Length of time between purchase phases
     VIP_PRESALE_PURCHASE_PHASE_DURATION: {
         56: 0,
-        97: 86400,     // 86400 == 1 day
+        97: 300,     // 86400 == 1 day
     },
 
     // Length of time between withdraw phases
     VIP_PRESALE_WITHDRAW_PHASE_DURATION: {
         56: 0,
-        97: 7862400,     // 91 days, 86400 == 1 day
+        97: 300,     // 91 days, 86400 == 1 day
     },
 
     // Amount of OUTPUT TOKEN to fund VIP Presale contract with
