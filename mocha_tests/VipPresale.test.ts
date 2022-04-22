@@ -585,6 +585,71 @@ describe('VIP Presale', () => {
         expect(await helixToken.balanceOf(vipPresale.address)).to.eq(expectedPresaleTokenBalance)
     })
 
+    it('vipPresale: withdraw more than 25% of purchase in withdraw phase 2 fails', async () => {
+        const inputToken = tokenA.address 
+        const outputToken = helixToken.address 
+        const user = wallet1.address            // account to whitelist
+        const maxTicket = 100                   // allotment to whitelisted user
+        const purchasePhase = 1                 // allow up to maxTicket purchase
+        const purchaseAmount = 100              // number of tickets purchased by user
+        const withdrawPhase = 2                 // allow up to 25% purchased withdrawal
+        const withdrawAmount = 25               // amount withdrawn by user
+        const withdrawPercent = 0.25            // max percent withdrawable in this withdraw phase
+    
+        // expect the number of tickets a user has purchased to stay the same after withdrawals
+        const expectedUserTicketPurchased = purchaseAmount;
+
+        // expect the user's ticket balance to decrease after withdrawls
+        const expectedUserTicketBalance = purchaseAmount - withdrawAmount;
+  
+        // the number of output tokens we expect the user to have withdrawn
+        const expectedOutputTokenDifference = await vipPresale.getAmountOut(withdrawAmount, outputToken)
+
+        // expect the user's token balance to increase in outputTokens 
+        const expectedUserTokenBalance = (await helixToken.balanceOf(user)).add(expectedOutputTokenDifference)
+
+        // and expect the contract's outputToken balance to decrease by the same amount
+        const expectedPresaleTokenBalance = (await helixToken.balanceOf(vipPresale.address)).sub(expectedOutputTokenDifference)
+
+        // check that the test varibles are set correctly
+        expect(withdrawAmount).to.not.be.above(purchaseAmount * withdrawPercent)
+
+        // make a purchase
+
+        await vipPresale.whitelistAdd([user], [maxTicket])
+        await vipPresale.setPurchasePhase(purchasePhase)
+
+        const tokenAmount = await vipPresale.getAmountOut(purchaseAmount, inputToken)
+        await tokenA1.approve(vipPresale.address, tokenAmount)
+
+        await vipPresale1.purchase(purchaseAmount)
+
+        // now make a withdrawal
+
+        // first set the correct phase
+        await vipPresale.setWithdrawPhase(withdrawPhase)
+
+        // withdraw as user
+        await vipPresale1.withdraw(withdrawAmount)
+
+        // check that the updated amounts match the expectations
+        expect((await vipPresale.users(user)).purchased).to.eq(expectedUserTicketPurchased)
+        expect((await vipPresale.users(user)).balance).to.eq(expectedUserTicketBalance)
+        expect(await helixToken.balanceOf(user)).to.eq(expectedUserTokenBalance)
+        expect(await helixToken.balanceOf(vipPresale.address)).to.eq(expectedPresaleTokenBalance)
+
+        // check that the user's withdrawn2 amount is updated
+        const withdrawn2 = (await vipPresale.users(user)).withdrawn2
+        expect(withdrawn2).to.eq(purchaseAmount * withdrawPercent)
+    
+        // check that the user can't withdraw any more this phase
+        expect(await vipPresale.maxRemovable(user)).to.eq(0)
+
+        // try to withdraw again, expect to fail
+        await expect(vipPresale1.withdraw(withdrawAmount))
+            .to.be.revertedWith("VipPresale: INSUFFICIENT ACCOUNT BALACE TO REMOVE")
+    })
+
     it('vipPresale: withdraw 50% of purchase in phase 3', async () => {
         const inputToken = tokenA.address 
         const outputToken = helixToken.address 
@@ -746,6 +811,68 @@ describe('VIP Presale', () => {
         expect(await helixToken.balanceOf(user)).to.eq(expectedUserTokenBalance)
         expect(await helixToken.balanceOf(vipPresale.address)).to.eq(expectedPresaleTokenBalance)
     })
+
+    it('vipPresale: purchase all tickets withdraw 100% of purchase in phase 5', async () => {
+        const inputToken = tokenA.address 
+        const outputToken = helixToken.address 
+        const user = wallet1.address            // account to whitelist
+        const maxTicket = 50000                   // allotment to whitelisted user
+        const purchasePhase = 1                 // allow up to maxTicket purchase
+        const purchaseAmount = 50000              // number of tickets purchased by user
+        const withdrawPhase = 5                 // allow up to 25% purchased withdrawal
+        const withdrawAmount = 50000               // amount withdrawn by user
+        const withdrawPercent = 1            // max percent withdrawable in this withdraw phase
+
+        // transfer enough tokens to wallet1 to make the purchase
+        await tokenA.transfer(wallet1.address, expandTo18Decimals(maxTicket * 5))
+    
+        // expect the number of tickets a user has purchased to stay the same after withdrawals
+        const expectedUserTicketPurchased = purchaseAmount;
+
+        // expect the user's ticket balance to decrease after withdrawls
+        const expectedUserTicketBalance = purchaseAmount - withdrawAmount;
+  
+        // the number of outputtokens we expect the user to have withdrawn
+        const expectedOutputTokenDifference = await vipPresale.getAmountOut(withdrawAmount, outputToken)
+
+        // expect the user's token balance to increase in outputTokens 
+        const expectedUserTokenBalance = (await helixToken.balanceOf(user)).add(expectedOutputTokenDifference)
+
+        // and expect the contract's outputToken balance to decrease by the same amount
+        const expectedPresaleTokenBalance = (await helixToken.balanceOf(vipPresale.address)).sub(expectedOutputTokenDifference)
+
+        // check that the test varibles are set correctly
+        expect(withdrawAmount).to.not.be.above(purchaseAmount * withdrawPercent)
+
+        // make a purchase
+
+        await vipPresale.whitelistAdd([user], [maxTicket])
+        await vipPresale.setPurchasePhase(purchasePhase)
+
+        const tokenAmount = await vipPresale.getAmountOut(purchaseAmount, inputToken)
+        await tokenA1.approve(vipPresale.address, tokenAmount)
+
+        await vipPresale1.purchase(purchaseAmount)
+
+        // check that all the tickets are purchased
+        expect(await vipPresale.ticketsAvailable()).to.eq(0)
+
+        // make a withdrawal
+
+        // first set the correct phase
+        await vipPresale.setWithdrawPhase(withdrawPhase)
+
+        // withdraw as user
+        await vipPresale1.withdraw(withdrawAmount)
+
+        // check that the updated amounts match the expectations
+        expect((await vipPresale.users(user)).purchased).to.eq(expectedUserTicketPurchased)
+        expect((await vipPresale.users(user)).balance).to.eq(expectedUserTicketBalance)
+        expect(await helixToken.balanceOf(user)).to.eq(expectedUserTokenBalance)
+        expect(await helixToken.balanceOf(vipPresale.address)).to.eq(expectedPresaleTokenBalance)
+        expect(await helixToken.balanceOf(vipPresale.address)).to.eq(0)
+    })
+
 
     it('vipPresale: burn all tickets while paused as owner', async () => {
         const owner = wallet0.address

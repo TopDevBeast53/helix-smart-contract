@@ -30,8 +30,11 @@ contract VipPresale is ReentrancyGuard {
     // Information about whitelisted users tickets
     struct User {
         uint maxTicket;         // sets purchase phase 1 upper limit on ticket purchases
-        uint purchased;         // tickets purchased, invariant: purchased <= maxTicket
+        uint purchased;         // tickets purchased, purchase phase 1 invariant: purchased <= maxTicket
         uint balance;           // tickets purchased but not withdrawn
+        uint withdrawn2;        // amount withdrawn in withdraw phase 2 (25% purchased max)
+        uint withdrawn3;        // amount withdrawn in withdraw phase 3 (50% purchased max)
+        uint withdrawn4;        // amount withdrawn in withdraw phase 4 (75% purchased max)
     }
 
     // Maximum number of tickets available for purchase at the start of the sale
@@ -207,7 +210,7 @@ contract VipPresale is ReentrancyGuard {
         _validatePurchase(msg.sender, amount);
 
         // get the `inputTokenAmount` in `inputToken` to purchase `amount` of tickets
-        uint tokenAmount = getAmountOut(amount, inputToken); 
+        uint tokenAmount = _getAmountOut(amount, inputToken); 
 
         require(
             tokenAmount <= inputToken.balanceOf(msg.sender), 
@@ -242,7 +245,11 @@ contract VipPresale is ReentrancyGuard {
     }
 
     // get `amountOut` of `tokenOut` for `amountIn` of tickets
-    function getAmountOut(uint amountIn, IERC20 tokenOut) public view returns(uint amountOut) {
+    function getAmountOut(uint amountIn, IERC20 tokenOut) external view returns(uint amountOut) {
+        amountOut = _getAmountOut(amountIn, tokenOut);
+    }
+
+    function _getAmountOut(uint amountIn, IERC20 tokenOut) private view returns(uint amountOut) {
         if (address(tokenOut) == address(inputToken)) {
             amountOut = amountIn * INPUT_RATE * INPUT_TOKEN_DECIMALS;
         } else if (address(tokenOut) == address(outputToken)) {
@@ -252,6 +259,7 @@ contract VipPresale is ReentrancyGuard {
         }
     }
 
+
     // used to destroy `outputToken` equivalant in value to `amount` of tickets
     // should only be used after purchasePhase 2 ends
     function burn(uint amount) external onlyOwner { 
@@ -259,7 +267,7 @@ contract VipPresale is ReentrancyGuard {
         _remove(amount);
 
         // get the `tokenAmount` equivalent in value to `amount` of tickets
-        uint tokenAmount = getAmountOut(amount, outputToken);
+        uint tokenAmount = _getAmountOut(amount, outputToken);
         outputToken.burn(address(this), tokenAmount);
     }
 
@@ -272,7 +280,7 @@ contract VipPresale is ReentrancyGuard {
         _remove(amount);
 
         // get the `tokenAmount` equivalent in value to `amount` of tickets
-        uint tokenAmount = getAmountOut(amount, outputToken);
+        uint tokenAmount = _getAmountOut(amount, outputToken);
         outputToken.safeTransfer(msg.sender, tokenAmount);
     }
 
@@ -289,17 +297,35 @@ contract VipPresale is ReentrancyGuard {
             // otherwise, the user will have purchased tickets and the tickets available
             // will already have been updated so we only need to decrease their balance
             users[msg.sender].balance -= amount;
+    
+            // update the amount withdrawn in this phase
+            if (withdrawPhase == 2) {
+                users[msg.sender].withdrawn2 += amount;
+            } else if (withdrawPhase == 3) {
+                users[msg.sender].withdrawn3 += amount;
+            } else if (withdrawPhase == 4) {
+                users[msg.sender].withdrawn4 += amount;
+            }
         }
     }
 
     // validate whether `amount` of tickets are removable by address `by`
     function _validateRemoval(address by, uint amount) private view {
-        require(amount <= ticketsAvailable, "VipPresale: INSUFFICIENT CONTRACT BALANCE TO REMOVE");
-        require(amount <= maxRemovable(by), "VipPresale: INSUFFICIENT ACCOUNT BALACE TO REMOVE");
+        // Check that the contract has enough output token balance to remove `amount` of tickets
+        require(
+            _getAmountOut(amount, outputToken) <= outputToken.balanceOf(address(this)), 
+            "VipPresale: INSUFFICIENT CONTRACT BALANCE TO REMOVE"
+        );
+        // Check that `by` has enough purchased tickeds to remove `amount`
+        require(amount <= _maxRemovable(by), "VipPresale: INSUFFICIENT ACCOUNT BALACE TO REMOVE");
     }
 
     // returns `maxAmount` removable by address `by`
-    function maxRemovable(address by) public view returns(uint maxAmount) {
+    function maxRemovable(address by) external view returns(uint maxAmount) {
+        maxAmount = _maxRemovable(by);
+    }
+
+    function _maxRemovable(address by) private view returns(uint maxAmount) {
         if (isOwner[by]) {
             // owner can remove all of the tokens available
             maxAmount = isPaused ? ticketsAvailable : 0;
@@ -307,9 +333,19 @@ contract VipPresale is ReentrancyGuard {
             if (isPaused) {
                 maxAmount = 0;
             } else {
-                // Max number of tickets user can withdraw as a function of withdrawPhase and 
-                // number of tickets purchased
-                uint allowed = users[by].purchased * withdrawPhasePercent[withdrawPhase] / WITHDRAW_PERCENT;
+                // Get the amount already withdrawn in this withdraw phase
+                uint withdrawn;
+                if (withdrawPhase == 2) {
+                    withdrawn = users[by].withdrawn2;
+                } else if (withdrawPhase == 3) {
+                    withdrawn = users[by].withdrawn3;
+                } else if (withdrawPhase == 4) {
+                    withdrawn = users[by].withdrawn4;
+                }
+
+                // Max number of tickets user can withdraw as a function of withdrawPhase and number of tickets purchased
+                // minus the tickets already withdrawn
+                uint allowed = (users[by].purchased * withdrawPhasePercent[withdrawPhase] / WITHDRAW_PERCENT) - withdrawn;
 
                 // Number of tickets remaining in their balance
                 uint balance = users[by].balance;
