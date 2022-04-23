@@ -42,11 +42,12 @@ async function main() {
     const IVipPresale = await ethers.getContractFactory('VipPresale')
     const VipPresale = IVipPresale.attach(vipPresale).connect(admin);
     console.log(`Add WhiteList...`)
-
     const len = addresses.length;
     
     for (let i = 0; i < len; i += 20) {
         console.log(`from:${i}  to:${Math.min(i + 20, len) - 1} doing...`)
+        console.log(`address i    == ${addresses[i]}`)
+        console.log(`address i+19 == ${addresses[Math.min(i+19, len)]}`) 
         const txx = await VipPresale.whitelistAdd(
             addresses.slice(i, Math.min(i + 20, len))
             , amounts.slice(i, Math.min(i + 20, len)))
