@@ -67,8 +67,12 @@ module.exports = {
         56: '',
         97: '0x0cc0d1C3CECFD88eDA86bb2aA5b8D422960e62Db',
     },
+    helixP: {
+        56: '0x67e02A2A1e7527eB18A703a19778f8ACd9972808',
+        97: '',
+    },
     vipPresale: {
-        56: '',
+        56: '0xb40a03c79C58857ecEe0a4Bd8Dc87d5831CE010e',
         97: '0x562BeA868BE7951b2f27C5825770CF5BE393d36F',
     },
     publicPresale: {
