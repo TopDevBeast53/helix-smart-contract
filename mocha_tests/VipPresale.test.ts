@@ -87,6 +87,25 @@ describe('VIP Presale', () => {
        expect(owners[0]).to.eq(wallet0.address)
     })
 
+    it('vipPresale: remove owner', async () => {
+        // add a new owner
+        expect(await vipPresale.isOwner(wallet1.address)).to.be.false
+        await vipPresale.addOwner(wallet1.address)
+        expect(await vipPresale.isOwner(wallet1.address)).to.be.true
+
+        let owners = await vipPresale.getOwners()
+        expect(owners.length).to.eq(2)
+        expect(owners[1]).to.eq(wallet1.address)
+
+        // remove the original owner
+        await vipPresale1.removeOwner(wallet0.address)
+        expect(await vipPresale.isOwner(wallet0.address)).to.be.false
+
+        owners = await vipPresale.getOwners()
+        expect(owners.length).to.eq(1)
+        expect(owners[0]).to.eq(wallet1.address)
+    })
+
     it('vipPresale: add owner', async () => {
         expect(await vipPresale.isOwner(wallet1.address)).to.be.false
         await vipPresale.addOwner(wallet1.address)
