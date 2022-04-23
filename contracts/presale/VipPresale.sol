@@ -321,18 +321,17 @@ contract VipPresale is ReentrancyGuard {
             if (isPaused) {
                 maxAmount = 0;
             } else {
+                if (withdrawPhase == 0) return 0;
+                
                 // the number of tickets already withdrawn 
                 uint withdrawn = users[by].purchased - users[by].balance;
 
+                // Use the previous phase percent if the phase hasn't ended
+                uint _withdrawPhase = block.timestamp < withdrawPhaseEndTimestamp ? withdrawPhase - 1 : withdrawPhase;
+                
                 // Max number of tickets user can withdraw as a function of withdrawPhase and number of tickets purchased
                 // minus the tickets already withdrawn
-                if (withdrawPhase == 0) return 0;
-
-                uint allowed;
-                if (block.timestamp < withdrawPhaseEndTimestamp)
-                    allowed = (users[by].purchased * withdrawPhasePercent[withdrawPhase - 1] / WITHDRAW_PERCENT) - withdrawn;
-                else
-                    allowed = (users[by].purchased * withdrawPhasePercent[withdrawPhase] / WITHDRAW_PERCENT) - withdrawn;
+                uint allowed = (users[by].purchased * withdrawPhasePercent[_withdrawPhase] / WITHDRAW_PERCENT) - withdrawn;
 
                 // Number of tickets remaining in their balance
                 uint balance = users[by].balance;
