@@ -49,6 +49,7 @@ module.exports = {
       url: "https://bsc-dataseed1.binance.org",
       chainId: 56,
       gasPrice: 20000000000,
+      gas: 2100000,
       accounts: resolveTestNetBSCAccounts(),
     },
   },
