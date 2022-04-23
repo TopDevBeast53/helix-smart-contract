@@ -350,6 +350,20 @@ contract VipPresale is ReentrancyGuard {
         owners.push(owner);
     }
 
+    // remove an existing owner from the contract, only callable by an owner
+    function removeOwner(address owner) external isValidAddress(owner) onlyOwner {
+        require(isOwner[owner], "VipPresale: NOT AN OWNER");
+        isOwner[owner] = false;
+
+        // array remove by swap 
+        for (uint i = 0; i < owners.length; i++) {
+            if (owners[i] == owner) {
+                owners[i] = owners[owners.length - 1];
+                owners.pop();
+            }
+        }
+    }
+
     // return the address array of registered owners
     function getOwners() external view returns(address[] memory) {
         return owners;
