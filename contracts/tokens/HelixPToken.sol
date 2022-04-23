@@ -25,6 +25,10 @@ contract HelixPToken is BEP20("Helix-p", "HELIX-P") {
         _burn(account, amount);
     }
 
+    function transferOwner(address user) external onlyOwner {
+        transferOwnership(user);
+    }
+    
     // Copied and modified from YAM code:
     // https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernanceStorage.sol
     // https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernance.sol
