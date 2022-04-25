@@ -42,6 +42,17 @@ contract MasterChef is Ownable, IMasterChef {
         uint256 lastRewardBlock; // Last block number that HelixTokens distribution occurs.
         uint256 accHelixTokenPerShare; // Accumulated HelixTokens per share, times 1e12. See below.
     }
+
+    // Used by bucket deposits and withdrawals to enable a caller to deposit lpTokens
+    // and accrue yield into distinct, uniquely indentified "buckets" such that each
+    // bucket can be interacted with individually and without affecting deposits and 
+    // yields in other buckets
+    struct BucketInfo {
+        uint256 amount;             // How many LP tokens have been deposited into the bucket
+        uint256 rewardDebt;         // Reward debt. See explanation in UserInfo
+        uint256 yield;              // Accrued but unwithdrawn yield
+    }
+     
     // The HelixToken TOKEN!
     HelixToken public helixToken;
     //Pools, Farms, Dev, Refs percent decimals
@@ -73,12 +84,55 @@ contract MasterChef is Ownable, IMasterChef {
     // Deposited amount HelixToken in MasterChef
     uint256 public depositedHelix;
 
+    // Maps poolId => depositorAddress => bucketId => BucketInfo
+    // where the depositor is depositing funds into a uniquely identified deposit "bucket"
+    // and where those funds are only accessible by the depositor
+    // Used by the bucket deposit and withdraw functions
+    mapping(uint256 => mapping(address => mapping(uint256 => BucketInfo))) public bucketInfo;
+
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event EmergencyWithdraw(
         address indexed user,
         uint256 indexed pid,
         uint256 amount
+    );
+    
+    // Emitted when a depositor deposits amount of lpToken into bucketId and stakes to poolId
+    event BucketDeposit(
+        address indexed depositor, 
+        uint256 indexed bucketId,
+        uint256 poolId, 
+        uint256 amount
+    );
+
+    event BucketWithdraw(
+        address indexed depositor, 
+        uint256 indexed bucketId,
+        uint256 poolId, 
+        uint256 amount
+    );
+
+    event BucketWithdrawAmountTo(
+        address indexed depositor, 
+        address indexed recipient,
+        uint256 indexed bucketId,
+        uint256 poolId, 
+        uint256 amount
+    );
+
+    event BucketWithdrawYieldTo(
+        address indexed depositor, 
+        address indexed recipient,
+        uint256 indexed bucketId,
+        uint256 poolId, 
+        uint256 yield 
+    );
+
+    event UpdateBucket(
+        address indexed depositor,
+        uint256 indexed bucketId,
+        uint256 indexed poolId
     );
 
     constructor(
@@ -116,6 +170,11 @@ contract MasterChef is Ownable, IMasterChef {
 
     function poolLength() external view returns (uint256) {
         return poolInfo.length;
+    }
+
+    // Return the lpToken address associated with poolId _pid
+    function getLpToken(uint256 _pid) external view returns(address) {
+        return address(poolInfo[_pid].lpToken);
     }
 
     function withdrawDevAndRefFee() public{
@@ -263,6 +322,149 @@ contract MasterChef is Ownable, IMasterChef {
         TransferHelper.safeTransfer(address(pool.lpToken), address(msg.sender), _amount);
         refRegister.recordStakingRewardWithdrawal(msg.sender, pending);
         emit Withdraw(msg.sender, _pid, _amount);
+    }
+
+    // Deposit _amount of lpToken into _bucketId and accrue yield by staking _amount to _poolId
+    function bucketDeposit(
+        uint256 _bucketId,          // Unique bucket to deposit _amount into
+        uint256 _poolId,            // Pool to deposit _amount into
+        uint256 _amount             // Amount of lpToken being deposited
+    ) public {
+        require(_poolId != 0, "MasterChef: INVALID LP TOKEN POOL ID");
+
+        PoolInfo storage pool = poolInfo[_poolId];
+        BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
+
+        updatePool(_poolId);
+
+        // If the bucket already has already accrued rewards, 
+        // increment the yield before resetting the rewardDebt
+        if (bucket.amount > 0) {
+            bucket.yield += bucket.amount * (pool.accHelixTokenPerShare) / (1e12) - (bucket.rewardDebt);
+        }
+    
+        // Transfer amount of lpToken from caller to chef
+        require(
+            _amount <= pool.lpToken.allowance(msg.sender, address(this)), 
+            "MasterChef: INSUFFICIENT LP TOKEN ALLOWANCE TO DEPOSIT INTO BUCKET"
+        );
+        TransferHelper.safeTransferFrom(address(pool.lpToken), msg.sender, address(this), _amount);
+
+        // Update the bucket amount and reset the rewardDebt
+        bucket.amount += _amount;
+        bucket.rewardDebt = bucket.amount * (pool.accHelixTokenPerShare) / (1e12);
+
+        emit BucketDeposit(msg.sender, _bucketId, _poolId, _amount);
+    }
+
+    // Withdraw _amount of lpToken and all accrued yield from _bucketId and _poolId
+    function bucketWithdraw(uint256 _bucketId, uint256 _poolId, uint256 _amount) public {
+        require(_poolId != 0, "MasterChef: INVALID LP TOKEN POOL ID");
+
+        PoolInfo storage pool = poolInfo[_poolId];
+        BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
+
+        require(_amount <= bucket.amount, "MasterChef: CAN'T WITHDRAW MORE THAN IN BUCKET");
+
+        updatePool(_poolId);
+    
+        // Calculate the total yield to withdraw
+        uint256 pending = bucket.amount * (pool.accHelixTokenPerShare) / (1e12) - (bucket.rewardDebt);
+        uint256 yield = bucket.yield + pending;
+        safeHelixTokenTransfer(msg.sender, yield);
+
+        // Update the bucket state
+        bucket.amount -= _amount;
+        bucket.rewardDebt = bucket.amount * (pool.accHelixTokenPerShare) / (1e12);
+        bucket.yield = 0;
+
+        // Withdraw the amount of lpToken
+        TransferHelper.safeTransfer(address(pool.lpToken), address(msg.sender), _amount);
+
+        emit BucketWithdraw(msg.sender, _bucketId, _poolId, _amount);
+    }
+
+    // Withdraw _amount of lpToken from _bucketId and from _poolId
+    // and send the withdrawn _amount to _recipient
+    function bucketWithdrawAmountTo(
+        address _recipient,
+        uint256 _bucketId,
+        uint256 _poolId, 
+        uint256 _amount
+    ) public {
+        require(_recipient != address(0), "MasterChef: INVALID RECIPIENT ADDRESS");
+        require (_poolId != 0, "MasterChef: INVALID POOL ID TO WITHDRAW LP TOKEN FROM");
+        PoolInfo storage pool = poolInfo[_poolId];
+
+        BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
+        require(
+            _amount <= bucket.amount, 
+            "MasterChef: CAN'T WITHDRAW AMOUNT GREATER THAN IN BUCKET"
+        );
+
+        updatePool(_poolId);
+
+        // Update the bucket state
+        bucket.yield += bucket.amount * (pool.accHelixTokenPerShare) / (1e12) - (bucket.rewardDebt);
+        bucket.amount -= _amount;
+        bucket.rewardDebt = bucket.amount * (pool.accHelixTokenPerShare) / (1e12);
+
+        // Transfer only lpToken to the recipient
+        TransferHelper.safeTransfer(address(pool.lpToken), _recipient, _amount);
+
+        emit BucketWithdrawAmountTo(msg.sender, _recipient, _bucketId, _poolId, _amount);
+    }
+
+    // Withdraw total yield in HelixToken from _bucketId and _poolId and send to _recipient
+    function bucketWithdrawYieldTo(
+        address _recipient,
+        uint256 _bucketId,
+        uint256 _poolId,
+        uint256 _yield
+    ) public {
+        require(_recipient != address(0), "MasterChef: INVALID RECIPIENT ADDRESS");
+        require(_poolId != 0, "MasterChef: INVALID POOL ID TO WITHDRAW YIELD FROM");
+        updatePool(_poolId);
+
+        PoolInfo storage pool = poolInfo[_poolId];
+        BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
+
+        // Total yield is any pending yield plus any previously calculated yield
+        uint256 pending = bucket.amount * (pool.accHelixTokenPerShare) / (1e12) - (bucket.rewardDebt);
+        uint256 yield = bucket.yield + pending;
+
+        require(
+            _yield <= yield,
+            "MasterChef: CAN'T WITHDRAW YIELD GREATER THAN IN BUCKET"
+        );
+
+        // Update bucket state
+        bucket.rewardDebt = bucket.amount * (pool.accHelixTokenPerShare) / (1e12);
+        yield -= _yield;
+
+        safeHelixTokenTransfer(_recipient, _yield);
+
+        emit BucketWithdrawYieldTo(msg.sender, _recipient, _bucketId, _poolId, _yield);
+    }
+
+    // Update _poolId and _bucketId yield and rewardDebt
+    function updateBucket(uint256 _bucketId, uint256 _poolId) external {
+        require(_poolId != 0, "MasterChef: INVALID POOL ID TO UPDATE");
+        updatePool(_poolId);
+
+        PoolInfo storage pool = poolInfo[_poolId];
+        BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
+
+        bucket.yield += bucket.amount * (pool.accHelixTokenPerShare) / (1e12) - (bucket.rewardDebt);
+        bucket.rewardDebt = bucket.amount * (pool.accHelixTokenPerShare) / (1e12);
+
+        emit UpdateBucket(msg.sender, _bucketId, _poolId);
+    }
+
+    function getBucketYield(uint256 _bucketId, uint256 _poolId) external view returns(uint256 yield) {
+        require(_poolId != 0, "MasterChef: INVALID POOL ID");
+        BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
+        yield = bucket.yield;
     }
 
     // Stake HelixToken tokens to MasterChef
