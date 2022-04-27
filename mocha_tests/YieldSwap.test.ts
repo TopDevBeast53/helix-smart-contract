@@ -20,6 +20,7 @@ const overrides = {
     gasLimit: 99999999999
 }
 
+const minLockDuration = initials.YIELD_SWAP_MIN_LOCK_DURATION[env.network]
 const maxLockDuration = initials.YIELD_SWAP_MAX_LOCK_DURATION[env.network]
 
 const ONE_DAY = 86400       // one day in seconds
@@ -132,8 +133,8 @@ describe('Yield Swap', () => {
     it('yieldSwap: initialized with expected values', async () => {
         expect(await yieldSwap.chef()).to.eq(chef.address)
         expect(await yieldSwap.treasury()).to.eq(wallet0.address)           // use wallet0 to make checking balance change easy
-        expect(await yieldSwap.MIN_LOCK_DURATION()).to.eq(ONE_DAY * 7)      // 1 week in seconds
-        expect(await yieldSwap.MAX_LOCK_DURATION()).to.eq(ONE_DAY * 365)    // 1 year in seconds
+        expect(await yieldSwap.MIN_LOCK_DURATION()).to.eq(minLockDuration)      // 1 week in seconds
+        expect(await yieldSwap.MAX_LOCK_DURATION()).to.eq(maxLockDuration)    // 1 year in seconds
         expect(await helixLP.balanceOf(wallet0.address)).to.eq(expandTo18Decimals(10000))
     })
 
@@ -150,6 +151,7 @@ describe('Yield Swap', () => {
     })
 
     it('yieldSwap: open swap with invalid lock duration fails', async () => {
+        await yieldSwap.setMinLockDuration(ONE_DAY * 1)
         const invalidDurationTooLow = ONE_DAY * 0
         await expect(yieldSwap.openSwap(exToken, poolId, amount, ask, invalidDurationTooLow))
             .to.be.revertedWith("YieldSwap: INVALID LOCK DURATION")
@@ -429,12 +431,10 @@ describe('Yield Swap', () => {
         const expectedBidder = wallet1.address
         const expectedSwapId = swapId
         const expectedAmount = bidAmount
-        const expectedIsOpen = true
 
         expect(bid.bidder).to.eq(expectedBidder)
         expect(bid.swapId).to.eq(expectedSwapId)
         expect(bid.amount).to.eq(expectedAmount)
-        expect(bid.isOpen).to.eq(expectedIsOpen)
 
         // Check that the bid was added to the swap
         const swap = await yieldSwap.getSwap(swapId)
@@ -538,14 +538,12 @@ describe('Yield Swap', () => {
         const bidId = await yieldSwap.getBidId()
     
         const expectedBidAmount = expandTo18Decimals(0)
-        const expectedIsOpen = false
 
         await yieldSwap1.setBid(bidId, expectedBidAmount)
 
         const bid = await yieldSwap.getBid(bidId)
 
         expect(bid.amount).to.eq(expectedBidAmount)
-        expect(bid.isOpen).to.eq(expectedIsOpen)
     })
 
     it('yieldSwap: set bid amount to greater than zero re-opens closed bid', async () => {
@@ -563,7 +561,6 @@ describe('Yield Swap', () => {
 
         // bid should be closed
         expect(bid.amount).to.eq(expectedBidAmount)
-        expect(bid.isOpen).to.be.false
 
         // set amount to greater than 0 to re-open the bid
         expectedBidAmount = expandTo18Decimals(100)
@@ -574,7 +571,6 @@ describe('Yield Swap', () => {
 
         // bid should be re-opened
         expect(bid.amount).to.eq(expectedBidAmount)
-        expect(bid.isOpen).to.be.true
     })
 
     it('yieldSwap: set bid emits BidSet event', async () => {
@@ -611,29 +607,6 @@ describe('Yield Swap', () => {
         // expect accept wallet1 bid as wallet1 to fail
         await expect(yieldSwap1.acceptBid(bidId))
             .to.be.revertedWith("YieldSwap: ONLY SELLER CAN ACCEPT BID")
-    })
-
-    it('yieldSwap: accept bid when bid is closed fails', async () => {
-        await openSwap()
-        const swapId = await yieldSwap.getSwapId()
-        await makeBid(swapId)
-   
-        // get the most recent bidId
-        const bidId = await yieldSwap.getBidId()
-
-        // close the bid as wallet1
-        const closeBidAmount = 0
-        await yieldSwap1.setBid(bidId, closeBidAmount)
-
-        // get the bid
-        const bid = await yieldSwap.getBid(bidId)
-
-        // check that the bid is closed
-        expect(bid.isOpen).to.be.false
-    
-        // expect accept bid when bid is closed to fail
-        await expect(yieldSwap.acceptBid(bidId))
-            .to.be.revertedWith("YieldSwap: BID IS CLOSED")
     })
 
     it('yieldSwap: accept bid when swap is closed fails', async () => {
@@ -761,6 +734,10 @@ describe('Yield Swap', () => {
         const expectedLockUntilTimestamp = swap.lockDuration.add(await now())
         expect(swap.lockUntilTimestamp).to.eq(expectedLockUntilTimestamp)
 
+        // expect the cost to be set
+        const expectedCost = bid.amount
+        expect(swap.cost).to.eq(expectedCost)
+
         // expect the wallet0 lp token balance to be decreased by lp amount
         const expectedLpBal0 = prevLpBal0.sub(swap.amount)
         expect(await helixLP.balanceOf(wallet0.address)).to.eq(expectedLpBal0)
@@ -779,9 +756,6 @@ describe('Yield Swap', () => {
         // expect the treasury ex token balance to be increased by treasury fee
         const expectedExBalTreasury = prevExBalTreasury.add(treasuryAmount)
         expect(await helixToken.balanceOf(wallet2.address)).to.eq(expectedExBalTreasury)
-
-        // expect the bid to be closed
-        expect(bid.isOpen).to.be.false
     })
 
     it('yieldSwap: accept bid emits BidAccepted event', async () => {
@@ -918,6 +892,10 @@ describe('Yield Swap', () => {
 
         // expect the buyer to be set to the accept ask caller (wallet1) 
         expect(swap.buyer).to.eq(wallet1.address)
+
+        // expect the cost to be set to the ask amount
+        const expectedCost = swap.ask
+        expect(swap.cost).to.eq(expectedCost)
 
         // expect the lock timestamp to be set
         const expectedLockUntilTimestamp = swap.lockDuration.add(await now())
@@ -1131,165 +1109,6 @@ describe('Yield Swap', () => {
         await expect(yieldSwap.withdraw(swapId))
             .to.emit(yieldSwap, "Withdrawn")
             .withArgs(swapId)
-    })
-
-    it('yieldSwap: get max bid with invalid swap id fails', async () => {
-        // invalid because no swap opened
-        let invalidSwapId = 0; 
-        await expect(yieldSwap.getMaxBid(invalidSwapId))
-            .to.be.revertedWith("YieldSwap: NO SWAP OPENED")
-
-        // open the swap
-        await openSwap()
-        invalidSwapId = (await yieldSwap.getSwapId()).add(1)
-        await expect(yieldSwap.getMaxBid(invalidSwapId))
-            .to.be.revertedWith("YieldSwap: INVALID SWAP ID")
-    })
-
-    it('yieldSwap: get max bid returns empty bid if no bid made', async () => {
-        // open the swap
-        await openSwap()
-        const swapId = await yieldSwap.getSwapId()
-
-        // get the max bid
-        const maxBid = await yieldSwap.getMaxBid(swapId)
-    
-        // expect the max bid to be empty and closed because no bid has been made
-        const expectedBidder = constants.AddressZero
-        const expectedSwapId = 0
-        const expectedAmount = 0
-        const expectedIsOpen = false
-
-        expect(maxBid.bidder).to.eq(expectedBidder)
-        expect(maxBid.swapId).to.eq(expectedSwapId)
-        expect(maxBid.amount).to.eq(expectedAmount)
-        expect(maxBid.isOpen).to.eq(expectedIsOpen)
-    })
-
-    it('yieldSwap: get max bid with one bid made', async () => {
-        // open the swap
-        await openSwap()
-        const swapId = await yieldSwap.getSwapId()
-
-        // make a bid
-        await makeBid(swapId)
-      
-        // get the bidId
-        const bidId = await yieldSwap.getBidId()
-
-        // get the expected bid
-        const expectedMaxBid = await yieldSwap.getBid(bidId)
-
-        // get the maxBid
-        const maxBid = await yieldSwap.getMaxBid(swapId)
-    
-        // check that the obtained max bid matches the bid made
-        expect(maxBid.bidder).to.eq(expectedMaxBid.bidder)
-        expect(maxBid.swapId).to.eq(expectedMaxBid.swapId)
-        expect(maxBid.amount).to.eq(expectedMaxBid.amount)
-        expect(maxBid.isOpen).to.eq(expectedMaxBid.isOpen)
-    })
-
-    it('yieldSwap: get max bid with largest bid made first', async () => {
-        // open the swap
-        await openSwap()
-        const swapId = await yieldSwap.getSwapId()
-
-        // make a bid as wallet 1
-        const bid1 = expandTo18Decimals(200)
-        await helixToken1.approve(yieldSwap.address, bid1)
-        await yieldSwap1.makeBid(swapId, bid1)
-
-        // transfer funds to wallet 2 from wallet 0
-        const balanceWallet2 = expandTo18Decimals(500)
-        await helixToken.transfer(wallet2.address, balanceWallet2)
-
-        // make a bid as wallet 2 
-        const bid2 = expandTo18Decimals(100)
-        await helixToken2.approve(yieldSwap.address, bid2)
-        await yieldSwap2.makeBid(swapId, bid2)
-
-        // get the bidId
-        const expectedBidId = 0
-        const expectedMaxBid = await yieldSwap.getBid(expectedBidId)
-
-        // get the maxBid
-        const maxBid = await yieldSwap.getMaxBid(swapId)
-    
-        // check that the obtained max bid matches the bid made
-        expect(maxBid.bidder).to.eq(expectedMaxBid.bidder)
-        expect(maxBid.swapId).to.eq(expectedMaxBid.swapId)
-        expect(maxBid.amount).to.eq(expectedMaxBid.amount)
-        expect(maxBid.isOpen).to.eq(expectedMaxBid.isOpen)
-    })
-
-    it('yieldSwap: get max bid with largest bid made last', async () => {
-        // open the swap
-        await openSwap()
-        const swapId = await yieldSwap.getSwapId()
-
-        // make a bid as wallet 1
-        const bid1 = expandTo18Decimals(100)
-        await helixToken1.approve(yieldSwap.address, bid1)
-        await yieldSwap1.makeBid(swapId, bid1)
-
-        // transfer funds to wallet 2 from wallet 0
-        const balanceWallet2 = expandTo18Decimals(500)
-        await helixToken.transfer(wallet2.address, balanceWallet2)
-
-        // make a bid as wallet 2 
-        const bid2 = expandTo18Decimals(200)
-        await helixToken2.approve(yieldSwap.address, bid2)
-        await yieldSwap2.makeBid(swapId, bid2)
-
-        // get the bidId
-        const expectedBidId = 1
-        const expectedMaxBid = await yieldSwap.getBid(expectedBidId)
-
-        // get the maxBid
-        const maxBid = await yieldSwap.getMaxBid(swapId)
-    
-        // check that the obtained max bid matches the bid made
-        expect(maxBid.bidder).to.eq(expectedMaxBid.bidder)
-        expect(maxBid.swapId).to.eq(expectedMaxBid.swapId)
-        expect(maxBid.amount).to.eq(expectedMaxBid.amount)
-        expect(maxBid.isOpen).to.eq(expectedMaxBid.isOpen)
-    })
-
-    it('yieldSwap: get max bid with multiple largest bids', async () => {
-        // open the swap
-        await openSwap()
-        const swapId = await yieldSwap.getSwapId()
-
-        // make a bid as wallet 1
-        const bid1 = expandTo18Decimals(200)
-        await helixToken1.approve(yieldSwap.address, bid1)
-        await yieldSwap1.makeBid(swapId, bid1)
-
-        // transfer funds to wallet 2 from wallet 0
-        const balanceWallet2 = expandTo18Decimals(500)
-        await helixToken.transfer(wallet2.address, balanceWallet2)
-
-        // make a bid as wallet 2 
-        const bid2 = expandTo18Decimals(200)
-        await helixToken2.approve(yieldSwap.address, bid2)
-        await yieldSwap2.makeBid(swapId, bid2)
-
-        // get the bidId
-        const expectedBidId = 0
-
-        // when there are tied largest bids, the winning bid should
-        // be the bid made first
-        const expectedMaxBid = await yieldSwap.getBid(expectedBidId)
-
-        // get the maxBid
-        const maxBid = await yieldSwap.getMaxBid(swapId)
-    
-        // check that the obtained max bid matches the bid made
-        expect(maxBid.bidder).to.eq(expectedMaxBid.bidder)
-        expect(maxBid.swapId).to.eq(expectedMaxBid.swapId)
-        expect(maxBid.amount).to.eq(expectedMaxBid.amount)
-        expect(maxBid.isOpen).to.eq(expectedMaxBid.isOpen)
     })
 
     it('yieldSwap: get swap ids with no swaps opened', async () => {
@@ -1596,6 +1415,7 @@ describe('Yield Swap', () => {
     })
 
     it('yieldSwap: set max lock duration with invalid duration fails', async () => {
+        await yieldSwap.setMinLockDuration(ONE_DAY * 1)
         const invalidLockDuration = (await yieldSwap.MIN_LOCK_DURATION()).sub(1)
         await expect(yieldSwap.setMaxLockDuration(invalidLockDuration))
             .to.be.revertedWith("YieldSwap: MAX LOCK DURATION MUST BE GREATER THAN MIN LOCK DURATION")
