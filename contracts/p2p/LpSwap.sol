@@ -24,6 +24,7 @@ contract LpSwap is Ownable, ReentrancyGuard {
         address seller;             // Address that opened this swap and that is selling amount of toBuyerToken
         address buyer;              // Address of the buyer of this swap, set only after the swap is closed
         uint amount;                // Amount of toBuyerToken being sold in this swap
+        uint cost;                  // Cost (bid/ask) in toSellerToken paid to seller, set only after swap is closed
         uint ask;                   // Amount of toSellerToken seller is asking for in exchange for amount of toBuyerToken
         bool isOpen;                // True if bids or ask are being accepted and false otherwise
     }
@@ -32,7 +33,6 @@ contract LpSwap is Ownable, ReentrancyGuard {
         address bidder;             // Address making this bid
         uint swapId;                // Id of the swap this bid was made on
         uint amount;                // Amount of toSellerToken bidder is offering in exchange for amount of toBuyerToken and yield
-        bool isOpen;                // True if the bid can be accepted and false otherwise
     }
 
     // Array of all swaps opened
@@ -180,7 +180,6 @@ contract LpSwap is Ownable, ReentrancyGuard {
         bid.bidder = msg.sender;
         bid.swapId = _swapId;
         bid.amount = amount;
-        bid.isOpen = true;
 
         // Add it to the bids array
         bids.push(bid);
@@ -210,13 +209,6 @@ contract LpSwap is Ownable, ReentrancyGuard {
 
         bid.amount = amount;
 
-        // Close or re-open the bid
-        if (bid.amount == 0 && bid.isOpen) {
-            bid.isOpen = false;
-        } else if (bid.amount > 0 && !bid.isOpen) {
-            bid.isOpen = true;
-        }
-
         emit BidSet(_bidId);
     }
 
@@ -226,11 +218,9 @@ contract LpSwap is Ownable, ReentrancyGuard {
         Swap storage swap = _getSwap(bid.swapId);
 
         require(msg.sender == swap.seller, "LpSwap: ONLY SELLER CAN ACCEPT BID");
-        require(bid.isOpen == true, "LpSwap: BID IS CLOSED");
 
         _accept(swap, msg.sender, bid.bidder, bid.amount);
 
-        bid.isOpen = false;
         emit BidAccepted(_bidId);
     }
 
@@ -247,10 +237,10 @@ contract LpSwap is Ownable, ReentrancyGuard {
     // Called internally to accept a bid or an ask, perform the
     // necessary checks, and transfer funds
     function _accept(
-        Swap storage swap,
-        address seller,
-        address buyer,
-        uint toSellerAmount
+        Swap storage swap,      // swap being accepted and closed
+        address seller,         // seller of the swap
+        address buyer,          // buyer of the swap
+        uint toSellerAmount     // amount being paid by buyer to seller
     ) private {
         require(swap.isOpen, "LpSwap: SWAP IS CLOSED");
 
@@ -264,6 +254,7 @@ contract LpSwap is Ownable, ReentrancyGuard {
         // Update the swap's status
         swap.isOpen = false;
         swap.buyer = buyer;
+        swap.cost = toSellerAmount;
 
         // Seller pays the buyer and pays their swap fees
         (uint buyerAmount, uint buyerTreasuryFee) = _applySellerFee(swap.amount);
@@ -276,19 +267,6 @@ contract LpSwap is Ownable, ReentrancyGuard {
         toSellerToken.safeTransferFrom(buyer, treasury, sellerTreasuryFee);
     }
 
-    // Return the bid with the highest bid amount made on _swapId
-    // If there are tied highest bids, choose the one that was made first
-    function getMaxBid(uint _swapId) external view returns(Bid memory maxBid) {
-        Swap storage swap = _getSwap(_swapId);
-        uint[] memory _bidIds = swap.bidIds;
-
-        for (uint id = 0; id < _bidIds.length; id++) {
-            if (bids[id].amount > maxBid.amount) {
-                maxBid = bids[id];
-            }
-        }
-    }
-    
     // Verify that _address has amount of token in balance
     // and that _address has approved this contract to transfer amount
     function _verify(IERC20 token, address _address, uint amount) private view {
