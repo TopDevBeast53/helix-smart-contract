@@ -47,7 +47,7 @@ async function main() {
     // await printAllSwaps(await getSwapIds())
    
     // print the bid data
-    // await printAllBids(await getAllBidIds())
+    await printAllBids(await getAllBidIds())
 
     // Add the HelixLp to chef staking pool
     // ONLY call with new chef and helixLP deployments
@@ -237,7 +237,6 @@ async function printBid(bidId) {
     print(`bidder:\t\t\t${bid.bidder}`)   
     print(`swapId:\t\t\t${bid.swapId}`)   
     print(`amount:\t\t\t${reduceBy18Decimals(bid.amount)}`)   
-    print(`isOpen:\t\t\t${bid.isOpen}`)   
     print(`\n`)
 }
 
