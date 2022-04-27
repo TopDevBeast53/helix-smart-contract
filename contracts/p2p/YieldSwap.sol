@@ -37,6 +37,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         address buyer;              // Address of the buyer of this swap, set only after the swap is closed
         uint poolId;                // Id relating lpToken to it's appropriate pool
         uint amount;                // Amount of lpToken being staked in this swap
+        uint cost;                  // Agreed cost (bid/ask) to buyer for yield, set only after swap is closed
         uint ask;                   // Amount of exToken seller is asking for in exchange for lpToken yield
         uint lockUntilTimestamp;    // Timestamp after which the buyer can withdraw their purchase of lpToken yield
         uint lockDuration;          // Duration between (buyer accepting ask or seller accepting bid) and lockUntilTimestamp
@@ -48,7 +49,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         address bidder;             // Address making this bid
         uint swapId;                // Id of the swap this bid was made on
         uint amount;                // Amount of exToken bidder is offering in exchange for amount of lpToken and yield
-        bool isOpen;                // True if the bid can be accepted and false otherwise
     }
 
     // Array of all swaps opened
@@ -216,7 +216,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         bid.bidder = msg.sender;
         bid.swapId = _swapId;
         bid.amount = amount;
-        bid.isOpen = true;
 
         // Add it to the bids array
         bids.push(bid);
@@ -246,13 +245,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
 
         bid.amount = amount;
 
-        // Close or re-open the bid
-        if (bid.amount == 0 && bid.isOpen) {
-            bid.isOpen = false;
-        } else if (bid.amount > 0 && !bid.isOpen) {
-            bid.isOpen = true;
-        }
-
         emit BidSet(_bidId);
     }
 
@@ -260,13 +252,10 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     function acceptBid(uint _bidId) external {
         Bid storage bid = _getBid(_bidId);
         Swap storage swap = _getSwap(bid.swapId);
-
         require(msg.sender == swap.seller, "YieldSwap: ONLY SELLER CAN ACCEPT BID");
-        require(bid.isOpen == true, "YieldSwap: BID IS CLOSED");
 
         _accept(swap, msg.sender, bid.bidder, bid.swapId, bid.amount);
 
-        bid.isOpen = false;
         emit BidAccepted(_bidId);
     }
 
@@ -283,11 +272,11 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     // Called internally to accept a bid or an ask, perform the
     // necessary checks, and transfer funds
     function _accept(
-        Swap storage swap,
-        address seller,
-        address buyer,
-        uint swapId,
-        uint exAmount
+        Swap storage swap,      // swap being accepted and closed
+        address seller,         // seller of the swap
+        address buyer,          // buyer of the swap
+        uint swapId,            // id of swap being accepted and closed
+        uint exAmount           // amount paid by buyer in exToken to seller for yield
     ) private {
         require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
 
@@ -299,6 +288,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
 
         swap.isOpen = false;
         swap.buyer = buyer;
+        swap.cost = exAmount;
         swap.lockUntilTimestamp = block.timestamp + swap.lockDuration;
 
         // Lock and stake lpAmount of the seller's lpToken
@@ -344,19 +334,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         emit Withdrawn(_swapId);
     }
 
-    // Return the bid with the highest bid amount made on _swapId
-    // If there are tied highest bids, choose the one that was made first
-    function getMaxBid(uint _swapId) external view returns(Bid memory maxBid) {
-        Swap storage swap = _getSwap(_swapId);
-        uint[] memory _bidIds = swap.bidIds;
-
-        for (uint id = 0; id < _bidIds.length; id++) {
-            if (bids[id].amount > maxBid.amount) {
-                maxBid = bids[id];
-            }
-        }
-    }
-    
     // Verify that _address has amount of token in balance
     // and that _address has approved this contract to transfer amount
     function _verify(IERC20 token, address _address, uint amount) private view {
