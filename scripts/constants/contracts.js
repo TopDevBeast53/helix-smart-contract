@@ -87,4 +87,9 @@ module.exports = {
         56: '',
         97: '',
     },
+    yieldSwap: {
+        56: '',
+        97: '0xb953F3096371364acB88B34eD89E269DA625a96A',
+    },
+
 }
