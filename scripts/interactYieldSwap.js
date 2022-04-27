@@ -47,7 +47,7 @@ async function main() {
     // await printAllSwaps(await getSwapIds())
    
     // print the bid data
-    await printAllBids(await getAllBidIds())
+    // await printAllBids(await getAllBidIds())
 
     // Add the HelixLp to chef staking pool
     // ONLY call with new chef and helixLP deployments
@@ -72,8 +72,8 @@ async function main() {
     // await makeBid(bidder, makeBidSwapId0, bidAmount0)
 
     // Accept the bid id and close the swap
-    const seller = user2
-    const acceptBidId = 16
+    const seller = user0
+    const acceptBidId = 21
     // await acceptBid(seller, acceptBidId)
 
     // Accept the ask and close the swap
@@ -83,8 +83,8 @@ async function main() {
 
     // Withdraw purchased yield 
     const caller = user1
-    const withdrawSwapId0 = 4
-    // await withdraw(caller, withdrawSwapId0)
+    const withdrawSwapId0 = 9
+    await withdraw(caller, withdrawSwapId0)
 
     print('done')
 }
@@ -184,6 +184,7 @@ async function printSwap(swapId) {
     print(`buyer:\t\t\t${swap.buyer}`)
     print(`poolId:\t\t\t${swap.poolId}`)
     print(`amount:\t\t\t${reduceBy18Decimals(swap.amount)}`)
+    print(`cost:\t\t\t${reduceBy18Decimals(swap.cost)}`)
     print(`ask:\t\t\t${reduceBy18Decimals(swap.ask)}`)
     print(`lockUntilTimestamp:\t${swap.lockUntilTimestamp}`)
     print(`isOpen:\t\t\t${swap.isOpen}`)
