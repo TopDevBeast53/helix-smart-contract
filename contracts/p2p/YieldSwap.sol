@@ -207,7 +207,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
 
         require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
         require(msg.sender != swap.seller, "YieldSwap: SELLER CAN'T BID ON THEIR OWN SWAP");
-        require(hasBidOnSwap[msg.sender][_swapId] == false, "YieldSwap: CALLER HAS ALREADY MADE BID");
+        require(!hasBidOnSwap[msg.sender][_swapId], "YieldSwap: CALLER HAS ALREADY MADE BID");
         require(amount > 0, "YieldSwap: BID AMOUNT CAN'T BE ZERO");
         _verify(swap.exToken, msg.sender, amount);
 
