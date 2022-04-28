@@ -17,7 +17,7 @@ contract HelixVault is Ownable {
     }
     
     struct Duration {
-        uint duration;                      // length of time a deposit will be locked, 1 day == 86400
+        uint duration;                      // length of time a deposit will be locked in seconds, 1 day == 86400
         uint weight;                        // reward modifier for locking a deposit for `duration`
     }
    
@@ -28,7 +28,7 @@ contract HelixVault is Ownable {
     // Used to display to users their deposits
     mapping(address => uint[]) public depositIds;
 
-    // Curated list of valid deposit durations and associated reward weights
+    // Owner-curated list of valid deposit durations and associated reward weights
     Duration[] public durations;
 
     // Last block number that token distribution occurs.
@@ -38,15 +38,11 @@ contract HelixVault is Ownable {
     uint public accTokenPerShare;
 
     // Used to index deposits for storage and retrieval
-    // Note that depositId == 0 is never assigned
-    // and is reserved for creating new deposits
     uint public depositId;    
 
-    // Token deposited and withdrawn in the vault
-    HelixToken public helixToken;
-
-    
-    // IBEP20 public rewardToken;
+    // Token deposited into and withdrawn from the vault by users
+    // and the token rewarded by the vault to user for locked token deposits
+    HelixToken public token;
 
     // Rate at which `token`s are created per block.
     uint public rewardPerBlock;
@@ -68,19 +64,21 @@ contract HelixVault is Ownable {
         uint depositTimestamp,
         uint withdrawTimestamp
     );
+
     event UpdateDeposit(
         address indexed user, 
         uint indexed id, 
         uint amount,            // amount added to existing deposit
         uint balance            // total balance deposited
     );
+
     event Withdraw(address indexed user, uint amount);
     event EmergencyWithdraw(address indexed user, uint amount);
     event RefPercentChanged(uint currentPercent);
 
-    modifier isValidId(uint id) {
-        require(id != 0, 'HelixVault: DEPOSIT ID 0 IS RESERVED');
-        require(id <= depositId, 'HelixVault: INVALID DEPOSIT ID');
+    modifier isValidDepositId(uint id) {
+        require(depositId > 0, 'HelixVault: NO DEPOSITS MADE');
+        require(id < depositId, 'HelixVault: INVALID DEPOSIT ID');
         _;
     }
 
@@ -100,12 +98,12 @@ contract HelixVault is Ownable {
     }
 
     constructor(
-        HelixToken _helixToken,
+        HelixToken _token,
         uint _rewardPerBlock,
         uint _startBlock,
         uint _bonusEndBlock
     ) {
-        helixToken = _helixToken;
+        token = _token;
         rewardPerBlock = _rewardPerBlock;
 
         bonusEndBlock = _bonusEndBlock;
@@ -118,7 +116,7 @@ contract HelixVault is Ownable {
         durations.push(Duration(540 days, 500));
         durations.push(Duration(720 days, 1000));
                                 
-        uint decimalsRewardToken = uint(helixToken.decimals());
+        uint decimalsRewardToken = uint(token.decimals());
         require(decimalsRewardToken < 30, 'HelixVault: REWARD TOKEN MUST HAVE LESS THAN 30 DECIMALS');
 
         PRECISION_FACTOR = uint(10**(uint(30) - decimalsRewardToken));
@@ -129,24 +127,15 @@ contract HelixVault is Ownable {
         WEIGHT_PERCENT = 1000;
     }
 
-    // Deposit `amount` of token in the vault
-    function deposit(uint amount, uint index, uint id) external {
+    // Used internally to create a new deposit and lock `amount` of token for `index` 
+    function newDeposit(uint amount, uint index) external {
         require(amount > 0, 'HelixVault: NOTHING TO DEPOSIT');
-
         updatePool();
 
-        if (id == 0) {
-            _newDeposit(amount, index);
-        } else {
-            _updateDeposit(amount, id);
-        }
-    }
+        token.transferFrom(msg.sender, address(this), amount);
 
-    // Used internally to create a new deposit and lock `amount` of token for `index` 
-    function _newDeposit(uint amount, uint index) private isValidIndex(index) {
-        helixToken.transferFrom(msg.sender, address(this), amount);
         // Get the new id of this deposit and create the deposit object
-        uint id = ++depositId;
+        uint id = depositId++;
 
         Deposit storage d = deposits[id];
         d.depositor = msg.sender;
@@ -163,18 +152,22 @@ contract HelixVault is Ownable {
         emit NewDeposit(msg.sender, id, amount, d.weight, d.depositTimestamp, d.withdrawTimestamp);
     }
 
-    // Used internally to add `amount` of token to deposit `id`
-    function _updateDeposit(uint amount, uint id) private isValidId(id) {
-        Deposit storage d = deposits[id];
+    // Used internally to increase deposit `id` by `amount` of token
+    function updateDeposit(uint amount, uint id) external {
+        require(amount > 0, 'HelixVault: NOTHING TO DEPOSIT');
+        updatePool();
+
+        Deposit storage d = _getDeposit(id);
 
         require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
-        require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
+        require(!d.withdrawn, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
         uint pending = _getReward(d.amount, d.weight);
         if (pending > 0) {
-            helixToken.transfer(msg.sender, pending);
+            token.transfer(msg.sender, pending);
         }
-        helixToken.transferFrom(msg.sender, address(this), amount);
+        token.transferFrom(msg.sender, address(this), amount);
+
         d.amount += amount;
         d.rewardDebt = _getReward(d.amount, d.weight);
 
@@ -182,8 +175,8 @@ contract HelixVault is Ownable {
     }
 
     // Withdraw `amount` of token from deposit `id`
-    function withdraw(uint amount, uint id) external isValidId(id) {
-        Deposit storage d = deposits[id];
+    function withdraw(uint amount, uint id) external {
+        Deposit storage d = _getDeposit(id);
 
         require(msg.sender == d.depositor, 'HelixVault: CALLER IS NOT DEPOSITOR');
         require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
@@ -194,7 +187,7 @@ contract HelixVault is Ownable {
         updatePool();
         uint pending = _getReward(d.amount, d.weight);
         if(pending > 0) {
-            helixToken.transfer(msg.sender, pending);
+            token.transfer(msg.sender, pending);
         }
 
         if(d.amount == amount) {
@@ -203,18 +196,18 @@ contract HelixVault is Ownable {
             d.amount -= amount;
             d.rewardDebt = _getReward(d.amount, d.weight);
         }
-        helixToken.transfer(msg.sender, amount);
+        token.transfer(msg.sender, amount);
         emit Withdraw(msg.sender, amount);
     }
 
     // View function to see pending Reward on frontend.
-    function pendingReward(uint id) external view isValidId(id) returns (uint) {
-        Deposit storage d = deposits[id];
+    function pendingReward(uint id) external view returns(uint) {
+        Deposit storage d = _getDeposit(id);
         require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
         require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
         uint _accTokenPerShare = accTokenPerShare;
-        uint lpSupply = helixToken.balanceOf(address(this));
+        uint lpSupply = token.balanceOf(address(this));
         if (block.number > lastRewardBlock && lpSupply != 0) {
             uint multiplier = getMultiplier(lastRewardBlock, block.number);
             uint reward = multiplier * rewardPerBlock;
@@ -223,15 +216,16 @@ contract HelixVault is Ownable {
         return _getReward(d.amount, d.weight, _accTokenPerShare) - d.rewardDebt;
     }
 
-    function claimReward(uint id) external isValidId(id) {
-        Deposit storage d = deposits[id];
+    // Called the deposit `id` holder to withdraw their accumulated reward
+    function claimReward(uint id) external {
+        Deposit storage d = _getDeposit(id);
         require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
         require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
         updatePool();
         uint pending = _getReward(d.amount, d.weight) - d.rewardDebt;
         if (pending > 0) {
-            helixToken.transfer(msg.sender, pending);
+            token.transfer(msg.sender, pending);
         }
         d.rewardDebt = _getReward(d.amount, d.weight);
     } 
@@ -241,11 +235,11 @@ contract HelixVault is Ownable {
         if (block.number <= lastRewardBlock) {
             return;
         }
-        uint balance = helixToken.balanceOf(address(this));
+        uint balance = token.balanceOf(address(this));
         if (balance > 0) {
             uint multiplier = getMultiplier(lastRewardBlock, block.number);
             uint reward = multiplier * rewardPerBlock;
-            helixToken.mint(address(this), reward);
+            token.mint(address(this), reward);
             accTokenPerShare += reward * PRECISION_FACTOR / balance;
         }
         lastRewardBlock = block.number;
@@ -261,6 +255,20 @@ contract HelixVault is Ownable {
         } else {
             return bonusEndBlock - _from;
         }
+    }
+
+    // Return the Deposit associated with this id
+    function getDeposit(uint _depositId) external view returns(Deposit memory) {
+        return _getDeposit(_depositId);
+    }
+
+    function _getDeposit(uint _depositId) 
+        private 
+        view 
+        isValidDepositId(_depositId) 
+        returns(Deposit storage) 
+    {
+        return deposits[_depositId];
     }
 
     // Used internally for computing reward and reward debts
@@ -283,10 +291,10 @@ contract HelixVault is Ownable {
         rewardPerBlock = newAmount;
     }
 
-    // Withdraw reward. EMERGENCY ONLY.
+    // Withdraw contract token balance - EMERGENCY ONLY.
     function emergencyRewardWithdraw(uint _amount) external onlyOwner {
-        require(_amount <= helixToken.balanceOf(address(this)), 'HelixVault: INSUFFICIENT REWARD TOKENS IN VAULT');
-        helixToken.transfer(msg.sender, _amount);
+        require(_amount <= token.balanceOf(address(this)), 'HelixVault: INSUFFICIENT REWARD TOKENS IN VAULT');
+        token.transfer(msg.sender, _amount);
     }
     
     function getDurations() external view returns(Duration[] memory) {
