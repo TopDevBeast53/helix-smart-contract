@@ -16,6 +16,9 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
     // instance of HelixNFT
     IHelixNFT private helixNFT;
 
+    // Used during calculations of accumulated tokens per share
+    uint public PRECISION_FACTOR = 1e12;
+
     // Here is a main formula to stake. Basically, any point in time, the amount of rewards entitled to a user but is pending to be distributed is:
     //
     //   pending reward = (user.helixPointAmount * rewardTokens.accCakePerShare) - user.rewardDebt
@@ -40,7 +43,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         uint rewardPerBlock;
         // block number which reward token is created.
         uint startBlock;
-        // Accumulated Tokens per share, times 1e12.(1e12 is for suming as integer)
+        // Accumulated Tokens per share, times PRECISION_FACTOR.(1e12 is for suming as integer)
         uint accTokenPerShare;
         // true - enable; false - disable
         bool enabled;
@@ -92,7 +95,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
             if(curRewardToken.enabled == true && curRewardToken.startBlock < block.number){
                 uint fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
                 uint curMultiplier = ExtraMath.min(fromRewardStartToNow, _fromLastRewardToNow);
-                rewardTokens[_tokenAddress].accTokenPerShare += (curRewardToken.rewardPerBlock * curMultiplier * 1e12) / _totalHelixPoints;
+                rewardTokens[_tokenAddress].accTokenPerShare += (curRewardToken.rewardPerBlock * curMultiplier * PRECISION_FACTOR) / _totalHelixPoints;
             }
         }
     }
@@ -333,11 +336,11 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
             if (_fromLastRewardToNow != 0 && _totalHelixPoints != 0 && curRewardToken.enabled == true) {
                 uint fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
                 uint curMultiplier = ExtraMath.min(fromRewardStartToNow, _fromLastRewardToNow);
-                _accTokenPerShare = curRewardToken.accTokenPerShare + (curMultiplier * curRewardToken.rewardPerBlock * 1e12 / _totalHelixPoints);
+                _accTokenPerShare = curRewardToken.accTokenPerShare + (curMultiplier * curRewardToken.rewardPerBlock * PRECISION_FACTOR / _totalHelixPoints);
             } else {
                 _accTokenPerShare = curRewardToken.accTokenPerShare;
             }
-            rewards[i] = (user.helixPointAmount * _accTokenPerShare / 1e12) - rewardDebt[_user][_tokenAddress];
+            rewards[i] = (user.helixPointAmount * _accTokenPerShare / PRECISION_FACTOR) - rewardDebt[_user][_tokenAddress];
         }
         return (rewardTokenAddresses, rewards);
     }
@@ -360,10 +363,10 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         }
         for(uint i = 0; i < _rewardTokenAddresses.length; i++){
             RewardToken memory curRewardToken = rewardTokens[_rewardTokenAddresses[i]];
-            uint pending = user.helixPointAmount * curRewardToken.accTokenPerShare / 1e12 - rewardDebt[msg.sender][_rewardTokenAddresses[i]];
+            uint pending = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR - rewardDebt[msg.sender][_rewardTokenAddresses[i]];
             if(pending > 0){
                 ERC20(_rewardTokenAddresses[i]).transfer(address(msg.sender), pending);// ------2
-                rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.helixPointAmount * curRewardToken.accTokenPerShare / 1e12;// -----3
+                rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR;// -----3
             }
         }
     }
@@ -389,11 +392,11 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
     /**
      * @dev Update RewardDebt by user who is staking
      *
-     * NOTE: Why divided by 1e12 is that `accTokenPerShare` is the value multiplied by 1e12.
+     * NOTE: Why divided by PRECISION_FACTOR is that `accTokenPerShare` is the value multiplied by 1e12.
      */
     function _updateRewardDebt(address _user) internal {
         for(uint i = 0; i < rewardTokenAddresses.length; i++){
-            rewardDebt[_user][rewardTokenAddresses[i]] = users[_user].helixPointAmount * rewardTokens[rewardTokenAddresses[i]].accTokenPerShare / 1e12;
+            rewardDebt[_user][rewardTokenAddresses[i]] = users[_user].helixPointAmount * rewardTokens[rewardTokenAddresses[i]].accTokenPerShare / PRECISION_FACTOR;
         }
     }
 
