@@ -250,4 +250,12 @@ module.exports = {
         56: 0,
         97: 31536000,       // 1 year in seconds: (86400 seconds per day) * (365 days)
     },
+
+    // --------- LP Swap --------- //
+
+    // contract name
+    LP_SWAP_TREASURY: {
+        56: '',
+        97: '0xe57Dd7C21EB970DCDcc151D1fb6c1D5DDb743D35',
+    },
 }
