@@ -445,6 +445,10 @@ describe('Yield Swap', () => {
 
         // Check that the address has bid on the swap
         expect(await yieldSwap.hasBidOnSwap(wallet1.address, swapId)).to.be.true
+
+        // Check that the swap id is attributed to the bidder
+        const bidderSwapIds = await yieldSwap.getBidderSwapIds(wallet1.address)
+        expect(bidderSwapIds[0]).to.eq(swapId)
     })
 
     it('yieldSwap: make bid emits BidMade event', async () => {
