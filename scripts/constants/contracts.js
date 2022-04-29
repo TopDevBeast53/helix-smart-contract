@@ -1,59 +1,59 @@
 module.exports = {
     factory: {
         56: '',
-        97: '0x8C6163E3894Dc031206838fc6b716681dcd0Ced2',
+        97: '0x06Ae31316132A752C19cEfb9BC41E7226670d7E7',
     },
     router: {
         56: '',
-        97: '0xb18C4afD256899aB1E60f752ac92b4D930f5292c',
+        97: '0xD254A05d40DE21494fD90cbb414D0F6D4f480f63',
     },
     helixToken: {
         56: '',
-        97: '0x373d65f5437B98DC3050Fa73fd47cC745a395891',
+        97: '0xC232Ce0b83b3B320CdA3ec78c57A0D101A4Ac5cD',
     },
     oracleFactory: {
         56: '',
-        97: '0xF090AEeF8891B73e23D370a1C1B9d14178f12E22',
+        97: '0xA8907Ab23B06108f2859444F78fa40ADc114A1Ff',
     },
     referralRegister: {
         56: '',
-        97: '0x9B3F49B35CddA8ea9CfF26720Fd52766a7cA18E0',
+        97: '0xaF488De3648948666B459E8c9b77bE6CDbA2b693',
     },
     masterChef: {
         56: '',
-        97: '0xb6BCd3139C4A3d75c34960854E102e801DB4e932',
+        97: '0xa380bD46C4Ee53f606Ca7F6665875c11C7fDF18E',
     },
     autoHelix: { // Auto Pool
         56: '',
-        97: '0xC28F43D3C967bD42eff53cCecCeaCF09f09a6C64',
+        97: '0xd6E3c01e086aB435ee9F54137CB801537496A2B3',
     },
-    smartChef: { // manual Pool
+    smartChef: {
         56: '',
         97: '0x35A3Fd0870B3dC69aB3C413B0761745944173AD2',
     },
     helixNFT: {
         56: '',
-        97: '0x39bB1d97cac44a837049eE109483886C27A3800C',
+        97: '0xD6451dD738b95859522A86A6Ba3f72D6a46F69Aa',
     },
     helixNFTChef: {
         56: '',
-        97: '0xe4c1ace1fC31c9bBD1BC13e6c13E8aaB5bE050b6',
+        97: '0xe8Eba547C61a430B899AD0ce9c5E21802d325800',
     },
     helixNFTBridge: {
         56: '',
-        97: '0xa5df536596434205A3084270A312b32eC47a902d',
+        97: '0xCd92EF89212F40c3F72895e0cD8E2D2e1CfBDd50',
     },
     hpToken: {
         56: '',
-        97: '0x5F4924C33a343eFDfb11FF77F0c54136afd6bEcD',
+        97: '0xf87Ef686DC48D5E1fc566174351F33e506d482cb',
     },
     swapRewards: {
         56: '',
-        97: '0xC2E722B1a33ea27b00082B19eec604519321e621',
+        97: '0x9ABBcC45fa375D66Beb98756Fc3A5345dE666E31',
     },
     helixMigrator: {
         56: '',
-        97: '0x59a7838455B0BfF92d7e5E505E91C9eBb051B2fd',
+        97: '0x6038466a15FF62C22Cba83E9194EA2d9c8Ffc9Bd',
     },
     tokenTools: {
         56: '',
@@ -61,7 +61,7 @@ module.exports = {
     },
     helixVault: {
         56: '',
-        97: '0x4592Bc7C6f98611b4EB01A1e931574DbbE6F345e',
+        97: '0xE5590210A3d266b79A648C8b50D327d7B6D66ab2',
     },
     multicall2: {
         56: '',
@@ -89,7 +89,7 @@ module.exports = {
     },
     yieldSwap: {
         56: '',
-        97: '0xb953F3096371364acB88B34eD89E269DA625a96A',
+        97: '0xBac68F8dA956196Af4C2C4c6cea1aA8619bC822C',
     },
     lpSwap: {
         56: '',
