@@ -179,7 +179,7 @@ contract HelixVault is Ownable {
         Deposit storage d = _getDeposit(id);
 
         require(msg.sender == d.depositor, 'HelixVault: CALLER IS NOT DEPOSITOR');
-        require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
+        require(!d.withdrawn, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
         require(d.amount >= amount && amount > 0, 'HelixVault: INVALID AMOUNT');
         require(block.timestamp >= d.withdrawTimestamp, 'HelixVault: TOKENS ARE LOCKED');
        
@@ -204,7 +204,7 @@ contract HelixVault is Ownable {
     function pendingReward(uint id) external view returns(uint) {
         Deposit storage d = _getDeposit(id);
         require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
-        require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
+        require(!d.withdrawn, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
         uint _accTokenPerShare = accTokenPerShare;
         uint lpSupply = token.balanceOf(address(this));
@@ -220,7 +220,7 @@ contract HelixVault is Ownable {
     function claimReward(uint id) external {
         Deposit storage d = _getDeposit(id);
         require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
-        require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
+        require(!d.withdrawn, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
         updatePool();
         uint pending = _getReward(d.amount, d.weight) - d.rewardDebt;
@@ -291,10 +291,9 @@ contract HelixVault is Ownable {
         rewardPerBlock = newAmount;
     }
 
-    // Withdraw contract token balance - EMERGENCY ONLY.
-    function emergencyRewardWithdraw(uint _amount) external onlyOwner {
-        require(_amount <= token.balanceOf(address(this)), 'HelixVault: INSUFFICIENT REWARD TOKENS IN VAULT');
-        token.transfer(msg.sender, _amount);
+    // Withdraw all the tokens in this contract. Emergency ONLY
+    function emergencyRewardWithdraw() external onlyOwner {
+        TransferHelper.safeTransfer(address(helixToken), msg.sender, helixToken.balanceOf(address(this)));
     }
     
     function getDurations() external view returns(Duration[] memory) {

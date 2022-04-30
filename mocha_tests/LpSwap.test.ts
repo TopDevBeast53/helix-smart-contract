@@ -391,12 +391,10 @@ describe('Lp Swap', () => {
         const expectedBidder = wallet1.address
         const expectedSwapId = swapId
         const expectedAmount = bidAmount
-        const expectedIsOpen = true
 
         expect(bid.bidder).to.eq(expectedBidder)
         expect(bid.swapId).to.eq(expectedSwapId)
         expect(bid.amount).to.eq(expectedAmount)
-        expect(bid.isOpen).to.eq(expectedIsOpen)
 
         // Check that the bid was added to the swap
         const swap = await lpSwap.getSwap(swapId)
@@ -500,14 +498,12 @@ describe('Lp Swap', () => {
         const bidId = await lpSwap.getBidId()
     
         const expectedBidAmount = expandTo18Decimals(0)
-        const expectedIsOpen = false
 
         await lpSwap1.setBid(bidId, expectedBidAmount)
 
         const bid = await lpSwap.getBid(bidId)
 
         expect(bid.amount).to.eq(expectedBidAmount)
-        expect(bid.isOpen).to.eq(expectedIsOpen)
     })
 
     it('lpSwap: set bid amount to greater than zero re-opens closed bid', async () => {
@@ -525,7 +521,6 @@ describe('Lp Swap', () => {
 
         // bid should be closed
         expect(bid.amount).to.eq(expectedBidAmount)
-        expect(bid.isOpen).to.be.false
 
         // set amount to greater than 0 to re-open the bid
         expectedBidAmount = expandTo18Decimals(100)
@@ -536,7 +531,6 @@ describe('Lp Swap', () => {
 
         // bid should be re-opened
         expect(bid.amount).to.eq(expectedBidAmount)
-        expect(bid.isOpen).to.be.true
     })
 
     it('lpSwap: set bid emits BidSet event', async () => {
@@ -573,29 +567,6 @@ describe('Lp Swap', () => {
         // expect accept wallet1 bid as wallet1 to fail
         await expect(lpSwap1.acceptBid(bidId))
             .to.be.revertedWith("LpSwap: ONLY SELLER CAN ACCEPT BID")
-    })
-
-    it('lpSwap: accept bid when bid is closed fails', async () => {
-        await openSwap()
-        const swapId = await lpSwap.getSwapId()
-        await makeBid(swapId)
-   
-        // get the most recent bidId
-        const bidId = await lpSwap.getBidId()
-
-        // close the bid as wallet1
-        const closeBidAmount = 0
-        await lpSwap1.setBid(bidId, closeBidAmount)
-
-        // get the bid
-        const bid = await lpSwap.getBid(bidId)
-
-        // check that the bid is closed
-        expect(bid.isOpen).to.be.false
-    
-        // expect accept bid when bid is closed to fail
-        await expect(lpSwap.acceptBid(bidId))
-            .to.be.revertedWith("LpSwap: BID IS CLOSED")
     })
 
     it('lpSwap: accept bid when swap is closed fails', async () => {
@@ -722,6 +693,10 @@ describe('Lp Swap', () => {
         // expect the swap to be closed
         expect(swap.isOpen).to.be.false
 
+        // expect the swap cost to be set to bid amount
+        const expectedCost = bid.amount
+        expect(swap.cost).to.eq(expectedCost)
+
         // expect the buyer to be set to the bidder
         expect(swap.buyer).to.eq(bid.bidder)
 
@@ -740,9 +715,6 @@ describe('Lp Swap', () => {
         // expect the wallet1 toBuyer token balance to be increased by amount
         const expectedToBuyerBal1 = prevToBuyerBal1.add(swap.amount)
         expect(await tokenA.balanceOf(wallet1.address)).to.eq(expectedToBuyerBal1)
-
-        // expect the bid to be closed
-        expect(bid.isOpen).to.be.false
     })
 
     it('lpSwap: accept bid emits BidAccepted event', async () => {
@@ -881,6 +853,10 @@ describe('Lp Swap', () => {
         // expect the swap to be closed
         expect(swap.isOpen).to.be.false
 
+        // expect the swap cost to be set to the ask
+        const expectedCost = swap.ask
+        expect(swap.cost).to.eq(swap.ask)
+
         // expect the buyer to be set to the ask-accepter 
         expect(swap.buyer).to.eq(wallet1.address)
 
@@ -918,165 +894,6 @@ describe('Lp Swap', () => {
             .withArgs(swapId)
     })
     
-    it('lpSwap: get max bid with invalid swap id fails', async () => {
-        // invalid because no swap opened
-        let invalidSwapId = 0; 
-        await expect(lpSwap.getMaxBid(invalidSwapId))
-            .to.be.revertedWith("LpSwap: NO SWAP OPENED")
-
-        // open the swap
-        await openSwap()
-        invalidSwapId = (await lpSwap.getSwapId()).add(1)
-        await expect(lpSwap.getMaxBid(invalidSwapId))
-            .to.be.revertedWith("LpSwap: INVALID SWAP ID")
-    })
-
-    it('lpSwap: get max bid returns empty bid if no bid made', async () => {
-        // open the swap
-        await openSwap()
-        const swapId = await lpSwap.getSwapId()
-
-        // get the max bid
-        const maxBid = await lpSwap.getMaxBid(swapId)
-    
-        // expect the max bid to be empty and closed because no bid has been made
-        const expectedBidder = constants.AddressZero
-        const expectedSwapId = 0
-        const expectedAmount = 0
-        const expectedIsOpen = false
-
-        expect(maxBid.bidder).to.eq(expectedBidder)
-        expect(maxBid.swapId).to.eq(expectedSwapId)
-        expect(maxBid.amount).to.eq(expectedAmount)
-        expect(maxBid.isOpen).to.eq(expectedIsOpen)
-    })
-
-    it('lpSwap: get max bid with one bid made', async () => {
-        // open the swap
-        await openSwap()
-        const swapId = await lpSwap.getSwapId()
-
-        // make a bid
-        await makeBid(swapId)
-      
-        // get the bidId
-        const bidId = await lpSwap.getBidId()
-
-        // get the expected bid
-        const expectedMaxBid = await lpSwap.getBid(bidId)
-
-        // get the maxBid
-        const maxBid = await lpSwap.getMaxBid(swapId)
-    
-        // check that the obtained max bid matches the bid made
-        expect(maxBid.bidder).to.eq(expectedMaxBid.bidder)
-        expect(maxBid.swapId).to.eq(expectedMaxBid.swapId)
-        expect(maxBid.amount).to.eq(expectedMaxBid.amount)
-        expect(maxBid.isOpen).to.eq(expectedMaxBid.isOpen)
-    })
-
-    it('lpSwap: get max bid with largest bid made first', async () => {
-        // open the swap
-        await openSwap()
-        const swapId = await lpSwap.getSwapId()
-
-        // make a bid as wallet 1
-        const bid1 = expandTo18Decimals(200)
-        await tokenB1.approve(lpSwap.address, bid1)
-        await lpSwap1.makeBid(swapId, bid1)
-
-        // transfer funds to wallet 2 from wallet 0
-        const balanceWallet2 = expandTo18Decimals(500)
-        await tokenB.transfer(wallet2.address, balanceWallet2)
-
-        // make a bid as wallet 2 
-        const bid2 = expandTo18Decimals(100)
-        await tokenB2.approve(lpSwap.address, bid2)
-        await lpSwap2.makeBid(swapId, bid2)
-
-        // get the bidId
-        const expectedBidId = 0
-        const expectedMaxBid = await lpSwap.getBid(expectedBidId)
-
-        // get the maxBid
-        const maxBid = await lpSwap.getMaxBid(swapId)
-    
-        // check that the obtained max bid matches the bid made
-        expect(maxBid.bidder).to.eq(expectedMaxBid.bidder)
-        expect(maxBid.swapId).to.eq(expectedMaxBid.swapId)
-        expect(maxBid.amount).to.eq(expectedMaxBid.amount)
-        expect(maxBid.isOpen).to.eq(expectedMaxBid.isOpen)
-    })
-
-    it('lpSwap: get max bid with largest bid made last', async () => {
-        // open the swap
-        await openSwap()
-        const swapId = await lpSwap.getSwapId()
-
-        // make a bid as wallet 1
-        const bid1 = expandTo18Decimals(100)
-        await tokenB1.approve(lpSwap.address, bid1)
-        await lpSwap1.makeBid(swapId, bid1)
-
-        // transfer funds to wallet 2 from wallet 0
-        const balanceWallet2 = expandTo18Decimals(500)
-        await tokenB.transfer(wallet2.address, balanceWallet2)
-
-        // make a bid as wallet 2 
-        const bid2 = expandTo18Decimals(200)
-        await tokenB2.approve(lpSwap.address, bid2)
-        await lpSwap2.makeBid(swapId, bid2)
-
-        // get the bidId
-        const expectedBidId = 1
-        const expectedMaxBid = await lpSwap.getBid(expectedBidId)
-
-        // get the maxBid
-        const maxBid = await lpSwap.getMaxBid(swapId)
-    
-        // check that the obtained max bid matches the bid made
-        expect(maxBid.bidder).to.eq(expectedMaxBid.bidder)
-        expect(maxBid.swapId).to.eq(expectedMaxBid.swapId)
-        expect(maxBid.amount).to.eq(expectedMaxBid.amount)
-        expect(maxBid.isOpen).to.eq(expectedMaxBid.isOpen)
-    })
-
-    it('lpSwap: get max bid with multiple largest bids', async () => {
-        // open the swap
-        await openSwap()
-        const swapId = await lpSwap.getSwapId()
-
-        // make a bid as wallet 1
-        const bid1 = expandTo18Decimals(200)
-        await tokenB1.approve(lpSwap.address, bid1)
-        await lpSwap1.makeBid(swapId, bid1)
-
-        // transfer funds to wallet 2 from wallet 0
-        const balanceWallet2 = expandTo18Decimals(500)
-        await tokenB.transfer(wallet2.address, balanceWallet2)
-
-        // make a bid as wallet 2 
-        const bid2 = expandTo18Decimals(200)
-        await tokenB2.approve(lpSwap.address, bid2)
-        await lpSwap2.makeBid(swapId, bid2)
-
-        // get the bidId
-        const expectedBidId = 0
-
-        // when there are tied largest bids, the winning bid should
-        // be the bid made first
-        const expectedMaxBid = await lpSwap.getBid(expectedBidId)
-
-        // get the maxBid
-        const maxBid = await lpSwap.getMaxBid(swapId)
-    
-        // check that the obtained max bid matches the bid made
-        expect(maxBid.bidder).to.eq(expectedMaxBid.bidder)
-        expect(maxBid.swapId).to.eq(expectedMaxBid.swapId)
-        expect(maxBid.amount).to.eq(expectedMaxBid.amount)
-        expect(maxBid.isOpen).to.eq(expectedMaxBid.isOpen)
-    })
-
     it('lpSwap: get swap ids with no swaps opened', async () => {
         const expectedSwapIdsLength = 0
         const swapIds = await lpSwap.getSwapIds(wallet0.address)

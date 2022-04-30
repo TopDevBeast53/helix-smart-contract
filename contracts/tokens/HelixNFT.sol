@@ -186,7 +186,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
      * @dev Override funtion to avoid the approval of the staked token
      */
     function approve(address to, uint256 tokenId) public override {
-        if (_tokens[tokenId].isStaked == true) {
+        if (_tokens[tokenId].isStaked) {
             revert("ERC721: Token is staked");
         }
         super.approve(to, tokenId);
@@ -200,7 +200,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
         address to,
         uint256 tokenId
     ) internal virtual override(ERC721EnumerableUpgradeable) {
-        if (_tokens[tokenId].isStaked == true) {
+        if (_tokens[tokenId].isStaked) {
             revert("ERC721: Token is staked");
         }
         super._beforeTokenTransfer(from, to, tokenId);
@@ -366,7 +366,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
     function setIsStaked(uint tokenId, bool isStaked) external onlyStaker {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
 
-        if (isStaked == true) {
+        if (isStaked) {
             // Clear approval for not to transfer when staked token 
             _approve(address(0), tokenId);
         }

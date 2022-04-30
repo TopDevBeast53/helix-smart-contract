@@ -16,6 +16,9 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
     // instance of HelixNFT
     IHelixNFT private helixNFT;
 
+    // Used during calculations of accumulated tokens per share
+    uint public PRECISION_FACTOR = 1e12;
+
     // Here is a main formula to stake. Basically, any point in time, the amount of rewards entitled to a user but is pending to be distributed is:
     //
     //   pending reward = (user.helixPointAmount * rewardTokens.accCakePerShare) - user.rewardDebt
@@ -40,7 +43,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         uint rewardPerBlock;
         // block number which reward token is created.
         uint startBlock;
-        // Accumulated Tokens per share, times 1e12.(1e12 is for suming as integer)
+        // Accumulated Tokens per share, times PRECISION_FACTOR.(1e12 is for suming as integer)
         uint accTokenPerShare;
         // true - enable; false - disable
         bool enabled;
@@ -89,10 +92,10 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         for(uint i = 0; i < rewardTokenAddresses.length; i++){
             address _tokenAddress = rewardTokenAddresses[i];
             RewardToken memory curRewardToken = rewardTokens[_tokenAddress];
-            if(curRewardToken.enabled == true && curRewardToken.startBlock < block.number){
+            if(curRewardToken.enabled && curRewardToken.startBlock < block.number){
                 uint fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
                 uint curMultiplier = ExtraMath.min(fromRewardStartToNow, _fromLastRewardToNow);
-                rewardTokens[_tokenAddress].accTokenPerShare += (curRewardToken.rewardPerBlock * curMultiplier * 1e12) / _totalHelixPoints;
+                rewardTokens[_tokenAddress].accTokenPerShare += (curRewardToken.rewardPerBlock * curMultiplier * PRECISION_FACTOR) / _totalHelixPoints;
             }
         }
     }
@@ -110,7 +113,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      */
     function addNewRewardToken(address newToken, uint startBlock, uint rewardPerBlock) public onlyOwner {
         require(newToken != address(0), "Address shouldn't be 0");
-        require(isRewardToken(newToken) == false, "Token is already in the list");
+        require(!isRewardToken(newToken), "Token is already in the list");
         require(rewardPerBlock != 0, "rewardPerBlock shouldn't be 0");
 
         rewardTokenAddresses.push(newToken);
@@ -137,7 +140,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      */
     function disableRewardToken(address token) public onlyOwner {
         require(isRewardToken(token), "Token not in the list");
-        require(rewardTokens[token].enabled == true, "Reward token is already disabled");
+        require(rewardTokens[token].enabled, "Reward token is already disabled");
 
         updatePool();
         rewardTokens[token].enabled = false;
@@ -161,7 +164,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      */
     function enableRewardToken(address token, uint startBlock, uint rewardPerBlock) public onlyOwner {
         require(isRewardToken(token), "Token not in the list");
-        require(rewardTokens[token].enabled == false, "Reward token is already enabled");
+        require(!rewardTokens[token].enabled, "Reward token is already enabled");
         require(rewardPerBlock != 0, "rewardPerBlock shouldn't be 0");
 
         if(startBlock == 0){
@@ -198,7 +201,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         for(uint i = 0; i < tokensId.length; i++){
             (address tokenOwner, bool isStaked, uint helixPoints) = helixNFT.getInfoForStaking(tokensId[i]);
             require(tokenOwner == msg.sender, "Not token owner");
-            require(isStaked == false, "Token has already been staked");
+            require(!isStaked, "Token has already been staked");
             helixNFT.setIsStaked(tokensId[i], true);
             depositedAPs += helixPoints;
             user.stakedNFTsId.push(tokensId[i]);// --------2
@@ -233,7 +236,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         for(uint i = 0; i < tokensId.length; i++){
             (address tokenOwner, bool isStaked, uint helixPoints) = helixNFT.getInfoForStaking(tokensId[i]);
             require(tokenOwner == msg.sender, "Not token owner");
-            require(isStaked == true, "Token has already been unstaked");
+            require(isStaked, "Token has already been unstaked");
             helixNFT.setIsStaked(tokensId[i], false);
             withdrawalAPs += helixPoints;
             removeTokenIdFromUsers(tokensId[i], msg.sender);// --------2
@@ -330,14 +333,14 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         for(uint i = 0; i < rewardTokenAddresses.length; i++){
             address _tokenAddress = rewardTokenAddresses[i];
             RewardToken memory curRewardToken = rewardTokens[_tokenAddress];
-            if (_fromLastRewardToNow != 0 && _totalHelixPoints != 0 && curRewardToken.enabled == true) {
+            if (_fromLastRewardToNow != 0 && _totalHelixPoints != 0 && curRewardToken.enabled) {
                 uint fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
                 uint curMultiplier = ExtraMath.min(fromRewardStartToNow, _fromLastRewardToNow);
-                _accTokenPerShare = curRewardToken.accTokenPerShare + (curMultiplier * curRewardToken.rewardPerBlock * 1e12 / _totalHelixPoints);
+                _accTokenPerShare = curRewardToken.accTokenPerShare + (curMultiplier * curRewardToken.rewardPerBlock * PRECISION_FACTOR / _totalHelixPoints);
             } else {
                 _accTokenPerShare = curRewardToken.accTokenPerShare;
             }
-            rewards[i] = (user.helixPointAmount * _accTokenPerShare / 1e12) - rewardDebt[_user][_tokenAddress];
+            rewards[i] = (user.helixPointAmount * _accTokenPerShare / PRECISION_FACTOR) - rewardDebt[_user][_tokenAddress];
         }
         return (rewardTokenAddresses, rewards);
     }
@@ -360,10 +363,10 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         }
         for(uint i = 0; i < _rewardTokenAddresses.length; i++){
             RewardToken memory curRewardToken = rewardTokens[_rewardTokenAddresses[i]];
-            uint pending = user.helixPointAmount * curRewardToken.accTokenPerShare / 1e12 - rewardDebt[msg.sender][_rewardTokenAddresses[i]];
+            uint pending = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR - rewardDebt[msg.sender][_rewardTokenAddresses[i]];
             if(pending > 0){
                 ERC20(_rewardTokenAddresses[i]).transfer(address(msg.sender), pending);// ------2
-                rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.helixPointAmount * curRewardToken.accTokenPerShare / 1e12;// -----3
+                rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR;// -----3
             }
         }
     }
@@ -389,11 +392,11 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
     /**
      * @dev Update RewardDebt by user who is staking
      *
-     * NOTE: Why divided by 1e12 is that `accTokenPerShare` is the value multiplied by 1e12.
+     * NOTE: Why divided by PRECISION_FACTOR is that `accTokenPerShare` is the value multiplied by 1e12.
      */
     function _updateRewardDebt(address _user) internal {
         for(uint i = 0; i < rewardTokenAddresses.length; i++){
-            rewardDebt[_user][rewardTokenAddresses[i]] = users[_user].helixPointAmount * rewardTokens[rewardTokenAddresses[i]].accTokenPerShare / 1e12;
+            rewardDebt[_user][rewardTokenAddresses[i]] = users[_user].helixPointAmount * rewardTokens[rewardTokenAddresses[i]].accTokenPerShare / PRECISION_FACTOR;
         }
     }
 

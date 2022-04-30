@@ -64,6 +64,12 @@ describe('Referral Register: fee-on-transfer tokens', () => {
         expect(await refReg.swapRefFee()).to.eq(swapFee)
     })
 
+    it('refReg: record staking reward withdrawal with invalid user address fails', async () => {
+        const invalidUser = constants.AddressZero
+        await expect(refReg.recordStakingRewardWithdrawal(invalidUser, stakeAmount))
+            .to.be.revertedWith("ReferralRegister: INVALID ADDRESS")
+    })
+
     it('refReg: record staking reward withdrawal does nothing if user is not added', async () => {
         expect(await refReg.balance(referrer)).to.eq(0)
         await refReg.recordStakingRewardWithdrawal(referred, stakeAmount);
@@ -88,6 +94,12 @@ describe('Referral Register: fee-on-transfer tokens', () => {
         await refReg.recordStakingRewardWithdrawal(referred, 0)
 
         expect(await refReg.balance(referrer)).to.eq(expectedBalanceAfterStake(0))
+    })
+
+    it('refReg: record swap reward withdrawal with invalid user address fails', async () => {
+        const invalidUser = constants.AddressZero
+        await expect(refReg.recordSwapReward(invalidUser, swapAmount))
+            .to.be.revertedWith("ReferralRegister: INVALID ADDRESS")
     })
 
     it('refReg: record swap reward does nothing if user is not added', async () => {
@@ -155,6 +167,11 @@ describe('Referral Register: fee-on-transfer tokens', () => {
             .to
             .be
             .revertedWith("ReferralRegister: caller is not a recorder")
+    })
+
+    it('refReg: withdraw with nothing to withdraw fails', async () => {
+        await expect(refReg.withdraw())
+            .to.be.revertedWith("ReferralRegister: NOTHING TO WITHDRAW")
     })
 
     it('refReg: withdraw helix to referrer succeeds', async () => {

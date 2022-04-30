@@ -37,6 +37,11 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
         uint amount
     );
 
+    modifier isValidAddress(address _address) {
+        require(_address != address(0), "ReferralRegister: INVALID ADDRESS");
+        _;
+    }
+
     // Should be initialize by default with 
     // defaultStakingRef = 10 (meaning 1% reward for staking)
     // defaultSwapRef = 10 (meaning 1% reward for swap)
@@ -46,20 +51,22 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
         swapRefFee = defaultSwapRef;
     }
 
-    function recordStakingRewardWithdrawal(address user, uint256 amount) external onlyRecorder {
-        if (ref[user] == address(0)) {
-            return;
-        }
+    function recordStakingRewardWithdrawal(address user, uint256 amount) 
+        external 
+        onlyRecorder 
+        isValidAddress(user)
+    {
         uint256 stakingRefReward = ((amount * stakingRefFee) / 1000);
         balance[ref[user]] += stakingRefReward;
 
         emit ReferralReward(user, ref[user], stakingRefReward);
     }
 
-    function recordSwapReward(address user, uint256 amount) external onlyRecorder {
-        if (ref[user] == address(0)) {
-            return;
-        }
+    function recordSwapReward(address user, uint256 amount) 
+        external 
+        onlyRecorder 
+        isValidAddress(user)
+    {
         uint256 swapRefReward = ((amount * swapRefFee) / 1000);
         balance[ref[user]] += swapRefReward;
 
@@ -86,9 +93,8 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
 
     function withdraw() external nonReentrant {
         uint256 toMint = balance[msg.sender];
-        if (toMint == 0) {
-            return;
-        }
+        require(toMint != 0, "ReferralRegister: NOTHING TO WITHDRAW");
+
         balance[msg.sender] = 0;
 
         helixToken.mint(msg.sender, toMint);

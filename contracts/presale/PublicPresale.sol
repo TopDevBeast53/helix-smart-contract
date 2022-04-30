@@ -281,6 +281,6 @@ contract PublicPresale is ReentrancyGuard {
 
     // revoke permission for `user` to purchase tickets
     function whitelistRemove(address user) external onlyOwner {
-        whitelist[user] = false;
+        delete whitelist[user];
     }
 } 
