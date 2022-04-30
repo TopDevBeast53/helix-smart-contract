@@ -283,10 +283,9 @@ contract HelixVault is Ownable {
         rewardPerBlock = newAmount;
     }
 
-    // Withdraw reward. EMERGENCY ONLY.
-    function emergencyRewardWithdraw(uint _amount) external onlyOwner {
-        require(_amount <= helixToken.balanceOf(address(this)), 'HelixVault: INSUFFICIENT REWARD TOKENS IN VAULT');
-        helixToken.transfer(msg.sender, _amount);
+    // Withdraw all the tokens in this contract. Emergency ONLY
+    function emergencyRewardWithdraw() external onlyOwner {
+        TransferHelper.safeTransfer(address(helixToken), msg.sender, helixToken.balanceOf(address(this)));
     }
     
     function getDurations() external view returns(Duration[] memory) {
