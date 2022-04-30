@@ -168,7 +168,7 @@ contract HelixVault is Ownable {
         Deposit storage d = deposits[id];
 
         require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
-        require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
+        require(!d.withdrawn, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
         uint pending = _getReward(d.amount, d.weight);
         if (pending > 0) {
@@ -186,7 +186,7 @@ contract HelixVault is Ownable {
         Deposit storage d = deposits[id];
 
         require(msg.sender == d.depositor, 'HelixVault: CALLER IS NOT DEPOSITOR');
-        require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
+        require(!d.withdrawn, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
         require(d.amount >= amount && amount > 0, 'HelixVault: INVALID AMOUNT');
         require(block.timestamp >= d.withdrawTimestamp, 'HelixVault: TOKENS ARE LOCKED');
        
@@ -211,7 +211,7 @@ contract HelixVault is Ownable {
     function pendingReward(uint id) external view isValidId(id) returns (uint) {
         Deposit storage d = deposits[id];
         require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
-        require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
+        require(!d.withdrawn, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
         uint _accTokenPerShare = accTokenPerShare;
         uint lpSupply = helixToken.balanceOf(address(this));
@@ -226,7 +226,7 @@ contract HelixVault is Ownable {
     function claimReward(uint id) external isValidId(id) {
         Deposit storage d = deposits[id];
         require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
-        require(d.withdrawn == false, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
+        require(!d.withdrawn, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
         updatePool();
         uint pending = _getReward(d.amount, d.weight) - d.rewardDebt;

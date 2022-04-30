@@ -171,7 +171,7 @@ contract LpSwap is Ownable, ReentrancyGuard {
 
         require(swap.isOpen, "LpSwap: SWAP IS CLOSED");
         require(msg.sender != swap.seller, "LpSwap: SELLER CAN'T BID ON THEIR OWN SWAP");
-        require(hasBidOnSwap[msg.sender][_swapId] == false, "LpSwap: CALLER HAS ALREADY MADE BID");
+        require(!hasBidOnSwap[msg.sender][_swapId], "LpSwap: CALLER HAS ALREADY MADE BID");
         require(amount > 0, "LpSwap: BID AMOUNT CAN'T BE ZERO");
         _verify(swap.toSellerToken, msg.sender, amount);
 
