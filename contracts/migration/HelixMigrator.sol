@@ -28,7 +28,7 @@ contract HelixMigrator is IHelixMigrator, Ownable {
     /** 
      * @notice Migrate liquidity pair (tokenA, tokenB) from external DEX to this DEX.
      */
-    function migrateLiquidity(address tokenA, address tokenB, address lpToken, address externalRouter) external payable returns(bool) {
+    function migrateLiquidity(address tokenA, address tokenB, address lpToken, address externalRouter) external returns(bool) {
         // Transfer the caller's external liquidity balance to this contract.
         uint exLiquidity = IERC20(lpToken).balanceOf(msg.sender);
         require(exLiquidity > 0, 'migrateLiquidity: caller has no lp balance');
