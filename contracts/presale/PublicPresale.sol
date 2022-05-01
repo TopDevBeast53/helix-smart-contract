@@ -81,6 +81,25 @@ contract PublicPresale is ReentrancyGuard {
     // true if user can purchase tickets during purchase phase 1 and false otherwise
     mapping(address => bool) public whitelist;
 
+    // Emitted when a user purchases amount of tickets
+    event Purchased(address indexed user, uint amount);
+
+    // Emitted when an owner burns amount of tickets
+    event Burned(uint amount);
+
+    // Emitted when a user withdraws amount of tickets
+    event Withdrawn(address indexed user, uint amount);
+
+    // Emitted when an existing owner adds a new owner
+    event OwnerAdded(address indexed owner, address indexed newOwner);
+
+    // Emitted when the owner pauses the sale
+    event Paused();
+
+    // Emitted when the owner unpauses the sale
+    event Unpaused();
+
+    // Emitted when the purchase phase is set
     event SetPurchasePhase(uint purchasePhase, uint startTimestamp, uint endTimestamp);
 
     modifier isValidPurchasePhase(uint phase) {
@@ -161,6 +180,8 @@ contract PublicPresale is ReentrancyGuard {
         
         // and update the contract's remaining tickets
         ticketsAvailable -= amount;
+
+        emit Purchased(msg.sender, amount);
     }
 
     // validate that `user` is eligible to purchase `amount` of tickets
@@ -193,6 +214,8 @@ contract PublicPresale is ReentrancyGuard {
 
         uint tokenAmount = getAmountOut(amount, outputToken);
         outputToken.burn(address(this), tokenAmount);
+
+        emit Burned(amount);
     }
 
     // used to withdraw `outputToken` equivalent in value to `amount` of tickets to `to`
@@ -204,6 +227,8 @@ contract PublicPresale is ReentrancyGuard {
         // transfer to `to` the `tokenAmount` equivalent in value to `amount` of tickets
         uint tokenAmount = getAmountOut(amount, outputToken);
         outputToken.safeTransfer(msg.sender, tokenAmount);
+
+        emit Withdrawn(msg.sender, amount);
     }
 
     // used internally to remove `amount` of tickets from circulation and transfer an 
@@ -228,6 +253,8 @@ contract PublicPresale is ReentrancyGuard {
         require(!isOwner[owner], "PublicPresale: ALREADY AN OWNER");
         isOwner[owner] = true;
         owners.push(owner);
+
+        emit OwnerAdded(msg.sender, owner);
     }
 
     // return the address array of registered owners
@@ -238,11 +265,13 @@ contract PublicPresale is ReentrancyGuard {
     // used to end the sale manually
     function pause() external onlyOwner {
         isPaused = true;
+        emit Paused();
     }
     
     // safety switch if accidentally paused
     function unpause() external onlyOwner {
         isPaused = false;
+        emit Unpaused();
     }
 
     // called periodically and, if sufficient time has elapsed, update the purchasePhase

@@ -97,6 +97,30 @@ contract MasterChef is Ownable, IMasterChef {
         uint256 indexed pid,
         uint256 amount
     );
+
+    // Emitted when the owner adds a new LP Token to the pool
+    event Added(uint256 indexed poolId, address indexed lpToken, bool withUpdate);
+
+    // Emitted when the owner sets the pool alloc point
+    event AllocPointSet(uint256 indexed poolId, uint256 allocPoint, bool withUpdate);
+
+    // Emitted when the owner sets a new migrator contract
+    event MigratorSet(address migrator);
+
+    // Emitted when when a pool's liquidity is migrated
+    event LiquidityMigrated(uint256 indexed poolId, address indexed lpToken);
+
+    // Emitted when the owner sets a new referral register contract
+    event ReferralRegisterSet(address referralRegister);
+
+    // Emitted when the pool is updated
+    event PoolUpdated(uint256 indexed poolId);
+
+    // Emitted when the owner sets a new dev address
+    event DevAddressSet(address devAddress);
+
+    // Emitted when the owner updates the helix per block rate
+    event HelixPerBlockUpdated(uint256 rate);
     
     // Emitted when a depositor deposits amount of lpToken into bucketId and stakes to poolId
     event BucketDeposit(
@@ -177,7 +201,7 @@ contract MasterChef is Ownable, IMasterChef {
         return address(poolInfo[_pid].lpToken);
     }
 
-    function withdrawDevAndRefFee() public{
+    function withdrawDevAndRefFee() public {
         require(lastBlockDevWithdraw < block.number, 'wait for new block');
         uint256 multiplier = getMultiplier(lastBlockDevWithdraw, block.number);
         uint256 HelixTokenReward = multiplier * HelixTokenPerBlock;
@@ -201,6 +225,9 @@ contract MasterChef is Ownable, IMasterChef {
                 accHelixTokenPerShare: 0
             })
         );
+        
+        uint256 poolId = poolInfo.length - 1;
+        emit Added(poolId, address(_lpToken), _withUpdate);
     }
 
     // Update the given pool's HelixToken allocation point. Can only be called by the owner.
@@ -210,11 +237,14 @@ contract MasterChef is Ownable, IMasterChef {
         }
         totalAllocPoint = totalAllocPoint - (poolInfo[_pid].allocPoint) + (_allocPoint);
         poolInfo[_pid].allocPoint = _allocPoint;
+
+        emit AllocPointSet(_pid, _allocPoint, _withUpdate);
     }
 
     // Set the migrator contract. Can only be called by the owner.
     function setMigrator(IMigratorChef _migrator) public onlyOwner {
         migrator = _migrator;
+        emit MigratorSet(address(_migrator));
     }
 
     // Migrate lp token to another lp contract. Can be called by anyone. We trust that migrator contract is good.
@@ -227,6 +257,8 @@ contract MasterChef is Ownable, IMasterChef {
         IERC20 newLpToken = migrator.migrate(lpToken);
         require(bal == newLpToken.balanceOf(address(this)), "migrate: bad");
         pool.lpToken = newLpToken;
+
+        emit LiquidityMigrated(_pid, address(newLpToken));
     }
 
     // Return reward multiplier over the given _from to _to block.
@@ -237,6 +269,7 @@ contract MasterChef is Ownable, IMasterChef {
     // Set ReferralRegister address
     function setReferralRegister(address _address) public onlyOwner {
         refRegister = ReferralRegister(_address);
+        emit ReferralRegisterSet(_address);
     }
 
     // View function to see pending HelixTokens on frontend.
@@ -286,6 +319,8 @@ contract MasterChef is Ownable, IMasterChef {
         helixToken.mint(address(this), HelixTokenReward);
         pool.accHelixTokenPerShare = pool.accHelixTokenPerShare + (HelixTokenReward * (1e12) / (lpSupply));
         pool.lastRewardBlock = block.number;
+
+        emit PoolUpdated(_pid);
     }
 
     // Deposit LP tokens to MasterChef for HelixToken allocation.
@@ -530,11 +565,13 @@ contract MasterChef is Ownable, IMasterChef {
 
     function setDevAddress(address _devaddr) public onlyOwner {
         devaddr = _devaddr;
+        emit DevAddressSet(_devaddr);
     }
 
     function updateHelixPerBlock(uint256 newAmount) public onlyOwner {
         require(newAmount <= 40 * 1e18, 'Max per block 40 HelixToken');
         require(newAmount >= 1e17, 'Min per block 0.1 HelixToken');
         HelixTokenPerBlock = newAmount;
+        emit HelixPerBlockUpdated(newAmount);
     }
 }

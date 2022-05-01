@@ -44,6 +44,18 @@ contract AutoHelix is Ownable, Pausable {
     event Pause();
     event Unpause();
 
+    // Emitted when the owner updates the performance fee
+    event PerformanceFeeSet(uint performanceFee);
+
+    // Emitted when the owner updates the call fee
+    event CallFeeSet(uint callFee);
+
+    // Emitted when the owner updates the withdraw fee
+    event WithdrawFeeSet(uint withdrawFee);
+
+    // Emitted when the owner updates the withdraw fee period
+    event WithdrawFeePeriodSet(uint withdrawFeePeriod);
+
     /**
      * @notice Constructor
      * @param _token: Helix token contract
@@ -147,6 +159,7 @@ contract AutoHelix is Ownable, Pausable {
     function setPerformanceFee(uint256 _performanceFee) external onlyOwner {
         require(_performanceFee <= MAX_PERFORMANCE_FEE, "performanceFee cannot be more than MAX_PERFORMANCE_FEE");
         performanceFee = _performanceFee;
+        emit PerformanceFeeSet(_performanceFee);
     }
 
     /**
@@ -156,6 +169,7 @@ contract AutoHelix is Ownable, Pausable {
     function setCallFee(uint256 _callFee) external onlyOwner {
         require(_callFee <= MAX_CALL_FEE, "callFee cannot be more than MAX_CALL_FEE");
         callFee = _callFee;
+        emit CallFeeSet(_callFee);
     }
 
     /**
@@ -165,6 +179,7 @@ contract AutoHelix is Ownable, Pausable {
     function setWithdrawFee(uint256 _withdrawFee) external onlyOwner {
         require(_withdrawFee <= MAX_WITHDRAW_FEE, "withdrawFee cannot be more than MAX_WITHDRAW_FEE");
         withdrawFee = _withdrawFee;
+        emit WithdrawFeeSet(_withdrawFee);
     }
 
     /**
@@ -177,6 +192,7 @@ contract AutoHelix is Ownable, Pausable {
             "withdrawFeePeriod cannot be more than MAX_WITHDRAW_FEE_PERIOD"
         );
         withdrawFeePeriod = _withdrawFeePeriod;
+        emit WithdrawFeePeriodSet(_withdrawFeePeriod);
     }
 
     /**

@@ -112,6 +112,21 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     // Emitted when a swap's buyer withdraws their purchased lpTokens and yield after lockUntilTimestamp
     event Withdrawn(uint indexed id);
 
+    // Emitted when the owner sets the treasury
+    event TreasurySet(address treasury);
+
+    // Emitted when the owner sets the seller's fee
+    event SellerFeeSet(uint sellerFee);
+
+    // Emitted when the owner sets the buyer's fee
+    event BuyerFeeSet(uint buyerFee);
+
+    // Emitted when the owner sets the minimum lock duration 
+    event MinLockDurationSet(uint minLockDuration);
+
+    // Emitted when the owner sets the maximum lock duration 
+    event MaxLockDurationSet(uint maxLockDuration);
+
     modifier isValidSwapId(uint id) {
         require(swaps.length != 0, "YieldSwap: NO SWAP OPENED");
         require(id < swaps.length, "YieldSwap: INVALID SWAP ID");
@@ -428,16 +443,19 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     function setTreasury(address _treasury) external onlyOwner {
         require(address(_treasury) != address(0), "YieldSwap: INVALID TREASURY ADDRESS");
         treasury = _treasury;
+        emit TreasurySet(_treasury);
     }
 
     function setSellerFee(uint _sellerFee) external onlyOwner {
         require(_sellerFee <= MAX_FEE_PERCENT, "YieldSwap: INVALID SELLER FEE");
         sellerFee = _sellerFee;
+        emit SellerFeeSet(_sellerFee);
     }
 
     function setBuyerFee(uint _buyerFee) external onlyOwner {
         require(_buyerFee <= MAX_FEE_PERCENT, "YieldSwap: INVALID BUYER FEE");
         buyerFee = _buyerFee;
+        emit BuyerFeeSet(_buyerFee);
     }
 
     // Apply the seller fee and get the amounts that go to the seller and to the treasury
@@ -466,6 +484,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
             "YieldSwap: MIN LOCK DURATION MUST BE LESS THAN MAX LOCK DURATION"
         );
         MIN_LOCK_DURATION = _MIN_LOCK_DURATION;
+        emit MinLockDurationSet(_MIN_LOCK_DURATION);
     }
 
     function setMaxLockDuration(uint _MAX_LOCK_DURATION) external onlyOwner {
@@ -474,5 +493,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
             "YieldSwap: MAX LOCK DURATION MUST BE GREATER THAN MIN LOCK DURATION"
         );
         MAX_LOCK_DURATION = _MAX_LOCK_DURATION;
+        emit MaxLockDurationSet(_MAX_LOCK_DURATION);
     }
 }

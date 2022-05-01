@@ -31,11 +31,24 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     uint256 public stakingRefFee;
     uint256 public swapRefFee;
 
+    // Emitted when a referrer earns amount because referred made a transaction
     event ReferralReward(
         address indexed referred,
         address indexed referrer,
         uint amount
     );
+
+    // Emitted when the owner sets the referral fees
+    event FeesSet(uint256 stakingRefFee, uint256 swapRefFee);
+
+    // Emitted when a referred adds a referrer
+    event ReferrerAdded(address referred, address referrer);
+
+    // Emitted when a referred removes their referrer
+    event ReferrerRemoved(address referred);
+
+    // Emitted when a referrer withdraws their earned referral rewards
+    event Withdrawn(address referrer, uint256 rewards);
 
     modifier isValidAddress(address _address) {
         require(_address != address(0), "ReferralRegister: INVALID ADDRESS");
@@ -78,17 +91,20 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
         require(_stakingRefFee < MAX_STAKING_FEE && _swapRefFee < MAX_SWAP_FEE, "Referral Register: Fees are too high.");
         stakingRefFee = _stakingRefFee;
         swapRefFee = _swapRefFee;
+        emit FeesSet(_stakingRefFee, _swapRefFee);
     }
 
     function addRef(address _referrer) external {
         require(ref[msg.sender] == address(0), "Referral Register: Address was already referred.");
         require(msg.sender != _referrer, "Referral Register: No self referral.");
         ref[msg.sender] = _referrer;
+        emit ReferrerAdded(msg.sender, _referrer);
     }
 
     function removeRef() external {
         require(ref[msg.sender] != address(0), "Referral Register: Address was not referred.");
         ref[msg.sender] = address(0);
+        emit ReferrerRemoved(msg.sender);
     }
 
     function withdraw() external nonReentrant {
@@ -98,6 +114,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
         balance[msg.sender] = 0;
 
         helixToken.mint(msg.sender, toMint);
+        emit Withdrawn(msg.sender, toMint);
     }
 
     // Role functions for Recorders --------------------------------------------------------------------------------------

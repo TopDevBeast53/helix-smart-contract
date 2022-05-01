@@ -64,7 +64,23 @@ contract AirDrop is ReentrancyGuard {
     
     // relates a withdrawPhase to the percent of airdropped tokens a user may withdraw during that withdrawPhase
     mapping (uint => uint) public withdrawPhasePercent;
-    
+
+   // Emitted when an owner burns amount of tickets
+    event Burned(uint amount);
+
+    // Emitted when a user withdraws amount of tickets
+    event Withdrawn(address indexed user, uint amount);
+
+    // Emitted when an existing owner adds a new owner
+    event OwnerAdded(address indexed owner, address indexed newOwner);
+
+    // Emitted when the owner pauses the sale
+    event Paused();
+
+    // Emitted when the owner unpauses the sale
+    event Unpaused(); 
+
+    // Emitted when the purchase phase is set
     event SetWithdrawPhase(uint withdrawPhase, uint startTimestamp, uint endTimestamp);
 
     modifier isValidWithdrawPhase(uint phase) {
@@ -104,6 +120,7 @@ contract AirDrop is ReentrancyGuard {
     function burn(uint amount) external onlyOwner { 
         _validateRemoval(msg.sender, amount);
         token.burn(address(this), amount);
+        emit Burned(amount);
     }
 
     // used to withdraw `amount` of token to caller's address
@@ -117,6 +134,8 @@ contract AirDrop is ReentrancyGuard {
             users[msg.sender].balance -= amount;
         }
         token.safeTransfer(msg.sender, amount);
+
+        emit Withdrawn(msg.sender, amount);
     }
 
     // validate whether `amount` of tokens are removable by address `by`
@@ -158,6 +177,7 @@ contract AirDrop is ReentrancyGuard {
         require(!isOwner[owner], "AirDrop: ALREADY AN OWNER");
         isOwner[owner] = true;
         owners.push(owner);
+        emit OwnerAdded(msg.sender, owner);
     }
 
     // return the address array of registered owners
@@ -168,11 +188,13 @@ contract AirDrop is ReentrancyGuard {
     // disable user withdrawals manually and enable owner removals
     function pause() external onlyOwner {
         isPaused = true;
+        emit Paused();
     }
     
     // disable owner removals and enable user withdrawls (withdrawPhase dependent)
     function unpause() external onlyOwner {
         isPaused = false;
+        emit Unpaused();
     }
 
     // return this contract's token balance

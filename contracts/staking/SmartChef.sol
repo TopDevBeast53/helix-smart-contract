@@ -49,6 +49,12 @@ contract SmartChef is Ownable {
     event EmergencyWithdraw(address indexed user, uint256 amount);
     event RefPercentChanged(uint256 currentPercent);
 
+    // Emitted when the owner sets a new limit amount
+    event LimitAmountSet(uint256 limitAmount);
+
+    // Emitted when any action causes the pool to be updated
+    event PoolUpdated(uint256 indexed poolId, uint256 updateTimestamp);
+
     constructor(
         IBEP20 _helix,
         IBEP20 _rewardToken,
@@ -82,6 +88,7 @@ contract SmartChef is Ownable {
     // Set the limit amount.
     function setLimitAmount(uint256 _amount) public onlyOwner {
         limitAmount = _amount;
+        emit LimitAmountSet(_amount);
     }
 
     // Return remaining limit amount
@@ -132,6 +139,8 @@ contract SmartChef is Ownable {
         uint256 HelixReward = multiplier * rewardPerBlock * pool.allocPoint / totalAllocPoint;
         pool.accHelixPerShare = pool.accHelixPerShare + (HelixReward * PRECISION_FACTOR / lpSupply);
         pool.lastRewardBlock = block.number;
+
+        emit PoolUpdated(_pid, block.number);
     }
 
     // Update reward variables for all pools. Be careful of gas spending!
@@ -141,7 +150,6 @@ contract SmartChef is Ownable {
             updatePool(pid);
         }
     }
-
 
     // Stake helixToken tokens to SmartChef
     function deposit(uint256 _amount) public {
@@ -162,7 +170,6 @@ contract SmartChef is Ownable {
             user.amount = user.amount + _amount;
         }
         user.rewardDebt = user.amount * pool.accHelixPerShare / PRECISION_FACTOR;
-
 
         emit Deposit(msg.sender, _amount);
     }

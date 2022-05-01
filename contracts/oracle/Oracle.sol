@@ -24,6 +24,13 @@ contract Oracle {
     FixedPoint.uq112x112 public price0Average;
     FixedPoint.uq112x112 public price1Average;
 
+    event Updated(
+        uint price0,
+        uint price1,
+        uint112 reserve0,
+        uint112 reserve1
+    );
+
     constructor(address factory, address tokenA, address tokenB) {
         IUniswapV2Pair _pair = IUniswapV2Pair(HelixLibrary.pairFor(factory, tokenA, tokenB));
         pair = _pair;
@@ -52,6 +59,13 @@ contract Oracle {
             price1CumulativeLast = price1Cumulative;
             blockTimestampLast = blockTimestamp;
         }
+
+        emit Updated(
+            price0Cumulative,
+            price1Cumulative,
+            reserve0,
+            reserve1
+        );
     }
 
     // note this will always return 0 before update has been called successfully for the first time.

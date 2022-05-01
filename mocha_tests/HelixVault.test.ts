@@ -732,6 +732,32 @@ describe('Vault', () => {
         await expect(vault.claimReward(id)).to.be.revertedWith('HelixVault: TOKENS ARE ALREADY WITHDRAWN')
     })
 
+    it('vault: claim reward emits Reward Claimed event', async () => {
+        // Add the smallest possible duration so that a withdrawl can be made by the test
+        const duration = 1
+        const weight = 1000
+        await vault.addDuration(duration, weight)
+
+        // first deposit to vault as wallet0 resulting in depositId == 1
+        let amount = expandTo18Decimals(100)
+        let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
+        let id = 0
+        await vault.deposit(amount, durationIndex, id); 
+
+        // get the most recent depositId
+        id = await vault.depositId()
+
+        // use that to get the withdraw timestamp
+        let deposit = await vault.deposits(id)
+        const withdrawTimestamp = deposit.withdrawTimestamp
+
+        // and wait until withdrawal can be made
+        await waitUntil(withdrawTimestamp)
+
+        await expect(vault.claimReward(id))
+            .to.emit(vault, "RewardClaimed")
+    })
+
     async function getAccTokenPerShare(blockNumber: number) {
         const multiplier = await vault.getMultiplier(await vault.lastRewardBlock(), blockNumber)
         const _rewardPerBlock = await vault.rewardPerBlock() // preface with _ avoid name conflict with global rewardPerBlock

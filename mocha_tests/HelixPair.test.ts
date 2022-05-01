@@ -206,7 +206,7 @@ describe('HelixPair', () => {
         await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
         const tx = await pair.swap(expectedOutputAmount, 0, wallet.address, '0x', overrides)
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(206074)
+        expect(receipt.gasUsed).to.eq(207979)
     })
 
     it('helixPair: burn', async () => {

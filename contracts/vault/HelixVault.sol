@@ -76,6 +76,15 @@ contract HelixVault is Ownable {
     event EmergencyWithdraw(address indexed user, uint amount);
     event RefPercentChanged(uint currentPercent);
 
+    // Emitted when a user claims their accrued rewards
+    event RewardClaimed(address indexed user, uint indexed id, uint reward);
+
+    // Emitted when any action updates the pool
+    event PoolUpdated(uint updateTimestamp);
+
+    // Emitted when the reward per block is updated by the owner
+    event RewardPerBlockUpdated(uint rewardPerBlock);
+
     modifier isValidDepositId(uint id) {
         require(depositId > 0, 'HelixVault: NO DEPOSITS MADE');
         require(id < depositId, 'HelixVault: INVALID DEPOSIT ID');
@@ -228,6 +237,8 @@ contract HelixVault is Ownable {
             token.transfer(msg.sender, pending);
         }
         d.rewardDebt = _getReward(d.amount, d.weight);
+
+        emit RewardClaimed(msg.sender, id, pending);
     } 
 
     // Update reward variables of the given pool to be up-to-date.
@@ -243,6 +254,8 @@ contract HelixVault is Ownable {
             accTokenPerShare += reward * PRECISION_FACTOR / balance;
         }
         lastRewardBlock = block.number;
+
+        emit PoolUpdated(lastRewardBlock);
     }
 
     // Return reward multiplier over the given _from to _to block.
@@ -289,6 +302,7 @@ contract HelixVault is Ownable {
         require(newAmount <= 40 * 1e18, 'HelixVault: 40 TOKENS MAX PER BLOCK');
         require(newAmount >= 1e17, 'HelixVault: 0.1 TOKENS MIN PER BLOCK');
         rewardPerBlock = newAmount;
+        emit RewardPerBlockUpdated(rewardPerBlock);
     }
 
     // Withdraw all the tokens in this contract. Emergency ONLY

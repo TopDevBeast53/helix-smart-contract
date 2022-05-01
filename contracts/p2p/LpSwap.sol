@@ -89,6 +89,15 @@ contract LpSwap is Ownable, ReentrancyGuard {
 
     // Emitted when a swap's bid is accepted by the seller
     event BidAccepted(uint indexed id);
+    
+    // Emitted when the owner sets the treasury
+    event TreasurySet(address treasury);
+
+    // Emitted when the owner sets the seller's fee
+    event SellerFeeSet(uint sellerFee);
+
+    // Emitted when the owner sets the buyer's fee
+    event BuyerFeeSet(uint buyerFee); 
 
     modifier isValidSwapId(uint id) {
         require(swaps.length != 0, "LpSwap: NO SWAP OPENED");
@@ -346,16 +355,19 @@ contract LpSwap is Ownable, ReentrancyGuard {
     function setTreasury(address _treasury) external onlyOwner {
         require(address(_treasury) != address(0), "LpSwap: INVALID TREASURY ADDRESS");
         treasury = _treasury;
+        emit TreasurySet(_treasury);
     }
 
     function setSellerFee(uint _sellerFee) external onlyOwner {
         require(_sellerFee <= MAX_FEE_PERCENT, "LpSwap: INVALID SELLER FEE");
         sellerFee = _sellerFee;
+        emit SellerFeeSet(_sellerFee);
     }
 
     function setBuyerFee(uint _buyerFee) external onlyOwner {
         require(_buyerFee <= MAX_FEE_PERCENT, "LpSwap: INVALID BUYER FEE");
         buyerFee = _buyerFee;
+        emit BuyerFeeSet(_buyerFee);
     }
 
     // Apply the seller fee and get the amounts that go to the seller and to the treasury
