@@ -293,7 +293,7 @@ contract HelixVault is Ownable {
 
     // Withdraw all the tokens in this contract. Emergency ONLY
     function emergencyRewardWithdraw() external onlyOwner {
-        TransferHelper.safeTransfer(address(helixToken), msg.sender, token.balanceOf(address(this)));
+        TransferHelper.safeTransfer(address(token), msg.sender, token.balanceOf(address(this)));
     }
     
     function getDurations() external view returns(Duration[] memory) {
