@@ -66,6 +66,9 @@ contract LpSwap is Ownable, ReentrancyGuard {
     // True if the address has bid on the swapId and false otherwise
     mapping(address => mapping(uint => bool)) public hasBidOnSwap;
 
+    // Map a bidder address to the swapIds it's bid on
+    mapping(address => uint[]) public bidderSwapIds;
+
     // Emitted when a new swap is opened 
     event SwapOpened(uint indexed id);
 
@@ -203,7 +206,8 @@ contract LpSwap is Ownable, ReentrancyGuard {
 
         // Reflect that the user has bid on this swap
         hasBidOnSwap[msg.sender][_swapId] = true;
-
+        bidderSwapIds[msg.sender].push(_swapId);
+        
         emit BidMade(bidId);
     }
 
@@ -308,6 +312,17 @@ contract LpSwap is Ownable, ReentrancyGuard {
         } else {
             return 0;
         }
+    }
+
+    // Return the array of all swapIds bid on by _address
+    function getBidderSwapIds(address _address) external view returns(uint[] memory _bidderSwapIds) {
+        require(_address != address(0), "YieldSwap: INVALID ADDRESS");
+        _bidderSwapIds = bidderSwapIds[_address];
+    }
+
+    // Return the array of all opened swaps
+    function getSwaps() external view returns(Swap[] memory) {
+        return swaps;
     }
 
     // Get the current bid id such that 
