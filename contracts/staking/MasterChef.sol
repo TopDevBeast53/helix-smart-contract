@@ -249,13 +249,13 @@ contract MasterChef is Ownable, IMasterChef {
 
     // Migrate lp token to another lp contract. Can be called by anyone. We trust that migrator contract is good.
     function migrate(uint256 _pid) public {
-        require(address(migrator) != address(0), "migrate: no migrator");
+        require(address(migrator) != address(0), "no migrator");
         PoolInfo storage pool = poolInfo[_pid];
         IERC20 lpToken = pool.lpToken;
         uint256 bal = lpToken.balanceOf(address(this));
         // lpToken.safeApprove(address(migrator), bal);
         IERC20 newLpToken = migrator.migrate(lpToken);
-        require(bal == newLpToken.balanceOf(address(this)), "migrate: bad");
+        require(bal == newLpToken.balanceOf(address(this)), "migrate failed");
         pool.lpToken = newLpToken;
 
         emit LiquidityMigrated(_pid, address(newLpToken));
@@ -348,7 +348,7 @@ contract MasterChef is Ownable, IMasterChef {
 
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        require(user.amount >= _amount, "withdraw: not good");
+        require(user.amount >= _amount, "insufficient amount");
         updatePool(_pid);
         uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
         safeHelixTokenTransfer(msg.sender, pending);
@@ -526,7 +526,7 @@ contract MasterChef is Ownable, IMasterChef {
     function leaveStaking(uint256 _amount) public {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
-        require(user.amount >= _amount, "withdraw: not good");
+        require(user.amount >= _amount, "insufficient amount");
         updatePool(0);
         uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
         if(pending > 0) {
