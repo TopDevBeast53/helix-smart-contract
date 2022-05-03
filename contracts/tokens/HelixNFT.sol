@@ -2,12 +2,11 @@
 pragma solidity >=0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable {
+contract HelixNFT is ERC721EnumerableUpgradeable {
     using Strings for uint256;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -194,29 +193,17 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
     }
 
     /**
-     * @dev Override function to avoid the transfer of the staked token
+     * @dev Override funtion to avoid the transfer of the staked token
      */
     function _beforeTokenTransfer(
         address from,
         address to,
         uint256 tokenId
-    ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
+    ) internal virtual override(ERC721EnumerableUpgradeable) {
         if (_tokens[tokenId].isStaked) {
             revert("ERC721: Token is staked");
         }
         super._beforeTokenTransfer(from, to, tokenId);
-    }
-
-    /**
-     * @dev Required override function required by solidity
-     */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
     }
 
     //External functions --------------------------------------------------------------------------------------------
