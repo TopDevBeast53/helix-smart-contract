@@ -1,32 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
-import '@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol';
-import '@uniswap/lib/contracts/libraries/FixedPoint.sol';
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
+import "@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol";
+import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 
-import '../libraries/HelixLibrary.sol';
+import "../libraries/HelixLibrary.sol";
 
 // fixed window oracle that recomputes the average price for the entire period once every period
 // note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
 contract Oracle {
     using FixedPoint for *;
 
-    uint public constant PERIOD = 24 hours;
+    uint256 public constant PERIOD = 24 hours;
 
     IUniswapV2Pair immutable pair;
     address public immutable token0;
     address public immutable token1;
 
-    uint public price0CumulativeLast;
-    uint public price1CumulativeLast;
+    uint256 public price0CumulativeLast;
+    uint256 public price1CumulativeLast;
     uint32 public blockTimestampLast;
     FixedPoint.uq112x112 public price0Average;
     FixedPoint.uq112x112 public price1Average;
 
     event Updated(
-        uint price0,
-        uint price1,
+        uint256 price0,
+        uint256 price1,
         uint112 reserve0,
         uint112 reserve1
     );
@@ -42,9 +42,9 @@ contract Oracle {
 
     function update() external {
         (uint112 reserve0, uint112 reserve1, ) = pair.getReserves();
-        require(reserve0 != 0 && reserve1 != 0, 'Oracle: NO RESERVES IN PAIR'); // ensure that there's liquidity in the pair
+        require(reserve0 != 0 && reserve1 != 0, "Oracle: NO RESERVES IN PAIR"); // ensure that there's liquidity in the pair
  
-        (uint price0Cumulative, uint price1Cumulative, uint32 blockTimestamp) =
+        (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) =
             UniswapV2OracleLibrary.currentCumulativePrices(address(pair));
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
 
@@ -69,11 +69,11 @@ contract Oracle {
     }
 
     // note this will always return 0 before update has been called successfully for the first time.
-    function consult(address token, uint amountIn) external view returns (uint amountOut) {
+    function consult(address token, uint256 amountIn) external view returns (uint256 amountOut) {
         if (token == token0) {
             amountOut = price0Average.mul(amountIn).decode144();
         } else {
-            require(token == token1, 'Oracle: INVALID_TOKEN');
+            require(token == token1, "Oracle: INVALID_TOKEN");
             amountOut = price1Average.mul(amountIn).decode144();
         }
     }
