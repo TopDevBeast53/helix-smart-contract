@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
-import '../interfaces/IMasterChef.sol';
+import "../interfaces/IMasterChef.sol";
 import "../interfaces/IERC20.sol";
-import '../libraries/SafeERC20.sol';
+import "../libraries/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /*
  * P2P swap for sellers to sell the yield on staked liquidity tokens after being locked
@@ -24,31 +24,31 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     IMasterChef public chef;
 
     // Minimum duration in seconds that a swap can be locked before allowing withdrawal, 86400 == 1 day
-    uint public MIN_LOCK_DURATION;
+    uint256 public MIN_LOCK_DURATION;
 
     // Maximum duration in seconds that a swap can be locked before allowing withdrawal, 86400 == 1 day
-    uint public MAX_LOCK_DURATION;
+    uint256 public MAX_LOCK_DURATION;
 
     struct Swap {
-        IERC20 lpToken;             // Liquidity token generating the yield being sold
-        IERC20 exToken;             // Exchange token from buyer to seller for yield 
-        uint[] bidIds;              // Array of ids referencing bids made on this swap 
-        address seller;             // Address that opened this swap and that is selling amount of lpToken
-        address buyer;              // Address of the buyer of this swap, set only after the swap is closed
-        uint poolId;                // Id relating lpToken to it's appropriate pool
-        uint amount;                // Amount of lpToken being staked in this swap
-        uint cost;                  // Agreed cost (bid/ask) to buyer for yield, set only after swap is closed
-        uint ask;                   // Amount of exToken seller is asking for in exchange for lpToken yield
-        uint lockUntilTimestamp;    // Timestamp after which the buyer can withdraw their purchase of lpToken yield
-        uint lockDuration;          // Duration between (buyer accepting ask or seller accepting bid) and lockUntilTimestamp
-        bool isOpen;                // True if bids or ask are being accepted and false otherwise
-        bool isWithdrawn;           // True if the purchase has been withdrawn by buyer and false otherwise
+        IERC20 lpToken;                 // Liquidity token generating the yield being sold
+        IERC20 exToken;                 // Exchange token from buyer to seller for yield 
+        uint[] bidIds;                  // Array of ids referencing bids made on this swap 
+        address seller;                 // Address that opened this swap and that is selling amount of lpToken
+        address buyer;                  // Address of the buyer of this swap, set only after the swap is closed
+        uint256 poolId;                 // Id relating lpToken to it's appropriate pool
+        uint256 amount;                 // Amount of lpToken being staked in this swap
+        uint256 cost;                   // Agreed cost (bid/ask) to buyer for yield, set only after swap is closed
+        uint256 ask;                    // Amount of exToken seller is asking for in exchange for lpToken yield
+        uint256 lockUntilTimestamp;     // Timestamp after which the buyer can withdraw their purchase of lpToken yield
+        uint256 lockDuration;           // Duration between (buyer accepting ask or seller accepting bid) and lockUntilTimestamp
+        bool isOpen;                    // True if bids or ask are being accepted and false otherwise
+        bool isWithdrawn;               // True if the purchase has been withdrawn by buyer and false otherwise
     }
 
     struct Bid {
-        address bidder;             // Address making this bid
-        uint swapId;                // Id of the swap this bid was made on
-        uint amount;                // Amount of exToken bidder is offering in exchange for amount of lpToken and yield
+        address bidder;                 // Address making this bid
+        uint256 swapId;                 // Id of the swap this bid was made on
+        uint256 amount;                 // Amount of exToken bidder is offering in exchange for amount of lpToken and yield
     }
 
     // Array of all swaps opened
@@ -61,16 +61,16 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     address public treasury;
 
     // Fee percent charged to seller
-    uint public sellerFee;
+    uint256 public sellerFee;
 
     // Fee percent charged to buyer
-    uint public buyerFee;
+    uint256 public buyerFee;
 
     // Max amount that a "fee" can be set to and 
     // the denominator used when calculating percentages
     // if MAX_FEE_PERCENT == 1000, then fees are out of 1000
     // so if fee == 50 that's 5% and if fee == 500 that's 50%
-    uint public MAX_FEE_PERCENT;
+    uint256 public MAX_FEE_PERCENT;
 
     // Map a seller address to the swaps it's opened 
     mapping(address => uint[]) public swapIds;
@@ -80,60 +80,60 @@ contract YieldSwap is Ownable, ReentrancyGuard {
 
     // Used for cheap lookup for whether an address has bid on a Swap 
     // True if the address has bid on the swapId and false otherwise
-    mapping(address => mapping(uint => bool)) public hasBidOnSwap;
+    mapping(address => mapping(uint256 => bool)) public hasBidOnSwap;
 
     // Map a bidder address to the swapIds it's bid on
     mapping(address => uint[]) public bidderSwapIds;
 
     // Emitted when a new swap is opened 
-    event SwapOpened(uint indexed id);
+    event SwapOpened(uint256 indexed id);
 
     // Emitted when a swap is closed with no buyer
-    event SwapClosed(uint indexed id);
+    event SwapClosed(uint256 indexed id);
 
     // Emitted when a swap's ask is set by the seller
-    event AskSet(uint indexed id);
+    event AskSet(uint256 indexed id);
 
     // Emitted when a swap's ask is accepted by a buyer
-    event AskAccepted(uint indexed id);
+    event AskAccepted(uint256 indexed id);
 
     // Emitted when a bid is made on a swap by a bidder
-    event BidMade(uint indexed id);
+    event BidMade(uint256 indexed id);
 
     // Emitted when a bid is withdrawn by a bidder after the swap has closed
-    event BidWithdrawn(uint indexed id);
+    event BidWithdrawn(uint256 indexed id);
 
     // Emitted when a bid amount is set by a bidder
-    event BidSet(uint indexed id);
+    event BidSet(uint256 indexed id);
 
     // Emitted when a swap's bid is accepted by the seller
-    event BidAccepted(uint indexed id);
+    event BidAccepted(uint256 indexed id);
 
     // Emitted when a swap's buyer withdraws their purchased lpTokens and yield after lockUntilTimestamp
-    event Withdrawn(uint indexed id);
+    event Withdrawn(uint256 indexed id);
 
     // Emitted when the owner sets the treasury
     event TreasurySet(address treasury);
 
     // Emitted when the owner sets the seller's fee
-    event SellerFeeSet(uint sellerFee);
+    event SellerFeeSet(uint256 sellerFee);
 
     // Emitted when the owner sets the buyer's fee
-    event BuyerFeeSet(uint buyerFee);
+    event BuyerFeeSet(uint256 buyerFee);
 
     // Emitted when the owner sets the minimum lock duration 
-    event MinLockDurationSet(uint minLockDuration);
+    event MinLockDurationSet(uint256 minLockDuration);
 
     // Emitted when the owner sets the maximum lock duration 
-    event MaxLockDurationSet(uint maxLockDuration);
+    event MaxLockDurationSet(uint256 maxLockDuration);
 
-    modifier isValidSwapId(uint id) {
+    modifier isValidSwapId(uint256 id) {
         require(swaps.length != 0, "YieldSwap: NO SWAP OPENED");
         require(id < swaps.length, "YieldSwap: INVALID SWAP ID");
         _;
     }
 
-    modifier isValidBidId(uint id) {
+    modifier isValidBidId(uint256 id) {
         require(bids.length != 0, "YieldSwap: NO BID MADE");
         require(id < bids.length, "YieldSwap: INVALID BID ID");
         _;
@@ -142,8 +142,8 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     constructor(
         IMasterChef _chef, 
         address _treasury,
-        uint _MIN_LOCK_DURATION,
-        uint _MAX_LOCK_DURATION
+        uint256 _MIN_LOCK_DURATION,
+        uint256 _MAX_LOCK_DURATION
     ) {
         require(address(_chef) != address(0), "YieldSwap: INVALID MASTER CHEF ADDRESS");
 
@@ -158,11 +158,11 @@ contract YieldSwap is Ownable, ReentrancyGuard {
 
     // Called externally to open a new swap
     function openSwap(
-        IERC20 exToken,         // Token paid by buyer to seller in exchange for lpToken
-        uint poolId,            // Id of pool to access lpToken from and stake lpToken into
-        uint amount,            // Amount of lpToken to swap
-        uint ask,               // Amount of exToken seller is asking to sell lpToken for
-        uint lockDuration       // Duration lpToken will be locked before being withdrawable
+        IERC20 exToken,             // Token paid by buyer to seller in exchange for lpToken
+        uint256 poolId,             // Id of pool to access lpToken from and stake lpToken into
+        uint256 amount,             // Amount of lpToken to swap
+        uint256 ask,                // Amount of exToken seller is asking to sell lpToken for
+        uint256 lockDuration        // Duration lpToken will be locked before being withdrawable
     ) external {
         require(address(exToken) != address(0), "YieldSwap: INVALID EXCHANGE TOKEN ADDRESS");
         require(amount > 0, "YieldSwap: AMOUNT CAN'T BE ZERO");
@@ -189,7 +189,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         // Add it to the swaps array
         swaps.push(swap);
 
-        uint _swapId = _getSwapId();
+        uint256 _swapId = _getSwapId();
 
         // Reflect the created swap id in the user's account
         swapIds[msg.sender].push(_swapId);
@@ -198,7 +198,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
 
     // Called by seller to update the swap's ask
-    function setAsk(uint _swapId, uint ask) external {
+    function setAsk(uint256 _swapId, uint256 ask) external {
         Swap storage swap = _getSwap(_swapId);
 
         require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
@@ -209,7 +209,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
     
     // Called by seller to close the swap and withdraw their lpTokens
-    function closeSwap(uint _swapId) external {
+    function closeSwap(uint256 _swapId) external {
         Swap storage swap = _getSwap(_swapId);
 
         require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
@@ -220,7 +220,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
 
     // Make a new bid on an open swap
-    function makeBid(uint _swapId, uint amount) external {
+    function makeBid(uint256 _swapId, uint256 amount) external {
         Swap storage swap = _getSwap(_swapId);
 
         require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
@@ -238,7 +238,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         // Add it to the bids array
         bids.push(bid);
 
-        uint bidId = _getBidId();
+        uint256 bidId = _getBidId();
 
         // Reflect the new bid in the swap
         swap.bidIds.push(bidId);
@@ -254,7 +254,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
 
     // Called externally by a bidder while bidding is open to set the amount being bid
-    function setBid(uint _bidId, uint amount) external {
+    function setBid(uint256 _bidId, uint256 amount) external {
         Bid storage bid = _getBid(_bidId);
         Swap storage swap = _getSwap(bid.swapId);
     
@@ -268,7 +268,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
 
     // Called externally by the seller to accept the bid and close the swap
-    function acceptBid(uint _bidId) external {
+    function acceptBid(uint256 _bidId) external {
         Bid storage bid = _getBid(_bidId);
         Swap storage swap = _getSwap(bid.swapId);
         require(msg.sender == swap.seller, "YieldSwap: ONLY SELLER CAN ACCEPT BID");
@@ -279,7 +279,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
 
     // Called by a buyer to accept the ask and close the swap
-    function acceptAsk(uint _swapId) external {
+    function acceptAsk(uint256 _swapId) external {
         Swap storage swap = _getSwap(_swapId);
         require(msg.sender != swap.seller, "YieldSwap: SELLER CAN'T ACCEPT ASK");
 
@@ -294,8 +294,8 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         Swap storage swap,      // swap being accepted and closed
         address seller,         // seller of the swap
         address buyer,          // buyer of the swap
-        uint swapId,            // id of swap being accepted and closed
-        uint exAmount           // amount paid by buyer in exToken to seller for yield
+        uint256 swapId,            // id of swap being accepted and closed
+        uint256 exAmount           // amount paid by buyer in exToken to seller for yield
     ) private {
         require(swap.isOpen, "YieldSwap: SWAP IS CLOSED");
 
@@ -311,7 +311,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         swap.lockUntilTimestamp = block.timestamp + swap.lockDuration;
 
         // Lock and stake lpAmount of the seller's lpToken
-        uint lpAmount = swap.amount;
+        uint256 lpAmount = swap.amount;
         lpToken.safeTransferFrom(seller, address(this), lpAmount);
 
         // Approve the chef contract to enable deposit and stake lpToken
@@ -319,14 +319,14 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         chef.bucketDeposit(swapId, swap.poolId, lpAmount);
         
         // Transfer exAmount from the buyer to the seller minus the treasury fee
-        (uint sellerAmount, uint treasuryAmount) = _applySellerFee(exAmount);
+        (uint256 sellerAmount, uint256 treasuryAmount) = _applySellerFee(exAmount);
         exToken.transferFrom(buyer, treasury, treasuryAmount);
         exToken.transferFrom(buyer, seller, sellerAmount);
     }
 
     // Called externally after lock duration to return swap 
     // seller's lpTokens and swap buyer's yield
-    function withdraw(uint _swapId) external {
+    function withdraw(uint256 _swapId) external {
         Swap storage swap = _getSwap(_swapId);
 
         require(!swap.isOpen, "YieldSwap: SWAP IS OPEN");
@@ -341,10 +341,10 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         chef.bucketWithdrawAmountTo(swap.seller, _swapId, swap.poolId, swap.amount);
 
         // Get the total yield to withdraw
-        uint yield = chef.getBucketYield(_swapId, swap.poolId);
+        uint256 yield = chef.getBucketYield(_swapId, swap.poolId);
 
         // Apply the buyer fee to the yield to get the amounts to send to the buyer and treasury
-        (uint buyerAmount, uint treasuryAmount) = _applyBuyerFee(yield);
+        (uint256 buyerAmount, uint256 treasuryAmount) = _applyBuyerFee(yield);
 
         // Send the buyer and treasury their respective portions of the yield
         chef.bucketWithdrawYieldTo(treasury, _swapId, swap.poolId, treasuryAmount);
@@ -355,7 +355,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
 
     // Verify that _address has amount of token in balance
     // and that _address has approved this contract to transfer amount
-    function _verify(IERC20 token, address _address, uint amount) private view {
+    function _verify(IERC20 token, address _address, uint256 amount) private view {
         require(amount <= token.balanceOf(_address), "YieldSwap: INSUFFICIENT TOKEN BALANCE");
         require(
             amount <= token.allowance(_address, address(this)),
@@ -402,11 +402,11 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
 
     // Return the swap associated with the given bidId
-    function getSwap(uint _swapId) external view returns(Swap memory) {
+    function getSwap(uint256 _swapId) external view returns(Swap memory) {
         return _getSwap(_swapId);
     }
 
-    function _getSwap(uint _swapId) 
+    function _getSwap(uint256 _swapId) 
         private 
         view 
         isValidSwapId(_swapId) 
@@ -416,11 +416,11 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
     
     // Return the bid associated with the given bidId
-    function getBid(uint _bidId) external view returns(Bid memory) {
+    function getBid(uint256 _bidId) external view returns(Bid memory) {
         return _getBid(_bidId);
     }
 
-    function _getBid(uint _bidId) 
+    function _getBid(uint256 _bidId) 
         private 
         view 
         isValidBidId(_bidId) 
@@ -446,39 +446,39 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         emit TreasurySet(_treasury);
     }
 
-    function setSellerFee(uint _sellerFee) external onlyOwner {
+    function setSellerFee(uint256 _sellerFee) external onlyOwner {
         require(_sellerFee <= MAX_FEE_PERCENT, "YieldSwap: INVALID SELLER FEE");
         sellerFee = _sellerFee;
         emit SellerFeeSet(_sellerFee);
     }
 
-    function setBuyerFee(uint _buyerFee) external onlyOwner {
+    function setBuyerFee(uint256 _buyerFee) external onlyOwner {
         require(_buyerFee <= MAX_FEE_PERCENT, "YieldSwap: INVALID BUYER FEE");
         buyerFee = _buyerFee;
         emit BuyerFeeSet(_buyerFee);
     }
 
     // Apply the seller fee and get the amounts that go to the seller and to the treasury
-    function applySellerFee(uint amount) external view returns(uint sellerAmount, uint treasuryAmount) {
+    function applySellerFee(uint256 amount) external view returns(uint256 sellerAmount, uint256 treasuryAmount) {
         (sellerAmount, treasuryAmount) = _applySellerFee(amount);
     }
 
-    function _applySellerFee(uint amount) private view returns(uint sellerAmount, uint treasuryAmount) {
+    function _applySellerFee(uint256 amount) private view returns(uint256 sellerAmount, uint256 treasuryAmount) {
         treasuryAmount = amount * sellerFee / MAX_FEE_PERCENT;
         sellerAmount = amount - treasuryAmount;
     }
 
     // Apply the buyer fee and get the amounts that go to the buyer and to the treasury
-    function applyBuyerFee(uint amount) external view returns(uint buyerAmount, uint treasuryAmount) {
+    function applyBuyerFee(uint256 amount) external view returns(uint256 buyerAmount, uint256 treasuryAmount) {
         (buyerAmount, treasuryAmount) = _applyBuyerFee(amount);
     }
 
-    function _applyBuyerFee(uint amount) private view returns(uint buyerAmount, uint treasuryAmount) {
+    function _applyBuyerFee(uint256 amount) private view returns(uint256 buyerAmount, uint256 treasuryAmount) {
         treasuryAmount = amount * buyerFee / MAX_FEE_PERCENT;
         buyerAmount = amount - treasuryAmount;
     }
 
-    function setMinLockDuration(uint _MIN_LOCK_DURATION) external onlyOwner {
+    function setMinLockDuration(uint256 _MIN_LOCK_DURATION) external onlyOwner {
         require(
             _MIN_LOCK_DURATION < MAX_LOCK_DURATION, 
             "YieldSwap: MIN LOCK DURATION MUST BE LESS THAN MAX LOCK DURATION"
@@ -487,7 +487,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         emit MinLockDurationSet(_MIN_LOCK_DURATION);
     }
 
-    function setMaxLockDuration(uint _MAX_LOCK_DURATION) external onlyOwner {
+    function setMaxLockDuration(uint256 _MAX_LOCK_DURATION) external onlyOwner {
         require(
             MIN_LOCK_DURATION < _MAX_LOCK_DURATION, 
             "YieldSwap: MAX LOCK DURATION MUST BE GREATER THAN MIN LOCK DURATION"
