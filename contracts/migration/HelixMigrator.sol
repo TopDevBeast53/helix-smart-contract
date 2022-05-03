@@ -7,7 +7,7 @@ import "../interfaces/IHelixMigrator.sol";
 import "../interfaces/IHelixV2Router02.sol";
 import "../interfaces/IExternalRouter.sol";
 
-contract HelixMigrator is IHelixMigrator, Ownable {
+contract HelixMigrator is Ownable {
     IHelixV2Router02 public router;
 
     constructor(address _router) {
@@ -17,12 +17,12 @@ contract HelixMigrator is IHelixMigrator, Ownable {
     event MigrateLiquidity(
         address indexed sender,             // Migrate liquidity function caller
         address indexed externalRouter,     // External DEX"s router
-        uint exLiquidity,                   // Liquidity in external DEX
-        uint exBalanceTokenA,               // Token A balance in external DEX
-        uint exBalanceTokenB,               // Token B balance in external DEX
-        uint liquidity,                     // Liquidity moved to DEX
-        uint balanceTokenA,                 // Token A balance moved to DEX
-        uint balanceTokenB                  // Token B balance moved to DEX
+        uint256 exLiquidity,                   // Liquidity in external DEX
+        uint256 exBalanceTokenA,               // Token A balance in external DEX
+        uint256 exBalanceTokenB,               // Token B balance in external DEX
+        uint256 liquidity,                     // Liquidity moved to DEX
+        uint256 balanceTokenA,                 // Token A balance moved to DEX
+        uint256 balanceTokenB                  // Token B balance moved to DEX
     );
 
     /** 
@@ -30,7 +30,7 @@ contract HelixMigrator is IHelixMigrator, Ownable {
      */
     function migrateLiquidity(address tokenA, address tokenB, address lpToken, address externalRouter) external returns(bool) {
         // Transfer the caller"s external liquidity balance to this contract.
-        uint exLiquidity = IERC20(lpToken).balanceOf(msg.sender);
+        uint256 exLiquidity = IERC20(lpToken).balanceOf(msg.sender);
         require(exLiquidity > 0, "migrateLiquidity: caller has no lp balance");
         require(IERC20(lpToken).transferFrom(msg.sender, address(this), exLiquidity), "migrateLiquidity: lp transfer from failed");
 
@@ -38,7 +38,7 @@ contract HelixMigrator is IHelixMigrator, Ownable {
         require(IERC20(lpToken).approve(externalRouter, exLiquidity), "migrateLiquidity: external lp approval failed");
 
         // Remove the token balances from the external exchange.
-        (uint exBalanceTokenA, uint exBalanceTokenB) = IExternalRouter(externalRouter).removeLiquidity(
+        (uint256 exBalanceTokenA, uint256 exBalanceTokenB) = IExternalRouter(externalRouter).removeLiquidity(
             tokenA,             // address of tokenA
             tokenB,             // address of tokenB
             exLiquidity,        // amount of liquidity to remove
@@ -54,7 +54,7 @@ contract HelixMigrator is IHelixMigrator, Ownable {
 
         // Move the external token balances to this exchange.
         // Note: addLiquidity handles adding token pair to factory.
-        (uint balanceTokenA, uint balanceTokenB, uint liquidity) = router.addLiquidity(
+        (uint256 balanceTokenA, uint256 balanceTokenB, uint256 liquidity) = router.addLiquidity(
             tokenA,             // address of token A
             tokenB,             // address of token B
             exBalanceTokenA,    // desired amount of A
