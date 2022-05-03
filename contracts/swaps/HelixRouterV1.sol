@@ -27,7 +27,7 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
     }
 
     receive() external payable {
-        assert(msg.sender == _WETH); // only accept ETH via fallback from the WETH contract
+        require(msg.sender == _WETH, "CALLER MUST BE WETH ADDRESS"); // only accept ETH via fallback from the WETH contract
     }
 
     function factory() external view override returns (address) {
