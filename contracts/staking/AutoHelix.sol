@@ -7,7 +7,7 @@ import "../interfaces/IMasterChef.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 contract AutoHelix is Ownable, Pausable {
 
@@ -45,16 +45,16 @@ contract AutoHelix is Ownable, Pausable {
     event Unpause();
 
     // Emitted when the owner updates the performance fee
-    event PerformanceFeeSet(uint performanceFee);
+    event PerformanceFeeSet(uint256 performanceFee);
 
     // Emitted when the owner updates the call fee
-    event CallFeeSet(uint callFee);
+    event CallFeeSet(uint256 callFee);
 
     // Emitted when the owner updates the withdraw fee
-    event WithdrawFeeSet(uint withdrawFee);
+    event WithdrawFeeSet(uint256 withdrawFee);
 
     // Emitted when the owner updates the withdraw fee period
-    event WithdrawFeePeriodSet(uint withdrawFeePeriod);
+    event WithdrawFeePeriodSet(uint256 withdrawFeePeriod);
 
     /**
      * @notice Constructor

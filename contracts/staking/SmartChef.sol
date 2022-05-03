@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import "../tokens/HelixToken.sol";
 import "../interfaces/IBEP20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 contract SmartChef is Ownable {
     // Info of each user.
@@ -156,7 +156,7 @@ contract SmartChef is Ownable {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
 
-        require(user.amount + _amount <= limitAmount, 'Exceed limit amount');
+        require(user.amount + _amount <= limitAmount, "Exceed limit amount");
 
         updatePool(0);
         if (user.amount > 0) {
@@ -208,7 +208,7 @@ contract SmartChef is Ownable {
 
     // Withdraw reward. EMERGENCY ONLY.
     function emergencyRewardWithdraw(uint256 _amount) public onlyOwner {
-        require(_amount <= rewardToken.balanceOf(address(this)), 'not enough token');
+        require(_amount <= rewardToken.balanceOf(address(this)), "not enough token");
         TransferHelper.safeTransfer(address(rewardToken), msg.sender, _amount);
     }
 }
