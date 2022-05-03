@@ -20,7 +20,7 @@ library HelixLibrary {
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
                 // hex'e0ce7bfb962a25cbac92cbc4b48f91427e2de2f8795b94d1943deb6ec507d0f0' // init code hash
-                hex'8d6ee07fe5c7f975e323d5679d2fcc45702d9453d141f08c2e2898aaca8f00ac' // mocha test
+                hex'0f8d32ce09b3f1fcd84412cb47700aee2a3093342de1b70e21aafc46a32d6959' // mocha test
             )))));
     }
 
