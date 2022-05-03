@@ -143,7 +143,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
      * @dev See {ERC721-tokenURI}.
      */
     function tokenURI(uint256 id) public view override returns (string memory) {
-        require(_exists(id), "ERC721Metadata: URI query for nonexistent token");
+        require(_exists(id), "URI query for nonexistent token");
 
         return string(abi.encodePacked(_tokens[id].tokenURI));
     }
@@ -300,7 +300,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
             string memory uri
         )
     {
-        require(_exists(_tokenId), "ERC721: token does not exist");
+        require(_exists(_tokenId), "token does not exist");
         Token memory token = _tokens[_tokenId];
         tokenId = _tokenId;
         tokenOwner = ownerOf(_tokenId);
@@ -314,7 +314,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
     }
 
     function getExternalTokenID(uint _tokenId) external view returns (string memory) {
-        require(_exists(_tokenId), "ERC721: token does not exist");
+        require(_exists(_tokenId), "token does not exist");
         return _tokens[_tokenId].externalTokenID;
     }
 
@@ -339,7 +339,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
      * HelixChefNFT's `stake` function calls it to get token's information by token ID
      */
     function getInfoForStaking(uint tokenId) external view returns (address tokenOwner, bool isStaked, uint helixPoints) {
-        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+        require(_exists(tokenId), "URI query for nonexistent token");
 
         tokenOwner = ownerOf(tokenId);
         isStaked = _tokens[tokenId].isStaked;
@@ -364,7 +364,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
      *       - Staker would be HelixChefNFT contract
      */
     function setIsStaked(uint tokenId, bool isStaked) external onlyStaker {
-        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+        require(_exists(tokenId), "URI query for nonexistent token");
 
         if (isStaked) {
             // Clear approval for not to transfer when staked token 
@@ -608,7 +608,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(owner() == msg.sender, "Ownable: caller is not the owner");
+        require(owner() == msg.sender, "caller is not the owner");
         _;
     }
 
@@ -617,7 +617,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
      * Can only be called by the current owner.
      */
     function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        require(newOwner != address(0), "new owner is the zero address");
         _owner = newOwner;
     }
 
