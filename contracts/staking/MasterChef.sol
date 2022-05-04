@@ -56,7 +56,7 @@ contract MasterChef is Ownable, IMasterChef {
     // The HelixToken TOKEN!
     HelixToken public helixToken;
     //Pools, Farms, Dev, Refs percent decimals
-    uint256 public percentDec = 1000000;
+    uint256 public percentDec;
     //Pools and Farms percent from token per block
     uint256 public stakingPercent;
     //Developers percent from token per block
@@ -68,7 +68,7 @@ contract MasterChef is Ownable, IMasterChef {
     // HelixToken tokens created per block.
     uint256 public HelixTokenPerBlock;
     // Bonus muliplier for early HelixToken makers.
-    uint256 public BONUS_MULTIPLIER = 1;
+    uint256 public BONUS_MULTIPLIER;
     // The migrator contract. It has a lot of power. Can only be set through governance (owner).
     IMigratorChef public migrator;
     // Referral Register contract
@@ -78,7 +78,7 @@ contract MasterChef is Ownable, IMasterChef {
     // Info of each user that stakes LP tokens.
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
     // Total allocation poitns. Must be the sum of all allocation points in all pools.
-    uint256 public totalAllocPoint = 0;
+    uint256 public totalAllocPoint;
     // The block number when HelixToken mining starts.
     uint256 public startBlock;
     // Deposited amount HelixToken in MasterChef
@@ -186,6 +186,8 @@ contract MasterChef is Ownable, IMasterChef {
         }));
 
         totalAllocPoint = 1000;
+        percentDec = 1000000;
+        BONUS_MULTIPLIER = 1;
     }
 
     function updateMultiplier(uint256 multiplierNumber) public onlyOwner {
