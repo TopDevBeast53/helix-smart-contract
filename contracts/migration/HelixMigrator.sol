@@ -10,8 +10,9 @@ import '../interfaces/IExternalRouter.sol';
 contract HelixMigrator is IHelixMigrator, Ownable {
     IHelixV2Router02 public router;
 
-    constructor(address _router) {
-        setRouter(_router);
+    constructor(IHelixV2Router02 _router) {
+        require(address(_router) != address(0), 'HelixMigrator: Router address is Zero');
+        router = _router;
     }
 
     event MigrateLiquidity(
@@ -83,8 +84,8 @@ contract HelixMigrator is IHelixMigrator, Ownable {
     /**
      * @notice Set the router address.
      */
-    function setRouter(address _router) public onlyOwner {
-        require(_router != address(0), 'HelixMigrator: Router address is Zero');
-        router = IHelixV2Router02(_router);
+    function setRouter(IHelixV2Router02 _router) external onlyOwner {
+        require(address(_router) != address(0), 'HelixMigrator: Router address is Zero');
+        router = _router;
     }
 }
