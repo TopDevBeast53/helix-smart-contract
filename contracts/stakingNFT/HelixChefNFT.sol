@@ -17,7 +17,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
     IHelixNFT private helixNFT;
 
     // Used during calculations of accumulated tokens per share
-    uint public PRECISION_FACTOR = 1e12;
+    uint public constant PRECISION_FACTOR = 1e12;
 
     // Here is a main formula to stake. Basically, any point in time, the amount of rewards entitled to a user but is pending to be distributed is:
     //
