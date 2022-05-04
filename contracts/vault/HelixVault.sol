@@ -141,8 +141,6 @@ contract HelixVault is Ownable {
         require(amount > 0, 'HelixVault: NOTHING TO DEPOSIT');
         updatePool();
 
-        token.transferFrom(msg.sender, address(this), amount);
-
         // Get the new id of this deposit and create the deposit object
         uint id = depositId++;
 
@@ -158,6 +156,7 @@ contract HelixVault is Ownable {
         // Relay the deposit id to the user's account
         depositIds[msg.sender].push(id);
 
+        token.transferFrom(msg.sender, address(this), amount);
         emit NewDeposit(msg.sender, id, amount, d.weight, d.depositTimestamp, d.withdrawTimestamp);
     }
 
@@ -171,14 +170,14 @@ contract HelixVault is Ownable {
         require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
         require(!d.withdrawn, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
+        d.amount += amount;
+        d.rewardDebt = _getReward(d.amount, d.weight);
+
         uint pending = _getReward(d.amount, d.weight);
         if (pending > 0) {
             token.transfer(msg.sender, pending);
         }
         token.transferFrom(msg.sender, address(this), amount);
-
-        d.amount += amount;
-        d.rewardDebt = _getReward(d.amount, d.weight);
 
         emit UpdateDeposit(msg.sender, id, amount, d.amount);
     }
@@ -194,17 +193,22 @@ contract HelixVault is Ownable {
        
         // collect rewards
         updatePool();
-        uint pending = _getReward(d.amount, d.weight);
-        if(pending > 0) {
-            token.transfer(msg.sender, pending);
-        }
 
-        if(d.amount == amount) {
+        uint pending = _getReward(d.amount, d.weight);
+
+        if (d.amount == amount) {
+            // Close the deposit if the amount deposited is being withdrawn
             d.withdrawn = true;
         } else {
             d.amount -= amount;
             d.rewardDebt = _getReward(d.amount, d.weight);
         }
+
+        if (pending > 0) {
+            token.transfer(msg.sender, pending);
+        }
+        token.transfer(msg.sender, amount);
+
         token.transfer(msg.sender, amount);
         emit Withdraw(msg.sender, amount);
     }
@@ -228,15 +232,18 @@ contract HelixVault is Ownable {
     // Called the deposit `id` holder to withdraw their accumulated reward
     function claimReward(uint id) external {
         Deposit storage d = _getDeposit(id);
+
         require(d.depositor == msg.sender, 'HelixVault: CALLER IS NOT DEPOSITOR');
         require(!d.withdrawn, 'HelixVault: TOKENS ARE ALREADY WITHDRAWN');
 
         updatePool();
+
         uint pending = _getReward(d.amount, d.weight) - d.rewardDebt;
+        d.rewardDebt = _getReward(d.amount, d.weight);
+
         if (pending > 0) {
             token.transfer(msg.sender, pending);
         }
-        d.rewardDebt = _getReward(d.amount, d.weight);
 
         emit RewardClaimed(msg.sender, id, pending);
     } 
@@ -246,14 +253,16 @@ contract HelixVault is Ownable {
         if (block.number <= lastRewardBlock) {
             return;
         }
+
+        lastRewardBlock = block.number;
+
         uint balance = token.balanceOf(address(this));
         if (balance > 0) {
             uint multiplier = getMultiplier(lastRewardBlock, block.number);
             uint reward = multiplier * rewardPerBlock;
-            token.mint(address(this), reward);
             accTokenPerShare += reward * PRECISION_FACTOR / balance;
+            token.mint(address(this), reward);
         }
-        lastRewardBlock = block.number;
 
         emit PoolUpdated(lastRewardBlock);
     }

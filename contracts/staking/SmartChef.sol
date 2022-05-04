@@ -159,18 +159,17 @@ contract SmartChef is Ownable {
         require(user.amount + _amount <= limitAmount, 'Exceed limit amount');
 
         updatePool(0);
-        if (user.amount > 0) {
-            uint256 pending = user.amount * pool.accHelixPerShare / PRECISION_FACTOR - user.rewardDebt;
-            if(pending > 0) {
-                TransferHelper.safeTransfer(address(rewardToken), msg.sender, pending);
-            }
-        }
-        if(_amount > 0) {
-            TransferHelper.safeTransferFrom(address(pool.lpToken), msg.sender, address(this), _amount);
-            user.amount = user.amount + _amount;
-        }
+        uint256 pending = user.amount * pool.accHelixPerShare / PRECISION_FACTOR - user.rewardDebt;
+        user.amount += _amount;
         user.rewardDebt = user.amount * pool.accHelixPerShare / PRECISION_FACTOR;
 
+        if (pending > 0) {
+            TransferHelper.safeTransfer(address(rewardToken), msg.sender, pending);
+        }
+        if (_amount > 0) {
+            TransferHelper.safeTransferFrom(address(pool.lpToken), msg.sender, address(this), _amount);
+        }
+        
         emit Deposit(msg.sender, _amount);
     }
 
@@ -178,17 +177,20 @@ contract SmartChef is Ownable {
     function withdraw(uint256 _amount) public {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
+
         require(user.amount >= _amount, "withdraw: not good");
+
         updatePool(0);
         uint256 pending = user.amount * pool.accHelixPerShare / PRECISION_FACTOR - user.rewardDebt;
-        if(pending > 0) {
+        user.amount -= _amount;
+        user.rewardDebt = user.amount * pool.accHelixPerShare / PRECISION_FACTOR;
+
+        if (pending > 0) {
             TransferHelper.safeTransfer(address(rewardToken), msg.sender, pending);
         }
-        if(_amount > 0) {
-            user.amount = user.amount - _amount;
+        if (_amount > 0) {
             TransferHelper.safeTransfer(address(pool.lpToken), msg.sender, _amount);
         }
-        user.rewardDebt = user.amount * pool.accHelixPerShare / PRECISION_FACTOR;
 
         emit Withdraw(msg.sender, _amount);
     }

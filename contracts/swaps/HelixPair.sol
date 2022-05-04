@@ -140,23 +140,32 @@ contract HelixPair is HelixLP, ReentrancyGuard {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         address _token0 = token0;                                // gas savings
         address _token1 = token1;                                // gas savings
+
         uint balance0 = IERC20(_token0).balanceOf(address(this));
         uint balance1 = IERC20(_token1).balanceOf(address(this));
-        uint liquidity = balanceOf[address(this)];
 
+        uint liquidity = balanceOf[address(this)];
         bool feeOn = _mintFee(_reserve0, _reserve1);
         uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
+
         amount0 = liquidity * balance0 / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity * balance1 / _totalSupply; // using balances ensures pro-rata distribution
+
         require(amount0 > 0 && amount1 > 0, 'Helix INSUFFICIENT_LIQUIDITY_BURNED');
+
+        // Set the expected balance by subtracting amountX before _burn and safeTransfer calls
+        // to perform all state changes before external calls and protect against reentrancy
+        balance0 = IERC20(_token0).balanceOf(address(this)) - amount0;
+        balance1 = IERC20(_token1).balanceOf(address(this)) - amount1;
+
+        _update(balance0, balance1, _reserve0, _reserve1);
+
+        if (feeOn) kLast = uint(reserve0) * reserve1; // reserve0 and reserve1 are up-to-date
+
         _burn(address(this), liquidity);
         TransferHelper.safeTransfer(_token0, to, amount0);
         TransferHelper.safeTransfer(_token1, to, amount1);
-        balance0 = IERC20(_token0).balanceOf(address(this));
-        balance1 = IERC20(_token1).balanceOf(address(this));
 
-        _update(balance0, balance1, _reserve0, _reserve1);
-        if (feeOn) kLast = uint(reserve0) * reserve1; // reserve0 and reserve1 are up-to-date
         emit Burn(msg.sender, amount0, amount1, to);
     }
 

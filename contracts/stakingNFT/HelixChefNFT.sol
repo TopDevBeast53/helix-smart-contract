@@ -167,16 +167,18 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         require(!rewardTokens[token].enabled, "Reward token is already enabled");
         require(rewardPerBlock != 0, "rewardPerBlock shouldn't be 0");
 
-        if(startBlock == 0){
+        if (startBlock == 0) {
             startBlock = block.number + 1;
         }
         require(startBlock >= block.number, "Start block Must be later than current");
+
         rewardTokens[token].enabled = true;
         rewardTokens[token].startBlock = startBlock;
         rewardTokens[token].rewardPerBlock = rewardPerBlock;
-        emit ChangeRewardToken(token, rewardPerBlock);
 
         updatePool();
+
+        emit ChangeRewardToken(token, rewardPerBlock);
     }
 
     /**
@@ -351,22 +353,26 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      * @dev Withdraw rewardToken from HelixChefNFT.
      *
      * NOTE: 1. updatePool()
-     *       2. User receives the pending reward sent to user's address.
-     *       3. User's `rewardDebt` gets updated.
+     *       2. User's `rewardDebt` gets updated.
+     *       3. User receives the pending reward sent to user's address.
      */
     function _withdrawRewardToken() internal {
-        updatePool();// -----1
+        updatePool();
+
         UserInfo memory user = users[msg.sender];
         address[] memory _rewardTokenAddresses = rewardTokenAddresses;
-        if(user.helixPointAmount == 0){
+
+        if (user.helixPointAmount == 0) {
             return;
         }
-        for(uint i = 0; i < _rewardTokenAddresses.length; i++){
+
+        for (uint i = 0; i < _rewardTokenAddresses.length; i++) {
             RewardToken memory curRewardToken = rewardTokens[_rewardTokenAddresses[i]];
             uint pending = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR - rewardDebt[msg.sender][_rewardTokenAddresses[i]];
-            if(pending > 0){
-                ERC20(_rewardTokenAddresses[i]).transfer(address(msg.sender), pending);// ------2
-                rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR;// -----3
+
+            if (pending > 0){
+                rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR;
+                ERC20(_rewardTokenAddresses[i]).transfer(address(msg.sender), pending);
             }
         }
     }

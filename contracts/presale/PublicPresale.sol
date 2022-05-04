@@ -154,16 +154,22 @@ contract PublicPresale is ReentrancyGuard {
 
     // purchase `amount` of tickets
     function purchase(uint amount) external nonReentrant {
-        // want to be in the latest phase
+        // Want to be in the latest phase
         _updatePurchasePhase();
    
-        // proceed only if the purchase is valid
+        // Proceed only if the purchase is valid
         _validatePurchase(msg.sender, amount);
 
-        // get the `inputTokenAmount` in `inputToken` to purchase `amount` of tickets
+        // Update the contract's remaining tickets
+        ticketsAvailable -= amount;
+   
+        // Get the amount of tokens caller can purchase for `amount`
+        uint outputTokenAmount = getAmountOut(amount, outputToken);
+
+        // Get the `inputTokenAmount` in `inputToken` to purchase `amount` of tickets
         uint inputTokenAmount = getAmountOut(amount, inputToken); 
 
-        // pay for the `amount` of tickets
+        // Pay for the `amount` of tickets
         require(
             inputTokenAmount <= inputToken.balanceOf(msg.sender), 
             "PublicPresale: INSUFFICIENT CALLER TOKEN BALANCE"
@@ -172,14 +178,12 @@ contract PublicPresale is ReentrancyGuard {
             inputTokenAmount <= inputToken.allowance(msg.sender, address(this)), 
             "PublicPresale: INSUFFICIENT ALLOWANCE"
         );
+
+        // Pay for the tickets by withdrawing inputTokenAmount from caller
         inputToken.safeTransferFrom(msg.sender, treasury, inputTokenAmount);
 
-        // transfer `amount` of tickets to user
-        uint outputTokenAmount = getAmountOut(amount, outputToken);
+        // Transfer `amount` of tickets to caller
         outputToken.safeTransfer(msg.sender, outputTokenAmount);
-        
-        // and update the contract's remaining tickets
-        ticketsAvailable -= amount;
 
         emit Purchased(msg.sender, amount);
     }

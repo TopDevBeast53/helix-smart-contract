@@ -76,9 +76,11 @@ contract HelixNFTBridge is Ownable {
         require(_bridgedExternalTokenIDs[externalTokenID], "HelixNFTBridge: not available");
         require(_bridgedExternalTokenIDsPickUp[externalTokenID] == msg.sender, "HelixNFTBridge: pick up not allowed");
 
+        // Add 1 in expectation of _lastTokenId being incremented during mintExternal call
+        _minted[externalTokenID] = helixNFT.getLastTokenId() + 1;
+
         helixNFT.mintExternal(msg.sender, externalTokenID, _externalIDToURI[externalTokenID]);
 
-        _minted[externalTokenID] = helixNFT.getLastTokenId();
     }
 
     /**

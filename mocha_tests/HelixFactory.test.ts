@@ -72,7 +72,7 @@ describe('HelixFactory', () => {
   it('factory: createPair:gas', async () => {
     const tx = await factory.createPair(...TEST_ADDRESSES)
     const receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(2995458)
+    expect(receipt.gasUsed).to.eq(2990436)
   })
 
   it('factory: setFeeTo', async () => {
