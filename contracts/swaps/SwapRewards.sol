@@ -6,7 +6,7 @@ import '../interfaces/IOracleFactory.sol';
 import '../interfaces/ISwapRewards.sol';
 import '../interfaces/IHelixToken.sol';
 import '../interfaces/IHelixNFT.sol';
-import '../referrals/ReferralRegister.sol';
+import '../interfaces/IReferralRegister.sol';
 
 /**
  * @title Accrue HELIX/AP to the swap caller
@@ -76,7 +76,7 @@ contract SwapRewards is ISwapRewards, Ownable {
         accrueAP(account, tokenOut, apAmount);
 
         // Accrue HELIX to the swap caller referrer.
-        ReferralRegister(refReg).recordSwapReward(account, getAmountOut(tokenOut, amountIn, address(helixToken)));
+        IReferralRegister(refReg).recordSwapReward(account, getAmountOut(tokenOut, amountIn, address(helixToken)));
 
         emit Swap(
             account,

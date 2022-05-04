@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import "../tokens/HelixToken.sol";
 import "../interfaces/IMasterChef.sol";
 import "../interfaces/IMigratorChef.sol";
-import "../referrals/ReferralRegister.sol";
+import "../interfaces/IReferralRegister.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
@@ -72,7 +72,7 @@ contract MasterChef is Ownable, IMasterChef {
     // The migrator contract. It has a lot of power. Can only be set through governance (owner).
     IMigratorChef public migrator;
     // Referral Register contract
-    ReferralRegister public refRegister;
+    IReferralRegister public refRegister;
     // Info of each pool.
     PoolInfo[] public poolInfo;
     // Info of each user that stakes LP tokens.
@@ -166,7 +166,7 @@ contract MasterChef is Ownable, IMasterChef {
         uint256 _startBlock,
         uint256 _stakingPercent,
         uint256 _devPercent,
-        ReferralRegister _referralRegister
+        IReferralRegister _referralRegister
     ) {
         helixToken = _HelixToken;
         devaddr = _devaddr;
@@ -268,7 +268,7 @@ contract MasterChef is Ownable, IMasterChef {
 
     // Set ReferralRegister address
     function setReferralRegister(address _address) public onlyOwner {
-        refRegister = ReferralRegister(_address);
+        refRegister = IReferralRegister(_address);
         emit ReferralRegisterSet(_address);
     }
 

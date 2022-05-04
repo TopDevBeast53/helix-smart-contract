@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 import '../interfaces/IOracleFactory.sol';
+import '../interfaces/IOracle.sol';
 import './Oracle.sol';
 
 // Used for constructing, updating, and consulting Oracle contracts
@@ -45,7 +46,7 @@ contract OracleFactory is IOracleFactory {
     function update(address token0, address token1) public {
         require(oracles[token0][token1] != address(0), 'OracleFactory: ORACLE HAS NOT BEEN CREATED');
 
-        Oracle oracle = Oracle(oracles[token0][token1]);
+        IOracle oracle = IOracle(oracles[token0][token1]);
         if (canUpdate(oracle)) {
             oracle.update();
             emit Update(token0, token1, getBlockTimestamp());
@@ -58,7 +59,7 @@ contract OracleFactory is IOracleFactory {
      */
     function consult(address tokenIn, uint amountIn, address tokenOut) external view returns (uint amountOut) {
         if (oracles[tokenIn][tokenOut] != address(0)) {
-            Oracle oracle = Oracle(oracles[tokenIn][tokenOut]);
+            IOracle oracle = IOracle(oracles[tokenIn][tokenOut]);
             amountOut = oracle.consult(tokenIn, amountIn);
         } else {
             amountOut = amountIn;
@@ -76,7 +77,7 @@ contract OracleFactory is IOracleFactory {
     }
 
     // helper function that returns whether enough time has passed to update the oracle
-    function canUpdate(Oracle oracle) internal view returns (bool) {
+    function canUpdate(IOracle oracle) internal view returns (bool) {
         uint32 blockTimestamp = getBlockTimestamp();
         uint32 timeElapsed = blockTimestamp - oracle.blockTimestampLast();
         return timeElapsed >= oracle.PERIOD();

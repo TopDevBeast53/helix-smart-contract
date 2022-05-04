@@ -2,9 +2,9 @@
 pragma solidity >= 0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
 import '@rari-capital/solmate/src/tokens/ERC20.sol';
-import "../libraries/ExtraMath.sol";
 import "../interfaces/IHelixNFT.sol";
 
 contract HelixChefNFT is Ownable, ReentrancyGuard {
@@ -94,7 +94,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
             RewardToken memory curRewardToken = rewardTokens[_tokenAddress];
             if(curRewardToken.enabled && curRewardToken.startBlock < block.number){
                 uint fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
-                uint curMultiplier = ExtraMath.min(fromRewardStartToNow, _fromLastRewardToNow);
+                uint curMultiplier = Math.min(fromRewardStartToNow, _fromLastRewardToNow);
                 rewardTokens[_tokenAddress].accTokenPerShare += (curRewardToken.rewardPerBlock * curMultiplier * PRECISION_FACTOR) / _totalHelixPoints;
             }
         }
@@ -276,7 +276,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         uint _accumulatedAP = helixNFT.getAccumulatedAP(msg.sender);
         require(amount <= _accumulatedAP, "Insufficient amount of HelixPoints");
         uint _remainAP = helixNFT.remainAPToNextLevel(tokenId);
-        uint _amount = ExtraMath.min(amount, _remainAP);
+        uint _amount = Math.min(amount, _remainAP);
 
         uint[] memory tokensId = new uint[](1);
         tokensId[0] = tokenId;
@@ -337,7 +337,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
             RewardToken memory curRewardToken = rewardTokens[_tokenAddress];
             if (_fromLastRewardToNow != 0 && _totalHelixPoints != 0 && curRewardToken.enabled) {
                 uint fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
-                uint curMultiplier = ExtraMath.min(fromRewardStartToNow, _fromLastRewardToNow);
+                uint curMultiplier = Math.min(fromRewardStartToNow, _fromLastRewardToNow);
                 _accTokenPerShare = curRewardToken.accTokenPerShare + (curMultiplier * curRewardToken.rewardPerBlock * PRECISION_FACTOR / _totalHelixPoints);
             } else {
                 _accTokenPerShare = curRewardToken.accTokenPerShare;

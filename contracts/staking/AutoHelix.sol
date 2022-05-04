@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "../tokens/HelixToken.sol";
 import "../interfaces/IMigratorChef.sol";
 import "../interfaces/IMasterChef.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 
 contract AutoHelix is Ownable, Pausable {
@@ -79,7 +79,7 @@ contract AutoHelix is Ownable, Pausable {
      * @notice Checks if the msg.sender is a contract or a proxy
      */
     modifier notContract() {
-        require(!_isContract(msg.sender), "contract not allowed");
+        require(!Address.isContract(msg.sender), "contract not allowed");
         require(msg.sender == tx.origin, "proxy contract not allowed");
         _;
     }
@@ -327,17 +327,5 @@ contract AutoHelix is Ownable, Pausable {
         if (bal > 0) {
             IMasterChef(masterchef).enterStaking(bal);
         }
-    }
-
-    /**
-     * @notice Checks if address is a contract
-     * @dev It prevents contract from being targetted
-     */
-    function _isContract(address addr) internal view returns (bool) {
-        uint256 size;
-        assembly {
-            size := extcodesize(addr)
-        }
-        return size > 0;
     }
 }

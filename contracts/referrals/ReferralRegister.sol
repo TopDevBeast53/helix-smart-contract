@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "../tokens/HelixToken.sol";
-import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
+import "../interfaces/IHelixToken.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
@@ -27,7 +27,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     uint256 constant MAX_STAKING_FEE = 30; // 3%
     uint256 constant MAX_SWAP_FEE = 100; // 10%
 
-    HelixToken public helixToken;
+    IHelixToken public token;
     uint256 public stakingRefFee;
     uint256 public swapRefFee;
 
@@ -58,8 +58,8 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     // Should be initialize by default with 
     // defaultStakingRef = 10 (meaning 1% reward for staking)
     // defaultSwapRef = 10 (meaning 1% reward for swap)
-    constructor(HelixToken token, uint256 defaultStakingRef, uint256 defaultSwapRef) {
-        helixToken = token;
+    constructor(IHelixToken _token, uint256 defaultStakingRef, uint256 defaultSwapRef) {
+        token = _token;
         stakingRefFee = defaultStakingRef;
         swapRefFee = defaultSwapRef;
     }
@@ -113,7 +113,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
 
         balance[msg.sender] = 0;
 
-        helixToken.mint(msg.sender, toMint);
+        token.mint(msg.sender, toMint);
         emit Withdrawn(msg.sender, toMint);
     }
 
