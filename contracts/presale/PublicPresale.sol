@@ -21,10 +21,10 @@ contract PublicPresale is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // Maximum number of tickets available for purchase at the start of the sale
-    uint public TICKET_MAX;
+    uint public constant TICKET_MAX = 21000;
 
     // Minimum number of tickets that can be purchased at a time
-    uint public MINIMUM_TICKET_PURCHASE;
+    uint public constant MINIMUM_TICKET_PURCHASE = 1;
 
     // Unsold tickets available for purchase
     // ticketsAvailable = TICKET_MAX - (sum(user.purchased) for user in whitelist)
@@ -44,10 +44,10 @@ contract PublicPresale is ReentrancyGuard {
     uint public OUTPUT_RATE;
 
     // Number of decimals on the `inputToken` used for calculating ticket exchange rates
-    uint public INPUT_TOKEN_DECIMALS;
+    uint public constant INPUT_TOKEN_DECIMALS = 1e18;
 
     // Number of decimals on the `outputToken` used for calculating ticket exchange rates
-    uint public OUTPUT_TOKEN_DECIMALS;
+    uint public constant OUTPUT_TOKEN_DECIMALS = 1e18;
 
     // Address that receives `inputToken`s sold in exchange for tickets
     address public treasury;
@@ -61,9 +61,11 @@ contract PublicPresale is ReentrancyGuard {
      *  2: begins automatically PURCHASE_PHASE_DURATION after the start of purchase phase 1
      *     purchases are available to any address
      */
-    uint public PURCHASE_PHASE_START;           // Phase when purchasing starts
-    uint public PURCHASE_PHASE_END;             // Last phase before purchasing ends
-    uint public PURCHASE_PHASE_DURATION;        // Length of time for a purchasePhase, 86400 == 1 day
+    uint public constant PURCHASE_PHASE_START = 1;          // Phase when purchasing starts
+    uint public constant PURCHASE_PHASE_END = 2;            // Last phase before purchasing ends
+
+    uint public immutable PURCHASE_PHASE_DURATION;          // Length of time for a purchasePhase, 86400 == 1 day
+
     uint public purchasePhase;                  // Current purchasePhase
     uint public purchasePhaseEndTimestamp;      // Timestamp after which the current purchasePhase has ended
 
@@ -140,15 +142,8 @@ contract PublicPresale is ReentrancyGuard {
         isOwner[msg.sender] = true;
         owners.push(msg.sender);
 
-        INPUT_TOKEN_DECIMALS = 1e18;
-        OUTPUT_TOKEN_DECIMALS = 1e18;
-
-        TICKET_MAX = 21000;
         ticketsAvailable = TICKET_MAX;
-        MINIMUM_TICKET_PURCHASE = 1;
 
-        PURCHASE_PHASE_START = 1;
-        PURCHASE_PHASE_END = 2;
         PURCHASE_PHASE_DURATION = _PURCHASE_PHASE_DURATION;
     }
 
