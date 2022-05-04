@@ -33,7 +33,7 @@ contract SmartChef is Ownable {
     // Info of each user that stakes LP tokens.
     mapping (address => UserInfo) public userInfo;
     // Total allocation points. Must be the sum of all allocation points in all pools.
-    uint256 public totalAllocPoint = 0;
+    uint256 public totalAllocPoint;
     // The block number when Helix mining starts.
     uint256 public startBlock;
     // The block number when Helix mining ends.
