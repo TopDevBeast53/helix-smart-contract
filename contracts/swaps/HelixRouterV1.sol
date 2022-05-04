@@ -38,7 +38,7 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         return _WETH;
     }
 
-    function setSwapRewards(address _swapRewards) public onlyOwner {
+    function setSwapRewards(address _swapRewards) external onlyOwner {
         swapRewards = _swapRewards;
     }
 
