@@ -54,7 +54,7 @@ contract LpSwap is Ownable, ReentrancyGuard {
     // the denominator used when calculating percentages
     // if MAX_FEE_PERCENT == 1000, then fees are out of 1000
     // so if fee == 50 that's 5% and if fee == 500 that's 50%
-    uint public MAX_FEE_PERCENT;
+    uint public constant MAX_FEE_PERCENT = 1000;
 
     // Map a seller address to the swaps it's opened 
     mapping(address => uint[]) public swapIds;
@@ -114,11 +114,8 @@ contract LpSwap is Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor(
-        address _treasury
-    ) {
+    constructor(address _treasury) {
         treasury = _treasury;
-        MAX_FEE_PERCENT = 1000;
     }
 
     // Called externally to open a new swap
