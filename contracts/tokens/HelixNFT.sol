@@ -115,7 +115,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
         string memory baseURI,
         uint initialHelixPoints,
         uint8 levelUpPercent
-    ) public initializer {
+    ) external initializer {
         _owner = msg.sender;
         _reentrancyStatus = 1;
 
@@ -149,40 +149,6 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
     }
 
     /**
-     * @dev To mint HelixNFT
-     *
-     * Initialize:
-     *      set helixPoints as initialHelixPoints value
-     *      set level as 1 (start from 1 LEVEL)
-     */
-    function mint(address to) public onlyMinter nonReentrant {
-        require(to != address(0), "Address can not be zero");
-        _lastTokenId += 1;
-        uint tokenId = _lastTokenId;
-        _tokens[tokenId].helixPoints = _initialHelixPoints;
-        _tokens[tokenId].createTimestamp = block.timestamp;
-        _tokens[tokenId].level = 1;
-        _safeMint(to, tokenId);
-    }
-
-    // Mints external NFT
-    function mintExternal(address to, string calldata externalTokenID, string calldata uri) public onlyMinter nonReentrant {
-        require(to != address(0), "Address can not be zero");
-        _lastTokenId += 1;
-        uint tokenId = _lastTokenId;
-        _tokens[tokenId].helixPoints = _initialHelixPoints;
-        _tokens[tokenId].createTimestamp = block.timestamp;
-        _tokens[tokenId].level = 1;
-        _tokens[tokenId].externalTokenID = externalTokenID;
-        _tokens[tokenId].tokenURI = uri;
-        _safeMint(to, tokenId);
-    }
-
-    function burn(uint256 tokenId) public nonReentrant {
-        _burn(tokenId);
-    }
-    
-    /**
      * @dev Override funtion to avoid the approval of the staked token
      */
     function approve(address to, uint256 tokenId) public override {
@@ -191,6 +157,8 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
         }
         super.approve(to, tokenId);
     }
+
+    //Internal functions --------------------------------------------------------------------------------------------
 
     /**
      * @dev Override funtion to avoid the transfer of the staked token
@@ -207,6 +175,40 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
     }
 
     //External functions --------------------------------------------------------------------------------------------
+
+    /**
+     * @dev To mint HelixNFT
+     *
+     * Initialize:
+     *      set helixPoints as initialHelixPoints value
+     *      set level as 1 (start from 1 LEVEL)
+     */
+    function mint(address to) external onlyMinter nonReentrant {
+        require(to != address(0), "Address can not be zero");
+        _lastTokenId += 1;
+        uint tokenId = _lastTokenId;
+        _tokens[tokenId].helixPoints = _initialHelixPoints;
+        _tokens[tokenId].createTimestamp = block.timestamp;
+        _tokens[tokenId].level = 1;
+        _safeMint(to, tokenId);
+    }
+
+    // Mints external NFT
+    function mintExternal(address to, string calldata externalTokenID, string calldata uri) external onlyMinter nonReentrant {
+        require(to != address(0), "Address can not be zero");
+        _lastTokenId += 1;
+        uint tokenId = _lastTokenId;
+        _tokens[tokenId].helixPoints = _initialHelixPoints;
+        _tokens[tokenId].createTimestamp = block.timestamp;
+        _tokens[tokenId].level = 1;
+        _tokens[tokenId].externalTokenID = externalTokenID;
+        _tokens[tokenId].tokenURI = uri;
+        _safeMint(to, tokenId);
+    }
+
+    function burn(uint256 tokenId) external nonReentrant {
+        _burn(tokenId);
+    }
     
     /**
      * @dev To get token IDs of user by address
