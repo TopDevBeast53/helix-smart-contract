@@ -19,8 +19,8 @@ library HelixLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'e0ce7bfb962a25cbac92cbc4b48f91427e2de2f8795b94d1943deb6ec507d0f0' // init code hash
-                //hex'5c895350dda5e963c0f7d7d02e3daeff647aec4f52185481ffe441be51cf510f' // mocha test
+                // hex'e0ce7bfb962a25cbac92cbc4b48f91427e2de2f8795b94d1943deb6ec507d0f0' // init code hash
+                hex'b81d3d29445919397343b9fb1582fb663b31166b273c1b5cbe993545378ddc93' // mocha test
             )))));
     }
 
