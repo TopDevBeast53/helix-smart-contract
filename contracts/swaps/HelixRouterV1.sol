@@ -232,7 +232,7 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
     
             address to = i < path.length - 2 ? HelixLibrary.pairFor(_factory, output, path[i + 2]) : _to;
             HelixPair(HelixLibrary.pairFor(_factory, input, output)).swap(
-                amount0Out, amount1Out, to, new bytes(0)
+                amount0Out, amount1Out, to
             );
 
             if (swapRewards != address(0)) {
@@ -353,7 +353,7 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
             
             (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOutput) : (amountOutput, uint(0));
             address to = i < path.length - 2 ? HelixLibrary.pairFor(_factory, output, path[i + 2]) : _to;
-            pair.swap(amount0Out, amount1Out, to, new bytes(0));
+            pair.swap(amount0Out, amount1Out, to);
 
             if (swapRewards != address(0)) {
                 ISwapRewards(swapRewards).swap(msg.sender, input, output, amountOutput);
