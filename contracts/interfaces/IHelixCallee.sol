@@ -2,5 +2,5 @@
 pragma solidity >=0.8.0;
 
 interface IHelixCallee {
-    function HelixCall(address sender, uint amount0, uint amount1, bytes calldata data) external;
+    function HelixCall(address sender, uint256 amount0, uint256 amount1, bytes calldata data) external;
 }
