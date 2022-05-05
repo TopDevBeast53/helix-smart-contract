@@ -2,22 +2,22 @@
 pragma solidity >= 0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import '@rari-capital/solmate/src/utils/ReentrancyGuard.sol';
-import '@rari-capital/solmate/src/tokens/ERC20.sol';
-import "../libraries/ExtraMath.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
+import "@rari-capital/solmate/src/tokens/ERC20.sol";
 import "../interfaces/IHelixNFT.sol";
 
 contract HelixChefNFT is Ownable, ReentrancyGuard {
 
     // Total Helix Points staked in Pool across all NFTs by all users.
-    uint public totalHelixPoints;
+    uint256 public totalHelixPoints;
     // Last block that rewards were calculated.
-    uint public lastRewardBlock;
+    uint256 public lastRewardBlock;
     // instance of HelixNFT
     IHelixNFT private helixNFT;
 
     // Used during calculations of accumulated tokens per share
-    uint public constant PRECISION_FACTOR = 1e12;
+    uint256 public constant PRECISION_FACTOR = 1e12;
 
     // Here is a main formula to stake. Basically, any point in time, the amount of rewards entitled to a user but is pending to be distributed is:
     //
@@ -34,17 +34,17 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         // list of staked NFT's ID
         uint[] stakedNFTsId;
         // HelixPoint Amount user gain with staked(A helixNFT has helixPoint amount initially)
-        uint helixPointAmount;
+        uint256 helixPointAmount;
     }
 
     // Info of reward token
     struct RewardToken {
         // reward will be accrued per block, must not be zero.
-        uint rewardPerBlock;
+        uint256 rewardPerBlock;
         // block number which reward token is created.
-        uint startBlock;
+        uint256 startBlock;
         // Accumulated Tokens per share, times PRECISION_FACTOR.(1e12 is for suming as integer)
-        uint accTokenPerShare;
+        uint256 accTokenPerShare;
         // true - enable; false - disable
         bool enabled;
     }
@@ -60,12 +60,12 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
 
     event AddNewRewardToken(address token);
     event DisableRewardToken(address token);
-    event ChangeRewardToken(address indexed token, uint rewardPerBlock);
-    event StakeTokens(address indexed user, uint amountRB, uint[] tokensId);
-    event UnstakeToken(address indexed user, uint amountRB, uint[] tokensId);
-    event BoostHelixNFT(uint indexed tokenId, uint boostedAP);
+    event ChangeRewardToken(address indexed token, uint256 rewardPerBlock);
+    event StakeTokens(address indexed user, uint256 amountRB, uint[] tokensId);
+    event UnstakeToken(address indexed user, uint256 amountRB, uint[] tokensId);
+    event BoostHelixNFT(uint256 indexed tokenId, uint256 boostedAP);
 
-    constructor(IHelixNFT _helixNFT, uint _lastRewardBlock) {
+    constructor(IHelixNFT _helixNFT, uint256 _lastRewardBlock) {
         helixNFT = _helixNFT;
         lastRewardBlock = _lastRewardBlock;
     }
@@ -79,8 +79,8 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      *       - Update `accTokenPerShare` of all `rewardTokens` to current time.
      */
     function updatePool() public {
-        uint _fromLastRewardToNow = getDiffBlock(lastRewardBlock, block.number);
-        uint _totalHelixPoints = totalHelixPoints;
+        uint256 _fromLastRewardToNow = getDiffBlock(lastRewardBlock, block.number);
+        uint256 _totalHelixPoints = totalHelixPoints;
 
         if(_fromLastRewardToNow == 0){
             return;
@@ -89,12 +89,12 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         if(_totalHelixPoints == 0){
             return;
         }
-        for(uint i = 0; i < rewardTokenAddresses.length; i++){
+        for(uint256 i = 0; i < rewardTokenAddresses.length; i++){
             address _tokenAddress = rewardTokenAddresses[i];
             RewardToken memory curRewardToken = rewardTokens[_tokenAddress];
             if(curRewardToken.enabled && curRewardToken.startBlock < block.number){
-                uint fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
-                uint curMultiplier = ExtraMath.min(fromRewardStartToNow, _fromLastRewardToNow);
+                uint256 fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
+                uint256 curMultiplier = Math.min(fromRewardStartToNow, _fromLastRewardToNow);
                 rewardTokens[_tokenAddress].accTokenPerShare += (curRewardToken.rewardPerBlock * curMultiplier * PRECISION_FACTOR) / _totalHelixPoints;
             }
         }
@@ -111,7 +111,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      * - `newToken` cannot be the zero address and it must be what doesn't exist.
      * - `rewardPerBlock` cannot be the zero.
      */
-    function addNewRewardToken(address newToken, uint startBlock, uint rewardPerBlock) public onlyOwner {
+    function addNewRewardToken(address newToken, uint256 startBlock, uint256 rewardPerBlock) public onlyOwner {
         require(newToken != address(0), "Address shouldn't be 0");
         require(!isRewardToken(newToken), "Token is already in the list");
         require(rewardPerBlock != 0, "rewardPerBlock shouldn't be 0");
@@ -162,21 +162,23 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      * - `rewardPerBlock` cannot be the zero.
      * - `startBlock` must be later than current.
      */
-    function enableRewardToken(address token, uint startBlock, uint rewardPerBlock) public onlyOwner {
+    function enableRewardToken(address token, uint256 startBlock, uint256 rewardPerBlock) public onlyOwner {
         require(isRewardToken(token), "Token not in the list");
         require(!rewardTokens[token].enabled, "Reward token is already enabled");
         require(rewardPerBlock != 0, "rewardPerBlock shouldn't be 0");
 
-        if(startBlock == 0){
+        if (startBlock == 0) {
             startBlock = block.number + 1;
         }
         require(startBlock >= block.number, "Start block Must be later than current");
+
         rewardTokens[token].enabled = true;
         rewardTokens[token].startBlock = startBlock;
         rewardTokens[token].rewardPerBlock = rewardPerBlock;
-        emit ChangeRewardToken(token, rewardPerBlock);
 
         updatePool();
+
+        emit ChangeRewardToken(token, rewardPerBlock);
     }
 
     /**
@@ -197,9 +199,9 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         _withdrawRewardToken();// --------1
         
         UserInfo storage user = users[msg.sender];
-        uint depositedAPs = 0;
-        for(uint i = 0; i < tokensId.length; i++){
-            (address tokenOwner, bool isStaked, uint helixPoints) = helixNFT.getInfoForStaking(tokensId[i]);
+        uint256 depositedAPs = 0;
+        for(uint256 i = 0; i < tokensId.length; i++){
+            (address tokenOwner, bool isStaked, uint256 helixPoints) = helixNFT.getInfoForStaking(tokensId[i]);
             require(tokenOwner == msg.sender, "Not token owner");
             require(!isStaked, "Token has already been staked");
             helixNFT.setIsStaked(tokensId[i], true);
@@ -232,9 +234,9 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         _withdrawRewardToken();// --------1
         
         UserInfo storage user = users[msg.sender];
-        uint withdrawalAPs = 0;
-        for(uint i = 0; i < tokensId.length; i++){
-            (address tokenOwner, bool isStaked, uint helixPoints) = helixNFT.getInfoForStaking(tokensId[i]);
+        uint256 withdrawalAPs = 0;
+        for(uint256 i = 0; i < tokensId.length; i++){
+            (address tokenOwner, bool isStaked, uint256 helixPoints) = helixNFT.getInfoForStaking(tokensId[i]);
             require(tokenOwner == msg.sender, "Not token owner");
             require(isStaked, "Token has already been unstaked");
             helixNFT.setIsStaked(tokensId[i], false);
@@ -260,21 +262,22 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
 
     /**
      * @dev Boost helixNFT `tokenId` with accumulated HelixPoints `amount` by an user
-     * @param tokenId uint ID of the token to be boosted
-     * @param amount uint amount of HelixPoints to boost for the token
+     * @param tokenId uint256 ID of the token to be boosted
+     * @param amount uint256 amount of HelixPoints to boost for the token
      *
      * Requirements:
      *      - sender must be an owner of token to be boosted.
      *      - The current held HelixPoints amount must be sufficient.
      *      - The counted helixPoints amount must be not over limit by level.
      */
-    function boostHelixNFT(uint tokenId, uint amount) external {
-        (address tokenOwner, bool isStaked, uint helixPoints) = helixNFT.getInfoForStaking(tokenId);
+    function boostHelixNFT(uint256 tokenId, uint256 amount) external {
+        (address tokenOwner, bool isStaked, uint256 helixPoints) = helixNFT.getInfoForStaking(tokenId);
         require(tokenOwner == msg.sender, "Not token owner");
-        uint _accumulatedAP = helixNFT.getAccumulatedAP(msg.sender);
+        uint256 _accumulatedAP = helixNFT.getAccumulatedAP(msg.sender);
         require(amount <= _accumulatedAP, "Insufficient amount of HelixPoints");
-        uint _remainAP = helixNFT.remainAPToNextLevel(tokenId);
-        uint _amount = ExtraMath.min(amount, _remainAP);
+
+        uint256 _remainAP = helixNFT.remainAPToNextLevel(tokenId);
+        uint256 _amount = Math.min(amount, _remainAP);
 
         uint[] memory tokensId = new uint[](1);
         tokensId[0] = tokenId;
@@ -282,7 +285,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
             unstake(tokensId);
         }
         helixNFT.setAccumulatedAP(msg.sender, _accumulatedAP - _amount);
-        uint newAP = helixPoints + _amount;
+        uint256 newAP = helixPoints + _amount;
         helixNFT.setHelixPoints(tokenId, newAP);
         if (_amount == _remainAP) {
             helixNFT.levelUp(tokenId);
@@ -327,15 +330,15 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         if(user.helixPointAmount == 0){
             return (rewardTokenAddresses, rewards);
         }
-        uint _totalHelixPoints = totalHelixPoints;
-        uint _fromLastRewardToNow = getDiffBlock(lastRewardBlock, block.number);
-        uint _accTokenPerShare = 0;
-        for(uint i = 0; i < rewardTokenAddresses.length; i++){
+        uint256 _totalHelixPoints = totalHelixPoints;
+        uint256 _fromLastRewardToNow = getDiffBlock(lastRewardBlock, block.number);
+        uint256 _accTokenPerShare = 0;
+        for(uint256 i = 0; i < rewardTokenAddresses.length; i++){
             address _tokenAddress = rewardTokenAddresses[i];
             RewardToken memory curRewardToken = rewardTokens[_tokenAddress];
             if (_fromLastRewardToNow != 0 && _totalHelixPoints != 0 && curRewardToken.enabled) {
-                uint fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
-                uint curMultiplier = ExtraMath.min(fromRewardStartToNow, _fromLastRewardToNow);
+                uint256 fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
+                uint256 curMultiplier = Math.min(fromRewardStartToNow, _fromLastRewardToNow);
                 _accTokenPerShare = curRewardToken.accTokenPerShare + (curMultiplier * curRewardToken.rewardPerBlock * PRECISION_FACTOR / _totalHelixPoints);
             } else {
                 _accTokenPerShare = curRewardToken.accTokenPerShare;
@@ -351,22 +354,26 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      * @dev Withdraw rewardToken from HelixChefNFT.
      *
      * NOTE: 1. updatePool()
-     *       2. User receives the pending reward sent to user's address.
-     *       3. User's `rewardDebt` gets updated.
+     *       2. User's `rewardDebt` gets updated.
+     *       3. User receives the pending reward sent to user's address.
      */
     function _withdrawRewardToken() internal {
-        updatePool();// -----1
+        updatePool();
+
         UserInfo memory user = users[msg.sender];
         address[] memory _rewardTokenAddresses = rewardTokenAddresses;
-        if(user.helixPointAmount == 0){
+
+        if (user.helixPointAmount == 0) {
             return;
         }
-        for(uint i = 0; i < _rewardTokenAddresses.length; i++){
+
+        for(uint256 i = 0; i < _rewardTokenAddresses.length; i++){
             RewardToken memory curRewardToken = rewardTokens[_rewardTokenAddresses[i]];
-            uint pending = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR - rewardDebt[msg.sender][_rewardTokenAddresses[i]];
-            if(pending > 0){
-                ERC20(_rewardTokenAddresses[i]).transfer(address(msg.sender), pending);// ------2
-                rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR;// -----3
+            uint256 pending = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR - rewardDebt[msg.sender][_rewardTokenAddresses[i]];
+            
+            if (pending > 0){
+                rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR;
+                ERC20(_rewardTokenAddresses[i]).transfer(address(msg.sender), pending);
             }
         }
     }
@@ -382,7 +389,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
     /**
      * @dev Return difference block between _from and _to
      */
-    function getDiffBlock(uint _from, uint _to) internal pure returns (uint) {
+    function getDiffBlock(uint256 _from, uint256 _to) internal pure returns (uint) {
         if(_to > _from)
             return _to - _from;
         else
@@ -395,7 +402,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      * NOTE: Why divided by PRECISION_FACTOR is that `accTokenPerShare` is the value multiplied by 1e12.
      */
     function _updateRewardDebt(address _user) internal {
-        for(uint i = 0; i < rewardTokenAddresses.length; i++){
+        for(uint256 i = 0; i < rewardTokenAddresses.length; i++){
             rewardDebt[_user][rewardTokenAddresses[i]] = users[_user].helixPointAmount * rewardTokens[rewardTokenAddresses[i]].accTokenPerShare / PRECISION_FACTOR;
         }
     }
@@ -405,9 +412,9 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      * @param tokenId to be removed
      * @param user who is unstaking
      */
-    function removeTokenIdFromUsers(uint tokenId, address user) internal {
+    function removeTokenIdFromUsers(uint256 tokenId, address user) internal {
         uint[] storage tokensId = users[user].stakedNFTsId;
-        for (uint i = 0; i < tokensId.length; i++) {
+        for (uint256 i = 0; i < tokensId.length; i++) {
             if (tokenId == tokensId[i]) {
                 tokensId[i] = tokensId[tokensId.length - 1];
                 tokensId.pop();

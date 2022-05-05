@@ -17,9 +17,9 @@ contract Voting is ReentrancyGuard, Ownable {
         bool isCore;
         string name;                            // IPFS CID pointing to proposal title and body text
         address creator;                        // creator's address
-        uint blockNum;                          // when the proposal was created
-        uint startTimestamp;                    // a timestamp of when the voting starts 
-        uint endTimestamp;                      // a timestamp of when the voting ends 
+        uint256 blockNum;                          // when the proposal was created
+        uint256 startTimestamp;                    // a timestamp of when the voting starts 
+        uint256 endTimestamp;                      // a timestamp of when the voting ends 
         mapping(address => uint8) decisions;    // decisions[voterAddr] == 1 -> YES, decisions[voterAddr] == 2 -> NO
         address[] voters;                       // array of voters
         mapping(address => uint) balance;       // balance of deposited helix token for each voter into the given proposal
@@ -27,13 +27,13 @@ contract Voting is ReentrancyGuard, Ownable {
     }
     
     // number of proposals
-    uint public numProposals;
+    uint256 public numProposals;
 
     // Used for accessing proposals by their index, i.e. creation order
-    mapping (uint => Proposal) public proposalsByIndex;
+    mapping (uint256 => Proposal) public proposalsByIndex;
 
     // Used for accessing Proposals by their name, i.e. hash
-    // via string name -> uint index -> Proposal
+    // via string name -> uint256 index -> Proposal
     mapping (string => uint) public proposalIndexById;
 
     event CreateProposal(string proposalName);
@@ -51,7 +51,7 @@ contract Voting is ReentrancyGuard, Ownable {
      * Requirements:
      * - EndTimestamp should be later from now.
      */
-    function createProposal(string calldata proposalName, uint endTimestamp) external {
+    function createProposal(string calldata proposalName, uint256 endTimestamp) external {
         require(endTimestamp > block.timestamp, "endTimestamp must be a time in the future");
         proposalIndexById[proposalName] = numProposals;
         Proposal storage p = proposalsByIndex[numProposals++];
@@ -72,7 +72,7 @@ contract Voting is ReentrancyGuard, Ownable {
      * - Check that add msg.sender twice for the same proposalId.
      * - Decision can be value of 1(Yes) or 2(No)
      */
-    function vote(uint proposalId, uint withTokenAmount, uint8 decision) external nonReentrant {
+    function vote(uint256 proposalId, uint256 withTokenAmount, uint8 decision) external nonReentrant {
         address voter = msg.sender;
         Proposal storage _proposal = proposalsByIndex[proposalId];
         require(isActive(proposalId), "Voting is over");
@@ -90,15 +90,15 @@ contract Voting is ReentrancyGuard, Ownable {
     /**
      * @dev Calculating the result of voting
      */
-    function resultProposal(uint proposalId) external view returns (uint, uint)
+    function resultProposal(uint256 proposalId) external view returns (uint, uint)
     {
-        uint numVoters = proposalsByIndex[proposalId].voters.length;
-        uint yesVotes = 0;
-        uint noVotes = 0;
-        for (uint i = 0; i < numVoters; i++) {
+        uint256 numVoters = proposalsByIndex[proposalId].voters.length;
+        uint256 yesVotes = 0;
+        uint256 noVotes = 0;
+        for (uint256 i = 0; i < numVoters; i++) {
             address voterAddr = proposalsByIndex[proposalId].voters[i];
-            uint votes = getNumberOfVotes(voterAddr, proposalId);
-            uint decision = proposalsByIndex[proposalId].decisions[voterAddr];
+            uint256 votes = getNumberOfVotes(voterAddr, proposalId);
+            uint256 decision = proposalsByIndex[proposalId].decisions[voterAddr];
             if (decision == 1) {
                 yesVotes += votes;
             } else {
@@ -116,7 +116,7 @@ contract Voting is ReentrancyGuard, Ownable {
      *     The amount should be less than balance - withdrawAfterEnd which sums up when user withdraw after end of voting.
      *     So withdrawAfterEnd before end of voting is 0.
      */
-    function withdraw(uint proposalId, uint amount) external nonReentrant {
+    function withdraw(uint256 proposalId, uint256 amount) external nonReentrant {
         address voter = msg.sender;
         Proposal storage _proposal = proposalsByIndex[proposalId];
         require(amount > 0 && _proposal.balance[voter] >= _proposal.withdrawAfterEnd[voter] + amount, "Wrong withdraw amount");
@@ -132,14 +132,14 @@ contract Voting is ReentrancyGuard, Ownable {
      * @dev See decision by `proposalId` & `voter`
      * NOTE: return value is 0 => `not voted yet1, 1 => `YES`, 2 => `NO`
      */
-    function getDecision(uint proposalId, address voter) external view returns (uint8) {
+    function getDecision(uint256 proposalId, address voter) external view returns (uint8) {
         return proposalsByIndex[proposalId].decisions[voter];
     }
 
     /**
      * @dev See voters by `proposalId`
      */
-    function voters(uint proposalId) external view returns (address[] memory) {
+    function voters(uint256 proposalId) external view returns (address[] memory) {
         return proposalsByIndex[proposalId].voters;
     }
     
@@ -148,7 +148,7 @@ contract Voting is ReentrancyGuard, Ownable {
     /**
      * @dev Returns true if this proposal can still be voted on and false otherwise.
      */
-    function isActive(uint proposalIndex) public view returns(bool) {
+    function isActive(uint256 proposalIndex) public view returns(bool) {
         return block.timestamp < proposalsByIndex[proposalIndex].endTimestamp;
     }
 
@@ -157,7 +157,7 @@ contract Voting is ReentrancyGuard, Ownable {
      *
      * NOTE: HelixToken's PriorVotes + deposited balance to proposal
      */
-    function getNumberOfVotes(address voter, uint proposalId) public view returns (uint) {
+    function getNumberOfVotes(address voter, uint256 proposalId) public view returns (uint) {
         return helixToken.getPriorVotes(voter, proposalsByIndex[proposalId].blockNum) + proposalsByIndex[proposalId].balance[voter];
     }
 
