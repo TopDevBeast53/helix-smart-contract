@@ -90,7 +90,7 @@ contract AutoHelix is Ownable, Pausable {
      * @param _amount: number of tokens to deposit (in Helix)
      */
     function deposit(uint256 _amount) external whenNotPaused notContract {
-        require(_amount > 0, "Nothing to deposit");
+        require(_amount > 0, "insufficient amount");
 
         uint256 pool = balanceOf();
 
