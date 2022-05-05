@@ -11,7 +11,7 @@ contract HelixMigrator is Ownable {
     IHelixV2Router02 public router;
 
     constructor(IHelixV2Router02 _router) {
-        require(address(_router) != address(0), "HelixMigrator: Router address is Zero");
+        require(address(_router) != address(0), "Migrator: zero address");
         router = _router;
     }
 
@@ -85,7 +85,7 @@ contract HelixMigrator is Ownable {
      * @notice Set the router address.
      */
     function setRouter(IHelixV2Router02 _router) external onlyOwner {
-        require(address(_router) != address(0), "HelixMigrator: Router address is Zero");
+        require(address(_router) != address(0), "Migrator: zero address");
         router = _router;
     }
 }
