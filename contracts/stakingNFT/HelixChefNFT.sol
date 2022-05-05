@@ -2,9 +2,9 @@
 pragma solidity >= 0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
 import "@rari-capital/solmate/src/tokens/ERC20.sol";
-import "../libraries/ExtraMath.sol";
 import "../interfaces/IHelixNFT.sol";
 
 contract HelixChefNFT is Ownable, ReentrancyGuard {
@@ -94,7 +94,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
             RewardToken memory curRewardToken = rewardTokens[_tokenAddress];
             if(curRewardToken.enabled && curRewardToken.startBlock < block.number){
                 uint256 fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
-                uint256 curMultiplier = ExtraMath.min(fromRewardStartToNow, _fromLastRewardToNow);
+                uint256 curMultiplier = Math.min(fromRewardStartToNow, _fromLastRewardToNow);
                 rewardTokens[_tokenAddress].accTokenPerShare += (curRewardToken.rewardPerBlock * curMultiplier * PRECISION_FACTOR) / _totalHelixPoints;
             }
         }
@@ -167,16 +167,18 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         require(!rewardTokens[token].enabled, "Reward token is already enabled");
         require(rewardPerBlock != 0, "rewardPerBlock shouldn't be 0");
 
-        if(startBlock == 0){
+        if (startBlock == 0) {
             startBlock = block.number + 1;
         }
         require(startBlock >= block.number, "Start block Must be later than current");
+
         rewardTokens[token].enabled = true;
         rewardTokens[token].startBlock = startBlock;
         rewardTokens[token].rewardPerBlock = rewardPerBlock;
-        emit ChangeRewardToken(token, rewardPerBlock);
 
         updatePool();
+
+        emit ChangeRewardToken(token, rewardPerBlock);
     }
 
     /**
@@ -273,8 +275,9 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         require(tokenOwner == msg.sender, "Not token owner");
         uint256 _accumulatedAP = helixNFT.getAccumulatedAP(msg.sender);
         require(amount <= _accumulatedAP, "Insufficient amount of HelixPoints");
+
         uint256 _remainAP = helixNFT.remainAPToNextLevel(tokenId);
-        uint256 _amount = ExtraMath.min(amount, _remainAP);
+        uint256 _amount = Math.min(amount, _remainAP);
 
         uint[] memory tokensId = new uint[](1);
         tokensId[0] = tokenId;
@@ -335,7 +338,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
             RewardToken memory curRewardToken = rewardTokens[_tokenAddress];
             if (_fromLastRewardToNow != 0 && _totalHelixPoints != 0 && curRewardToken.enabled) {
                 uint256 fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
-                uint256 curMultiplier = ExtraMath.min(fromRewardStartToNow, _fromLastRewardToNow);
+                uint256 curMultiplier = Math.min(fromRewardStartToNow, _fromLastRewardToNow);
                 _accTokenPerShare = curRewardToken.accTokenPerShare + (curMultiplier * curRewardToken.rewardPerBlock * PRECISION_FACTOR / _totalHelixPoints);
             } else {
                 _accTokenPerShare = curRewardToken.accTokenPerShare;
@@ -351,22 +354,26 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      * @dev Withdraw rewardToken from HelixChefNFT.
      *
      * NOTE: 1. updatePool()
-     *       2. User receives the pending reward sent to user's address.
-     *       3. User's `rewardDebt` gets updated.
+     *       2. User's `rewardDebt` gets updated.
+     *       3. User receives the pending reward sent to user's address.
      */
     function _withdrawRewardToken() internal {
-        updatePool();// -----1
+        updatePool();
+
         UserInfo memory user = users[msg.sender];
         address[] memory _rewardTokenAddresses = rewardTokenAddresses;
-        if(user.helixPointAmount == 0){
+
+        if (user.helixPointAmount == 0) {
             return;
         }
+
         for(uint256 i = 0; i < _rewardTokenAddresses.length; i++){
             RewardToken memory curRewardToken = rewardTokens[_rewardTokenAddresses[i]];
             uint256 pending = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR - rewardDebt[msg.sender][_rewardTokenAddresses[i]];
-            if(pending > 0){
-                ERC20(_rewardTokenAddresses[i]).transfer(address(msg.sender), pending);// ------2
-                rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR;// -----3
+            
+            if (pending > 0){
+                rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR;
+                ERC20(_rewardTokenAddresses[i]).transfer(address(msg.sender), pending);
             }
         }
     }

@@ -10,7 +10,8 @@ import "../libraries/HelixLibrary.sol";
 // fixed window oracle that recomputes the average price for the entire period once every period
 // note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
 contract Oracle {
-    using FixedPoint for *;
+    using FixedPoint for FixedPoint.uq112x112;
+    using FixedPoint for FixedPoint.uq144x112;
 
     uint256 public constant PERIOD = 24 hours;
 

@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import "../tokens/HelixToken.sol";
 import "../interfaces/IMasterChef.sol";
 import "../interfaces/IMigratorChef.sol";
-import "../referrals/ReferralRegister.sol";
+import "../interfaces/IReferralRegister.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
@@ -72,7 +72,7 @@ contract MasterChef is Ownable, IMasterChef {
     // The migrator contract. It has a lot of power. Can only be set through governance (owner).
     IMigratorChef public migrator;
     // Referral Register contract
-    ReferralRegister public refRegister;
+    IReferralRegister public refRegister;
     // Info of each pool.
     PoolInfo[] public poolInfo;
     // Info of each user that stakes LP tokens.
@@ -166,7 +166,7 @@ contract MasterChef is Ownable, IMasterChef {
         uint256 _startBlock,
         uint256 _stakingPercent,
         uint256 _devPercent,
-        ReferralRegister _referralRegister
+        IReferralRegister _referralRegister
     ) {
         helixToken = _HelixToken;
         devaddr = _devaddr;
@@ -205,8 +205,8 @@ contract MasterChef is Ownable, IMasterChef {
         require(lastBlockDevWithdraw < block.number, "wait for new block");
         uint256 multiplier = getMultiplier(lastBlockDevWithdraw, block.number);
         uint256 HelixTokenReward = multiplier * HelixTokenPerBlock;
-        helixToken.mint(devaddr, (HelixTokenReward * devPercent) / (percentDec));
         lastBlockDevWithdraw = block.number;
+        helixToken.mint(devaddr, (HelixTokenReward * devPercent) / (percentDec));
     }
 
     // Add a new lp to the pool. Can only be called by the owner.
@@ -268,7 +268,7 @@ contract MasterChef is Ownable, IMasterChef {
 
     // Set ReferralRegister address
     function setReferralRegister(address _address) public onlyOwner {
-        refRegister = ReferralRegister(_address);
+        refRegister = IReferralRegister(_address);
         emit ReferralRegisterSet(_address);
     }
 
@@ -316,46 +316,59 @@ contract MasterChef is Ownable, IMasterChef {
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
         uint256 HelixTokenReward = multiplier * (HelixTokenPerBlock) * (pool.allocPoint) / (totalAllocPoint) * (stakingPercent) / (percentDec);
-        helixToken.mint(address(this), HelixTokenReward);
         pool.accHelixTokenPerShare = pool.accHelixTokenPerShare + (HelixTokenReward * (1e12) / (lpSupply));
         pool.lastRewardBlock = block.number;
+        helixToken.mint(address(this), HelixTokenReward);
 
         emit PoolUpdated(_pid);
     }
 
     // Deposit LP tokens to MasterChef for HelixToken allocation.
     function deposit(uint256 _pid, uint256 _amount) public {
-
         require (_pid != 0, "deposit HelixToken by staking");
 
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
+
         updatePool(_pid);
-        if (user.amount > 0) {
-            uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
-            safeHelixTokenTransfer(msg.sender, pending);
-        }
-        TransferHelper.safeTransferFrom(address(pool.lpToken), address(msg.sender), address(this), _amount);
+
+        uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
         user.amount = user.amount + (_amount);
         user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
+
+        if (pending > 0) {
+            safeHelixTokenTransfer(msg.sender, pending);
+        }
+        if (_amount > 0) {
+            TransferHelper.safeTransferFrom(address(pool.lpToken), address(msg.sender), address(this), _amount);
+        }
+
         emit Deposit(msg.sender, _pid, _amount);
     }
 
     // Withdraw LP tokens from MasterChef.
     function withdraw(uint256 _pid, uint256 _amount) public {
-
         require (_pid != 0, "withdraw HelixToken by unstaking");
 
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        require(user.amount >= _amount, "withdraw: not good");
+
+        require(user.amount >= _amount, "INSUFFICIENT FUNDS TO WITHDRAW");
+
         updatePool(_pid);
+
         uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
-        safeHelixTokenTransfer(msg.sender, pending);
-        user.amount = user.amount - (_amount);
+        user.amount -= _amount;
         user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
-        TransferHelper.safeTransfer(address(pool.lpToken), address(msg.sender), _amount);
-        refRegister.recordStakingRewardWithdrawal(msg.sender, pending);
+
+        if (pending > 0) {
+            refRegister.recordStakingRewardWithdrawal(msg.sender, pending);
+            safeHelixTokenTransfer(msg.sender, pending);
+        }
+        if (_amount > 0) {
+            TransferHelper.safeTransfer(address(pool.lpToken), address(msg.sender), _amount);
+        }
+
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
@@ -378,16 +391,16 @@ contract MasterChef is Ownable, IMasterChef {
             bucket.yield += bucket.amount * (pool.accHelixTokenPerShare) / (1e12) - (bucket.rewardDebt);
         }
     
+        // Update the bucket amount and reset the rewardDebt
+        bucket.amount += _amount;
+        bucket.rewardDebt = bucket.amount * (pool.accHelixTokenPerShare) / (1e12);
+
         // Transfer amount of lpToken from caller to chef
         require(
             _amount <= pool.lpToken.allowance(msg.sender, address(this)), 
             "MasterChef: INSUFFICIENT LP TOKEN ALLOWANCE TO DEPOSIT INTO BUCKET"
         );
         TransferHelper.safeTransferFrom(address(pool.lpToken), msg.sender, address(this), _amount);
-
-        // Update the bucket amount and reset the rewardDebt
-        bucket.amount += _amount;
-        bucket.rewardDebt = bucket.amount * (pool.accHelixTokenPerShare) / (1e12);
 
         emit BucketDeposit(msg.sender, _bucketId, _poolId, _amount);
     }
@@ -406,14 +419,14 @@ contract MasterChef is Ownable, IMasterChef {
         // Calculate the total yield to withdraw
         uint256 pending = bucket.amount * (pool.accHelixTokenPerShare) / (1e12) - (bucket.rewardDebt);
         uint256 yield = bucket.yield + pending;
-        safeHelixTokenTransfer(msg.sender, yield);
 
         // Update the bucket state
         bucket.amount -= _amount;
         bucket.rewardDebt = bucket.amount * (pool.accHelixTokenPerShare) / (1e12);
         bucket.yield = 0;
 
-        // Withdraw the amount of lpToken
+        // Withdraw the yield and lpToken
+        safeHelixTokenTransfer(msg.sender, yield);
         TransferHelper.safeTransfer(address(pool.lpToken), address(msg.sender), _amount);
 
         emit BucketWithdraw(msg.sender, _bucketId, _poolId, _amount);
@@ -504,41 +517,48 @@ contract MasterChef is Ownable, IMasterChef {
 
     // Stake HelixToken tokens to MasterChef
     function enterStaking(uint256 _amount) public {
+        updatePool(0);
+        depositedHelix += _amount;
+
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
-        updatePool(0);
-        if (user.amount > 0) {
-            uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
-            if(pending > 0) {
-                safeHelixTokenTransfer(msg.sender, pending);
-            }
-        }
-        if(_amount > 0) {
-            TransferHelper.safeTransferFrom(address(pool.lpToken), address(msg.sender), address(this), _amount);
-            user.amount = user.amount + (_amount);
-            depositedHelix = depositedHelix + (_amount);
-        }
+
+        uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
+        user.amount += _amount;
         user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
+        
+        if (pending > 0) {
+            safeHelixTokenTransfer(msg.sender, pending);
+        }
+        if (_amount > 0) {
+            TransferHelper.safeTransferFrom(address(pool.lpToken), address(msg.sender), address(this), _amount);
+        }
+
         emit Deposit(msg.sender, 0, _amount);
     }
 
     // Withdraw HelixToken tokens from STAKING.
     function leaveStaking(uint256 _amount) public {
+        updatePool(0);
+        depositedHelix -= _amount;
+        
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
+
         require(user.amount >= _amount, "withdraw: not good");
-        updatePool(0);
+
         uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
-        if(pending > 0) {
-            safeHelixTokenTransfer(msg.sender, pending);
-            refRegister.recordStakingRewardWithdrawal(msg.sender, pending);
-        }
-        if(_amount > 0) {
-            user.amount = user.amount - (_amount);
-            TransferHelper.safeTransfer(address(pool.lpToken), address(msg.sender), _amount);
-            depositedHelix = depositedHelix - (_amount);
-        }
+        user.amount -= _amount;
         user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
+
+        if (pending > 0) {
+            refRegister.recordStakingRewardWithdrawal(msg.sender, pending);
+            safeHelixTokenTransfer(msg.sender, pending);
+        }
+        if (_amount > 0) {
+            TransferHelper.safeTransfer(address(pool.lpToken), address(msg.sender), _amount);
+        }
+
         emit Withdraw(msg.sender, 0, _amount);
     }
 
@@ -546,11 +566,14 @@ contract MasterChef is Ownable, IMasterChef {
     function emergencyWithdraw(uint256 _pid) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        TransferHelper.safeTransfer(address(pool.lpToken), address(msg.sender), user.amount);
 
-        emit EmergencyWithdraw(msg.sender, _pid, user.amount);
+        uint256 _amount = user.amount;
         user.amount = 0;
         user.rewardDebt = 0;
+
+        TransferHelper.safeTransfer(address(pool.lpToken), address(msg.sender), _amount);
+
+        emit EmergencyWithdraw(msg.sender, _pid, _amount);
     }
 
     // Safe HelixToken transfer function, just in case if rounding error causes pool to not have enough HelixTokens.
