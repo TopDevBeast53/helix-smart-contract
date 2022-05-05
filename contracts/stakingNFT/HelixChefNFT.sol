@@ -101,87 +101,6 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Used by owner to add new reward Token
-     * @param newToken address of reward Token to be added
-     * @param startBlock startBlock of new reward Token
-     * @param rewardPerBlock rewardPerBlock of new reward Token
-     *
-     * Requirements:
-     *
-     * - `newToken` cannot be the zero address and it must be what doesn't exist.
-     * - `rewardPerBlock` cannot be the zero.
-     */
-    function addNewRewardToken(address newToken, uint256 startBlock, uint256 rewardPerBlock) public onlyOwner {
-        require(newToken != address(0), "Address shouldn't be 0");
-        require(!isRewardToken(newToken), "Token is already in the list");
-        require(rewardPerBlock != 0, "rewardPerBlock shouldn't be 0");
-
-        rewardTokenAddresses.push(newToken);
-        if(startBlock == 0){
-            rewardTokens[newToken].startBlock = block.number + 1;
-        } else {
-            rewardTokens[newToken].startBlock = startBlock;
-        }
-        rewardTokens[newToken].rewardPerBlock = rewardPerBlock;
-        rewardTokens[newToken].enabled = true;
-
-        emit AddNewRewardToken(newToken);
-    }
-
-    /**
-     * @dev Used by owner to disable rewardToken
-     * @param token address of reward Token to be disabled
-     * 
-     * NOTE: UpdatePool() is required to reward users so far before token is disabled.
-     *
-     * Requirements:
-     * - `token` must exist.
-     * - `token` must be enabled.
-     */
-    function disableRewardToken(address token) public onlyOwner {
-        require(isRewardToken(token), "Token not in the list");
-        require(rewardTokens[token].enabled, "Reward token is already disabled");
-
-        updatePool();
-        rewardTokens[token].enabled = false;
-        emit DisableRewardToken(token);
-    }
-
-    /**
-     * @dev Used by owner to enable rewardToken 
-     * @param token address of reward Token to be enabled
-     * @param startBlock startBlock of reward Token to be enabled
-     * @param rewardPerBlock rewardPerBlock of reward Token to be enabled
-     *
-     * NOTE: UpdatePool() is required to refresh once token is enabled.
-     *
-     * Requirements:
-     *
-     * - `token` must exist.
-     * - `token` must be diabled.
-     * - `rewardPerBlock` cannot be the zero.
-     * - `startBlock` must be later than current.
-     */
-    function enableRewardToken(address token, uint256 startBlock, uint256 rewardPerBlock) public onlyOwner {
-        require(isRewardToken(token), "Token not in the list");
-        require(!rewardTokens[token].enabled, "Reward token is already enabled");
-        require(rewardPerBlock != 0, "rewardPerBlock shouldn't be 0");
-
-        if (startBlock == 0) {
-            startBlock = block.number + 1;
-        }
-        require(startBlock >= block.number, "Start block Must be later than current");
-
-        rewardTokens[token].enabled = true;
-        rewardTokens[token].startBlock = startBlock;
-        rewardTokens[token].rewardPerBlock = rewardPerBlock;
-
-        updatePool();
-
-        emit ChangeRewardToken(token, rewardPerBlock);
-    }
-
-    /**
      * @dev staking
      *
      * NOTE: 1. UpdatePool and User receives the pending reward sent to user's address.
@@ -194,7 +113,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      * - `tokensId`'s owner must be sender
      * - `tokensId` must be unstaked
      */
-    function stake(uint[] memory tokensId) public nonReentrant {
+    function stake(uint256[] memory tokensId) public nonReentrant {
         
         _withdrawRewardToken();// --------1
         
@@ -229,7 +148,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      * - `tokensId`'s owner must be sender
      * - `tokensId` must be staked
      */
-    function unstake(uint[] memory tokensId) public nonReentrant {
+    function unstake(uint256[] memory tokensId) public nonReentrant {
         
         _withdrawRewardToken();// --------1
         
@@ -252,6 +171,87 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
     }
 
     //External functions -----------------------------------------------------
+
+    /**
+     * @dev Used by owner to add new reward Token
+     * @param newToken address of reward Token to be added
+     * @param startBlock startBlock of new reward Token
+     * @param rewardPerBlock rewardPerBlock of new reward Token
+     *
+     * Requirements:
+     *
+     * - `newToken` cannot be the zero address and it must be what doesn't exist.
+     * - `rewardPerBlock` cannot be the zero.
+     */
+    function addNewRewardToken(address newToken, uint256 startBlock, uint256 rewardPerBlock) external onlyOwner {
+        require(newToken != address(0), "Address shouldn't be 0");
+        require(!isRewardToken(newToken), "Token is already in the list");
+        require(rewardPerBlock != 0, "rewardPerBlock shouldn't be 0");
+
+        rewardTokenAddresses.push(newToken);
+        if(startBlock == 0){
+            rewardTokens[newToken].startBlock = block.number + 1;
+        } else {
+            rewardTokens[newToken].startBlock = startBlock;
+        }
+        rewardTokens[newToken].rewardPerBlock = rewardPerBlock;
+        rewardTokens[newToken].enabled = true;
+
+        emit AddNewRewardToken(newToken);
+    }
+
+    /**
+     * @dev Used by owner to disable rewardToken
+     * @param token address of reward Token to be disabled
+     * 
+     * NOTE: UpdatePool() is required to reward users so far before token is disabled.
+     *
+     * Requirements:
+     * - `token` must exist.
+     * - `token` must be enabled.
+     */
+    function disableRewardToken(address token) external onlyOwner {
+        require(isRewardToken(token), "Token not in the list");
+        require(rewardTokens[token].enabled, "Reward token is already disabled");
+
+        updatePool();
+        rewardTokens[token].enabled = false;
+        emit DisableRewardToken(token);
+    }
+
+    /**
+     * @dev Used by owner to enable rewardToken 
+     * @param token address of reward Token to be enabled
+     * @param startBlock startBlock of reward Token to be enabled
+     * @param rewardPerBlock rewardPerBlock of reward Token to be enabled
+     *
+     * NOTE: UpdatePool() is required to refresh once token is enabled.
+     *
+     * Requirements:
+     *
+     * - `token` must exist.
+     * - `token` must be diabled.
+     * - `rewardPerBlock` cannot be the zero.
+     * - `startBlock` must be later than current.
+     */
+    function enableRewardToken(address token, uint256 startBlock, uint256 rewardPerBlock) external onlyOwner {
+        require(isRewardToken(token), "Token not in the list");
+        require(!rewardTokens[token].enabled, "Reward token is already enabled");
+        require(rewardPerBlock != 0, "rewardPerBlock shouldn't be 0");
+
+        if (startBlock == 0) {
+            startBlock = block.number + 1;
+        }
+        require(startBlock >= block.number, "Start block Must be later than current");
+
+        rewardTokens[token].enabled = true;
+        rewardTokens[token].startBlock = startBlock;
+        rewardTokens[token].rewardPerBlock = rewardPerBlock;
+
+        updatePool();
+
+        emit ChangeRewardToken(token, rewardPerBlock);
+    }
     
     /**
      * @dev To withdraw reward token

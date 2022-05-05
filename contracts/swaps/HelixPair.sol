@@ -116,7 +116,7 @@ contract HelixPair is HelixLP, ReentrancyGuard {
     }
 
     // this low-level function should be called from a contract which performs important safety checks
-    function mint(address to) public nonReentrant returns (uint256 liquidity) {
+    function mint(address to) external nonReentrant returns (uint256 liquidity) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         uint256 balance0 = IERC20(token0).balanceOf(address(this));
         uint256 balance1 = IERC20(token1).balanceOf(address(this));

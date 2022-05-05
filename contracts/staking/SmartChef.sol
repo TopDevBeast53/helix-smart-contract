@@ -85,13 +85,13 @@ contract SmartChef is Ownable {
     }
 
     // Set the limit amount.
-    function setLimitAmount(uint256 _amount) public onlyOwner {
+    function setLimitAmount(uint256 _amount) external onlyOwner {
         limitAmount = _amount;
         emit LimitAmountSet(_amount);
     }
 
     // Return remaining limit amount
-    function remainingLimitAmount() public view returns(uint256) {
+    function remainingLimitAmount() external view returns(uint256) {
         if (userInfo[msg.sender].amount >= limitAmount){
             return 0;
         }
@@ -151,7 +151,7 @@ contract SmartChef is Ownable {
     }
 
     // Stake helixToken tokens to SmartChef
-    function deposit(uint256 _amount) public {
+    function deposit(uint256 _amount) external {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
 
@@ -173,7 +173,7 @@ contract SmartChef is Ownable {
     }
 
     // Withdraw helixToken tokens from STAKING.
-    function withdraw(uint256 _amount) public {
+    function withdraw(uint256 _amount) external {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
 
@@ -195,7 +195,7 @@ contract SmartChef is Ownable {
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
-    function emergencyWithdraw() public {
+    function emergencyWithdraw() external {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
         uint256 amountToTransfer = user.amount;
