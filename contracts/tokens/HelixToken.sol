@@ -73,6 +73,11 @@ contract HelixToken is BEP20("Helix", "HELIX") {
         uint256 newBalance
     );
 
+    modifier isNotZeroAddress(address _address) {
+        require(_address != address(0), "Helix: zero address");
+        _;
+    }
+
     /**
      * @notice Delegate votes from `msg.sender` to `delegatee`
      * @param delegator The address to get delegatee for
@@ -124,18 +129,11 @@ contract HelixToken is BEP20("Helix", "HELIX") {
         );
 
         address signatory = ecrecover(digest, v, r, s);
-        require(
-            signatory != address(0),
-            "HELIX::delegateBySig: invalid signature"
-        );
-        require(
-            nonce == nonces[signatory]++,
-            "HELIX::delegateBySig: invalid nonce"
-        );
-        require(
-            block.timestamp <= expiry,
-            "HELIX::delegateBySig: signature expired"
-        );
+
+        require(signatory != address(0), "Helix: invalid signature");
+        require(nonce == nonces[signatory]++, "Helix: invalid nonce");
+        require(block.timestamp <= expiry, "Helix: signature expired");
+
         return _delegate(signatory, delegatee);
     }
 
@@ -162,10 +160,7 @@ contract HelixToken is BEP20("Helix", "HELIX") {
         view
         returns (uint256)
     {
-        require(
-            blockNumber < block.number,
-            "HELIX::getPriorVotes: not yet determined"
-        );
+        require(blockNumber < block.number, "Helix: invalid blockNumber");
 
         uint32 nCheckpoints = numCheckpoints[account];
         if (nCheckpoints == 0) {
@@ -293,11 +288,7 @@ contract HelixToken is BEP20("Helix", "HELIX") {
      * @param _addMinter address of minter to be added.
      * @return true if successful.
      */
-    function addMinter(address _addMinter) public onlyOwner returns (bool) {
-        require(
-            _addMinter != address(0),
-            "HELIX: _addMinter is the zero address"
-        );
+    function addMinter(address _addMinter) public onlyOwner isNotZeroAddress(_addMinter) returns (bool) {
         return EnumerableSet.add(_minters, _addMinter);
     }
 
@@ -306,11 +297,7 @@ contract HelixToken is BEP20("Helix", "HELIX") {
      * @param _delMinter address of minter to be deleted.
      * @return true if successful.
      */
-    function delMinter(address _delMinter) external onlyOwner returns (bool) {
-        require(
-            _delMinter != address(0),
-            "HELIX: _delMinter is the zero address"
-        );
+    function delMinter(address _delMinter) external onlyOwner isNotZeroAddress(_delMinter) returns (bool) {
         return EnumerableSet.remove(_minters, _delMinter);
     }
 
@@ -341,13 +328,13 @@ contract HelixToken is BEP20("Helix", "HELIX") {
         onlyOwner
         returns (address)
     {
-        require(_index <= getMinterLength() - 1, "HELIX: index out of bounds");
+        require(_index <= getMinterLength() - 1, "Helix: index out of bounds");
         return EnumerableSet.at(_minters, _index);
     }
 
     // modifier for mint function
     modifier onlyMinter() {
-        require(isMinter(msg.sender), "caller is not the minter");
+        require(isMinter(msg.sender), "Helix: not minter");
         _;
     }
 }
