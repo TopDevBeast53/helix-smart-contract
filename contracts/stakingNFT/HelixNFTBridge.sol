@@ -40,7 +40,7 @@ contract HelixNFTBridge is Ownable {
      */
     EnumerableSet.AddressSet private _bridgers;
 
-    event BridgeToSolana(string externalTokenID, string externalRecipientAddr, uint timestamp);
+    event BridgeToSolana(string externalTokenID, string externalRecipientAddr, uint256 timestamp);
     event AddBridger(address indexed user);
     
     /**

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
-import '../interfaces/IERC20.sol';
-import '../libraries/SafeERC20.sol';
-import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
+import "../interfaces/IERC20.sol";
+import "../libraries/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /*
  * Allow users to purchase outputToken using inputToken via the medium of tickets
@@ -21,33 +21,33 @@ contract PublicPresale is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // Maximum number of tickets available for purchase at the start of the sale
-    uint public TICKET_MAX;
+    uint256 public TICKET_MAX;
 
     // Minimum number of tickets that can be purchased at a time
-    uint public MINIMUM_TICKET_PURCHASE;
+    uint256 public MINIMUM_TICKET_PURCHASE;
 
     // Unsold tickets available for purchase
     // ticketsAvailable = TICKET_MAX - (sum(user.purchased) for user in whitelist)
     // where user.purchased is in range [0, user.maxTicket] for user in whitelist
-    uint public ticketsAvailable;
+    uint256 public ticketsAvailable;
 
     // Token exchanged to purchase tickets, i.e. BUSD
     IERC20 public inputToken;
 
     // Number of tickets a user gets per `inputToken`
-    uint public INPUT_RATE;
+    uint256 public INPUT_RATE;
 
     // Token being sold in presale and redeemable by exchanging tickets, i.e. HELIX
     IERC20 public outputToken;
 
     // Number of `outputTokens` a user gets per ticket
-    uint public OUTPUT_RATE;
+    uint256 public OUTPUT_RATE;
 
     // Number of decimals on the `inputToken` used for calculating ticket exchange rates
-    uint public INPUT_TOKEN_DECIMALS;
+    uint256 public INPUT_TOKEN_DECIMALS;
 
     // Number of decimals on the `outputToken` used for calculating ticket exchange rates
-    uint public OUTPUT_TOKEN_DECIMALS;
+    uint256 public OUTPUT_TOKEN_DECIMALS;
 
     // Address that receives `inputToken`s sold in exchange for tickets
     address public treasury;
@@ -61,11 +61,11 @@ contract PublicPresale is ReentrancyGuard {
      *  2: begins automatically PURCHASE_PHASE_DURATION after the start of purchase phase 1
      *     purchases are available to any address
      */
-    uint public PURCHASE_PHASE_START;           // Phase when purchasing starts
-    uint public PURCHASE_PHASE_END;             // Last phase before purchasing ends
-    uint public PURCHASE_PHASE_DURATION;        // Length of time for a purchasePhase, 86400 == 1 day
-    uint public purchasePhase;                  // Current purchasePhase
-    uint public purchasePhaseEndTimestamp;      // Timestamp after which the current purchasePhase has ended
+    uint256 public PURCHASE_PHASE_START;           // Phase when purchasing starts
+    uint256 public PURCHASE_PHASE_END;             // Last phase before purchasing ends
+    uint256 public PURCHASE_PHASE_DURATION;        // Length of time for a purchasePhase, 86400 == 1 day
+    uint256 public purchasePhase;                  // Current purchasePhase
+    uint256 public purchasePhaseEndTimestamp;      // Timestamp after which the current purchasePhase has ended
 
     // Further purchases are prohibited if paused
     // and owner only burn and withdraw functions are enabled
@@ -82,13 +82,13 @@ contract PublicPresale is ReentrancyGuard {
     mapping(address => bool) public whitelist;
 
     // Emitted when a user purchases amount of tickets
-    event Purchased(address indexed user, uint amount);
+    event Purchased(address indexed user, uint256 amount);
 
     // Emitted when an owner burns amount of tickets
-    event Burned(uint amount);
+    event Burned(uint256 amount);
 
     // Emitted when a user withdraws amount of tickets
-    event Withdrawn(address indexed user, uint amount);
+    event Withdrawn(address indexed user, uint256 amount);
 
     // Emitted when an existing owner adds a new owner
     event OwnerAdded(address indexed owner, address indexed newOwner);
@@ -100,9 +100,9 @@ contract PublicPresale is ReentrancyGuard {
     event Unpaused();
 
     // Emitted when the purchase phase is set
-    event SetPurchasePhase(uint purchasePhase, uint startTimestamp, uint endTimestamp);
+    event SetPurchasePhase(uint256 purchasePhase, uint256 startTimestamp, uint256 endTimestamp);
 
-    modifier isValidPurchasePhase(uint phase) {
+    modifier isValidPurchasePhase(uint256 phase) {
         require(phase <= PURCHASE_PHASE_END, "PublicPresale: PHASE EXCEEDS PURCHASE PHASE END");
         _;
     }
@@ -121,9 +121,9 @@ contract PublicPresale is ReentrancyGuard {
         address _inputToken,
         address _outputToken, 
         address _treasury,
-        uint _INPUT_RATE, 
-        uint _OUTPUT_RATE,
-        uint _PURCHASE_PHASE_DURATION
+        uint256 _INPUT_RATE, 
+        uint256 _OUTPUT_RATE,
+        uint256 _PURCHASE_PHASE_DURATION
     ) 
         isValidAddress(_inputToken)
         isValidAddress(_outputToken)
@@ -153,7 +153,7 @@ contract PublicPresale is ReentrancyGuard {
     }
 
     // purchase `amount` of tickets
-    function purchase(uint amount) external nonReentrant {
+    function purchase(uint256 amount) external nonReentrant {
         // Want to be in the latest phase
         _updatePurchasePhase();
    
@@ -162,12 +162,9 @@ contract PublicPresale is ReentrancyGuard {
 
         // Update the contract's remaining tickets
         ticketsAvailable -= amount;
-   
-        // Get the amount of tokens caller can purchase for `amount`
-        uint outputTokenAmount = getAmountOut(amount, outputToken);
-
+        
         // Get the `inputTokenAmount` in `inputToken` to purchase `amount` of tickets
-        uint inputTokenAmount = getAmountOut(amount, inputToken); 
+        uint256 inputTokenAmount = getAmountOut(amount, inputToken); 
 
         // Pay for the `amount` of tickets
         require(
@@ -181,7 +178,10 @@ contract PublicPresale is ReentrancyGuard {
 
         // Pay for the tickets by withdrawing inputTokenAmount from caller
         inputToken.safeTransferFrom(msg.sender, treasury, inputTokenAmount);
-
+        
+        // Get the amount of tokens caller can purchase for `amount`
+        uint256 outputTokenAmount = getAmountOut(amount, outputToken);
+        
         // Transfer `amount` of tickets to caller
         outputToken.safeTransfer(msg.sender, outputTokenAmount);
 
@@ -189,7 +189,7 @@ contract PublicPresale is ReentrancyGuard {
     }
 
     // validate that `user` is eligible to purchase `amount` of tickets
-    function _validatePurchase(address user, uint amount) private view isValidAddress(user) {
+    function _validatePurchase(address user, uint256 amount) private view isValidAddress(user) {
         require(purchasePhase >= PURCHASE_PHASE_START, "PublicPresale: SALE HAS NOT STARTED");
         require(!isPaused, "PublicPresale: SALE IS PAUSED");
         require(amount >= MINIMUM_TICKET_PURCHASE, "PublicPresale: AMOUNT IS LESS THAN MINIMUM TICKET PURCHASE");
@@ -200,7 +200,7 @@ contract PublicPresale is ReentrancyGuard {
     }
 
     // get `amountOut` of `tokenOut` for `amountIn` of tickets
-    function getAmountOut(uint amountIn, IERC20 tokenOut) public view returns(uint amountOut) {
+    function getAmountOut(uint256 amountIn, IERC20 tokenOut) public view returns(uint256 amountOut) {
         if (address(tokenOut) == address(inputToken)) {
             amountOut = amountIn * INPUT_RATE * INPUT_TOKEN_DECIMALS;
         } else if (address(tokenOut) == address(outputToken)) {
@@ -212,11 +212,11 @@ contract PublicPresale is ReentrancyGuard {
 
     // used to destroy `outputToken` equivalant in value to `amount` of tickets
     // should only be used after purchasePhase 2 ends
-    function burn(uint amount) external onlyOwner { 
+    function burn(uint256 amount) external onlyOwner { 
         // remove `amount` of tickets 
         _remove(amount);
 
-        uint tokenAmount = getAmountOut(amount, outputToken);
+        uint256 tokenAmount = getAmountOut(amount, outputToken);
         outputToken.burn(address(this), tokenAmount);
 
         emit Burned(amount);
@@ -224,12 +224,12 @@ contract PublicPresale is ReentrancyGuard {
 
     // used to withdraw `outputToken` equivalent in value to `amount` of tickets to `to`
     // should only be used after purchasePhase 2 ends
-    function withdraw(uint amount) external onlyOwner {
+    function withdraw(uint256 amount) external onlyOwner {
         // remove `amount` of tickets 
         _remove(amount);
 
         // transfer to `to` the `tokenAmount` equivalent in value to `amount` of tickets
-        uint tokenAmount = getAmountOut(amount, outputToken);
+        uint256 tokenAmount = getAmountOut(amount, outputToken);
         outputToken.safeTransfer(msg.sender, tokenAmount);
 
         emit Withdrawn(msg.sender, amount);
@@ -237,7 +237,7 @@ contract PublicPresale is ReentrancyGuard {
 
     // used internally to remove `amount` of tickets from circulation and transfer an 
     // amount of `outputToken` equivalent in value to `amount` to `to`
-    function _remove(uint amount) private {
+    function _remove(uint256 amount) private {
         // proceed only if the removal is valid
         // note that only owners can make removals
         require(isPaused, "PublicPresale: SALE IS NOT PAUSED");
@@ -248,7 +248,7 @@ contract PublicPresale is ReentrancyGuard {
     }
 
     // returns true if `amount` is removable by address `by`
-    function isRemovable(uint amount) external view onlyOwner returns(bool) {
+    function isRemovable(uint256 amount) external view onlyOwner returns(bool) {
         return amount <= ticketsAvailable;
     }
  
@@ -293,12 +293,12 @@ contract PublicPresale is ReentrancyGuard {
 
     // used externally to update from purchasePhase 0 to purchasePhase 1
     // should only ever be called to set purchasePhase == 1
-    function setPurchasePhase(uint phase) external onlyOwner isValidPurchasePhase(phase) {
+    function setPurchasePhase(uint256 phase) external onlyOwner isValidPurchasePhase(phase) {
         _setPurchasePhase(phase);
     }
 
     // used internally to update purchasePhases
-    function _setPurchasePhase(uint phase) private {
+    function _setPurchasePhase(uint256 phase) private {
         purchasePhase = phase;
         purchasePhaseEndTimestamp = block.timestamp + PURCHASE_PHASE_DURATION;
         emit SetPurchasePhase(phase, block.timestamp, purchasePhaseEndTimestamp);
@@ -306,7 +306,7 @@ contract PublicPresale is ReentrancyGuard {
    
     // used externally to grant multiple `_users` permission to purchase tickets during phase 1
     function whitelistAdd(address[] calldata _users) external onlyOwner {
-        for (uint i = 0; i < _users.length; i++) {
+        for (uint256 i = 0; i < _users.length; i++) {
             address user = _users[i]; 
             whitelist[user] = true;
         }

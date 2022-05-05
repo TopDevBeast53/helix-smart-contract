@@ -7,7 +7,7 @@ import "../interfaces/IMigratorChef.sol";
 import "../interfaces/IReferralRegister.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 // MasterChef is the master of HelixToken. He can make HelixToken and he is a fair guy.
 //
@@ -202,7 +202,7 @@ contract MasterChef is Ownable, IMasterChef {
     }
 
     function withdrawDevAndRefFee() public {
-        require(lastBlockDevWithdraw < block.number, 'wait for new block');
+        require(lastBlockDevWithdraw < block.number, "wait for new block");
         uint256 multiplier = getMultiplier(lastBlockDevWithdraw, block.number);
         uint256 HelixTokenReward = multiplier * HelixTokenPerBlock;
         lastBlockDevWithdraw = block.number;
@@ -325,7 +325,7 @@ contract MasterChef is Ownable, IMasterChef {
 
     // Deposit LP tokens to MasterChef for HelixToken allocation.
     function deposit(uint256 _pid, uint256 _amount) public {
-        require (_pid != 0, 'deposit HelixToken by staking');
+        require (_pid != 0, "deposit HelixToken by staking");
 
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
@@ -348,7 +348,7 @@ contract MasterChef is Ownable, IMasterChef {
 
     // Withdraw LP tokens from MasterChef.
     function withdraw(uint256 _pid, uint256 _amount) public {
-        require(_pid != 0, 'withdraw HelixToken by unstaking');
+        require (_pid != 0, "withdraw HelixToken by unstaking");
 
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
@@ -592,8 +592,8 @@ contract MasterChef is Ownable, IMasterChef {
     }
 
     function updateHelixPerBlock(uint256 newAmount) public onlyOwner {
-        require(newAmount <= 40 * 1e18, 'Max per block 40 HelixToken');
-        require(newAmount >= 1e17, 'Min per block 0.1 HelixToken');
+        require(newAmount <= 40 * 1e18, "Max per block 40 HelixToken");
+        require(newAmount >= 1e17, "Min per block 0.1 HelixToken");
         HelixTokenPerBlock = newAmount;
         emit HelixPerBlockUpdated(newAmount);
     }

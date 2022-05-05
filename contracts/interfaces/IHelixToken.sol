@@ -2,6 +2,6 @@
 pragma solidity >= 0.8.0;
 
 interface IHelixToken {
-    function mint(address to, uint amount) external returns(bool);
-    function transfer(address recipient, uint amount) external returns(bool);
+    function mint(address to, uint256 amount) external returns(bool);
+    function transfer(address recipient, uint256 amount) external returns(bool);
 }
