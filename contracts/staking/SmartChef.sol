@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 import "../interfaces/IBEP20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 contract SmartChef is Ownable {
     // Info of each user.
@@ -32,7 +32,7 @@ contract SmartChef is Ownable {
     // Info of each user that stakes LP tokens.
     mapping (address => UserInfo) public userInfo;
     // Total allocation points. Must be the sum of all allocation points in all pools.
-    uint256 public totalAllocPoint = 0;
+    uint256 public totalAllocPoint;
     // The block number when Helix mining starts.
     uint256 public startBlock;
     // The block number when Helix mining ends.
@@ -155,7 +155,7 @@ contract SmartChef is Ownable {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
 
-        require(user.amount + _amount <= limitAmount, 'Exceed limit amount');
+        require(user.amount + _amount <= limitAmount, "Exceed limit amount");
 
         updatePool(0);
         uint256 pending = user.amount * pool.accHelixPerShare / PRECISION_FACTOR - user.rewardDebt;
@@ -209,7 +209,7 @@ contract SmartChef is Ownable {
 
     // Withdraw reward. EMERGENCY ONLY.
     function emergencyRewardWithdraw(uint256 _amount) public onlyOwner {
-        require(_amount <= rewardToken.balanceOf(address(this)), 'not enough token');
+        require(_amount <= rewardToken.balanceOf(address(this)), "not enough token");
         TransferHelper.safeTransfer(address(rewardToken), msg.sender, _amount);
     }
 }

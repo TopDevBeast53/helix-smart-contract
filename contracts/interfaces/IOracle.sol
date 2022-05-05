@@ -5,7 +5,7 @@ import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
 import '@uniswap/lib/contracts/libraries/FixedPoint.sol';
 
 interface IOracle {
-    function consult(address tokenIn, uint amountIn) external view returns (uint amountOut);
+    function consult(address tokenIn, uint256 amountIn) external view returns (uint256 amountOut);
     function update() external;
     function PERIOD() external view returns (uint256);
     function pair() external view returns (IUniswapV2Pair);
