@@ -84,21 +84,21 @@ contract AirDrop is ReentrancyGuard {
     event SetWithdrawPhase(uint withdrawPhase, uint startTimestamp, uint endTimestamp);
 
     modifier isValidWithdrawPhase(uint phase) {
-        require(phase <= WITHDRAW_PHASE_END, "AirDrop: PHASE EXCEEDS WITHDRAW PHASE END");
+        require(phase <= WITHDRAW_PHASE_END, "AirDrop: invalid withdraw phase");
         _;
     }
 
-    modifier isValidAddress(address _address) {
-        require(_address != address(0), "AirDrop: INVALID ADDRESS");
+    modifier isNotZeroAddress(address _address) {
+        require(_address != address(0), "AirDrop: zero address");
         _;
     }
 
     modifier onlyOwner() {
-        require(isOwner[msg.sender], "AirDrop: CALLER IS NOT OWNER");
+        require(isOwner[msg.sender], "AirDrop: not owner");
         _;
     }
 
-    constructor(string memory _name, address _token, uint _WITHDRAW_PHASE_DURATION) isValidAddress(_token) {
+    constructor(string memory _name, address _token, uint _WITHDRAW_PHASE_DURATION) isNotZeroAddress(_token) {
         name = _name;
         token = IERC20(_token);
 
@@ -140,8 +140,8 @@ contract AirDrop is ReentrancyGuard {
 
     // validate whether `amount` of tokens are removable by address `by`
     function _validateRemoval(address by, uint amount) private view {
-        require(amount <= tokenBalance(), "AirDrop: INSUFFICIENT CONTRACT BALANCE TO REMOVE");
-        require(amount <= maxRemovable(by), "AirDrop: UNABLE TO REMOVE AMOUNT");
+        require(amount <= tokenBalance(), "AirDrop: insufficient contract balance");
+        require(amount <= maxRemovable(by), "AirDrop: unable to remove");
     }
 
     // returns `maxAmount` removable by address `by`
@@ -173,8 +173,8 @@ contract AirDrop is ReentrancyGuard {
     }
  
     // add a new owner to the contract, only callable by an existing owner
-    function addOwner(address owner) external isValidAddress(owner) onlyOwner {
-        require(!isOwner[owner], "AirDrop: ALREADY AN OWNER");
+    function addOwner(address owner) external isNotZeroAddress(owner) onlyOwner {
+        require(!isOwner[owner], "AirDrop: already owner");
         isOwner[owner] = true;
         owners.push(owner);
         emit OwnerAdded(msg.sender, owner);
@@ -231,10 +231,10 @@ contract AirDrop is ReentrancyGuard {
     // used externally to airdrop multiple `_users` tokens
     // each _users[i] receives amounts[i] many tokens for i in range _users.length
     function airdropAdd(address[] calldata _users, uint[] calldata amounts) external onlyOwner {
-        require(_users.length == amounts.length, "AirDrop: USERS AND AMOUNTS MUST HAVE SAME LENGTH");
+        require(_users.length == amounts.length, "AirDrop: users and amounts must be same length");
         for (uint i = 0; i < _users.length; i++) {
             uint amount = amounts[i];
-            require(amount <= tokenBalance(), "AirDrop: AMOUNT CAN'T BE GREATER THAN TOKENS AVAILABLE");
+            require(amount <= tokenBalance(), "AirDrop: amount greater than tokens available");
 
             address user = _users[i];
             users[user].airdropped += amount;
