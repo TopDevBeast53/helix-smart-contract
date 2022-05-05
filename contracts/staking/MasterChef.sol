@@ -159,6 +159,16 @@ contract MasterChef is Ownable, IMasterChef {
         uint256 indexed poolId
     );
 
+    modifier isNotHelixPoolId(uint256 poolId) {
+        require(poolId != 0, "MasterChef: invalid pool id");
+        _;
+    }
+
+    modifier isNotZeroAddress(address _address) {
+        require(_address != address(0), "MasterChef: zero address");
+        _;
+    }
+
     constructor(
         HelixToken _HelixToken,
         address _devaddr,
@@ -202,7 +212,7 @@ contract MasterChef is Ownable, IMasterChef {
     }
 
     function withdrawDevAndRefFee() public {
-        require(lastBlockDevWithdraw < block.number, 'wait for new block');
+        require(lastBlockDevWithdraw < block.number, 'MasterChef: wait for new block');
         uint256 multiplier = getMultiplier(lastBlockDevWithdraw, block.number);
         uint256 HelixTokenReward = multiplier * HelixTokenPerBlock;
         lastBlockDevWithdraw = block.number;
@@ -249,13 +259,13 @@ contract MasterChef is Ownable, IMasterChef {
 
     // Migrate lp token to another lp contract. Can be called by anyone. We trust that migrator contract is good.
     function migrate(uint256 _pid) public {
-        require(address(migrator) != address(0), "migrate: no migrator");
+        require(address(migrator) != address(0), "MasterChef: no migrator");
         PoolInfo storage pool = poolInfo[_pid];
         IERC20 lpToken = pool.lpToken;
         uint256 bal = lpToken.balanceOf(address(this));
         // lpToken.safeApprove(address(migrator), bal);
         IERC20 newLpToken = migrator.migrate(lpToken);
-        require(bal == newLpToken.balanceOf(address(this)), "migrate: bad");
+        require(bal == newLpToken.balanceOf(address(this)), "MasterChef: migrate failed");
         pool.lpToken = newLpToken;
 
         emit LiquidityMigrated(_pid, address(newLpToken));
@@ -324,9 +334,7 @@ contract MasterChef is Ownable, IMasterChef {
     }
 
     // Deposit LP tokens to MasterChef for HelixToken allocation.
-    function deposit(uint256 _pid, uint256 _amount) public {
-        require (_pid != 0, 'deposit HelixToken by staking');
-
+    function deposit(uint256 _pid, uint256 _amount) public isNotHelixPoolId(_pid) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
@@ -347,13 +355,11 @@ contract MasterChef is Ownable, IMasterChef {
     }
 
     // Withdraw LP tokens from MasterChef.
-    function withdraw(uint256 _pid, uint256 _amount) public {
-        require(_pid != 0, 'withdraw HelixToken by unstaking');
-
+    function withdraw(uint256 _pid, uint256 _amount) public isNotHelixPoolId(_pid) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
-        require(user.amount >= _amount, "INSUFFICIENT FUNDS TO WITHDRAW");
+        require(user.amount >= _amount, "MasterChef: insufficient balance");
 
         updatePool(_pid);
 
@@ -377,9 +383,10 @@ contract MasterChef is Ownable, IMasterChef {
         uint256 _bucketId,          // Unique bucket to deposit _amount into
         uint256 _poolId,            // Pool to deposit _amount into
         uint256 _amount             // Amount of lpToken being deposited
-    ) public {
-        require(_poolId != 0, "MasterChef: INVALID LP TOKEN POOL ID");
-
+    ) 
+        public 
+        isNotHelixPoolId(_poolId)
+    {
         PoolInfo storage pool = poolInfo[_poolId];
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
 
@@ -398,7 +405,7 @@ contract MasterChef is Ownable, IMasterChef {
         // Transfer amount of lpToken from caller to chef
         require(
             _amount <= pool.lpToken.allowance(msg.sender, address(this)), 
-            "MasterChef: INSUFFICIENT LP TOKEN ALLOWANCE TO DEPOSIT INTO BUCKET"
+            "MasterChef: insufficient allowance"
         );
         TransferHelper.safeTransferFrom(address(pool.lpToken), msg.sender, address(this), _amount);
 
@@ -406,13 +413,11 @@ contract MasterChef is Ownable, IMasterChef {
     }
 
     // Withdraw _amount of lpToken and all accrued yield from _bucketId and _poolId
-    function bucketWithdraw(uint256 _bucketId, uint256 _poolId, uint256 _amount) public {
-        require(_poolId != 0, "MasterChef: INVALID LP TOKEN POOL ID");
-
+    function bucketWithdraw(uint256 _bucketId, uint256 _poolId, uint256 _amount) public isNotHelixPoolId(_poolId) {
         PoolInfo storage pool = poolInfo[_poolId];
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
 
-        require(_amount <= bucket.amount, "MasterChef: CAN'T WITHDRAW MORE THAN IN BUCKET");
+        require(_amount <= bucket.amount, "MasterChef: insufficient balance");
 
         updatePool(_poolId);
     
@@ -439,15 +444,17 @@ contract MasterChef is Ownable, IMasterChef {
         uint256 _bucketId,
         uint256 _poolId, 
         uint256 _amount
-    ) public {
-        require(_recipient != address(0), "MasterChef: INVALID RECIPIENT ADDRESS");
-        require (_poolId != 0, "MasterChef: INVALID POOL ID TO WITHDRAW LP TOKEN FROM");
+    ) 
+        public 
+        isNotZeroAddress(_recipient)
+        isNotHelixPoolId(_poolId)
+    {
         PoolInfo storage pool = poolInfo[_poolId];
 
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
         require(
             _amount <= bucket.amount, 
-            "MasterChef: CAN'T WITHDRAW AMOUNT GREATER THAN IN BUCKET"
+            "MasterChef: insufficient balance"
         );
 
         updatePool(_poolId);
@@ -469,9 +476,11 @@ contract MasterChef is Ownable, IMasterChef {
         uint256 _bucketId,
         uint256 _poolId,
         uint256 _yield
-    ) public {
-        require(_recipient != address(0), "MasterChef: INVALID RECIPIENT ADDRESS");
-        require(_poolId != 0, "MasterChef: INVALID POOL ID TO WITHDRAW YIELD FROM");
+    ) 
+        public 
+        isNotZeroAddress(_recipient)
+        isNotHelixPoolId(_poolId)
+    {
         updatePool(_poolId);
 
         PoolInfo storage pool = poolInfo[_poolId];
@@ -483,7 +492,7 @@ contract MasterChef is Ownable, IMasterChef {
 
         require(
             _yield <= yield,
-            "MasterChef: CAN'T WITHDRAW YIELD GREATER THAN IN BUCKET"
+            "MasterChef: insufficient balance"
         );
 
         // Update bucket state
@@ -496,8 +505,7 @@ contract MasterChef is Ownable, IMasterChef {
     }
 
     // Update _poolId and _bucketId yield and rewardDebt
-    function updateBucket(uint256 _bucketId, uint256 _poolId) external {
-        require(_poolId != 0, "MasterChef: INVALID POOL ID TO UPDATE");
+    function updateBucket(uint256 _bucketId, uint256 _poolId) external isNotHelixPoolId(_poolId) {
         updatePool(_poolId);
 
         PoolInfo storage pool = poolInfo[_poolId];
@@ -509,8 +517,12 @@ contract MasterChef is Ownable, IMasterChef {
         emit UpdateBucket(msg.sender, _bucketId, _poolId);
     }
 
-    function getBucketYield(uint256 _bucketId, uint256 _poolId) external view returns(uint256 yield) {
-        require(_poolId != 0, "MasterChef: INVALID POOL ID");
+    function getBucketYield(uint256 _bucketId, uint256 _poolId) 
+        external 
+        view 
+        isNotHelixPoolId(_poolId)
+        returns (uint256 yield) 
+    {
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
         yield = bucket.yield;
     }
@@ -545,7 +557,7 @@ contract MasterChef is Ownable, IMasterChef {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
 
-        require(user.amount >= _amount, "withdraw: not good");
+        require(user.amount >= _amount, "MasterChef: insufficient balance");
 
         uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
         user.amount -= _amount;
@@ -592,8 +604,8 @@ contract MasterChef is Ownable, IMasterChef {
     }
 
     function updateHelixPerBlock(uint256 newAmount) public onlyOwner {
-        require(newAmount <= 40 * 1e18, 'Max per block 40 HelixToken');
-        require(newAmount >= 1e17, 'Min per block 0.1 HelixToken');
+        require(newAmount <= 40 * 1e18, 'MasterChef: max 40 per block');
+        require(newAmount >= 1e17, 'MasterChef: min 0.1 per block');
         HelixTokenPerBlock = newAmount;
         emit HelixPerBlockUpdated(newAmount);
     }
