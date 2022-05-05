@@ -42,7 +42,7 @@ contract Oracle {
 
     function update() external {
         (uint112 reserve0, uint112 reserve1, ) = pair.getReserves();
-        require(reserve0 != 0 && reserve1 != 0, 'Oracle: NO RESERVES IN PAIR'); // ensure that there's liquidity in the pair
+        require(reserve0 != 0 && reserve1 != 0, 'Oracle: no reserves in pair'); // ensure that there's liquidity in the pair
  
         (uint price0Cumulative, uint price1Cumulative, uint32 blockTimestamp) =
             UniswapV2OracleLibrary.currentCumulativePrices(address(pair));
@@ -73,7 +73,7 @@ contract Oracle {
         if (token == token0) {
             amountOut = price0Average.mul(amountIn).decode144();
         } else {
-            require(token == token1, 'Oracle: INVALID_TOKEN');
+            require(token == token1, 'Oracle: invalid token');
             amountOut = price1Average.mul(amountIn).decode144();
         }
     }
