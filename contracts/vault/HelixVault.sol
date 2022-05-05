@@ -307,8 +307,8 @@ contract HelixVault is Ownable {
     }
 
     function updateRewardPerBlock(uint256 newAmount) external onlyOwner {
-        require(newAmount <= 40 * 1e18, "Vault: 40 max per block");
-        require(newAmount >= 1e17, "Vault: 0.1 min per block");
+        require(newAmount <= 40 * 1e18, "Vault: max 40 per block");
+        require(newAmount >= 1e17, "Vault: min 0.1 per block");
         rewardPerBlock = newAmount;
         emit RewardPerBlockUpdated(rewardPerBlock);
     }
