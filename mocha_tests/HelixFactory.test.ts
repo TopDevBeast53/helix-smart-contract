@@ -76,16 +76,16 @@ describe('HelixFactory', () => {
   })
 
   it('factory: setFeeTo', async () => {
-    await expect(factory.connect(other).setFeeTo(other.address)).to.be.revertedWith('Helix: FORBIDDEN')
+    await expect(factory.connect(other).setFeeTo(other.address)).to.be.revertedWith('Factory: not feeToSetter')
     await factory.setFeeTo(wallet.address)
     expect(await factory.feeTo()).to.eq(wallet.address)
   })
 
   it('factory: setFeeToSetter', async () => {
-    await expect(factory.connect(other).setFeeToSetter(other.address)).to.be.revertedWith('Helix: FORBIDDEN')
+    await expect(factory.connect(other).setFeeToSetter(other.address)).to.be.revertedWith('Factory: not feeToSetter')
     await factory.setFeeToSetter(other.address)
     expect(await factory.feeToSetter()).to.eq(other.address)
-    await expect(factory.setFeeToSetter(wallet.address)).to.be.revertedWith('Helix: FORBIDDEN')
+    await expect(factory.setFeeToSetter(wallet.address)).to.be.revertedWith('Factory: not feeToSetter')
   })
 
   })

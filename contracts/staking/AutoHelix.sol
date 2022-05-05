@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "../tokens/HelixToken.sol";
 import "../interfaces/IMigratorChef.sol";
 import "../interfaces/IMasterChef.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 contract AutoHelix is Ownable, Pausable {
 
@@ -33,10 +33,10 @@ contract AutoHelix is Ownable, Pausable {
     uint256 public constant MAX_WITHDRAW_FEE = 100; // 1%
     uint256 public constant MAX_WITHDRAW_FEE_PERIOD = 3 days; // 3 days
 
-    uint256 public performanceFee = 299; // 2.99%
-    uint256 public callFee = 25; // 0.25%
-    uint256 public withdrawFee = 10; // 0.1%
-    uint256 public withdrawFeePeriod = 3 days; // 3 days
+    uint256 public performanceFee;
+    uint256 public callFee;
+    uint256 public withdrawFee;
+    uint256 public withdrawFeePeriod;
 
     event Deposit(address indexed sender, uint256 amount, uint256 shares, uint256 lastDepositedTime);
     event Withdraw(address indexed sender, uint256 amount, uint256 shares);
@@ -45,16 +45,16 @@ contract AutoHelix is Ownable, Pausable {
     event Unpause();
 
     // Emitted when the owner updates the performance fee
-    event PerformanceFeeSet(uint performanceFee);
+    event PerformanceFeeSet(uint256 performanceFee);
 
     // Emitted when the owner updates the call fee
-    event CallFeeSet(uint callFee);
+    event CallFeeSet(uint256 callFee);
 
     // Emitted when the owner updates the withdraw fee
-    event WithdrawFeeSet(uint withdrawFee);
+    event WithdrawFeeSet(uint256 withdrawFee);
 
     // Emitted when the owner updates the withdraw fee period
-    event WithdrawFeePeriodSet(uint withdrawFeePeriod);
+    event WithdrawFeePeriodSet(uint256 withdrawFeePeriod);
 
     /**
      * @notice Constructor
@@ -73,14 +73,19 @@ contract AutoHelix is Ownable, Pausable {
 
         // Infinite approve
         IERC20(_token).approve(address(_masterchef), type(uint256).max);
+
+        performanceFee = 299; // 2.99%
+        callFee = 25; // 0.25%
+        withdrawFee = 10; // 0.1%
+        withdrawFeePeriod = 3 days; // 3 days
     }
 
     /**
      * @notice Checks if the msg.sender is a contract or a proxy
      */
     modifier notContract() {
-        require(!_isContract(msg.sender), "contract not allowed");
-        require(msg.sender == tx.origin, "proxy contract not allowed");
+        require(!Address.isContract(msg.sender), "AutoHelix: contract not allowed");
+        require(msg.sender == tx.origin, "AutoHelix: proxy not allowed");
         _;
     }
 
@@ -90,26 +95,23 @@ contract AutoHelix is Ownable, Pausable {
      * @param _amount: number of tokens to deposit (in Helix)
      */
     function deposit(uint256 _amount) external whenNotPaused notContract {
-        require(_amount > 0, "Nothing to deposit");
+        require(_amount > 0, "AutoHelix: zero amount");
 
         uint256 pool = balanceOf();
-        TransferHelper.safeTransferFrom(address(token), msg.sender, address(this), _amount);
-        uint256 currentShares = 0;
-        if (totalShares != 0) {
-            currentShares = _amount * totalShares / pool;
-        } else {
-            currentShares = _amount;
-        }
-        UserInfo storage user = userInfo[msg.sender];
 
+        uint256 currentShares = _amount;
+        if (totalShares > 0) {
+            currentShares *= totalShares / pool;
+        } 
+        totalShares += currentShares;
+
+        UserInfo storage user = userInfo[msg.sender];
         user.shares = user.shares + currentShares;
+        user.helixAtLastUserAction = user.shares * (pool + _amount) / totalShares;
+        user.lastUserActionTime = block.timestamp;
         user.lastDepositedTime = block.timestamp;
 
-        totalShares = totalShares + currentShares;
-
-        user.helixAtLastUserAction = user.shares * balanceOf() / totalShares;
-        user.lastUserActionTime = block.timestamp;
-
+        TransferHelper.safeTransferFrom(address(token), msg.sender, address(this), _amount);
         _earn();
 
         emit Deposit(msg.sender, _amount, currentShares, block.timestamp);
@@ -129,7 +131,10 @@ contract AutoHelix is Ownable, Pausable {
     function harvest() external notContract whenNotPaused {
         IMasterChef(masterchef).leaveStaking(0);
 
+        lastHarvestedTime = block.timestamp;
+
         uint256 bal = available();
+
         uint256 currentPerformanceFee = bal * performanceFee / 10000;
         TransferHelper.safeTransfer(address(token), treasury, currentPerformanceFee); 
 
@@ -137,8 +142,6 @@ contract AutoHelix is Ownable, Pausable {
         TransferHelper.safeTransfer(address(token), msg.sender, currentCallFee);
 
         _earn();
-
-        lastHarvestedTime = block.timestamp;
 
         emit Harvest(msg.sender, currentPerformanceFee, currentCallFee);
     }
@@ -148,7 +151,7 @@ contract AutoHelix is Ownable, Pausable {
      * @dev Only callable by the contract owner.
      */
     function setTreasury(address _treasury) external onlyOwner {
-        require(_treasury != address(0), "Cannot be zero address");
+        require(_treasury != address(0), "AutoHelix: zero address");
         treasury = _treasury;
     }
 
@@ -157,7 +160,7 @@ contract AutoHelix is Ownable, Pausable {
      * @dev Only callable by the contract owner.
      */
     function setPerformanceFee(uint256 _performanceFee) external onlyOwner {
-        require(_performanceFee <= MAX_PERFORMANCE_FEE, "performanceFee cannot be more than MAX_PERFORMANCE_FEE");
+        require(_performanceFee <= MAX_PERFORMANCE_FEE, "AutoHelix: invalid fee");
         performanceFee = _performanceFee;
         emit PerformanceFeeSet(_performanceFee);
     }
@@ -167,7 +170,7 @@ contract AutoHelix is Ownable, Pausable {
      * @dev Only callable by the contract owner.
      */
     function setCallFee(uint256 _callFee) external onlyOwner {
-        require(_callFee <= MAX_CALL_FEE, "callFee cannot be more than MAX_CALL_FEE");
+        require(_callFee <= MAX_CALL_FEE, "AutoHelix: invalid fee");
         callFee = _callFee;
         emit CallFeeSet(_callFee);
     }
@@ -177,7 +180,7 @@ contract AutoHelix is Ownable, Pausable {
      * @dev Only callable by the contract owner.
      */
     function setWithdrawFee(uint256 _withdrawFee) external onlyOwner {
-        require(_withdrawFee <= MAX_WITHDRAW_FEE, "withdrawFee cannot be more than MAX_WITHDRAW_FEE");
+        require(_withdrawFee <= MAX_WITHDRAW_FEE, "AutoHelix: invalid fee");
         withdrawFee = _withdrawFee;
         emit WithdrawFeeSet(_withdrawFee);
     }
@@ -189,7 +192,7 @@ contract AutoHelix is Ownable, Pausable {
     function setWithdrawFeePeriod(uint256 _withdrawFeePeriod) external onlyOwner {
         require(
             _withdrawFeePeriod <= MAX_WITHDRAW_FEE_PERIOD,
-            "withdrawFeePeriod cannot be more than MAX_WITHDRAW_FEE_PERIOD"
+            "AutoHelix: invalid fee period"
         );
         withdrawFeePeriod = _withdrawFeePeriod;
         emit WithdrawFeePeriodSet(_withdrawFeePeriod);
@@ -207,7 +210,7 @@ contract AutoHelix is Ownable, Pausable {
      * @notice Withdraw unexpected tokens sent to the Helix Vault
      */
     function inCaseTokensGetStuck(address _token) external onlyOwner {
-        require(_token != address(token), "Token cannot be same as deposit token");
+        require(_token != address(token), "AutoHelix: invalid token");
 
         uint256 amount = IERC20(_token).balanceOf(address(this));
         TransferHelper.safeTransfer(address(_token), msg.sender, amount);
@@ -267,8 +270,8 @@ contract AutoHelix is Ownable, Pausable {
      */
     function withdraw(uint256 _shares) public notContract {
         UserInfo storage user = userInfo[msg.sender];
-        require(_shares > 0, "Nothing to withdraw");
-        require(_shares <= user.shares, "Withdraw amount exceeds balance");
+        require(_shares > 0, "AutoHelix: zero amount");
+        require(_shares <= user.shares, "AutoHelix: insufficient balance");
 
         uint256 currentAmount = (balanceOf() * _shares) / totalShares;
         user.shares = user.shares - _shares;
@@ -284,22 +287,22 @@ contract AutoHelix is Ownable, Pausable {
                 currentAmount = bal + diff;
             }
         }
-
+        
+        uint256 currentWithdrawFee;
         if (block.timestamp < user.lastDepositedTime + (withdrawFeePeriod)) {
-            uint256 currentWithdrawFee = currentAmount * withdrawFee / 10000;
-            TransferHelper.safeTransfer(address(token), treasury, currentWithdrawFee);
-            currentAmount = currentAmount - currentWithdrawFee;
+            currentWithdrawFee = currentAmount * withdrawFee / 10000;
+            currentAmount -= currentWithdrawFee;
         }
 
-        if (user.shares > 0) {
-            user.helixAtLastUserAction = user.shares * balanceOf() / totalShares;
-        } else {
-            user.helixAtLastUserAction = 0;
-        }
-
+        user.helixAtLastUserAction = user.shares * balanceOf() / totalShares;
         user.lastUserActionTime = block.timestamp;
 
-        TransferHelper.safeTransfer(address(token), msg.sender, currentAmount);
+        if (currentWithdrawFee > 0) {
+            TransferHelper.safeTransfer(address(token), treasury, currentWithdrawFee);
+        }
+        if (currentAmount > 0) {
+            TransferHelper.safeTransfer(address(token), msg.sender, currentAmount);
+        }
 
         emit Withdraw(msg.sender, currentAmount, _shares);
     }
@@ -329,17 +332,5 @@ contract AutoHelix is Ownable, Pausable {
         if (bal > 0) {
             IMasterChef(masterchef).enterStaking(bal);
         }
-    }
-
-    /**
-     * @notice Checks if address is a contract
-     * @dev It prevents contract from being targetted
-     */
-    function _isContract(address addr) internal view returns (bool) {
-        uint256 size;
-        assembly {
-            size := extcodesize(addr)
-        }
-        return size > 0;
     }
 }

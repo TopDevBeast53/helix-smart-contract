@@ -15,7 +15,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
     uint256 private _reentrancyStatus;
 
     // Maximum length of tokens per request
-    uint public constant MAX_ARRAY_LENGTH_PER_REQUEST = 30;
+    uint256 public constant MAX_ARRAY_LENGTH_PER_REQUEST = 30;
 
     /**
      * @dev Stakers who can change attribute `isStaked` of token
@@ -47,14 +47,14 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
     /**
      * @dev Last NFT token id, it's increasing on mint
      */
-    uint private _lastTokenId;
+    uint256 private _lastTokenId;
     
     /**
      * @dev A HelixNFT has Helix Points amount initially when it is minted
      *
      * NOTE : Set its value when deploy this contract
      */
-    uint private _initialHelixPoints;
+    uint256 private _initialHelixPoints;
 
     /**
      * @dev When level up, add a percentage of your previous HelixPoints.
@@ -74,26 +74,25 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * @dev List of HelixPoints amount limits that a NFT can have by level
      */
     uint[7] private _helixPointsTable;
-    
 
     /**
      * @dev Structure for attributes the Helix NFTs
      */
     struct Token {
-        // Helix Point is a “power” of your NFT and a tool that helps you to boost your NFT and earn more crypto
-        uint helixPoints;
-        // Helix NFT consists of on a particular level:
-        uint level;
-        // True if staked, false otherwise
-        bool isStaked;
-        // Timestamp the token is minted(block's timestamp)
-        uint createTimestamp;
-
         // ID of the bridged NFT.
         string externalTokenID;
-
         // External token URI to use.
         string tokenURI;
+
+        // Helix Point is a “power” of your NFT and a tool that helps you to boost your NFT and earn more crypto
+        uint256 helixPoints;
+        // Helix NFT consists of on a particular level:
+        uint256 level;
+        // Timestamp the token is minted(block's timestamp)
+        uint256 createTimestamp;
+
+        // True if staked, false otherwise
+        bool isStaked;
     }
 
     // map token info by token ID : TokenId => Token
@@ -102,21 +101,35 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
     mapping(address => uint) private _accumulatedHP;
 
     // event when any tokenId gain HelixPoints 
-    event AccrueHelixPoints(address indexed tokenId, uint amount);
+    event AccrueHelixPoints(address indexed tokenId, uint256 amount);
     // event when an user level up from which tokenId
-    event LevelUp(address indexed user, uint indexed newLevel, uint tokenId);
-    event Initialize(string baseURI, uint initialHelixPoints);
-    event TokenMint(address indexed to, uint indexed tokenId, uint level, uint helixPoints);
+    event LevelUp(address indexed user, uint256 indexed newLevel, uint256 tokenId);
+    event Initialize(string baseURI, uint256 initialHelixPoints);
+    event TokenMint(address indexed to, uint256 indexed tokenId, uint256 level, uint256 helixPoints);
 
+    modifier isNotZeroAddress(address _address) {
+        require(_address != address(0), "HelixNFT: zero address");
+        _;
+    }
+
+    modifier tokenIdExists(uint256 tokenId) {
+        require(_exists(tokenId), "HelixNFT: nonexistent token");
+        _;
+    }
+
+    modifier isNotZero(uint256 amount) {
+        require(amount > 0, "HelixNFT: zero amount");
+        _;
+    }
 
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
     function initialize(
         string memory baseURI,
-        uint initialHelixPoints,
+        uint256 initialHelixPoints,
         uint8 levelUpPercent
-    ) public initializer {
+    ) external initializer {
         _owner = msg.sender;
         _reentrancyStatus = 1;
 
@@ -143,46 +156,10 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
     /**
      * @dev See {ERC721-tokenURI}.
      */
-    function tokenURI(uint256 id) public view override returns (string memory) {
-        require(_exists(id), "ERC721Metadata: URI query for nonexistent token");
-
+    function tokenURI(uint256 id) public view override tokenIdExists(id) returns (string memory) {
         return string(abi.encodePacked(_tokens[id].tokenURI));
     }
 
-    /**
-     * @dev To mint HelixNFT
-     *
-     * Initialize:
-     *      set helixPoints as initialHelixPoints value
-     *      set level as 1 (start from 1 LEVEL)
-     */
-    function mint(address to) public onlyMinter nonReentrant {
-        require(to != address(0), "Address can not be zero");
-        _lastTokenId += 1;
-        uint tokenId = _lastTokenId;
-        _tokens[tokenId].helixPoints = _initialHelixPoints;
-        _tokens[tokenId].createTimestamp = block.timestamp;
-        _tokens[tokenId].level = 1;
-        _safeMint(to, tokenId);
-    }
-
-    // Mints external NFT
-    function mintExternal(address to, string calldata externalTokenID, string calldata uri) public onlyMinter nonReentrant {
-        require(to != address(0), "Address can not be zero");
-        _lastTokenId += 1;
-        uint tokenId = _lastTokenId;
-        _tokens[tokenId].helixPoints = _initialHelixPoints;
-        _tokens[tokenId].createTimestamp = block.timestamp;
-        _tokens[tokenId].level = 1;
-        _tokens[tokenId].externalTokenID = externalTokenID;
-        _tokens[tokenId].tokenURI = uri;
-        _safeMint(to, tokenId);
-    }
-
-    function burn(uint256 tokenId) public nonReentrant {
-        _burn(tokenId);
-    }
-    
     /**
      * @dev Override funtion to avoid the approval of the staked token
      */
@@ -192,6 +169,8 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
         }
         super.approve(to, tokenId);
     }
+
+    //Internal functions --------------------------------------------------------------------------------------------
 
     /**
      * @dev Override function to avoid the transfer of the staked token
@@ -220,13 +199,50 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
     }
 
     //External functions --------------------------------------------------------------------------------------------
+
+    /**
+     * @dev To mint HelixNFT
+     *
+     * Initialize:
+     *      set helixPoints as initialHelixPoints value
+     *      set level as 1 (start from 1 LEVEL)
+     */
+    function mint(address to) external onlyMinter nonReentrant isNotZeroAddress(to) {
+        _lastTokenId += 1;
+        uint256 tokenId = _lastTokenId;
+        _tokens[tokenId].helixPoints = _initialHelixPoints;
+        _tokens[tokenId].createTimestamp = block.timestamp;
+        _tokens[tokenId].level = 1;
+        _safeMint(to, tokenId);
+    }
+
+    // Mints external NFT
+    function mintExternal(address to, string calldata externalTokenID, string calldata uri) 
+        external 
+        onlyMinter 
+        nonReentrant 
+        isNotZeroAddress(to) 
+    {
+        _lastTokenId += 1;
+        uint256 tokenId = _lastTokenId;
+        _tokens[tokenId].helixPoints = _initialHelixPoints;
+        _tokens[tokenId].createTimestamp = block.timestamp;
+        _tokens[tokenId].level = 1;
+        _tokens[tokenId].externalTokenID = externalTokenID;
+        _tokens[tokenId].tokenURI = uri;
+        _safeMint(to, tokenId);
+    }
+
+    function burn(uint256 tokenId) external nonReentrant {
+        _burn(tokenId);
+    }
     
     /**
      * @dev To get token IDs of user by address
      */
     function getTokenIdsOfOwner(address user) external view returns (uint[] memory) {
-        uint balance = ERC721Upgradeable.balanceOf(user);
-        require(balance > 0, "Nothing is balance of you!");
+        uint256 balance = ERC721Upgradeable.balanceOf(user);
+        require(balance > 0, "HelixNFT: insufficient balance");
         uint[] memory tokenIds = new uint[](balance);
         for (uint256 index = 0; index < balance; index++) {
             tokenIds[index] = tokenOfOwnerByIndex(user, index);
@@ -250,12 +266,12 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * - The current token level must be valid.
      * - The current held HelixPoints amount must be sufficient.
      */
-    function levelUp(uint tokenId) external onlyStaker {
+    function levelUp(uint256 tokenId) external onlyStaker {
         Token storage token = _tokens[tokenId];
-        uint curLevel = token.level;
-        require(curLevel > 0 && curLevel < 7, "Token level is not valid");
-        uint curHelixPoints = token.helixPoints;
-        require(_helixPointsTable[curLevel] == curHelixPoints, "Insufficient amount of HelixPoints");
+        uint256 curLevel = token.level;
+        require(curLevel > 0 && curLevel < 7, "HelixNFT: invalid level");
+        uint256 curHelixPoints = token.helixPoints;
+        require(_helixPointsTable[curLevel] == curHelixPoints, "HelixNFT: insufficient points");
 
         token.level = curLevel + 1;
         token.helixPoints = curHelixPoints + (curHelixPoints * _levelUpPercent) / 100;
@@ -266,7 +282,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
     /**
      * @dev Returns (HelixPoints amount to upgrade to the next level - current HP amount)
      */
-    function remainHPToNextLevel(uint tokenId) external view returns (uint) {
+    function remainHPToNextLevel(uint256 tokenId) external view returns (uint) {
         return _remainHPToNextLevel(tokenId);
     }
 
@@ -280,8 +296,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
     /**
      * @dev Set accumulated HelixPoints amount of `user`
      */
-    function setAccumulatedHP(address user, uint amount) external onlyStaker {
-        require(amount >= 0, "Wrong number of amount");
+    function setAccumulatedHP(address user, uint256 amount) external onlyStaker isNotZero(amount) {
         _accumulatedHP[user] = amount;
     }
 
@@ -291,8 +306,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * NOTE: It would be called by swap contract(accruer).
      *       An user can accumulate HelixPoints as a reward when Swapping
      */
-    function accruePoints(address user, uint amount) external onlyAccruer {
-        require(amount > 0, "Wrong number of amount");
+    function accruePoints(address user, uint256 amount) external onlyAccruer isNotZero(amount) {
         _accumulatedHP[user] += amount;
         emit AccrueHelixPoints(user, amount);
     }
@@ -300,20 +314,22 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
     /**
      * @dev External function to get the information of `tokenId`
      */
-    function getToken(uint _tokenId) external view
+    function getToken(uint256 _tokenId) 
+        external 
+        view
+        tokenIdExists(_tokenId)
         returns (
-            uint tokenId,
+            uint256 tokenId,
             address tokenOwner,
-            uint level,
-            uint helixPoints,
-            uint remainHPToNextLvl,
+            uint256 level,
+            uint256 helixPoints,
+            uint256 remainHPToNextLvl,
             bool isStaked,
-            uint createTimestamp,
+            uint256 createTimestamp,
             string memory externalTokenID,
             string memory uri
         )
     {
-        require(_exists(_tokenId), "ERC721: token does not exist");
         Token memory token = _tokens[_tokenId];
         tokenId = _tokenId;
         tokenOwner = ownerOf(_tokenId);
@@ -326,23 +342,21 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
         uri = tokenURI(_tokenId);
     }
 
-    function getExternalTokenID(uint _tokenId) external view returns (string memory) {
-        require(_exists(_tokenId), "ERC721: token does not exist");
+    function getExternalTokenID(uint256 _tokenId) external view tokenIdExists(_tokenId) returns (string memory) {
         return _tokens[_tokenId].externalTokenID;
     }
 
     /**
      * @dev External function to get helixPoints by `tokenId`
      */
-    function getHelixPoints(uint tokenId) external view returns (uint) {
+    function getHelixPoints(uint256 tokenId) external view returns (uint) {
         return _tokens[tokenId].helixPoints;
     }
 
     /**
      * @dev External function to set helixPoints by `tokenId`
      */
-    function setHelixPoints(uint tokenId, uint amount) external onlyStaker {
-        require(amount > 0, "Wrong number of amount");
+    function setHelixPoints(uint256 tokenId, uint256 amount) external onlyStaker isNotZero(amount) {
         _tokens[tokenId].helixPoints = amount;
     }
 
@@ -351,9 +365,12 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * 
      * HelixChefNFT's `stake` function calls it to get token's information by token ID
      */
-    function getInfoForStaking(uint tokenId) external view returns (address tokenOwner, bool isStaked, uint helixPoints) {
-        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
-
+    function getInfoForStaking(uint256 tokenId) 
+        external 
+        view 
+        tokenIdExists(tokenId) 
+        returns (address tokenOwner, bool isStaked, uint256 helixPoints) 
+    {
         tokenOwner = ownerOf(tokenId);
         isStaked = _tokens[tokenId].isStaked;
         helixPoints = _tokens[tokenId].helixPoints;
@@ -362,13 +379,13 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
     /**
      * @dev External function to get level by `tokenId`
      */
-    function getLevel(uint tokenId) external view returns (uint) {
+    function getLevel(uint256 tokenId) external view returns (uint) {
         return _tokens[tokenId].level;
     }
 
     /** 
      * @dev Set to set Base URI
-     * @param tokenId uint ID of the token to be staked/unstaked
+     * @param tokenId uint256 ID of the token to be staked/unstaked
      * @param isStaked bool whether to being staked or not
      *
      * HelixChefNFT's `stake` function calls it to set staked status into token's info by token ID
@@ -376,9 +393,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * NOTE: - Staked token can't be transferred to anyone
      *       - Staker would be HelixChefNFT contract
      */
-    function setIsStaked(uint tokenId, bool isStaked) external onlyStaker {
-        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
-
+    function setIsStaked(uint256 tokenId, bool isStaked) external onlyStaker tokenIdExists(tokenId) {
         if (isStaked) {
             // Clear approval for not to transfer when staked token 
             _approve(address(0), tokenId);
@@ -405,15 +420,14 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      *
      * NOTE: percentage value: e.g. 10%
      */
-    function setLevelUpPercent(uint8 percent) external onlyOwner {
-        require(percent > 0, "Wrong percent value");
+    function setLevelUpPercent(uint8 percent) external onlyOwner isNotZero(percent) {
         _levelUpPercent = percent;
     }
 
     /**
      * @dev Returns (HelixPoints amount to upgrade to the next level - current HP amount)
      */
-    function _remainHPToNextLevel(uint tokenId) internal view returns (uint) {
+    function _remainHPToNextLevel(uint256 tokenId) internal view returns (uint) {
         return _helixPointsTable[uint(_tokens[tokenId].level)] - _tokens[tokenId].helixPoints;
     }
 
@@ -424,11 +438,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * @param _addStaker address of staker to be added.
      * @return true if successful.
      */
-    function addStaker(address _addStaker) public onlyOwner returns (bool) {
-        require(
-            _addStaker != address(0),
-            "HelixNFT: _addStaker is the zero address"
-        );
+    function addStaker(address _addStaker) public onlyOwner isNotZeroAddress(_addStaker) returns (bool) {
         return EnumerableSet.add(_stakers, _addStaker);
     }
 
@@ -437,11 +447,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * @param _delStaker address of staker to be deleted.
      * @return true if successful.
      */
-    function delStaker(address _delStaker) external onlyOwner returns (bool) {
-        require(
-            _delStaker != address(0),
-            "HelixNFT: _delStaker is the zero address"
-        );
+    function delStaker(address _delStaker) external onlyOwner isNotZeroAddress(_delStaker) returns (bool) {
         return EnumerableSet.remove(_stakers, _delStaker);
     }
 
@@ -480,7 +486,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * @dev Modifier for changing `isStaked` of token
      */
     modifier onlyStaker() {
-        require(isStaker(msg.sender), "caller is not the staker");
+        require(isStaker(msg.sender), "HelixNFT: not staker");
         _;
     }
 
@@ -491,11 +497,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * @param _addMinter address of minter to be added.
      * @return true if successful.
      */
-    function addMinter(address _addMinter) public onlyOwner returns (bool) {
-        require(
-            _addMinter != address(0),
-            "HelixNFT: _addMinter is the zero address"
-        );
+    function addMinter(address _addMinter) public onlyOwner isNotZeroAddress(_addMinter) returns (bool) {
         return EnumerableSet.add(_minters, _addMinter);
     }
 
@@ -504,11 +506,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * @param _delMinter address of minter to be deleted.
      * @return true if successful.
      */
-    function delMinter(address _delMinter) external onlyOwner returns (bool) {
-        require(
-            _delMinter != address(0),
-            "HelixNFT: _delMinter is the zero address"
-        );
+    function delMinter(address _delMinter) external onlyOwner isNotZeroAddress(_delMinter) returns (bool) {
         return EnumerableSet.remove(_minters, _delMinter);
     }
 
@@ -547,7 +545,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * @dev Modifier
      */
     modifier onlyMinter() {
-        require(isMinter(msg.sender), "caller is not the minter");
+        require(isMinter(msg.sender), "HelixNFT: not minter");
         _;
     }
 
@@ -558,8 +556,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * @param _addAccruer address of accruer to be added.
      * @return true if successful.
      */
-    function addAccruer(address _addAccruer) public onlyOwner returns (bool) {
-        require(_addAccruer != address(0), "HelixNFT: _addAccruer is the zero address");
+    function addAccruer(address _addAccruer) external onlyOwner isNotZeroAddress(_addAccruer) returns (bool) {
         return EnumerableSet.add(_accruers, _addAccruer);
     }
 
@@ -568,8 +565,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * @param _delAccruer address of accruer to be deleted.
      * @return true if successful.
      */
-    function delAccruer(address _delAccruer) external onlyOwner returns (bool) {
-        require( _delAccruer != address(0), "HelixNFT: _delAccruer is the zero address");
+    function delAccruer(address _delAccruer) external onlyOwner isNotZeroAddress(_delAccruer) returns (bool) {
         return EnumerableSet.remove(_accruers, _delAccruer);
     }
 
@@ -604,7 +600,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * @dev Modifier
      */
     modifier onlyAccruer() {
-        require(isAccruer(msg.sender), "caller is not the accruer");
+        require(isAccruer(msg.sender), "HelixNFT: not accruer");
         _;
     }
 
@@ -621,7 +617,7 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(owner() == msg.sender, "Ownable: caller is not the owner");
+        require(owner() == msg.sender, "HelixNFT: not owner");
         _;
     }
 
@@ -629,15 +625,14 @@ contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeab
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Can only be called by the current owner.
      */
-    function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+    function transferOwnership(address newOwner) external virtual onlyOwner isNotZeroAddress(newOwner) {
         _owner = newOwner;
     }
 
     // ReentrancyGuard ---------------------------------------------------------------
 
     modifier nonReentrant() {
-        require(_reentrancyStatus == 1, "REENTRANCY");
+        require(_reentrancyStatus == 1, "HelixNFT: reentrancy");
         _reentrancyStatus = 2;
         _;
         _reentrancyStatus = 1;

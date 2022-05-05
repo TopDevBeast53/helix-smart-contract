@@ -59,7 +59,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
     })
 
     it('refReg: initialized with expected values', async () => {
-        expect(await refReg.helixToken()).to.eq(helixToken.address)
+        expect(await refReg.token()).to.eq(helixToken.address)
         expect(await refReg.stakingRefFee()).to.eq(stakeFee)
         expect(await refReg.swapRefFee()).to.eq(swapFee)
     })
@@ -67,7 +67,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
     it('refReg: record staking reward withdrawal with invalid user address fails', async () => {
         const invalidUser = constants.AddressZero
         await expect(refReg.recordStakingRewardWithdrawal(invalidUser, stakeAmount))
-            .to.be.revertedWith("ReferralRegister: INVALID ADDRESS")
+            .to.be.revertedWith("ReferralRegister: zero address")
     })
 
     it('refReg: record staking reward withdrawal does nothing if user is not added', async () => {
@@ -99,7 +99,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
     it('refReg: record swap reward withdrawal with invalid user address fails', async () => {
         const invalidUser = constants.AddressZero
         await expect(refReg.recordSwapReward(invalidUser, swapAmount))
-            .to.be.revertedWith("ReferralRegister: INVALID ADDRESS")
+            .to.be.revertedWith("ReferralRegister: zero address")
     })
 
     it('refReg: record swap reward does nothing if user is not added', async () => {
@@ -151,7 +151,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
 
     it("refReg: can't self refer", async () => {
         // the caller shouldn't be able to add themselves as a referrer
-        await expect(refReg.addRef(referred)).to.be.revertedWith("Referral Register: No self referral.");
+        await expect(refReg.addRef(referred)).to.be.revertedWith("ReferralRegister: no self referral");
     })
 
     it("refReg: can't record without owner permission", async () => {
@@ -161,17 +161,17 @@ describe('Referral Register: fee-on-transfer tokens', () => {
         await expect(localRefReg.recordStakingRewardWithdrawal(owner.address, 1000))
             .to
             .be
-            .revertedWith("ReferralRegister: caller is not a recorder")
+            .revertedWith("ReferralRegister: not a recorder")
 
         await expect(localRefReg.recordSwapReward(owner.address, 1000))
             .to
             .be
-            .revertedWith("ReferralRegister: caller is not a recorder")
+            .revertedWith("ReferralRegister: not a recorder")
     })
 
     it('refReg: withdraw with nothing to withdraw fails', async () => {
         await expect(refReg.withdraw())
-            .to.be.revertedWith("ReferralRegister: NOTHING TO WITHDRAW")
+            .to.be.revertedWith("ReferralRegister: nothing to withdraw")
     })
 
     it('refReg: withdraw helix to referrer succeeds', async () => {

@@ -141,42 +141,42 @@ describe('Yield Swap', () => {
     it('yieldSwap: open swap with invalid exchange token fails', async () => {
         const invalidExToken = constants.AddressZero
         await expect(yieldSwap.openSwap(invalidExToken, poolId, amount, ask, duration))
-            .to.be.revertedWith("YieldSwap: INVALID EXCHANGE TOKEN ADDRESS")
+            .to.be.revertedWith("YieldSwap: zero address")
     })
 
     it('yieldSwap: open swap with invalid amount fails', async () => {
         const invalidAmount = 0
         await expect(yieldSwap.openSwap(exToken, poolId, invalidAmount, ask, duration))
-            .to.be.revertedWith("YieldSwap: AMOUNT CAN'T BE ZERO")
+            .to.be.revertedWith("YieldSwap: not above zero")
     })
 
     it('yieldSwap: open swap with invalid lock duration fails', async () => {
         await yieldSwap.setMinLockDuration(ONE_DAY * 1)
         const invalidDurationTooLow = ONE_DAY * 0
         await expect(yieldSwap.openSwap(exToken, poolId, amount, ask, invalidDurationTooLow))
-            .to.be.revertedWith("YieldSwap: INVALID LOCK DURATION")
+            .to.be.revertedWith("YieldSwap: invalid min lock duration")
 
         const invalidDurationTooHigh = maxLockDuration + 1
         await expect(yieldSwap.openSwap(exToken, poolId, amount, ask, invalidDurationTooHigh))
-            .to.be.revertedWith("YieldSwap: INVALID LOCK DURATION")
+            .to.be.revertedWith("YieldSwap: invalid min lock duration")
     })
 
     it('yieldSwap: open swap with invalid pool id fails', async () => {
         const invalidPoolId = await chef.poolLength()
         await expect(yieldSwap.openSwap(exToken, invalidPoolId, amount, ask, duration))
-            .to.be.revertedWith("YieldSwap: INVALID POOL ID")
+            .to.be.revertedWith("YieldSwap: invalid pool id")
     })
 
     it('yieldSwap: open swap with insufficient token balance fails', async () => {
         const invalidAmount = (await helixLP.balanceOf(wallet0.address)).add(expandTo18Decimals(1))
         await expect(yieldSwap.openSwap(exToken, poolId, invalidAmount, ask, duration))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("YieldSwap: insufficient balance")
     })
 
     it('yieldSwap: open swap with insufficient token allowance fails', async () => {
         // No allowance given to yieldSwap
         await expect(yieldSwap.openSwap(exToken, poolId, amount, ask, duration))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("YieldSwap: insufficient allowance")
     })
 
     it('yieldSwap: open swap', async () => {
@@ -233,7 +233,7 @@ describe('Yield Swap', () => {
         // expect to fail because no swap opened
         const invalidSwapId0 = 0
         await expect(yieldSwap.setAsk(invalidSwapId0, ask))
-            .to.be.revertedWith("YieldSwap: NO SWAP OPENED")
+            .to.be.revertedWith("YieldSwap: no swap opened")
 
         // open swap
         await openSwap() 
@@ -241,7 +241,7 @@ describe('Yield Swap', () => {
         // expect to fail because swapId too large
         const invalidSwapId1 = (await yieldSwap.getSwapId()) + 1
         await expect(yieldSwap.setAsk(invalidSwapId1, ask))
-            .to.be.revertedWith("YieldSwap: INVALID SWAP ID")
+            .to.be.revertedWith("YieldSwap: invalid swap id")
     })
 
     it('yieldSwap: set ask when swap is closed fails', async () => {
@@ -255,7 +255,7 @@ describe('Yield Swap', () => {
 
         // the swap is closed and setting the ask should be prohibited
         await expect(yieldSwap.setAsk(swapId, ask))
-            .to.be.revertedWith("YieldSwap: SWAP IS CLOSED")
+            .to.be.revertedWith("YieldSwap: swap is closed")
     })
 
     it('yieldSwap: set ask when not seller fails', async () => {
@@ -265,7 +265,7 @@ describe('Yield Swap', () => {
 
         // expect calling set ask as wallet 1 to fail
         await expect(yieldSwap1.setAsk(swapId, ask))
-            .to.be.revertedWith("YieldSwap: ONLY SELLER CAN SET ASK")
+            .to.be.revertedWith("YieldSwap: caller is not seller")
     })
 
     it('yieldSwap: set ask', async () => {
@@ -293,7 +293,7 @@ describe('Yield Swap', () => {
         // expect to fail because no swap opened
         const invalidSwapId0 = 0
         await expect(yieldSwap.closeSwap(invalidSwapId0))
-            .to.be.revertedWith("YieldSwap: NO SWAP OPENED")
+            .to.be.revertedWith("YieldSwap: no swap opened")
 
         // open swap
         await openSwap() 
@@ -301,7 +301,7 @@ describe('Yield Swap', () => {
         // expect to fail because swapId too large
         const invalidSwapId1 = (await yieldSwap.getSwapId()) + 1
         await expect(yieldSwap.closeSwap(invalidSwapId1))
-            .to.be.revertedWith("YieldSwap: INVALID SWAP ID")
+            .to.be.revertedWith("YieldSwap: invalid swap id")
     })
 
     it('yieldSwap: close swap when swap is closed fails', async () => {
@@ -315,7 +315,7 @@ describe('Yield Swap', () => {
 
         // the swap is closed and closing again should be prohibited
         await expect(yieldSwap.closeSwap(swapId))
-            .to.be.revertedWith("YieldSwap: SWAP IS CLOSED")
+            .to.be.revertedWith("YieldSwap: swap is closed")
     })
 
     it('yieldSwap: close swap when not seller fails', async () => {
@@ -325,7 +325,7 @@ describe('Yield Swap', () => {
 
         // expect calling set ask as wallet 1 to fail
         await expect(yieldSwap1.closeSwap(swapId))
-            .to.be.revertedWith("YieldSwap: ONLY SELLER CAN CLOSE SWAP")
+            .to.be.revertedWith("YieldSwap: caller is not seller")
     })
 
     it('yieldSwap: close swap', async () => {
@@ -360,7 +360,7 @@ describe('Yield Swap', () => {
 
         // the swap is closed and making bid should be prohibited
         await expect(yieldSwap.makeBid(swapId, bidAmount))
-            .to.be.revertedWith("YieldSwap: SWAP IS CLOSED")
+            .to.be.revertedWith("YieldSwap: swap is closed")
     })
 
     it('yieldSwap: make bid as seller fails', async () => {
@@ -370,7 +370,7 @@ describe('Yield Swap', () => {
 
         // expect making bid as seller to fail
         await expect(yieldSwap.makeBid(swapId, bidAmount))
-            .to.be.revertedWith("YieldSwap: SELLER CAN'T BID ON THEIR OWN SWAP")
+            .to.be.revertedWith("YieldSwap: caller is seller")
     })
 
     it('yieldSwap: make bid on same swap more than once fails', async () => {
@@ -380,7 +380,7 @@ describe('Yield Swap', () => {
 
         // expect making second bid on same swap to fail
         await expect(yieldSwap1.makeBid(swapId, bidAmount))
-            .to.be.revertedWith("YieldSwap: CALLER HAS ALREADY MADE BID")
+            .to.be.revertedWith("YieldSwap: caller has already bid")
     })
 
     it('yieldSwap: make bid with no amount fails', async () => {
@@ -392,7 +392,7 @@ describe('Yield Swap', () => {
 
         // expect making second bid on same swap to fail
         await expect(yieldSwap1.makeBid(swapId, bidAmount))
-            .to.be.revertedWith("YieldSwap: BID AMOUNT CAN'T BE ZERO")
+            .to.be.revertedWith("YieldSwap: not above zero")
     })
 
     it('yieldSwap: make bid with insufficient token balance fails', async () => {
@@ -402,7 +402,7 @@ describe('Yield Swap', () => {
         const invalidAmount = (await helixToken.balanceOf(wallet1.address)).add(expandTo18Decimals(1))
 
         await expect(yieldSwap1.makeBid(swapId, invalidAmount))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("YieldSwap: insufficient balance")
     })
 
     it('yieldSwap: make bid with insufficient token allowance fails', async () => {
@@ -412,7 +412,7 @@ describe('Yield Swap', () => {
         const invalidAmount = (await helixToken.allowance(wallet1.address, yieldSwap.address)).add(expandTo18Decimals(1))
 
         await expect(yieldSwap1.makeBid(swapId, invalidAmount))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("YieldSwap: insufficient allowance")
     })
 
     it('yieldSwap: make bid', async () => {
@@ -473,7 +473,7 @@ describe('Yield Swap', () => {
 
         const invalidBidId = (await yieldSwap.getBidId()).add(1)
         await expect(yieldSwap1.setBid(invalidBidId, bidAmount))
-            .to.be.revertedWith("YieldSwap: INVALID BID ID")
+            .to.be.revertedWith("YieldSwap: invalid bid id")
     })
 
     it('yieldSwap: set bid when swap is closed fails', async () => {
@@ -486,7 +486,7 @@ describe('Yield Swap', () => {
         await yieldSwap.closeSwap(swapId)
 
         await expect(yieldSwap1.setBid(bidId, bidAmount))
-            .to.be.revertedWith("YieldSwap: SWAP IS CLOSED")
+            .to.be.revertedWith("YieldSwap: swap is closed")
     })
 
     it('yieldSwap: set bid when caller is not bidder fails', async () => {
@@ -497,7 +497,7 @@ describe('Yield Swap', () => {
     
         // expect to fail because bid was made by wallet1
         await expect(yieldSwap.setBid(bidId, bidAmount))
-            .to.be.revertedWith("YieldSwap: CALLER IS NOT THE BIDDER")
+            .to.be.revertedWith("YieldSwap: caller is not bidder")
     })
 
     it('yieldSwap: set bid with insufficient token balance fails', async () => {
@@ -508,7 +508,7 @@ describe('Yield Swap', () => {
     
         const invalidBidAmount = balanceWallet1.add(expandTo18Decimals(1))
         await expect(yieldSwap1.setBid(bidId, invalidBidAmount))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("YieldSwap: insufficient balance")
     })
 
     it('yieldSwap: set bid with insufficient token allowance fails', async () => {
@@ -519,7 +519,7 @@ describe('Yield Swap', () => {
     
         const invalidBidAmount = bidAmount.add(expandTo18Decimals(1))
         await expect(yieldSwap1.setBid(bidId, invalidBidAmount))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("YieldSwap: insufficient allowance")
     })
 
     it('yieldSwap: set bid', async () => {
@@ -597,7 +597,7 @@ describe('Yield Swap', () => {
 
         // accept wallet1 bid as wallet0 with invalid bidId
         await expect(yieldSwap.acceptBid(invalidBidId))
-            .to.be.revertedWith("YieldSwap: INVALID BID ID")
+            .to.be.revertedWith("YieldSwap: invalid bid id")
     })
 
     it('yieldSwap: accept bid as bidder fails', async () => {
@@ -610,7 +610,7 @@ describe('Yield Swap', () => {
 
         // expect accept wallet1 bid as wallet1 to fail
         await expect(yieldSwap1.acceptBid(bidId))
-            .to.be.revertedWith("YieldSwap: ONLY SELLER CAN ACCEPT BID")
+            .to.be.revertedWith("YieldSwap: caller is not seller")
     })
 
     it('yieldSwap: accept bid when swap is closed fails', async () => {
@@ -626,7 +626,7 @@ describe('Yield Swap', () => {
 
         // expect accept bid when swap is closed to fail
         await expect(yieldSwap.acceptBid(bidId))
-            .to.be.revertedWith("YieldSwap: SWAP IS CLOSED")
+            .to.be.revertedWith("YieldSwap: swap is closed")
     })
 
     it('yieldSwap: accept bid with insufficient seller lp token balance fails', async () => {
@@ -645,7 +645,7 @@ describe('Yield Swap', () => {
 
         // expect accept bid with no lp token balance to fail
         await expect(yieldSwap.acceptBid(bidId))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("YieldSwap: insufficient balance")
     })
 
     it('yieldSwap: accept bid with insufficient seller lp token allowance fails', async () => {
@@ -664,7 +664,7 @@ describe('Yield Swap', () => {
 
         // expect accept bid with no lp token allowance to fail
         await expect(yieldSwap.acceptBid(bidId))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("YieldSwap: insufficient allowance")
     })
 
     it('yieldSwap: accept bid with insufficient bidder ex token balance fails', async () => {
@@ -683,7 +683,7 @@ describe('Yield Swap', () => {
 
         // expect accept bid with no ex token balance to fail
         await expect(yieldSwap.acceptBid(bidId))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("YieldSwap: insufficient balance")
     })
 
     it('yieldSwap: accept bid with insufficient bidder ex token allowance fails', async () => {
@@ -702,7 +702,7 @@ describe('Yield Swap', () => {
 
         // expect accept bid with no ex token allowance to fail
         await expect(yieldSwap.acceptBid(bidId))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("YieldSwap: insufficient allowance")
     })
 
     it('yieldSwap: accept bid', async () => {
@@ -781,7 +781,7 @@ describe('Yield Swap', () => {
 
         // accept wallet0 ask as wallet1 with invalid swapId
         await expect(yieldSwap1.acceptAsk(invalidSwapId))
-            .to.be.revertedWith("YieldSwap: INVALID SWAP ID")
+            .to.be.revertedWith("YieldSwap: invalid swap id")
     })
 
     it('yieldSwap: accept ask as seller fails', async () => {
@@ -790,7 +790,7 @@ describe('Yield Swap', () => {
     
         // expect accept wallet0 ask as wallet0 to fail
         await expect(yieldSwap.acceptAsk(swapId))
-            .to.be.revertedWith("YieldSwap: SELLER CAN'T ACCEPT ASK")
+            .to.be.revertedWith("YieldSwap: caller is seller")
     })
 
     it('yieldSwap: accept ask when swap is closed fails', async () => {
@@ -802,7 +802,7 @@ describe('Yield Swap', () => {
 
         // expect accept ask as wallet1 when swap is closed to fail
         await expect(yieldSwap1.acceptAsk(swapId))
-            .to.be.revertedWith("YieldSwap: SWAP IS CLOSED")
+            .to.be.revertedWith("YieldSwap: swap is closed")
     })
 
     it('yieldSwap: accept ask with insufficient seller lp token balance fails', async () => {
@@ -817,7 +817,7 @@ describe('Yield Swap', () => {
 
         // expect accept ask as wallet1 with no wallet0 lp token balance to fail
         await expect(yieldSwap1.acceptAsk(swapId))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("YieldSwap: insufficient balance")
     })
 
     it('yieldSwap: accept ask with insufficient seller lp token allowance fails', async () => {
@@ -832,7 +832,7 @@ describe('Yield Swap', () => {
 
         // expect accept ask as wallet1 with no wallet0 lp token allowance to fail
         await expect(yieldSwap1.acceptAsk(swapId))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("YieldSwap: insufficient allowance")
     })
 
     it('yieldSwap: accept ask with insufficient bidder ex token balance fails', async () => {
@@ -847,7 +847,7 @@ describe('Yield Swap', () => {
 
         // expect accept ask ask wallet1 with no wallet1 ex token balance to fail
         await expect(yieldSwap1.acceptAsk(swapId))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("YieldSwap: insufficient balance")
     })
 
     it('yieldSwap: accept ask with insufficient bidder ex token allowance fails', async () => {
@@ -862,7 +862,7 @@ describe('Yield Swap', () => {
 
         // expect accept ask as wallet1 with no wallet1 ex token allowance to fail
         await expect(yieldSwap1.acceptAsk(swapId))
-            .to.be.revertedWith("YieldSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("YieldSwap: insufficient allowance")
     })
 
     it('yieldSwap: accept ask', async () => {
@@ -946,13 +946,13 @@ describe('Yield Swap', () => {
         // invalid because no swap opened
         let invalidSwapId = 0; 
         await expect(yieldSwap.withdraw(invalidSwapId))
-            .to.be.revertedWith("YieldSwap: NO SWAP OPENED")
+            .to.be.revertedWith("YieldSwap: no swap opened")
 
         // open the swap
         await openSwap()
         invalidSwapId = (await yieldSwap.getSwapId()).add(1)
         await expect(yieldSwap.withdraw(invalidSwapId))
-            .to.be.revertedWith("YieldSwap: INVALID SWAP ID")
+            .to.be.revertedWith("YieldSwap: invalid swap id")
     })
 
     it('yieldSwap: withdraw when swap is open fails', async () => {
@@ -961,7 +961,7 @@ describe('Yield Swap', () => {
         const swapId = await yieldSwap.getSwapId()
 
         await expect(yieldSwap.withdraw(swapId))
-            .to.be.revertedWith("YieldSwap: SWAP IS OPEN")
+            .to.be.revertedWith("YieldSwap: swap not closed")
     })
 
     it('yieldSwap: withdraw when swap is withdrawn fails', async () => {
@@ -993,10 +993,10 @@ describe('Yield Swap', () => {
 
         // expect a second withdrawal to fail
         await expect(yieldSwap.withdraw(swapId))
-            .to.be.revertedWith("YieldSwap: SWAP HAS BEEN WITHDRAWN")
+            .to.be.revertedWith("YieldSwap: swap is withdrawn")
     })
 
-    it('yieldSwap: withdraw when swap is open fails', async () => {
+    it('yieldSwap: withdraw when swap had no buyer fails', async () => {
         // open the swap
         await openSwap()
         const swapId = await yieldSwap.getSwapId()
@@ -1005,7 +1005,7 @@ describe('Yield Swap', () => {
         await yieldSwap.closeSwap(swapId)
 
         await expect(yieldSwap.withdraw(swapId))
-            .to.be.revertedWith("YieldSwap: SWAP HAD NO BUYER")
+            .to.be.revertedWith("YieldSwap: swap had no buyer")
     })
 
     it('yieldSwap: withdraw when swap is locked fails', async () => {
@@ -1023,7 +1023,7 @@ describe('Yield Swap', () => {
         await yieldSwap1.acceptAsk(swapId)
 
         await expect(yieldSwap.withdraw(swapId))
-            .to.be.revertedWith("YieldSwap: WITHDRAW IS LOCKED")
+            .to.be.revertedWith("YieldSwap: swap is locked")
     })
 
     it('yieldSwap: withdraw', async () => {
@@ -1285,7 +1285,7 @@ describe('Yield Swap', () => {
     it('yieldSwap: set treasury with invalid address fails', async () => {
         const invalidTreasuryAddress = constants.AddressZero
         await expect(yieldSwap.setTreasury(invalidTreasuryAddress))
-            .to.be.revertedWith("YieldSwap: INVALID TREASURY ADDRESS")
+            .to.be.revertedWith("YieldSwap: zero address")
     })
 
     it('yieldSwap: set treasury', async () => {
@@ -1303,7 +1303,7 @@ describe('Yield Swap', () => {
     it('yieldSwap: set seller fee with invalid fee fails', async () => {
         const invalidFee = (await yieldSwap.MAX_FEE_PERCENT()).add(1)
         await expect(yieldSwap.setSellerFee(invalidFee))
-            .to.be.revertedWith("YieldSwap: INVALID SELLER FEE")
+            .to.be.revertedWith("YieldSwap: invalid fee")
     })
 
     it('yieldSwap: set seller fee', async () => {
@@ -1321,7 +1321,7 @@ describe('Yield Swap', () => {
     it('yieldSwap: set buyer fee with invalid fee fails', async () => {
         const invalidFee = (await yieldSwap.MAX_FEE_PERCENT()).add(1)
         await expect(yieldSwap.setBuyerFee(invalidFee))
-            .to.be.revertedWith("YieldSwap: INVALID BUYER FEE")
+            .to.be.revertedWith("YieldSwap: invalid fee")
     })
 
     it('yieldSwap: set buyer fee', async () => {
@@ -1403,7 +1403,7 @@ describe('Yield Swap', () => {
     it('yieldSwap: set min lock duration with invalid duration fails', async () => {
         const invalidLockDuration = (await yieldSwap.MAX_LOCK_DURATION()).add(1)
         await expect(yieldSwap.setMinLockDuration(invalidLockDuration))
-            .to.be.revertedWith("YieldSwap: MIN LOCK DURATION MUST BE LESS THAN MAX LOCK DURATION")
+            .to.be.revertedWith("YieldSwap: invalid min lock duration")
     })
 
     it('yieldSwap: set min lock duration', async () => {
@@ -1422,7 +1422,7 @@ describe('Yield Swap', () => {
         await yieldSwap.setMinLockDuration(ONE_DAY * 1)
         const invalidLockDuration = (await yieldSwap.MIN_LOCK_DURATION()).sub(1)
         await expect(yieldSwap.setMaxLockDuration(invalidLockDuration))
-            .to.be.revertedWith("YieldSwap: MAX LOCK DURATION MUST BE GREATER THAN MIN LOCK DURATION")
+            .to.be.revertedWith("YieldSwap: invalid max lock duration")
     })
 
     it('yieldSwap: set max lock duration', async () => {

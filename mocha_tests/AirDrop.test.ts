@@ -85,13 +85,13 @@ describe('AirDrop Presale', () => {
 
     it('airDrop: add owner as non-owner fails', async () => {
         await expect(airDrop1.addOwner(wallet2.address))
-            .to.be.revertedWith('AirDrop: CALLER IS NOT OWNER')
+            .to.be.revertedWith('AirDrop: not owner')
     })
 
     it('airDrop: add owner duplicate fails', async () => {
         // wallet 0 is added as owner on contract creation
         await expect(airDrop.addOwner(wallet0.address))
-            .to.be.revertedWith('AirDrop: ALREADY AN OWNER')
+            .to.be.revertedWith('AirDrop: already owner')
     })
 
     it('airDrop: airdrop add', async () => {
@@ -118,7 +118,7 @@ describe('AirDrop Presale', () => {
         const amounts = [wallet1Amount, wallet2Amount]
         
         await expect(airDrop1.airdropAdd(users, amounts))
-            .to.be.revertedWith('AirDrop: CALLER IS NOT OWNER')
+            .to.be.revertedWith('AirDrop: not owner')
     })
 
     it('airDrop: airdrop add with unequal argument arrays fails', async () => {
@@ -127,7 +127,7 @@ describe('AirDrop Presale', () => {
         const amounts = [wallet1Amount]
         
         await expect(airDrop.airdropAdd(users, amounts))
-            .to.be.revertedWith('AirDrop: USERS AND AMOUNTS MUST HAVE SAME LENGTH')
+            .to.be.revertedWith('AirDrop: users and amounts must be same length')
     })
 
     it('airDrop: airdrop add user with too many tokens fails', async () => {
@@ -137,7 +137,7 @@ describe('AirDrop Presale', () => {
         const amounts = [wallet1Amount, wallet2Amount]
         
         await expect(airDrop.airdropAdd(users, amounts))
-            .to.be.revertedWith("AirDrop: AMOUNT CAN'T BE GREATER THAN TOKENS AVAILABLE")
+            .to.be.revertedWith("AirDrop: amount greater than tokens available")
     })
 
     it('airDrop: airdrop remove', async () => {
@@ -172,7 +172,7 @@ describe('AirDrop Presale', () => {
     
         // then expect to fail
         await expect(airDrop1.airdropRemove(wallet1.address, wallet1Amount))
-            .to.be.revertedWith('AirDrop: CALLER IS NOT OWNER')
+            .to.be.revertedWith('AirDrop: not owner')
     })
 
     it('airDrop: pause', async () => {
@@ -182,7 +182,7 @@ describe('AirDrop Presale', () => {
 
     it('airDrop: pause as non-owner fails', async () => {
         await expect(airDrop1.pause())
-            .to.be.revertedWith('AirDrop: CALLER IS NOT OWNER')
+            .to.be.revertedWith('AirDrop: not owner')
     })
 
     it('airDrop: unpause', async () => {
@@ -193,7 +193,7 @@ describe('AirDrop Presale', () => {
 
     it('airDrop: unpause as non-owner fails', async () => {
         await expect(airDrop1.unpause())
-            .to.be.revertedWith('AirDrop: CALLER IS NOT OWNER')
+            .to.be.revertedWith('AirDrop: not owner')
     })
 
     it('airDrop: set withdraw phase', async () => {
@@ -219,13 +219,13 @@ describe('AirDrop Presale', () => {
     it('airDrop: set withdraw phase as non-owner fails', async () => {
         const phase = 0
         await expect(airDrop1.setWithdrawPhase(phase))
-            .to.be.revertedWith('AirDrop: CALLER IS NOT OWNER')
+            .to.be.revertedWith('AirDrop: not owner')
     })
 
     it('airDrop: set withdraw phase with invalid phase fails', async () => {
         const invalidPhase = (await airDrop.WITHDRAW_PHASE_END()).toNumber() + 1
         await expect(airDrop.setWithdrawPhase(invalidPhase))
-            .to.be.revertedWith('AirDrop: PHASE EXCEEDS WITHDRAW PHASE END')
+            .to.be.revertedWith('AirDrop: invalid withdraw phase')
     })
 
     it('airDrop: set withdraw phase emits set withdraw phase event', async () => {
