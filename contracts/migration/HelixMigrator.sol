@@ -31,11 +31,11 @@ contract HelixMigrator is IHelixMigrator, Ownable {
     function migrateLiquidity(address tokenA, address tokenB, address lpToken, address externalRouter) external returns(bool) {
         // Transfer the caller's external liquidity balance to this contract.
         uint exLiquidity = IERC20(lpToken).balanceOf(msg.sender);
-        require(exLiquidity > 0, 'migrateLiquidity: caller has no lp balance');
-        require(IERC20(lpToken).transferFrom(msg.sender, address(this), exLiquidity), 'migrateLiquidity: lp transfer from failed');
+        require(exLiquidity > 0, 'Migrator: caller has no lp balance');
+        require(IERC20(lpToken).transferFrom(msg.sender, address(this), exLiquidity), 'Migrator: lp transfer from failed');
 
         // Approve external router to spend up to `exLiquidity` amount of the liquidity.
-        require(IERC20(lpToken).approve(externalRouter, exLiquidity), 'migrateLiquidity: external lp approval failed');
+        require(IERC20(lpToken).approve(externalRouter, exLiquidity), 'Migrator: external lp approval failed');
 
         // Remove the token balances from the external exchange.
         (uint exBalanceTokenA, uint exBalanceTokenB) = IExternalRouter(externalRouter).removeLiquidity(
@@ -49,8 +49,8 @@ contract HelixMigrator is IHelixMigrator, Ownable {
         );
 
         // Approve this router to spend up to the external token balances.
-        require(IERC20(tokenA).approve(address(router), exBalanceTokenA), 'migrateLiquidity: token A router approval failed');
-        require(IERC20(tokenB).approve(address(router), exBalanceTokenB), 'migrateLiquidity: token B router approval failed');
+        require(IERC20(tokenA).approve(address(router), exBalanceTokenA), 'Migrator: token A router approval failed');
+        require(IERC20(tokenB).approve(address(router), exBalanceTokenB), 'Migrator: token B router approval failed');
 
         // Move the external token balances to this exchange.
         // Note: addLiquidity handles adding token pair to factory.
@@ -84,7 +84,7 @@ contract HelixMigrator is IHelixMigrator, Ownable {
      * @notice Set the router address.
      */
     function setRouter(address _router) public onlyOwner {
-        require(_router != address(0), 'HelixMigrator: Router address is Zero');
+        require(_router != address(0), 'Migrator: invalid router address');
         router = IHelixV2Router02(_router);
     }
 }
