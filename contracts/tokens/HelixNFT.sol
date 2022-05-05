@@ -79,20 +79,20 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
      * @dev Structure for attributes the Helix NFTs
      */
     struct Token {
+        // ID of the bridged NFT.
+        string externalTokenID;
+        // External token URI to use.
+        string tokenURI;
+
         // Helix Point is a “power” of your NFT and a tool that helps you to boost your NFT and earn more crypto
         uint256 helixPoints;
         // Helix NFT consists of on a particular level:
         uint256 level;
-        // True if staked, false otherwise
-        bool isStaked;
         // Timestamp the token is minted(block's timestamp)
         uint256 createTimestamp;
 
-        // ID of the bridged NFT.
-        string externalTokenID;
-
-        // External token URI to use.
-        string tokenURI;
+        // True if staked, false otherwise
+        bool isStaked;
     }
 
     // map token info by token ID : TokenId => Token
