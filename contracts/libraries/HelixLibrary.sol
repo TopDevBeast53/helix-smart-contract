@@ -4,27 +4,53 @@ pragma solidity >=0.8.0;
 import '../swaps/HelixPair.sol';
 
 library HelixLibrary {
+    modifier notZeroAmount(uint256 amount) {
+        require(amount > 0, "HelixLibrary: zero amount");
+        _;
+    }
+
+    modifier notZeroLiquidity(uint256 liquidity) {
+        require(liquidity > 0, "HelixLibrary: zero liquidity");
+        _;
+    }
+
+    modifier isValidPath(address[] memory path) {
+        require(path.length >= 2, "HelixLibrary: invalid path");
+        _;
+    }
 
     // returns sorted token addresses, used to handle return values from pairs sorted in this order
-    function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {
-        require(tokenA != tokenB, 'HelixLibrary: IDENTICAL_ADDRESSES');
+    function sortTokens(address tokenA, address tokenB) 
+        internal 
+        pure 
+        returns (address token0, address token1) 
+    {
+        require(tokenA != tokenB, 'HelixLibrary: identical addresses');
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        require(token0 != address(0), 'HelixLibrary: ZERO_ADDRESS');
+        require(token0 != address(0), 'HelixLibrary: zero address');
     }
 
     // calculates the CREATE2 address for a pair without making any external calls
-    function pairFor(address factory, address tokenA, address tokenB) internal pure returns (address pair) {
+    function pairFor(address factory, address tokenA, address tokenB) 
+        internal 
+        pure 
+        returns (address pair) 
+    {
         (address token0, address token1) = sortTokens(tokenA, tokenB);
         pair = address(uint160(uint256(keccak256(abi.encodePacked(
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'e0ce7bfb962a25cbac92cbc4b48f91427e2de2f8795b94d1943deb6ec507d0f0' // init code hash
-                //hex'5c895350dda5e963c0f7d7d02e3daeff647aec4f52185481ffe441be51cf510f' // mocha test
+                // hex'e0ce7bfb962a25cbac92cbc4b48f91427e2de2f8795b94d1943deb6ec507d0f0' // init code hash
+                hex'07fb8bff932d0d6fc1ce85d4054bbe5c2e04bdeb5c6499b3fa215208e1f4df53' // mocha test
             )))));
     }
 
-    function getSwapFee(address factory, address tokenA, address tokenB) internal view returns (uint swapFee) {
+    function getSwapFee(address factory, address tokenA, address tokenB) 
+        internal 
+        view 
+        returns (uint swapFee) 
+    {
         swapFee = HelixPair(pairFor(factory, tokenA, tokenB)).swapFee();
     }
 
@@ -36,16 +62,26 @@ library HelixLibrary {
     }
 
     // given some amount of an asset and pair reserves, returns an equivalent amount of the other asset
-    function quote(uint amountA, uint reserveA, uint reserveB) internal pure returns (uint amountB) {
-        require(amountA > 0, 'HelixLibrary: INSUFFICIENT_AMOUNT');
-        require(reserveA > 0 && reserveB > 0, 'HelixLibrary: INSUFFICIENT_LIQUIDITY');
+    function quote(uint amountA, uint reserveA, uint reserveB) 
+        internal 
+        pure 
+        notZeroAmount(amountA) 
+        notZeroLiquidity(reserveA)
+        notZeroLiquidity(reserveB)
+        returns (uint amountB) 
+    {
         amountB = amountA * reserveB / reserveA;
     }
 
     // given an input amount of an asset and pair reserves, returns the maximum output amount of the other asset
-    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut, uint swapFee) internal pure returns (uint amountOut) {
-        require(amountIn > 0, 'HelixLibrary: INSUFFICIENT_INPUT_AMOUNT');
-        require(reserveIn > 0 && reserveOut > 0, 'HelixLibrary: INSUFFICIENT_LIQUIDITY');
+    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut, uint swapFee) 
+        internal 
+        pure 
+        notZeroAmount(amountIn) 
+        notZeroLiquidity(reserveIn)
+        notZeroLiquidity(reserveOut)
+        returns (uint amountOut) 
+    {
         uint amountInWithFee = amountIn * (uint(1000) - swapFee);
         uint numerator = amountInWithFee * reserveOut;
         uint denominator = reserveIn * 1000 + amountInWithFee;
@@ -53,17 +89,26 @@ library HelixLibrary {
     }
 
     // given an output amount of an asset and pair reserves, returns a required input amount of the other asset
-    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut, uint swapFee) internal pure returns (uint amountIn) {
-        require(amountOut > 0, 'HelixLibrary: INSUFFICIENT_OUTPUT_AMOUNT');
-        require(reserveIn > 0 && reserveOut > 0, 'HelixLibrary: INSUFFICIENT_LIQUIDITY');
+    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut, uint swapFee) 
+        internal 
+        pure 
+        notZeroAmount(amountOut) 
+        notZeroLiquidity(reserveIn)
+        notZeroLiquidity(reserveOut)
+        returns (uint amountIn) 
+    {
         uint numerator = reserveIn * amountOut * 1000;
         uint denominator = (reserveOut - amountOut) * (uint(1000) - swapFee);
         amountIn = (numerator / denominator) + 1;
     }
 
     // performs chained getAmountOut calculations on any number of pairs
-    function getAmountsOut(address factory, uint amountIn, address[] memory path) internal view returns (uint[] memory amounts) {
-        require(path.length >= 2, 'HelixLibrary: INVALID_PATH');
+    function getAmountsOut(address factory, uint amountIn, address[] memory path) 
+        internal 
+        view 
+        isValidPath(path)
+        returns (uint[] memory amounts) 
+    {
         amounts = new uint[](path.length);
         amounts[0] = amountIn;
         for (uint i; i < path.length - 1; i++) {
@@ -73,8 +118,12 @@ library HelixLibrary {
     }
 
     // performs chained getAmountIn calculations on any number of pairs
-    function getAmountsIn(address factory, uint amountOut, address[] memory path) internal view returns (uint[] memory amounts) {
-        require(path.length >= 2, 'HelixLibrary: INVALID_PATH');
+    function getAmountsIn(address factory, uint amountOut, address[] memory path) 
+        internal 
+        view 
+        isValidPath(path)
+        returns (uint[] memory amounts) 
+    {
         amounts = new uint[](path.length);
         amounts[amounts.length - 1] = amountOut;
         for (uint i = path.length - 1; i > 0; i--) {
