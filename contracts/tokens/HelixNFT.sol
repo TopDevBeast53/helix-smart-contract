@@ -194,7 +194,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
      *      set helixPoints as initialHelixPoints value
      *      set level as 1 (start from 1 LEVEL)
      */
-    function mint(address to) public onlyMinter nonReentrant isNotZeroAddress(to) {
+    function mint(address to) external onlyMinter nonReentrant isNotZeroAddress(to) {
         _lastTokenId += 1;
         uint256 tokenId = _lastTokenId;
         _tokens[tokenId].helixPoints = _initialHelixPoints;
@@ -205,7 +205,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
 
     // Mints external NFT
     function mintExternal(address to, string calldata externalTokenID, string calldata uri) 
-        public 
+        external 
         onlyMinter 
         nonReentrant 
         isNotZeroAddress(to) 
@@ -543,7 +543,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
      * @param _addAccruer address of accruer to be added.
      * @return true if successful.
      */
-    function addAccruer(address _addAccruer) public onlyOwner isNotZeroAddress(_addAccruer) returns (bool) {
+    function addAccruer(address _addAccruer) external onlyOwner isNotZeroAddress(_addAccruer) returns (bool) {
         return EnumerableSet.add(_accruers, _addAccruer);
     }
 
@@ -612,7 +612,7 @@ contract HelixNFT is ERC721EnumerableUpgradeable {
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Can only be called by the current owner.
      */
-    function transferOwnership(address newOwner) public virtual onlyOwner isNotZeroAddress(newOwner) {
+    function transferOwnership(address newOwner) external virtual onlyOwner isNotZeroAddress(newOwner) {
         _owner = newOwner;
     }
 
