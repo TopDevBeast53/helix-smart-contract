@@ -79,8 +79,8 @@ contract AutoHelix is Ownable, Pausable {
      * @notice Checks if the msg.sender is a contract or a proxy
      */
     modifier notContract() {
-        require(!Address.isContract(msg.sender), "contract not allowed");
-        require(msg.sender == tx.origin, "proxy contract not allowed");
+        require(!Address.isContract(msg.sender), "AutoHelix: contract not allowed");
+        require(msg.sender == tx.origin, "AutoHelix: proxy not allowed");
         _;
     }
 
@@ -90,7 +90,7 @@ contract AutoHelix is Ownable, Pausable {
      * @param _amount: number of tokens to deposit (in Helix)
      */
     function deposit(uint256 _amount) external whenNotPaused notContract {
-        require(_amount > 0, "Nothing to deposit");
+        require(_amount > 0, "AutoHelix: zero amount");
 
         uint256 pool = balanceOf();
 
@@ -146,7 +146,7 @@ contract AutoHelix is Ownable, Pausable {
      * @dev Only callable by the contract owner.
      */
     function setTreasury(address _treasury) external onlyOwner {
-        require(_treasury != address(0), "Cannot be zero address");
+        require(_treasury != address(0), "AutoHelix: zero address");
         treasury = _treasury;
     }
 
@@ -155,7 +155,7 @@ contract AutoHelix is Ownable, Pausable {
      * @dev Only callable by the contract owner.
      */
     function setPerformanceFee(uint256 _performanceFee) external onlyOwner {
-        require(_performanceFee <= MAX_PERFORMANCE_FEE, "performanceFee cannot be more than MAX_PERFORMANCE_FEE");
+        require(_performanceFee <= MAX_PERFORMANCE_FEE, "AutoHelix: invalid fee");
         performanceFee = _performanceFee;
         emit PerformanceFeeSet(_performanceFee);
     }
@@ -165,7 +165,7 @@ contract AutoHelix is Ownable, Pausable {
      * @dev Only callable by the contract owner.
      */
     function setCallFee(uint256 _callFee) external onlyOwner {
-        require(_callFee <= MAX_CALL_FEE, "callFee cannot be more than MAX_CALL_FEE");
+        require(_callFee <= MAX_CALL_FEE, "AutoHelix: invalid fee");
         callFee = _callFee;
         emit CallFeeSet(_callFee);
     }
@@ -175,7 +175,7 @@ contract AutoHelix is Ownable, Pausable {
      * @dev Only callable by the contract owner.
      */
     function setWithdrawFee(uint256 _withdrawFee) external onlyOwner {
-        require(_withdrawFee <= MAX_WITHDRAW_FEE, "withdrawFee cannot be more than MAX_WITHDRAW_FEE");
+        require(_withdrawFee <= MAX_WITHDRAW_FEE, "AutoHelix: invalid fee");
         withdrawFee = _withdrawFee;
         emit WithdrawFeeSet(_withdrawFee);
     }
@@ -187,7 +187,7 @@ contract AutoHelix is Ownable, Pausable {
     function setWithdrawFeePeriod(uint256 _withdrawFeePeriod) external onlyOwner {
         require(
             _withdrawFeePeriod <= MAX_WITHDRAW_FEE_PERIOD,
-            "withdrawFeePeriod cannot be more than MAX_WITHDRAW_FEE_PERIOD"
+            "AutoHelix: invalid fee period"
         );
         withdrawFeePeriod = _withdrawFeePeriod;
         emit WithdrawFeePeriodSet(_withdrawFeePeriod);
@@ -205,7 +205,7 @@ contract AutoHelix is Ownable, Pausable {
      * @notice Withdraw unexpected tokens sent to the Helix Vault
      */
     function inCaseTokensGetStuck(address _token) external onlyOwner {
-        require(_token != address(token), "Token cannot be same as deposit token");
+        require(_token != address(token), "AutoHelix: invalid token");
 
         uint256 amount = IERC20(_token).balanceOf(address(this));
         TransferHelper.safeTransfer(address(_token), msg.sender, amount);
@@ -265,8 +265,8 @@ contract AutoHelix is Ownable, Pausable {
      */
     function withdraw(uint256 _shares) public notContract {
         UserInfo storage user = userInfo[msg.sender];
-        require(_shares > 0, "Nothing to withdraw");
-        require(_shares <= user.shares, "Withdraw amount exceeds balance");
+        require(_shares > 0, "AutoHelix: zero amount");
+        require(_shares <= user.shares, "AutoHelix: insufficient balance");
 
         uint256 currentAmount = (balanceOf() * _shares) / totalShares;
         user.shares = user.shares - _shares;
