@@ -57,13 +57,13 @@ describe('HelixRouter', () => {
     expect(await router.quote(bigNumberify(1), bigNumberify(100), bigNumberify(200))).to.eq(bigNumberify(2))
     expect(await router.quote(bigNumberify(2), bigNumberify(200), bigNumberify(100))).to.eq(bigNumberify(1))
     await expect(router.quote(bigNumberify(0), bigNumberify(100), bigNumberify(200))).to.be.revertedWith(
-      'HelixLibrary: INSUFFICIENT_AMOUNT'
+      'HelixLibrary: zero amount'
     )
     await expect(router.quote(bigNumberify(1), bigNumberify(0), bigNumberify(200))).to.be.revertedWith(
-      'HelixLibrary: INSUFFICIENT_LIQUIDITY'
+      'HelixLibrary: zero liquidity'
     )
     await expect(router.quote(bigNumberify(1), bigNumberify(100), bigNumberify(0))).to.be.revertedWith(
-      'HelixLibrary: INSUFFICIENT_LIQUIDITY'
+      'HelixLibrary: zero liquidity'
     )
   })
 
@@ -71,13 +71,13 @@ describe('HelixRouter', () => {
     const func = router['getAmountOut(uint256,uint256,uint256,uint256)'];
     expect(await func(bigNumberify(2), bigNumberify(100), bigNumberify(100), swapFee)).to.eq(bigNumberify(1))
     await expect(func(bigNumberify(0), bigNumberify(100), bigNumberify(100), swapFee)).to.be.revertedWith(
-      'HelixLibrary: INSUFFICIENT_INPUT_AMOUNT'
+      'HelixLibrary: zero amount'
     )
     await expect(func(bigNumberify(2), bigNumberify(0), bigNumberify(100), swapFee)).to.be.revertedWith(
-      'HelixLibrary: INSUFFICIENT_LIQUIDITY'
+      'HelixLibrary: zero liquidity'
     )
     await expect(func(bigNumberify(2), bigNumberify(100), bigNumberify(0), swapFee)).to.be.revertedWith(
-      'HelixLibrary: INSUFFICIENT_LIQUIDITY'
+      'HelixLibrary: zero liquidity'
     )
   })
 
@@ -85,13 +85,13 @@ describe('HelixRouter', () => {
     const func = router['getAmountIn(uint256,uint256,uint256,uint256)'];
     expect(await func(bigNumberify(1), bigNumberify(100), bigNumberify(100), swapFee)).to.eq(bigNumberify(2))
     await expect(func(bigNumberify(0), bigNumberify(100), bigNumberify(100), swapFee)).to.be.revertedWith(
-      'HelixLibrary: INSUFFICIENT_OUTPUT_AMOUNT'
+      'HelixLibrary: zero amount'
     )
     await expect(func(bigNumberify(1), bigNumberify(0), bigNumberify(100), swapFee)).to.be.revertedWith(
-      'HelixLibrary: INSUFFICIENT_LIQUIDITY'
+      'HelixLibrary: zero liquidity'
     )
     await expect(func(bigNumberify(1), bigNumberify(100), bigNumberify(0), swapFee)).to.be.revertedWith(
-      'HelixLibrary: INSUFFICIENT_LIQUIDITY'
+      'HelixLibrary: zero liquidity'
     )
   })
 
@@ -112,7 +112,7 @@ describe('HelixRouter', () => {
 
     const func = router['getAmountsOut'];
     await expect(func(bigNumberify(2), [token0.address])).to.be.revertedWith(
-      'HelixLibrary: INVALID_PATH'
+      'HelixLibrary: invalid path'
     )
     const path = [token0.address, token1.address]
     const result = await func(bigNumberify(2), path)
@@ -137,7 +137,7 @@ describe('HelixRouter', () => {
 
     const func = router['getAmountsIn'];
     await expect(func(bigNumberify(1), [token0.address])).to.be.revertedWith(
-      'HelixLibrary: INVALID_PATH'
+      'HelixLibrary: invalid path'
     )
     const path = [token0.address, token1.address]
     const result = await func(bigNumberify(2), path)

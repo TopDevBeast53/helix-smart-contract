@@ -16,8 +16,8 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
     address public immutable _WETH;
     address public swapRewards;
 
-    modifier ensure(uint deadline) {
-        require(deadline >= block.timestamp, 'HelixRouterV1: EXPIRED');
+    modifier onlyValidDeadline(uint deadline) {
+        require(deadline >= block.timestamp, 'Router: invalid deadline');
         _;
     }
 
@@ -61,12 +61,12 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         } else {
             uint amountBOptimal = HelixLibrary.quote(amountADesired, reserveA, reserveB);
             if (amountBOptimal <= amountBDesired) {
-                require(amountBOptimal >= amountBMin, 'HelixRouterV1: INSUFFICIENT_B_AMOUNT');
+                _requireGEQ(amountBOptimal, amountBMin);
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
                 uint amountAOptimal = HelixLibrary.quote(amountBDesired, reserveB, reserveA);
                 assert(amountAOptimal <= amountADesired);
-                require(amountAOptimal >= amountAMin, 'HelixRouterV1: INSUFFICIENT_A_AMOUNT');
+                _requireGEQ(amountAOptimal, amountAMin);
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }
         }
@@ -81,7 +81,7 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         uint amountBMin,
         address to,
         uint deadline
-    ) external virtual override ensure(deadline) returns (uint amountA, uint amountB, uint liquidity) {
+    ) external virtual override onlyValidDeadline(deadline) returns (uint amountA, uint amountB, uint liquidity) {
         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
         address pair = HelixLibrary.pairFor(_factory, tokenA, tokenB);
         TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
@@ -95,7 +95,7 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         uint amountETHMin,
         address to,
         uint deadline
-    ) external virtual override payable ensure(deadline) returns (uint amountToken, uint amountETH, uint liquidity) {
+    ) external virtual override payable onlyValidDeadline(deadline) returns (uint amountToken, uint amountETH, uint liquidity) {
         (amountToken, amountETH) = _addLiquidity(
             token,
             _WETH,
@@ -122,14 +122,14 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         uint amountBMin,
         address to,
         uint deadline
-    ) public virtual override ensure(deadline) returns (uint amountA, uint amountB) {
+    ) public virtual override onlyValidDeadline(deadline) returns (uint amountA, uint amountB) {
         address pair = HelixLibrary.pairFor(_factory, tokenA, tokenB);
         HelixPair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
         (uint amount0, uint amount1) = HelixPair(pair).burn(to);
         (address token0,) = HelixLibrary.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
-        require(amountA >= amountAMin, 'HelixRouterV1: INSUFFICIENT_A_AMOUNT');
-        require(amountB >= amountBMin, 'HelixRouterV1: INSUFFICIENT_B_AMOUNT');
+        _requireGEQ(amountA, amountAMin);
+        _requireGEQ(amountB, amountBMin);
     }
     function removeLiquidityETH(
         address token,
@@ -138,7 +138,7 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         uint amountETHMin,
         address to,
         uint deadline
-    ) public virtual override ensure(deadline) returns (uint amountToken, uint amountETH) {
+    ) public virtual override onlyValidDeadline(deadline) returns (uint amountToken, uint amountETH) {
         (amountToken, amountETH) = removeLiquidity(
             token,
             _WETH,
@@ -190,7 +190,7 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         uint amountETHMin,
         address to,
         uint deadline
-    ) public virtual override ensure(deadline) returns (uint amountETH) {
+    ) public virtual override onlyValidDeadline(deadline) returns (uint amountETH) {
         (, amountETH) = removeLiquidity(
             token,
             _WETH,
@@ -246,9 +246,9 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         address[] calldata path,
         address to,
         uint deadline
-    ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
+    ) external virtual override onlyValidDeadline(deadline) returns (uint[] memory amounts) {
         amounts = HelixLibrary.getAmountsOut(_factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, 'HelixRouterV1: INSUFFICIENT_OUTPUT_AMOUNT');
+        _requireGEQ(amounts[amounts.length - 1], amountOutMin);
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, HelixLibrary.pairFor(_factory, path[0], path[1]), amounts[0]
         );
@@ -260,9 +260,9 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         address[] calldata path,
         address to,
         uint deadline
-    ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
+    ) external virtual override onlyValidDeadline(deadline) returns (uint[] memory amounts) {
         amounts = HelixLibrary.getAmountsIn(_factory, amountOut, path);
-        require(amounts[0] <= amountInMax, 'HelixRouterV1: EXCESSIVE_INPUT_AMOUNT');
+        _requireLEQ(amounts[0], amountInMax);
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, HelixLibrary.pairFor(_factory, path[0], path[1]), amounts[0]
         );
@@ -273,12 +273,12 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         virtual
         override
         payable
-        ensure(deadline)
+        onlyValidDeadline(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[0] == _WETH, 'HelixRouterV1: INVALID_PATH');
+        _requireValidPath(path[0]);
         amounts = HelixLibrary.getAmountsOut(_factory, msg.value, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, 'HelixRouterV1: INSUFFICIENT_OUTPUT_AMOUNT');
+        _requireGEQ(amounts[amounts.length - 1], amountOutMin);
         IWETH(_WETH).deposit{value: amounts[0]}();
         assert(IWETH(_WETH).transfer(HelixLibrary.pairFor(_factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
@@ -287,12 +287,12 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         external
         virtual
         override
-        ensure(deadline)
+        onlyValidDeadline(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[path.length - 1] == _WETH, 'HelixRouterV1: INVALID_PATH');
+        _requireValidPath(path[path.length - 1]);
         amounts = HelixLibrary.getAmountsIn(_factory, amountOut, path);
-        require(amounts[0] <= amountInMax, 'HelixRouterV1: EXCESSIVE_INPUT_AMOUNT');
+        _requireLEQ(amounts[0], amountInMax);
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, HelixLibrary.pairFor(_factory, path[0], path[1]), amounts[0]
         );
@@ -304,12 +304,12 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         external
         virtual
         override
-        ensure(deadline)
+        onlyValidDeadline(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[path.length - 1] == _WETH, 'HelixRouterV1: INVALID_PATH');
+        _requireValidPath(path[path.length - 1]); 
         amounts = HelixLibrary.getAmountsOut(_factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, 'HelixRouterV1: INSUFFICIENT_OUTPUT_AMOUNT');
+        _requireGEQ(amounts[amounts.length - 1], amountOutMin);
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, HelixLibrary.pairFor(_factory, path[0], path[1]), amounts[0]
         );
@@ -322,12 +322,12 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         virtual
         override
         payable
-        ensure(deadline)
+        onlyValidDeadline(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[0] == _WETH, 'HelixRouterV1: INVALID_PATH');
+        _requireValidPath(path[0]);
         amounts = HelixLibrary.getAmountsIn(_factory, amountOut, path);
-        require(amounts[0] <= msg.value, 'HelixRouterV1: EXCESSIVE_INPUT_AMOUNT');
+        _requireLEQ(amounts[0], msg.value);
         IWETH(_WETH).deposit{value: amounts[0]}();
         assert(IWETH(_WETH).transfer(HelixLibrary.pairFor(_factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
@@ -366,16 +366,13 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         address[] calldata path,
         address to,
         uint deadline
-    ) external virtual override ensure(deadline) {
+    ) external virtual override onlyValidDeadline(deadline) {
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, HelixLibrary.pairFor(_factory, path[0], path[1]), amountIn
         );
         uint balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
-        require(
-            IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore >= amountOutMin,
-            'HelixRouterV1: INSUFFICIENT_OUTPUT_AMOUNT'
-        );
+        _requireGEQ(IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore, amountOutMin);
     }
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
         uint amountOutMin,
@@ -387,18 +384,15 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         virtual
         override
         payable
-        ensure(deadline)
+        onlyValidDeadline(deadline)
     {
-        require(path[0] == _WETH, 'HelixRouterV1: INVALID_PATH');
+        _requireValidPath(path[0]);
         uint amountIn = msg.value;
         IWETH(_WETH).deposit{value: amountIn}();
         assert(IWETH(_WETH).transfer(HelixLibrary.pairFor(_factory, path[0], path[1]), amountIn));
         uint balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
-        require(
-            IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore >= amountOutMin,
-            'HelixRouterV1: INSUFFICIENT_OUTPUT_AMOUNT'
-        );
+        _requireGEQ(IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore, amountOutMin);
     }
     function swapExactTokensForETHSupportingFeeOnTransferTokens(
         uint amountIn,
@@ -410,15 +404,15 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         external
         virtual
         override
-        ensure(deadline)
+        onlyValidDeadline(deadline)
     {
-        require(path[path.length - 1] == _WETH, 'HelixRouterV1: INVALID_PATH');
+        _requireValidPath(path[path.length - 1]);
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, HelixLibrary.pairFor(_factory, path[0], path[1]), amountIn
         );
         _swapSupportingFeeOnTransferTokens(path, address(this));
         uint amountOut = IERC20(_WETH).balanceOf(address(this));
-        require(amountOut >= amountOutMin, 'HelixRouterV1: INSUFFICIENT_OUTPUT_AMOUNT');
+        _requireGEQ(amountOut, amountOutMin);
         IWETH(_WETH).withdraw(amountOut);
         TransferHelper.safeTransferETH(to, amountOut);
     }
@@ -484,5 +478,18 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
         returns (uint[] memory amounts)
     {
         return HelixLibrary.getAmountsIn(_factory, amountOut, path);
+    }
+
+    // require amount to be greater than or equal to min
+    function _requireGEQ(uint256 amount, uint256 min) private pure {
+        require(amount >= min, 'Router: insufficient amount');
+    }
+
+    function _requireLEQ(uint256 amount, uint256 max) private pure {
+        require(amount <= max, 'Router: excessive amount');
+    }
+
+    function _requireValidPath(address path) private view {
+        require(path == _WETH, 'Router: invalid path');
     }
 }
