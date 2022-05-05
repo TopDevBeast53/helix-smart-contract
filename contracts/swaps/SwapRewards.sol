@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '../interfaces/IOracleFactory.sol';
-import '../interfaces/ISwapRewards.sol';
-import '../interfaces/IHelixToken.sol';
-import '../interfaces/IHelixNFT.sol';
-import '../interfaces/IReferralRegister.sol';
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "../interfaces/IOracleFactory.sol";
+import "../interfaces/ISwapRewards.sol";
+import "../interfaces/IHelixToken.sol";
+import "../interfaces/IHelixNFT.sol";
+import "../interfaces/IReferralRegister.sol";
 
 /**
  * @title Accrue HELIX/AP to the swap caller
@@ -26,20 +26,20 @@ contract SwapRewards is ISwapRewards, Ownable {
     // 10    -> Rewards are 1% HELIX and 99% AP.
     // 500   -> Rewards are 50% HELIX and 50% AP. 
     // 1000  -> Rewards are 100% HELIX and 0% AP.
-    uint public splitRewardPercent;
+    uint256 public splitRewardPercent;
 
     // Percents earned on rewards after split.
     // 10 -> 1%, 100 -> 10%, 1000 -> 100%
-    uint public helixRewardPercent;
-    uint public apRewardPercent;
+    uint256 public helixRewardPercent;
+    uint256 public apRewardPercent;
 
-    event AccrueAp(address indexed account, uint ap);
-    event AccrueHelix(address indexed account, uint helix);
+    event AccrueAp(address indexed account, uint256 ap);
+    event AccrueHelix(address indexed account, uint256 helix);
     event Swap(
         address indexed account, 
         address indexed tokenIn, 
         address indexed tokenOut, 
-        uint amountIn
+        uint256 amountIn
     );
     
     constructor(
@@ -49,9 +49,9 @@ contract SwapRewards is ISwapRewards, Ownable {
         IHelixToken _helixToken,
         IHelixNFT _helixNFT,
         address _hpToken,
-        uint _splitRewardPercent,
-        uint _helixRewardPercent,
-        uint _apRewardPercent
+        uint256 _splitRewardPercent,
+        uint256 _helixRewardPercent,
+        uint256 _apRewardPercent
     ) {
         router = _router;
         oracleFactory = _oracleFactory;
@@ -67,11 +67,11 @@ contract SwapRewards is ISwapRewards, Ownable {
     /**
      * @dev Accrue HELIX/AP to the swap caller and accrue HELIX to the swap caller's referrer
      */
-    function swap(address account, address tokenIn, address tokenOut, uint amountIn) external {
+    function swap(address account, address tokenIn, address tokenOut, uint256 amountIn) external {
         require (msg.sender == router, "SwapFee: not router");
 
         // Accrue HELIX/AP to the swap caller
-        (uint helixAmount, uint apAmount) = splitReward(amountIn);
+        (uint256 helixAmount, uint256 apAmount) = splitReward(amountIn);
         accrueHelix(account, tokenOut, helixAmount);
         accrueAP(account, tokenOut, apAmount);
 
@@ -90,7 +90,7 @@ contract SwapRewards is ISwapRewards, Ownable {
      * @dev returns HELIX and AP rewards split by splitRewardPercent percentage
      *      such that helixAmount + apAmount = `amount`
      */
-    function splitReward(uint amount) public view returns (uint helixAmount, uint apAmount) {
+    function splitReward(uint256 amount) public view returns (uint256 helixAmount, uint256 apAmount) {
         helixAmount = amount * splitRewardPercent / 1000;
         apAmount = amount - helixAmount;
     }
@@ -98,8 +98,8 @@ contract SwapRewards is ISwapRewards, Ownable {
     /**
      * @dev Accrue HELIX to `account` based on `amountIn` of `tokenIn`.
      */
-    function accrueHelix(address account, address tokenIn, uint amountIn) private {
-        uint helixOut = getAmountOut(tokenIn, amountIn, address(helixToken));
+    function accrueHelix(address account, address tokenIn, uint256 amountIn) private {
+        uint256 helixOut = getAmountOut(tokenIn, amountIn, address(helixToken));
         helixOut = helixOut * helixRewardPercent / 1000;
         if (helixOut > 0) {
             helixToken.mint(account, helixOut);
@@ -110,8 +110,8 @@ contract SwapRewards is ISwapRewards, Ownable {
     /**
      * @dev Accrue AP to `account` based on `amountIn` of `tokenIn`.
      */
-    function accrueAP(address account, address tokenIn, uint amountIn) private {
-        uint apOut = getAmountOut(tokenIn, amountIn, hpToken);
+    function accrueAP(address account, address tokenIn, uint256 amountIn) private {
+        uint256 apOut = getAmountOut(tokenIn, amountIn, hpToken);
         apOut = apOut * apRewardPercent / 1000;
         if (apOut > 0) {
             helixNFT.accruePoints(account, apOut);
@@ -122,7 +122,7 @@ contract SwapRewards is ISwapRewards, Ownable {
     /**
      * @dev Gets the amount of `tokenOut` equivalent in value to `amountIn` many `tokenIn`.
      */
-    function getAmountOut(address tokenIn, uint amountIn, address tokenOut) public view returns (uint amountOut) {
+    function getAmountOut(address tokenIn, uint256 amountIn, address tokenOut) public view returns (uint256 amountOut) {
         amountOut = IOracleFactory(oracleFactory).consult(tokenIn, amountIn, tokenOut);
     }
 
@@ -157,12 +157,12 @@ contract SwapRewards is ISwapRewards, Ownable {
 
     // Note that all percentages in this contract are out of 1000,
     // so percentage == 1 -> 0.1% and 1000 -> 100%
-    modifier validPercentage(uint percentage) {
+    modifier validPercentage(uint256 percentage) {
         require(percentage <= 1000, "SwapFee: invalid percentage");
         _;
     }
 
-    function setSplitRewardPercent(uint _splitRewardPercent) 
+    function setSplitRewardPercent(uint256 _splitRewardPercent) 
         external
         onlyOwner 
         validPercentage(_splitRewardPercent) 
@@ -170,7 +170,7 @@ contract SwapRewards is ISwapRewards, Ownable {
         splitRewardPercent = _splitRewardPercent;
     }
 
-    function setApRewardPercent(uint _apRewardPercent) 
+    function setApRewardPercent(uint256 _apRewardPercent) 
         external
         onlyOwner 
         validPercentage(_apRewardPercent) 
@@ -178,7 +178,7 @@ contract SwapRewards is ISwapRewards, Ownable {
         apRewardPercent = _apRewardPercent;
     }
 
-    function setHelixRewardPercent(uint _helixRewardPercent) 
+    function setHelixRewardPercent(uint256 _helixRewardPercent) 
         external
         onlyOwner 
         validPercentage(_helixRewardPercent) 

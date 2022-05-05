@@ -35,7 +35,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     event ReferralReward(
         address indexed referred,
         address indexed referrer,
-        uint amount
+        uint256 amount
     );
 
     // Emitted when the owner sets the referral fees

@@ -1,8 +1,8 @@
 //SPDX-License-Identifier:MIT
 pragma solidity >=0.8.0;
 
-import './HelixPair.sol';
-import '../interfaces/IOracleFactory.sol';
+import "./HelixPair.sol";
+import "../interfaces/IOracleFactory.sol";
 
 contract HelixFactory {
     address public feeTo;
@@ -44,10 +44,10 @@ contract HelixFactory {
     }
 
     function createPair(address tokenA, address tokenB) external returns (address pair) {
-        require(tokenA != tokenB, 'Factory: identical addresses');
+        require(tokenA != tokenB, "Factory: identical addresses");
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        require(token0 != address(0), 'Factory: zero address');
-        require(getPair[token0][token1] == address(0), 'Factory: pair exists'); // single check is sufficient
+        require(token0 != address(0), "Factory: zero address");
+        require(getPair[token0][token1] == address(0), "Factory: pair exists"); // single check is sufficient
 
         bytes memory bytecode = type(HelixPair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
@@ -76,7 +76,7 @@ contract HelixFactory {
     }
 
     function setDevFee(address _pair, uint8 _devFee) external onlyFeeToSetter {
-        require(_devFee > 0, 'Factory: invalid fee');
+        require(_devFee > 0, "Factory: invalid fee");
         HelixPair(_pair).setDevFee(_devFee);
         emit DevFeeSet(_pair, _devFee);
     }

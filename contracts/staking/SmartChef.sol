@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 import "../interfaces/IBEP20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 contract SmartChef is Ownable {
     // Info of each user.
@@ -32,7 +32,7 @@ contract SmartChef is Ownable {
     // Info of each user that stakes LP tokens.
     mapping (address => UserInfo) public userInfo;
     // Total allocation points. Must be the sum of all allocation points in all pools.
-    uint256 public totalAllocPoint = 0;
+    uint256 public totalAllocPoint;
     // The block number when Helix mining starts.
     uint256 public startBlock;
     // The block number when Helix mining ends.
@@ -88,13 +88,13 @@ contract SmartChef is Ownable {
     }
 
     // Set the limit amount.
-    function setLimitAmount(uint256 _amount) public onlyOwner {
+    function setLimitAmount(uint256 _amount) external onlyOwner {
         limitAmount = _amount;
         emit LimitAmountSet(_amount);
     }
 
     // Return remaining limit amount
-    function remainingLimitAmount() public view returns(uint256) {
+    function remainingLimitAmount() external view returns(uint256) {
         if (userInfo[msg.sender].amount >= limitAmount){
             return 0;
         }
@@ -154,11 +154,11 @@ contract SmartChef is Ownable {
     }
 
     // Stake helixToken tokens to SmartChef
-    function deposit(uint256 _amount) public {
+    function deposit(uint256 _amount) external {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
 
-        require(user.amount + _amount <= limitAmount, 'SmartChef: amount exceeds limit');
+        require(user.amount + _amount <= limitAmount, "SmartChef: amount exceeds limit");
 
         updatePool(0);
         uint256 pending = user.amount * pool.accHelixPerShare / PRECISION_FACTOR - user.rewardDebt;
@@ -176,7 +176,7 @@ contract SmartChef is Ownable {
     }
 
     // Withdraw helixToken tokens from STAKING.
-    function withdraw(uint256 _amount) public {
+    function withdraw(uint256 _amount) external {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
 
@@ -198,7 +198,7 @@ contract SmartChef is Ownable {
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
-    function emergencyWithdraw() public {
+    function emergencyWithdraw() external {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
         uint256 amountToTransfer = user.amount;
@@ -212,7 +212,7 @@ contract SmartChef is Ownable {
 
     // Withdraw reward. EMERGENCY ONLY.
     function emergencyRewardWithdraw(uint256 _amount) public onlyOwner {
-        require(_amount <= rewardToken.balanceOf(address(this)), 'SmartChef: insufficient balance');
+        require(_amount <= rewardToken.balanceOf(address(this)), "SmartChef: insufficient balance");
         TransferHelper.safeTransfer(address(rewardToken), msg.sender, _amount);
     }
 }

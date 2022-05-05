@@ -4,30 +4,29 @@ pragma solidity >=0.8.0;
 import "../tokens/HelixLP.sol";
 import "../libraries/UQ112x112.sol";
 import "../libraries/ExtraMath.sol";
-import "../interfaces/IHelixCallee.sol";
-import './HelixFactory.sol';
-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import "./HelixFactory.sol";
 import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
+import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 contract HelixPair is HelixLP, ReentrancyGuard {
     using UQ112x112 for uint224;
 
-    event Mint(address indexed sender, uint amount0, uint amount1);
-    event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
+    event Mint(address indexed sender, uint256 amount0, uint256 amount1);
+    event Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to);
     event Swap(
         address indexed sender,
-        uint amount0In,
-        uint amount1In,
-        uint amount0Out,
-        uint amount1Out,
+        uint256 amount0In,
+        uint256 amount1In,
+        uint256 amount0Out,
+        uint256 amount1Out,
         address indexed to
     );
     event Sync(uint112 reserve0, uint112 reserve1);
 
-    uint    public constant MINIMUM_LIQUIDITY = 10**3;
+    uint256    public constant MINIMUM_LIQUIDITY = 10**3;
     address public factory;
     address public token0;
     address public token1;
@@ -36,12 +35,12 @@ contract HelixPair is HelixLP, ReentrancyGuard {
     uint112 private reserve1;           // uses single storage slot, accessible via getReserves
     uint32  private blockTimestampLast; // uses single storage slot, accessible via getReserves
 
-    uint public price0CumulativeLast;
-    uint public price1CumulativeLast;
-    uint public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
+    uint256 public price0CumulativeLast;
+    uint256 public price1CumulativeLast;
+    uint256 public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
     
-    uint32 public swapFee = 2; // uses 0.2% default
-    uint32 public devFee  = 5; // uses 0.5% default from swap fee
+    uint32 public swapFee;              // uses 0.2% default
+    uint32 public devFee;               // uses 0.5% default from swap fee
 
     function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
         _reserve0 = reserve0;
@@ -61,6 +60,10 @@ contract HelixPair is HelixLP, ReentrancyGuard {
 
     constructor() {
         factory = msg.sender;
+
+        swapFee = 2; // uses 0.2% default
+        devFee  = 5; // uses 0.5% default from swap fee
+
     }
 
     // called once by the factory at time of deployment
@@ -70,18 +73,20 @@ contract HelixPair is HelixLP, ReentrancyGuard {
     }
 
     function setSwapFee(uint32 _swapFee) external onlyFactory onlyAboveZero(_swapFee) {
-        require(_swapFee <= 1000, 'Pair: invalid fee');
+        require(_swapFee <= 1000, "Pair: invalid fee");
         swapFee = _swapFee;
     }
     
     function setDevFee(uint32 _devFee) external onlyFactory onlyAboveZero(_devFee) {
-        require(_devFee <= 500, 'Pair: invalid fee');
+        require(_devFee <= 500, "Pair: invalid fee");
+    
+    function setDevFee(uint32 _devFee) external {
         devFee = _devFee;
     }
 
     // update reserves and, on the first call per block, price accumulators
-    function _update(uint balance0, uint balance1, uint112 _reserve0, uint112 _reserve1) private {
-        require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, 'Pair: overflow');
+    function _update(uint256 balance0, uint256 balance1, uint112 _reserve0, uint112 _reserve1) private {
+        require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, "Pair: overflow");
         uint32 blockTimestamp = uint32(block.timestamp % 2**32);
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
         if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {
@@ -99,15 +104,15 @@ contract HelixPair is HelixLP, ReentrancyGuard {
     function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool feeOn) {
         address feeTo = IUniswapV2Factory(factory).feeTo();
         feeOn = feeTo != address(0);
-        uint _kLast = kLast; // gas savings
+        uint256 _kLast = kLast; // gas savings
         if (feeOn) {
             if (_kLast != 0) {
-                uint rootK = ExtraMath.sqrt(uint(_reserve0) * _reserve1);
-                uint rootKLast = ExtraMath.sqrt(_kLast);
+                uint256 rootK = ExtraMath.sqrt(uint(_reserve0) * _reserve1);
+                uint256 rootKLast = ExtraMath.sqrt(_kLast);
                 if (rootK > rootKLast) {
-                    uint numerator = totalSupply * (rootK - rootKLast);
-                    uint denominator = rootK * devFee + rootKLast;
-                    uint liquidity = numerator / denominator;
+                    uint256 numerator = totalSupply * (rootK - rootKLast);
+                    uint256 denominator = rootK * devFee + rootKLast;
+                    uint256 liquidity = numerator / denominator;
                     if (liquidity > 0) _mint(feeTo, liquidity);
                 }
             }
@@ -117,22 +122,22 @@ contract HelixPair is HelixLP, ReentrancyGuard {
     }
 
     // this low-level function should be called from a contract which performs important safety checks
-    function mint(address to) public nonReentrant returns (uint liquidity) {
+    function mint(address to) external nonReentrant returns (uint256 liquidity) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        uint balance0 = IERC20(token0).balanceOf(address(this));
-        uint balance1 = IERC20(token1).balanceOf(address(this));
-        uint amount0 = balance0 - _reserve0;
-        uint amount1 = balance1 - _reserve1;
+        uint256 balance0 = IERC20(token0).balanceOf(address(this));
+        uint256 balance1 = IERC20(token1).balanceOf(address(this));
+        uint256 amount0 = balance0 - _reserve0;
+        uint256 amount1 = balance1 - _reserve1;
 
         bool feeOn = _mintFee(_reserve0, _reserve1);
-        uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
+        uint256 _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
         if (_totalSupply == 0) {
             liquidity = ExtraMath.sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;
            _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
             liquidity = Math.min(amount0 * _totalSupply / _reserve0, amount1 * _totalSupply / _reserve1);
         }
-        require(liquidity > 0, 'Pair: insufficient minted');
+        require(liquidity > 0, "Pair: insufficient minted");
         _mint(to, liquidity);
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -141,22 +146,22 @@ contract HelixPair is HelixLP, ReentrancyGuard {
     }
 
     // this low-level function should be called from a contract which performs important safety checks
-    function burn(address to) external nonReentrant returns (uint amount0, uint amount1) {
+    function burn(address to) external nonReentrant returns (uint256 amount0, uint256 amount1) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         address _token0 = token0;                                // gas savings
         address _token1 = token1;                                // gas savings
 
-        uint balance0 = IERC20(_token0).balanceOf(address(this));
-        uint balance1 = IERC20(_token1).balanceOf(address(this));
-
-        uint liquidity = balanceOf[address(this)];
+        uint256 balance0 = IERC20(_token0).balanceOf(address(this));
+        uint256 balance1 = IERC20(_token1).balanceOf(address(this));
+        
+        uint256 liquidity = balanceOf[address(this)];
         bool feeOn = _mintFee(_reserve0, _reserve1);
-        uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
+        uint256 _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
 
         amount0 = liquidity * balance0 / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity * balance1 / _totalSupply; // using balances ensures pro-rata distribution
 
-        require(amount0 > 0 && amount1 > 0, 'Pair: insufficient burned');
+        require(amount0 > 0 && amount1 > 0, "Pair: insufficient burned");
 
         // Set the expected balance by subtracting amountX before _burn and safeTransfer calls
         // to perform all state changes before external calls and protect against reentrancy
@@ -175,34 +180,33 @@ contract HelixPair is HelixLP, ReentrancyGuard {
     }
 
     // this low-level function should be called from a contract which performs important safety checks
-    function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external nonReentrant {
-        require(amount0Out > 0 || amount1Out > 0, 'Pair: insufficient amount out');
+    function swap(uint256 amount0Out, uint256 amount1Out, address to) external nonReentrant {
+        require(amount0Out > 0 || amount1Out > 0, "Pair: insufficient amount out");
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        require(amount0Out < _reserve0 && amount1Out < _reserve1, 'Pair: insufficient liquidity');
+        require(amount0Out < _reserve0 && amount1Out < _reserve1, "Pair: insufficient liquidity");
 
-        uint balance0;
-        uint balance1;
+        uint256 balance0;
+        uint256 balance1;
         { // scope for _token{0,1}, avoids stack too deep errors
             address _token0 = token0;
             address _token1 = token1;
-            require(to != _token0 && to != _token1, 'Pair: invalid to');
+            require(to != _token0 && to != _token1, "Pair: invalid to");
             if (amount0Out > 0) TransferHelper.safeTransfer(_token0, to, amount0Out);
             if (amount1Out > 0) TransferHelper.safeTransfer(_token1, to, amount1Out);
-            if (data.length > 0) IHelixCallee(to).HelixCall(msg.sender, amount0Out, amount1Out, data);
             balance0 = IERC20(_token0).balanceOf(address(this));
             balance1 = IERC20(_token1).balanceOf(address(this));
         }
 
-        uint amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
-        uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
-        require(amount0In > 0 || amount1In > 0, 'Pair: insufficient amount in');
+        uint256 amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
+        uint256 amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
+        require(amount0In > 0 || amount1In > 0, "Pair: insufficient amount in");
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
-            uint _swapFee = swapFee;
-            uint balance0Adjusted = balance0 * (1000) - (amount0In * _swapFee);
-            uint balance1Adjusted = balance1 * (1000) - (amount1In * _swapFee);
+            uint256 _swapFee = swapFee;
+            uint256 balance0Adjusted = balance0 * (1000) - (amount0In * _swapFee);
+            uint256 balance1Adjusted = balance1 * (1000) - (amount1In * _swapFee);
             require(
                 balance0Adjusted * balance1Adjusted >= uint(_reserve0) * (_reserve1) * (1000**2), 
-                'Pair: insufficient reserves'
+                "Pair: insufficient reserves"
             );
         }
 
