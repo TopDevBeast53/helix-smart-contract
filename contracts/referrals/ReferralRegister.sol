@@ -50,8 +50,13 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     // Emitted when a referrer withdraws their earned referral rewards
     event Withdrawn(address referrer, uint256 rewards);
 
-    modifier isValidAddress(address _address) {
-        require(_address != address(0), "ReferralRegister: INVALID ADDRESS");
+    modifier isNotZeroAddress(address _address) {
+        require(_address != address(0), "ReferralRegister: zero address");
+        _;
+    }
+
+    modifier onlyRecorder() {
+        require(isRecorder(msg.sender), "ReferralRegister: not a recorder");
         _;
     }
 
@@ -67,7 +72,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     function recordStakingRewardWithdrawal(address user, uint256 amount) 
         external 
         onlyRecorder 
-        isValidAddress(user)
+        isNotZeroAddress(user)
     {
         uint256 stakingRefReward = ((amount * stakingRefFee) / 1000);
         balance[ref[user]] += stakingRefReward;
@@ -78,7 +83,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     function recordSwapReward(address user, uint256 amount) 
         external 
         onlyRecorder 
-        isValidAddress(user)
+        isNotZeroAddress(user)
     {
         uint256 swapRefReward = ((amount * swapRefFee) / 1000);
         balance[ref[user]] += swapRefReward;
@@ -88,28 +93,29 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
 
     function setFees(uint256 _stakingRefFee, uint256 _swapRefFee) external onlyOwner {
         // Prevent the owner from increasing referral rewards - values to be determined
-        require(_stakingRefFee < MAX_STAKING_FEE && _swapRefFee < MAX_SWAP_FEE, "Referral Register: Fees are too high.");
+        require(_stakingRefFee <= MAX_STAKING_FEE, "ReferralRegister: invalid staking fee");
+        require(_swapRefFee <= MAX_SWAP_FEE, "ReferralRegister: invalid swap fee");
         stakingRefFee = _stakingRefFee;
         swapRefFee = _swapRefFee;
         emit FeesSet(_stakingRefFee, _swapRefFee);
     }
 
     function addRef(address _referrer) external {
-        require(ref[msg.sender] == address(0), "Referral Register: Address was already referred.");
-        require(msg.sender != _referrer, "Referral Register: No self referral.");
+        require(ref[msg.sender] == address(0), "ReferralRegister: already referred");
+        require(msg.sender != _referrer, "ReferralRegister: no self referral");
         ref[msg.sender] = _referrer;
         emit ReferrerAdded(msg.sender, _referrer);
     }
 
     function removeRef() external {
-        require(ref[msg.sender] != address(0), "Referral Register: Address was not referred.");
+        require(ref[msg.sender] != address(0), "ReferralRegister: not referred");
         ref[msg.sender] = address(0);
         emit ReferrerRemoved(msg.sender);
     }
 
     function withdraw() external nonReentrant {
         uint256 toMint = balance[msg.sender];
-        require(toMint != 0, "ReferralRegister: NOTHING TO WITHDRAW");
+        require(toMint != 0, "ReferralRegister: nothing to withdraw");
 
         balance[msg.sender] = 0;
 
@@ -124,8 +130,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     * @param account address of recorder to be added.
     * @return true if successful.
     */
-    function addRecorder(address account) public onlyOwner returns(bool) {
-        require(account != address(0), "ReferralRegister: account is the zero address");
+    function addRecorder(address account) public onlyOwner isNotZeroAddress(account) returns(bool) {
         return EnumerableSet.add(_recorders, account);
     }
 
@@ -134,8 +139,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     * @param account address of recorder to be deleted.
     * @return true if successful.
     */
-    function delRecorder(address account) external onlyOwner returns(bool) {
-        require(account != address(0), "ReferralRegister: account is the zero address");
+    function delRecorder(address account) external onlyOwner isNotZeroAddress(account) returns(bool) {
         return EnumerableSet.remove(_recorders, account);
     }
 
@@ -163,13 +167,5 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     function getRecorder(uint256 index) external view onlyOwner returns(address) {
         require(index <= getRecorderLength() - 1, "ReferralRegister: index out of bounds");
         return EnumerableSet.at(_recorders, index);
-    }
-
-    /**
-    * @dev Modifier
-    */
-    modifier onlyRecorder() {
-        require(isRecorder(msg.sender), "ReferralRegister: caller is not a recorder");
-        _;
     }
 }
