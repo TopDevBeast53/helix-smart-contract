@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-contract HelixNFT is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable {
+contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable {
     using Strings for uint256;
     using EnumerableSet for EnumerableSet.AddressSet;
 
