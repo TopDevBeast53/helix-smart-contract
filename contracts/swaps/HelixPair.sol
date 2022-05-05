@@ -4,13 +4,12 @@ pragma solidity >=0.8.0;
 import "../tokens/HelixLP.sol";
 import "../libraries/UQ112x112.sol";
 import "../libraries/ExtraMath.sol";
-import "../interfaces/IHelixCallee.sol";
 import "./HelixFactory.sol";
-import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
+import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 contract HelixPair is HelixLP, ReentrancyGuard {
     using UQ112x112 for uint224;
@@ -174,7 +173,7 @@ contract HelixPair is HelixLP, ReentrancyGuard {
     }
 
     // this low-level function should be called from a contract which performs important safety checks
-    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external nonReentrant {
+    function swap(uint256 amount0Out, uint256 amount1Out, address to) external nonReentrant {
         require(amount0Out > 0 || amount1Out > 0, "Helix INSUFFICIENT_OUTPUT_AMOUNT");
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         require(amount0Out < _reserve0 && amount1Out < _reserve1, "Helix INSUFFICIENT_LIQUIDITY");
@@ -187,7 +186,6 @@ contract HelixPair is HelixLP, ReentrancyGuard {
             require(to != _token0 && to != _token1, "Helix INVALID_TO");
             if (amount0Out > 0) TransferHelper.safeTransfer(_token0, to, amount0Out);
             if (amount1Out > 0) TransferHelper.safeTransfer(_token1, to, amount1Out);
-            if (data.length > 0) IHelixCallee(to).HelixCall(msg.sender, amount0Out, amount1Out, data);
             balance0 = IERC20(_token0).balanceOf(address(this));
             balance1 = IERC20(_token1).balanceOf(address(this));
         }
