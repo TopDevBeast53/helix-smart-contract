@@ -51,10 +51,10 @@ contract HelixVault is Ownable {
     uint256 public bonusEndBlock;
    
     // Used for computing rewards
-    uint256 public PRECISION_FACTOR;
+    uint256 public immutable PRECISION_FACTOR;
 
     // Used for a weight's percentage, i.e. weight / WEIGHT_PERCENT
-    uint256 public WEIGHT_PERCENT;
+    uint256 public constant WEIGHT_PERCENT = 1000;
 
     event NewDeposit(
         address indexed user, 
@@ -129,11 +129,6 @@ contract HelixVault is Ownable {
         require(decimalsRewardToken < 30, "HelixVault: REWARD TOKEN MUST HAVE LESS THAN 30 DECIMALS");
 
         PRECISION_FACTOR = uint(10**(uint(30) - decimalsRewardToken));
-        
-        // weight == 50 -> 5%
-        // weight == 300 -> 30%
-        // weight == 1000 -> 100%
-        WEIGHT_PERCENT = 1000;
     }
 
     // Used internally to create a new deposit and lock `amount` of token for `index` 

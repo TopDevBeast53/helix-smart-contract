@@ -69,7 +69,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     // the denominator used when calculating percentages
     // if MAX_FEE_PERCENT == 1000, then fees are out of 1000
     // so if fee == 50 that's 5% and if fee == 500 that's 50%
-    uint256 public MAX_FEE_PERCENT;
+    uint256 public constant MAX_FEE_PERCENT = 1000;
 
     // Map a seller address to the swaps it's opened 
     mapping(address => uint[]) public swapIds;
@@ -151,8 +151,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
 
         MIN_LOCK_DURATION = _MIN_LOCK_DURATION;
         MAX_LOCK_DURATION = _MAX_LOCK_DURATION;
-
-        MAX_FEE_PERCENT = 1000;
     }
 
     // Called externally to open a new swap

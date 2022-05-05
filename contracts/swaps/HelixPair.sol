@@ -40,8 +40,8 @@ contract HelixPair is HelixLP, ReentrancyGuard {
     uint256 public price1CumulativeLast;
     uint256 public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
     
-    uint32 public swapFee = 2; // uses 0.2% default
-    uint32 public devFee  = 5; // uses 0.5% default from swap fee
+    uint32 public swapFee;              // uses 0.2% default
+    uint32 public devFee;               // uses 0.5% default from swap fee
 
     function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
         _reserve0 = reserve0;
@@ -51,6 +51,10 @@ contract HelixPair is HelixLP, ReentrancyGuard {
 
     constructor() {
         factory = msg.sender;
+
+        swapFee = 2; // uses 0.2% default
+        devFee  = 5; // uses 0.5% default from swap fee
+
     }
 
     // called once by the factory at time of deployment

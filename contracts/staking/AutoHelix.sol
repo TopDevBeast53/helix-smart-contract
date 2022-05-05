@@ -33,10 +33,10 @@ contract AutoHelix is Ownable, Pausable {
     uint256 public constant MAX_WITHDRAW_FEE = 100; // 1%
     uint256 public constant MAX_WITHDRAW_FEE_PERIOD = 3 days; // 3 days
 
-    uint256 public performanceFee = 299; // 2.99%
-    uint256 public callFee = 25; // 0.25%
-    uint256 public withdrawFee = 10; // 0.1%
-    uint256 public withdrawFeePeriod = 3 days; // 3 days
+    uint256 public performanceFee;
+    uint256 public callFee;
+    uint256 public withdrawFee;
+    uint256 public withdrawFeePeriod;
 
     event Deposit(address indexed sender, uint256 amount, uint256 shares, uint256 lastDepositedTime);
     event Withdraw(address indexed sender, uint256 amount, uint256 shares);
@@ -73,6 +73,11 @@ contract AutoHelix is Ownable, Pausable {
 
         // Infinite approve
         IERC20(_token).approve(address(_masterchef), type(uint256).max);
+
+        performanceFee = 299; // 2.99%
+        callFee = 25; // 0.25%
+        withdrawFee = 10; // 0.1%
+        withdrawFeePeriod = 3 days; // 3 days
     }
 
     /**

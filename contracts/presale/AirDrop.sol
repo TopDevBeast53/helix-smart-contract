@@ -42,13 +42,15 @@ contract AirDrop is ReentrancyGuard {
      * After withdraw phase 1 is started, subsequent withdraw phases automatically 
      * begin `WITHDRAW_PHASE_DURATION` after the start of the previous withdraw phase
      */
-    uint256 public WITHDRAW_PHASE_START;           // Phase when withdrawing starts 
-    uint256 public WITHDRAW_PHASE_END;             // Last withdraw phase, does not end withdrawing
-    uint256 public WITHDRAW_PHASE_DURATION;        // Length of time for a withdrawPhase, 86400 == 1 day
+    uint256 public constant WITHDRAW_PHASE_START = 1;           // Phase when withdrawing starts 
+    uint256 public constant WITHDRAW_PHASE_END = 5;             // Last withdraw phase, does not end withdrawing
+
+    uint256 public immutable WITHDRAW_PHASE_DURATION;        // Length of time for a withdrawPhase, 86400 == 1 day
+
     uint256 public withdrawPhase;                  // Current withdrawPhase
     uint256 public withdrawPhaseEndTimestamp;      // Timestamp after which the current withdrawPhase has ended
 
-    uint256 public WITHDRAW_PERCENT;               // Used as the denominator when calculating withdraw percent
+    uint256 public constant WITHDRAW_PERCENT = 100;    // the denominator, withdrawPhasePercent[x]/WITHDRAW_PERCENT
 
     // sets whether withdrawals are enabled or disabled and by whom
     bool public isPaused;
@@ -105,15 +107,12 @@ contract AirDrop is ReentrancyGuard {
         isOwner[msg.sender] = true;
         owners.push(msg.sender);
 
-        WITHDRAW_PHASE_START = 1;
-        WITHDRAW_PHASE_END = 5;
         WITHDRAW_PHASE_DURATION = _WITHDRAW_PHASE_DURATION;
 
         withdrawPhasePercent[2] = 25;       // 25%
         withdrawPhasePercent[3] = 50;       // 50%
         withdrawPhasePercent[4] = 75;       // 75%
         withdrawPhasePercent[5] = 100;      // 100%
-        WITHDRAW_PERCENT = 100;             // the denominator, withdrawPhasePercent[x]/WITHDRAW_PERCENT
     }
 
     // used to destroy `amount` of token
