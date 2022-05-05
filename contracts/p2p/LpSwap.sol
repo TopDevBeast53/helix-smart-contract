@@ -102,15 +102,30 @@ contract LpSwap is Ownable, ReentrancyGuard {
     event BuyerFeeSet(uint buyerFee); 
 
     modifier isValidSwapId(uint id) {
-        require(swaps.length != 0, "LpSwap: NO SWAP OPENED");
-        require(id < swaps.length, "LpSwap: INVALID SWAP ID");
+        require(swaps.length != 0, "LpSwap: no swap opened");
+        require(id < swaps.length, "LpSwap: invalid swap id");
         _;
     }
 
     modifier isValidBidId(uint id) {
-        require(bids.length != 0, "LpSwap: NO BID MADE");
-        require(id < bids.length, "LpSwap: INVALID BID ID");
+        require(bids.length != 0, "LpSwap: no bid made");
+        require(id < bids.length, "LpSwap: invalid bid id");
         _;
+    }
+
+    modifier isNotZeroAddress(address _address) {
+        require(_address != address(0), "LpSwap: zero address");
+        _;
+    }
+
+    modifier isAboveZero(uint256 number) {
+        require(number > 0, "LpSwap: not above zero");
+        _;
+    }
+
+    modifier isValidFee(uint256 _fee) {
+       require(_fee <= MAX_FEE_PERCENT, "LpSwap: invalid fee");
+       _;
     }
 
     constructor(
@@ -126,13 +141,14 @@ contract LpSwap is Ownable, ReentrancyGuard {
         IERC20 toSellerToken,   // Token being sold in this swap by buyer to seller
         uint amount,            // Amount of toBuyerToken to sell
         uint ask                // Amount of toSellerToken seller is asking to sell toBuyerToken for
-    ) external {
-        require(address(toBuyerToken) != address(0), "LpSwap: INVALID TO BUYER TOKEN ADDRESS");
-        require(address(toSellerToken) != address(0), "LpSwap: INVALID TO SELLER TOKEN ADDRESS");
-        require(address(toSellerToken) != address(toBuyerToken), "LpSwap: TOKENS MUST BE DISTINCT");
-        require(amount > 0, "LpSwap: AMOUNT CAN'T BE ZERO");
-
-        _verify(toBuyerToken, msg.sender, amount);
+    ) 
+        external 
+        isNotZeroAddress(address(toBuyerToken))
+        isNotZeroAddress(address(toSellerToken))
+        isAboveZero(amount)
+    {
+        require(address(toSellerToken) != address(toBuyerToken), "LpSwap: tokens not distinct");
+        _requireValidBalanceAndAllowance(toBuyerToken, msg.sender, amount);
 
         // Open the swap
         Swap memory swap;
@@ -157,9 +173,9 @@ contract LpSwap is Ownable, ReentrancyGuard {
     // Called by seller to update the swap's ask
     function setAsk(uint _swapId, uint ask) external {
         Swap storage swap = _getSwap(_swapId);
-
-        require(swap.isOpen, "LpSwap: SWAP IS CLOSED");
-        require(msg.sender == swap.seller, "LpSwap: ONLY SELLER CAN SET ASK");
+        
+        _requireIsOpen(swap.isOpen);
+        _requireIsSeller(msg.sender, swap.seller);
 
         swap.ask = ask;
         emit AskSet(_swapId);
@@ -169,22 +185,21 @@ contract LpSwap is Ownable, ReentrancyGuard {
     function closeSwap(uint _swapId) external {
         Swap storage swap = _getSwap(_swapId);
 
-        require(swap.isOpen, "LpSwap: SWAP IS CLOSED");
-        require(msg.sender == swap.seller, "LpSwap: ONLY SELLER CAN CLOSE SWAP");
+        _requireIsOpen(swap.isOpen);
+        _requireIsSeller(msg.sender, swap.seller);
 
         swap.isOpen = false;
         emit SwapClosed(_swapId);
     }
 
     // Make a new bid on an open swap
-    function makeBid(uint _swapId, uint amount) external {
+    function makeBid(uint _swapId, uint amount) external isAboveZero(amount) {
         Swap storage swap = _getSwap(_swapId);
 
-        require(swap.isOpen, "LpSwap: SWAP IS CLOSED");
-        require(msg.sender != swap.seller, "LpSwap: SELLER CAN'T BID ON THEIR OWN SWAP");
-        require(!hasBidOnSwap[msg.sender][_swapId], "LpSwap: CALLER HAS ALREADY MADE BID");
-        require(amount > 0, "LpSwap: BID AMOUNT CAN'T BE ZERO");
-        _verify(swap.toSellerToken, msg.sender, amount);
+        _requireIsOpen(swap.isOpen);
+        _requireIsNotSeller(msg.sender, swap.seller);
+        require(!hasBidOnSwap[msg.sender][_swapId], "LpSwap: caller has already bid");
+        _requireValidBalanceAndAllowance(swap.toSellerToken, msg.sender, amount);
 
         // Open the swap
         Bid memory bid;
@@ -215,9 +230,9 @@ contract LpSwap is Ownable, ReentrancyGuard {
         Bid storage bid = _getBid(_bidId);
         Swap storage swap = _getSwap(bid.swapId);
     
-        require(swap.isOpen, "LpSwap: SWAP IS CLOSED");
-        require(msg.sender == bid.bidder, "LpSwap: CALLER IS NOT THE BIDDER");
-        _verify(swap.toSellerToken, msg.sender, amount);
+        _requireIsOpen(swap.isOpen);
+        require(msg.sender == bid.bidder, "LpSwap: caller is not bidder");
+        _requireValidBalanceAndAllowance(swap.toSellerToken, msg.sender, amount);
 
         bid.amount = amount;
 
@@ -229,8 +244,7 @@ contract LpSwap is Ownable, ReentrancyGuard {
         Bid storage bid = _getBid(_bidId);
         Swap storage swap = _getSwap(bid.swapId);
 
-        require(msg.sender == swap.seller, "LpSwap: ONLY SELLER CAN ACCEPT BID");
-
+        _requireIsSeller(msg.sender, swap.seller);
         _accept(swap, msg.sender, bid.bidder, bid.amount);
 
         emit BidAccepted(_bidId);
@@ -239,8 +253,8 @@ contract LpSwap is Ownable, ReentrancyGuard {
     // Called by a buyer to accept the ask and close the swap
     function acceptAsk(uint _swapId) external {
         Swap storage swap = _getSwap(_swapId);
-        require(msg.sender != swap.seller, "LpSwap: SELLER CAN'T ACCEPT ASK");
 
+        _requireIsNotSeller(msg.sender, swap.seller);
         _accept(swap, swap.seller, msg.sender, swap.ask);
 
         emit AskAccepted(_swapId);
@@ -254,14 +268,14 @@ contract LpSwap is Ownable, ReentrancyGuard {
         address buyer,          // buyer of the swap
         uint toSellerAmount     // amount being paid by buyer to seller
     ) private {
-        require(swap.isOpen, "LpSwap: SWAP IS CLOSED");
+        _requireIsOpen(swap.isOpen);
 
         // Verify that the buyer and seller can both cover the swap
         IERC20 toBuyerToken = swap.toBuyerToken;
-        _verify(toBuyerToken, seller, swap.amount);
+        _requireValidBalanceAndAllowance(toBuyerToken, seller, swap.amount);
 
         IERC20 toSellerToken = swap.toSellerToken;
-        _verify(toSellerToken, buyer, toSellerAmount);
+        _requireValidBalanceAndAllowance(toSellerToken, buyer, toSellerAmount);
 
         // Update the swap's status
         swap.isOpen = false;
@@ -281,11 +295,11 @@ contract LpSwap is Ownable, ReentrancyGuard {
 
     // Verify that _address has amount of token in balance
     // and that _address has approved this contract to transfer amount
-    function _verify(IERC20 token, address _address, uint amount) private view {
-        require(amount <= token.balanceOf(_address), "LpSwap: INSUFFICIENT TOKEN BALANCE");
+    function _requireValidBalanceAndAllowance(IERC20 token, address _address, uint amount) private view {
+        require(amount <= token.balanceOf(_address), "LpSwap: insufficient balance");
         require(
             amount <= token.allowance(_address, address(this)),
-            "LpSwap: INSUFFICIENT TOKEN ALLOWANCE"
+            "LpSwap: insufficient allowance"
         );
     }
 
@@ -314,8 +328,12 @@ contract LpSwap is Ownable, ReentrancyGuard {
     }
 
     // Return the array of all swapIds bid on by _address
-    function getBidderSwapIds(address _address) external view returns(uint[] memory _bidderSwapIds) {
-        require(_address != address(0), "YieldSwap: INVALID ADDRESS");
+    function getBidderSwapIds(address _address) 
+        external 
+        view 
+        isNotZeroAddress(_address) 
+        returns (uint[] memory _bidderSwapIds) 
+    {
         _bidderSwapIds = bidderSwapIds[_address];
     }
 
@@ -366,20 +384,17 @@ contract LpSwap is Ownable, ReentrancyGuard {
         return bids[_bidId];
     }
 
-    function setTreasury(address _treasury) external onlyOwner {
-        require(address(_treasury) != address(0), "LpSwap: INVALID TREASURY ADDRESS");
+    function setTreasury(address _treasury) external onlyOwner isNotZeroAddress(_treasury) {
         treasury = _treasury;
         emit TreasurySet(_treasury);
     }
 
-    function setSellerFee(uint _sellerFee) external onlyOwner {
-        require(_sellerFee <= MAX_FEE_PERCENT, "LpSwap: INVALID SELLER FEE");
+    function setSellerFee(uint _sellerFee) external onlyOwner isValidFee(_sellerFee) {
         sellerFee = _sellerFee;
         emit SellerFeeSet(_sellerFee);
     }
 
-    function setBuyerFee(uint _buyerFee) external onlyOwner {
-        require(_buyerFee <= MAX_FEE_PERCENT, "LpSwap: INVALID BUYER FEE");
+    function setBuyerFee(uint _buyerFee) external onlyOwner isValidFee(_buyerFee) {
         buyerFee = _buyerFee;
         emit BuyerFeeSet(_buyerFee);
     }
@@ -402,5 +417,17 @@ contract LpSwap is Ownable, ReentrancyGuard {
     function _applyBuyerFee(uint amount) private view returns(uint buyerAmount, uint treasuryAmount) {
         treasuryAmount = amount * buyerFee / MAX_FEE_PERCENT;
         buyerAmount = amount - treasuryAmount;
+    }
+
+    function _requireIsOpen(bool isOpen) private pure {
+        require(isOpen, "LpSwap: swap is closed");
+    }
+
+    function _requireIsSeller(address caller, address seller) private pure {
+        require(caller == seller, "LpSwap: caller is not seller");
+    }
+
+    function _requireIsNotSeller(address caller, address seller) private pure {
+        require(caller != seller, "LpSwap: caller is seller");
     }
 }
