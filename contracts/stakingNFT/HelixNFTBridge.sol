@@ -40,7 +40,7 @@ contract HelixNFTBridge is Ownable {
      */
     EnumerableSet.AddressSet private _bridgers;
 
-    event BridgeToSolana(string externalTokenID, string externalRecipientAddr, uint timestamp);
+    event BridgeToSolana(string externalTokenID, string externalRecipientAddr, uint256 timestamp);
     event AddBridger(address indexed user);
     
     /**
@@ -86,21 +86,21 @@ contract HelixNFTBridge is Ownable {
     /**
      * @dev Whether the token is bridged or not.
      */
-    function isBridged(string calldata externalTokenID) view public returns (bool) {
+    function isBridged(string calldata externalTokenID) view external returns (bool) {
         return _bridgedExternalTokenIDs[externalTokenID];
     }
 
     /**
      * @dev Get the owner to pick up the NFT from the bridge contract.
      */
-    function getPickUpOwner(string calldata externalTokenID) view public returns (address) {
+    function getPickUpOwner(string calldata externalTokenID) view external returns (address) {
         return _bridgedExternalTokenIDsPickUp[externalTokenID];
     }
 
     /**
      * @dev Returns the address of the minted NFT if available, address(0) otherwise.
      */
-    function getMinted(string calldata externalTokenID) view public returns (uint256) {
+    function getMinted(string calldata externalTokenID) view external returns (uint256) {
         return _minted[externalTokenID];
     }
 
@@ -126,7 +126,7 @@ contract HelixNFTBridge is Ownable {
      * @param _bridger address of bridger to be added.
      * @return true if successful.
      */
-    function addBridger(address _bridger) public onlyOwner returns (bool) {
+    function addBridger(address _bridger) external onlyOwner returns (bool) {
         require(
             _bridger != address(0),
             "HelixNFTBridge: _bridger is the zero address"

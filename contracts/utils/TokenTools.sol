@@ -27,8 +27,8 @@ contract TokenTools {
     struct TokenPair {
         address tokenA;         // address of token A
         address tokenB;         // address of token B
-        uint balanceA;          // msg.sender balance of token A
-        uint balanceB;          // msg.sender balance of token B
+        uint256 balanceA;          // msg.sender balance of token A
+        uint256 balanceB;          // msg.sender balance of token B
         string symbolA;         // symbol of token A
         string symbolB;         // symbol of token B 
     }
@@ -38,9 +38,9 @@ contract TokenTools {
      */
     function getAllPairs(address lpToken) external view returns(address[] memory) {
         address factory = ILpToken(lpToken).factory(); 
-        uint allPairsLength = IFactory(factory).allPairsLength();
+        uint256 allPairsLength = IFactory(factory).allPairsLength();
         address[] memory allPairs = new address[](allPairsLength);
-        for (uint i = 0; i < allPairsLength; i++) {
+        for (uint256 i = 0; i < allPairsLength; i++) {
             allPairs[i] = IFactory(factory).allPairs(i);
         }
         return allPairs;
@@ -52,15 +52,15 @@ contract TokenTools {
      */
     function getStakedTokenPairs(address lpToken) external view returns(TokenPair[] memory) {
         address factory = ILpToken(lpToken).factory(); 
-        uint allPairsLength = IFactory(factory).allPairsLength();
-        uint stakedPairsLength;
+        uint256 allPairsLength = IFactory(factory).allPairsLength();
+        uint256 stakedPairsLength;
         TokenPair[] memory stakedPairs = new TokenPair[](allPairsLength);
-        for (uint i = 0; i < allPairsLength; i++) {
+        for (uint256 i = 0; i < allPairsLength; i++) {
             address pair = IFactory(factory).allPairs(i);
             address tokenA = IPair(pair).token0();
             address tokenB = IPair(pair).token1();
-            uint balanceA = IToken(tokenA).balanceOf(msg.sender);
-            uint balanceB = IToken(tokenB).balanceOf(msg.sender);
+            uint256 balanceA = IToken(tokenA).balanceOf(msg.sender);
+            uint256 balanceB = IToken(tokenB).balanceOf(msg.sender);
             if (balanceA > 0 && balanceB > 0) {
                 string memory symbolA = IToken(tokenA).symbol();
                 string memory symbolB = IToken(tokenB).symbol();
@@ -80,10 +80,10 @@ contract TokenTools {
     /**
      * @dev Helper function that strips empty token pairs from the given array.
      */
-    function stripEmpty(TokenPair[] memory arr, uint len) internal pure returns(TokenPair[] memory) {
+    function stripEmpty(TokenPair[] memory arr, uint256 len) internal pure returns(TokenPair[] memory) {
         TokenPair[] memory result = new TokenPair[](len);
-        uint j;
-        for (uint i = 0; i < arr.length; i++) {
+        uint256 j;
+        for (uint256 i = 0; i < arr.length; i++) {
             // Only necessary to check a single field since 
             // any empty field indicates an empty pair.
             if (arr[i].tokenA != address(0)) {

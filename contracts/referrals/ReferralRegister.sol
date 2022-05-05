@@ -35,7 +35,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     event ReferralReward(
         address indexed referred,
         address indexed referrer,
-        uint amount
+        uint256 amount
     );
 
     // Emitted when the owner sets the referral fees
@@ -124,7 +124,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     * @param account address of recorder to be added.
     * @return true if successful.
     */
-    function addRecorder(address account) public onlyOwner returns(bool) {
+    function addRecorder(address account) external onlyOwner returns(bool) {
         require(account != address(0), "ReferralRegister: account is the zero address");
         return EnumerableSet.add(_recorders, account);
     }

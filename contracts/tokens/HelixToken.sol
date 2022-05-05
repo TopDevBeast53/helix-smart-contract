@@ -1,51 +1,27 @@
 //SPDX-License-Identifier:MIT
 pragma solidity >=0.8.0;
 
+// Copied and modified from YAM code:
+// https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernanceStorage.sol
+// https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernance.sol
+// Which is copied and modified from COMPOUND:
+// https://github.com/compound-finance/compound-protocol/blob/master/contracts/Governance/Comp.sol
+
 import "../libraries/BEP20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // Geometry token with Governance.
 contract HelixToken is BEP20("Helix", "HELIX") {
     using EnumerableSet for EnumerableSet.AddressSet;
+
     EnumerableSet.AddressSet private _minters;
-
-    /// @notice Creates `_amount` token to `_to`.
-    function mint(address _to, uint256 _amount)
-        public
-        onlyMinter
-        returns (bool)
-    {
-        _mint(_to, _amount);
-        _moveDelegates(address(0), _delegates[_to], _amount);
-        return true;
-    }
-
-    // @dev Destroys `amount` tokens from `account`, reducing the total supply.
-    function burn(address account, uint256 amount) public onlyMinter {
-        _burn(account, amount);
-    }
-
-    // Copied and modified from YAM code:
-    // https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernanceStorage.sol
-    // https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernance.sol
-    // Which is copied and modified from COMPOUND:
-    // https://github.com/compound-finance/compound-protocol/blob/master/contracts/Governance/Comp.sol
-
-    /// @dev A record of each accounts delegate
-    mapping(address => address) internal _delegates;
-
+    
     /// @notice A checkpoint for marking number of votes from a given block
     struct Checkpoint {
         uint32 fromBlock;
         uint256 votes;
     }
-
-    /// @notice A record of votes checkpoints for each account, by index
-    mapping(address => mapping(uint32 => Checkpoint)) public checkpoints;
-
-    /// @notice The number of checkpoints for each account
-    mapping(address => uint32) public numCheckpoints;
-
+    
     /// @notice The EIP-712 typehash for the contract's domain
     bytes32 public constant DOMAIN_TYPEHASH =
         keccak256(
@@ -55,6 +31,15 @@ contract HelixToken is BEP20("Helix", "HELIX") {
     /// @notice The EIP-712 typehash for the delegation struct used by the contract
     bytes32 public constant DELEGATION_TYPEHASH =
         keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)");
+ 
+     /// @dev A record of each accounts delegate
+    mapping(address => address) internal _delegates;
+
+    /// @notice A record of votes checkpoints for each account, by index
+    mapping(address => mapping(uint32 => Checkpoint)) public checkpoints;
+
+    /// @notice The number of checkpoints for each account
+    mapping(address => uint32) public numCheckpoints;
 
     /// @notice A record of states for signing / validating signatures
     mapping(address => uint256) public nonces;
@@ -73,6 +58,21 @@ contract HelixToken is BEP20("Helix", "HELIX") {
         uint256 newBalance
     );
 
+    /// @notice Creates `_amount` token to `_to`.
+    function mint(address _to, uint256 _amount)
+        external 
+        onlyMinter
+        returns (bool)
+    {
+        _mint(_to, _amount);
+        _moveDelegates(address(0), _delegates[_to], _amount);
+        return true;
+    }
+
+    // @dev Destroys `amount` tokens from `account`, reducing the total supply.
+    function burn(address account, uint256 amount) external onlyMinter {
+        _burn(account, amount);
+    }
     /**
      * @notice Delegate votes from `msg.sender` to `delegatee`
      * @param delegator The address to get delegatee for
@@ -293,7 +293,7 @@ contract HelixToken is BEP20("Helix", "HELIX") {
      * @param _addMinter address of minter to be added.
      * @return true if successful.
      */
-    function addMinter(address _addMinter) public onlyOwner returns (bool) {
+    function addMinter(address _addMinter) external onlyOwner returns (bool) {
         require(
             _addMinter != address(0),
             "HELIX: _addMinter is the zero address"
