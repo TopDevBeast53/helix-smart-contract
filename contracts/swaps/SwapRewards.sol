@@ -68,7 +68,7 @@ contract SwapRewards is ISwapRewards, Ownable {
      * @dev Accrue HELIX/AP to the swap caller and accrue HELIX to the swap caller's referrer
      */
     function swap(address account, address tokenIn, address tokenOut, uint256 amountIn) external {
-        require (msg.sender == router, "SwapFee: CALLER IS NOT THE ROUTER");
+        require (msg.sender == router, "SwapFee: not router");
 
         // Accrue HELIX/AP to the swap caller
         (uint256 helixAmount, uint256 apAmount) = splitReward(amountIn);
@@ -127,7 +127,7 @@ contract SwapRewards is ISwapRewards, Ownable {
     }
 
     modifier validAddress(address _address) {
-        require(_address != address(0), "SwapFee: Invalid address");
+        require(_address != address(0), "SwapFee: zero address");
         _;
     }
 
@@ -158,7 +158,7 @@ contract SwapRewards is ISwapRewards, Ownable {
     // Note that all percentages in this contract are out of 1000,
     // so percentage == 1 -> 0.1% and 1000 -> 100%
     modifier validPercentage(uint256 percentage) {
-        require(percentage <= 1000, "SwapFee: Invalid percentage");
+        require(percentage <= 1000, "SwapFee: invalid percentage");
         _;
     }
 

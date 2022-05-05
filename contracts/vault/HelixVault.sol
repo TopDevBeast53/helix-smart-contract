@@ -86,23 +86,28 @@ contract HelixVault is Ownable {
     event RewardPerBlockUpdated(uint256 rewardPerBlock);
 
     modifier isValidDepositId(uint256 id) {
-        require(depositId > 0, "HelixVault: NO DEPOSITS MADE");
-        require(id < depositId, "HelixVault: INVALID DEPOSIT ID");
+        require(depositId > 0, "Vault: no deposit made");
+        require(id < depositId, "Vault: invalid id");
         _;
     }
 
     modifier isValidIndex(uint256 index) {
-        require(index < durations.length, "HelixVault: INVALID DURATION INDEX");
+        require(index < durations.length, "Vault: invalid index");
         _;
     }
 
-    modifier isValidDuration(uint256 duration) {
-        require(duration > 0, "HelixVault: INVALID DURATION");
+    modifier notZeroDuration(uint256 duration) {
+        require(duration > 0, "Vault: zero duration");
         _;
     }
 
-    modifier isValidWeight(uint256 weight) {
-        require(weight > 0, "HelixVault: INVALID WEIGHT");
+    modifier notZeroWeight(uint256 weight) {
+        require(weight > 0, "Vault: zero weight");
+        _;
+    }
+
+    modifier notZeroAmount(uint256 amount) {
+        require(amount > 0, "Vault: zero amount");
         _;
     }
 
@@ -126,14 +131,13 @@ contract HelixVault is Ownable {
         durations.push(Duration(720 days, 1000));
                                 
         uint256 decimalsRewardToken = uint(token.decimals());
-        require(decimalsRewardToken < 30, "HelixVault: REWARD TOKEN MUST HAVE LESS THAN 30 DECIMALS");
+        require(decimalsRewardToken < 30, "Vault: invalid reward token decimals");
 
         PRECISION_FACTOR = uint(10**(uint(30) - decimalsRewardToken));
     }
 
     // Used internally to create a new deposit and lock `amount` of token for `index` 
-    function newDeposit(uint256 amount, uint256 index) external {
-        require(amount > 0, "HelixVault: NOTHING TO DEPOSIT");
+    function newDeposit(uint256 amount, uint256 index) external notZeroAmount(amount) {
         updatePool();
 
         // Get the new id of this deposit and create the deposit object
@@ -156,14 +160,13 @@ contract HelixVault is Ownable {
     }
 
     // Used internally to increase deposit `id` by `amount` of token
-    function updateDeposit(uint256 amount, uint256 id) external {
-        require(amount > 0, "HelixVault: NOTHING TO DEPOSIT");
+    function updateDeposit(uint256 amount, uint256 id) external notZeroAmount(amount) {
         updatePool();
 
         Deposit storage d = _getDeposit(id);
-
-        require(d.depositor == msg.sender, "HelixVault: CALLER IS NOT DEPOSITOR");
-        require(!d.withdrawn, "HelixVault: TOKENS ARE ALREADY WITHDRAWN");
+    
+        _requireIsDepositor(msg.sender, d.depositor);
+        _requireNotWithdrawn(d.withdrawn);
 
         d.amount += amount;
         d.rewardDebt = _getReward(d.amount, d.weight);
@@ -178,13 +181,13 @@ contract HelixVault is Ownable {
     }
 
     // Withdraw `amount` of token from deposit `id`
-    function withdraw(uint256 amount, uint256 id) external {
+    function withdraw(uint256 amount, uint256 id) external notZeroAmount(amount) {
         Deposit storage d = _getDeposit(id);
-
-        require(msg.sender == d.depositor, "HelixVault: CALLER IS NOT DEPOSITOR");
-        require(!d.withdrawn, "HelixVault: TOKENS ARE ALREADY WITHDRAWN");
-        require(d.amount >= amount && amount > 0, "HelixVault: INVALID AMOUNT");
-        require(block.timestamp >= d.withdrawTimestamp, "HelixVault: TOKENS ARE LOCKED");
+    
+        _requireIsDepositor(msg.sender, d.depositor); 
+        _requireNotWithdrawn(d.withdrawn);
+        require(d.amount >= amount, "Vault: invalid amount");
+        require(block.timestamp >= d.withdrawTimestamp, "Vault: locked");
        
         // collect rewards
         updatePool();
@@ -211,8 +214,9 @@ contract HelixVault is Ownable {
     // View function to see pending Reward on frontend.
     function pendingReward(uint256 id) external view returns(uint) {
         Deposit storage d = _getDeposit(id);
-        require(d.depositor == msg.sender, "HelixVault: CALLER IS NOT DEPOSITOR");
-        require(!d.withdrawn, "HelixVault: TOKENS ARE ALREADY WITHDRAWN");
+        
+        _requireIsDepositor(msg.sender, d.depositor);
+        _requireNotWithdrawn(d.withdrawn);
 
         uint256 _accTokenPerShare = accTokenPerShare;
         uint256 lpSupply = token.balanceOf(address(this));
@@ -228,8 +232,8 @@ contract HelixVault is Ownable {
     function claimReward(uint256 id) external {
         Deposit storage d = _getDeposit(id);
 
-        require(d.depositor == msg.sender, "HelixVault: CALLER IS NOT DEPOSITOR");
-        require(!d.withdrawn, "HelixVault: TOKENS ARE ALREADY WITHDRAWN");
+        _requireIsDepositor(msg.sender, d.depositor);
+        _requireNotWithdrawn(d.withdrawn);
 
         updatePool();
 
@@ -253,8 +257,8 @@ contract HelixVault is Ownable {
 
         uint256 balance = token.balanceOf(address(this));
         if (balance > 0) {
-            uint multiplier = getMultiplier(lastRewardBlock, block.number);
-            uint reward = multiplier * rewardPerBlock;
+            uint256 multiplier = getMultiplier(lastRewardBlock, block.number);
+            uint256 reward = multiplier * rewardPerBlock;
             accTokenPerShare += reward * PRECISION_FACTOR / balance;
             token.mint(address(this), reward);
         }
@@ -264,7 +268,7 @@ contract HelixVault is Ownable {
 
     // Return reward multiplier over the given _from to _to block.
     function getMultiplier(uint256 _from, uint256 _to) public view returns (uint) {
-        require(_from <= _to, "HelixVault: TO BLOCK MAY NOT PRECEED FROM BLOCK");
+        require(_from <= _to, "Vault: invalid block values");
         if (_to <= bonusEndBlock) {
             return _to - _from;
         } else if (_from >= bonusEndBlock) {
@@ -303,8 +307,8 @@ contract HelixVault is Ownable {
     }
 
     function updateRewardPerBlock(uint256 newAmount) external onlyOwner {
-        require(newAmount <= 40 * 1e18, "HelixVault: 40 TOKENS MAX PER BLOCK");
-        require(newAmount >= 1e17, "HelixVault: 0.1 TOKENS MIN PER BLOCK");
+        require(newAmount <= 40 * 1e18, "Vault: max 40 per block");
+        require(newAmount >= 1e17, "Vault: min 0.1 per block");
         rewardPerBlock = newAmount;
         emit RewardPerBlockUpdated(rewardPerBlock);
     }
@@ -321,8 +325,8 @@ contract HelixVault is Ownable {
     function setDuration(uint256 index, uint256 duration, uint256 weight)
         external
         isValidIndex(index)
-        isValidDuration(duration)
-        isValidWeight(weight)  
+        notZeroDuration(duration)
+        notZeroWeight(weight)  
         onlyOwner
     {
         durations[index].duration = duration;
@@ -331,8 +335,8 @@ contract HelixVault is Ownable {
     
     function addDuration(uint256 duration, uint256 weight) 
         external 
-        isValidDuration(duration) 
-        isValidWeight(weight)
+        notZeroDuration(duration) 
+        notZeroWeight(weight)
         onlyOwner
     {
         durations.push(Duration(duration, weight));
@@ -348,5 +352,13 @@ contract HelixVault is Ownable {
             durations[i] = durations[i + 1];
         }
         durations.pop();
+    }
+
+    function _requireIsDepositor(address caller, address depositor) private pure {
+        require(caller == depositor, "Vault: not depositor");
+    }
+
+    function _requireNotWithdrawn(bool withdrawn) private pure {
+        require(!withdrawn, "Vault: withdrawn");
     }
 }

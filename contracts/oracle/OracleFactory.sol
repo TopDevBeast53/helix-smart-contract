@@ -30,8 +30,8 @@ contract OracleFactory is IOracleFactory {
      * @dev Create a new oracle for `token0` and `token1`.
      */
     function create(address token0, address token1) external {
-        require(oracles[token0][token1] == address(0), "OracleFactory: ORACLE HAS ALREADY BEEN CREATED");
-        require(msg.sender == factory, "OracleFactory: CALLER IS NOT FACTORY");
+        require(oracles[token0][token1] == address(0), "OracleFactory: oracle was already created");
+        require(msg.sender == factory, "OracleFactory: caller is not factory");
 
         Oracle oracle = new Oracle(factory, token0, token1);
         oracles[token0][token1] = address(oracle);
@@ -44,7 +44,7 @@ contract OracleFactory is IOracleFactory {
      * @dev Update current prices of `token0` and `token1`.
      */
     function update(address token0, address token1) public {
-        require(oracles[token0][token1] != address(0), "OracleFactory: ORACLE HAS NOT BEEN CREATED");
+        require(oracles[token0][token1] != address(0), "OracleFactory: oracle has not been created");
 
         IOracle oracle = IOracle(oracles[token0][token1]);
         if (canUpdate(oracle)) {

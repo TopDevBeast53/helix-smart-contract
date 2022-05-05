@@ -43,6 +43,9 @@ contract SmartChef is Ownable {
     // The precision factor
     uint256 public PRECISION_FACTOR;
 
+    // Maximum decimals allowed on the reward token
+    uint256 public constant MAX_REWARD_TOKEN_DECIMALS = 30;
+
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 amount);
@@ -70,7 +73,7 @@ contract SmartChef is Ownable {
         limitAmount = _limitAmount;
 
         uint256 decimalsRewardToken = uint256(rewardToken.decimals());
-        require(decimalsRewardToken < 30, "Must be inferior to 30");
+        require(decimalsRewardToken < MAX_REWARD_TOKEN_DECIMALS, "SmartChef: invalid decimals");
 
         PRECISION_FACTOR = uint256(10**(uint256(30) - decimalsRewardToken));
 
@@ -155,7 +158,7 @@ contract SmartChef is Ownable {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
 
-        require(user.amount + _amount <= limitAmount, "Exceed limit amount");
+        require(user.amount + _amount <= limitAmount, "SmartChef: amount exceeds limit");
 
         updatePool(0);
         uint256 pending = user.amount * pool.accHelixPerShare / PRECISION_FACTOR - user.rewardDebt;
@@ -177,7 +180,7 @@ contract SmartChef is Ownable {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
 
-        require(user.amount >= _amount, "withdraw: not good");
+        require(user.amount >= _amount, "SmartChef: insufficient balance");
 
         updatePool(0);
         uint256 pending = user.amount * pool.accHelixPerShare / PRECISION_FACTOR - user.rewardDebt;
@@ -209,7 +212,7 @@ contract SmartChef is Ownable {
 
     // Withdraw reward. EMERGENCY ONLY.
     function emergencyRewardWithdraw(uint256 _amount) public onlyOwner {
-        require(_amount <= rewardToken.balanceOf(address(this)), "not enough token");
+        require(_amount <= rewardToken.balanceOf(address(this)), "SmartChef: insufficient balance");
         TransferHelper.safeTransfer(address(rewardToken), msg.sender, _amount);
     }
 }

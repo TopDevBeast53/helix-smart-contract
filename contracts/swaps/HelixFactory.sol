@@ -30,6 +30,11 @@ contract HelixFactory {
     // Emitted when the owner sets the Oracle Factory contract
     event OracleFactorySet(address oracleFactory);
 
+    modifier onlyFeeToSetter() {
+        require(msg.sender == feeToSetter, "Factory: not feeToSetter");
+        _;
+    }
+
     constructor(address _feeToSetter) {
         feeToSetter = _feeToSetter;
     }
@@ -39,10 +44,10 @@ contract HelixFactory {
     }
 
     function createPair(address tokenA, address tokenB) external returns (address pair) {
-        require(tokenA != tokenB, "Helix: IDENTICAL_ADDRESSES");
+        require(tokenA != tokenB, "Factory: identical addresses");
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        require(token0 != address(0), "Helix: ZERO_ADDRESS");
-        require(getPair[token0][token1] == address(0), "Helix: PAIR_EXISTS"); // single check is sufficient
+        require(token0 != address(0), "Factory: zero address");
+        require(getPair[token0][token1] == address(0), "Factory: pair exists"); // single check is sufficient
 
         bytes memory bytecode = type(HelixPair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
@@ -60,33 +65,28 @@ contract HelixFactory {
         emit PairCreated(token0, token1, pair, allPairs.length);
     }
 
-    function setFeeTo(address _feeTo) external {
-        require(msg.sender == feeToSetter, "Helix: FORBIDDEN");
+    function setFeeTo(address _feeTo) external onlyFeeToSetter {
         feeTo = _feeTo;
         emit FeeToSet(_feeTo);
     }
 
-    function setFeeToSetter(address _feeToSetter) external {
-        require(msg.sender == feeToSetter, "Helix: FORBIDDEN");
+    function setFeeToSetter(address _feeToSetter) external onlyFeeToSetter {
         feeToSetter = _feeToSetter;
         emit FeeToSetterSet(_feeToSetter);
     }
 
-    function setDevFee(address _pair, uint8 _devFee) external {
-        require(msg.sender == feeToSetter, "Helix: FORBIDDEN");
-        require(_devFee > 0, "Helix: FORBIDDEN_FEE");
+    function setDevFee(address _pair, uint8 _devFee) external onlyFeeToSetter {
+        require(_devFee > 0, "Factory: invalid fee");
         HelixPair(_pair).setDevFee(_devFee);
         emit DevFeeSet(_pair, _devFee);
     }
     
-    function setSwapFee(address _pair, uint32 _swapFee) external {
-        require(msg.sender == feeToSetter, "Helix: FORBIDDEN");
+    function setSwapFee(address _pair, uint32 _swapFee) external onlyFeeToSetter {
         HelixPair(_pair).setSwapFee(_swapFee);
         emit SwapFeeSet(_pair, _swapFee);
     }
 
-    function setOracleFactory(address _oracleFactory) external {
-        require(msg.sender == feeToSetter, "Helix Factory: INVALID CALLER");
+    function setOracleFactory(address _oracleFactory) external onlyFeeToSetter {
         oracleFactory = _oracleFactory;
         emit OracleFactorySet(_oracleFactory);
     }

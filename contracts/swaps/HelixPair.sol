@@ -48,6 +48,16 @@ contract HelixPair is HelixLP, ReentrancyGuard {
         _blockTimestampLast = blockTimestampLast;
     }
 
+    modifier onlyFactory() {
+        require(msg.sender == factory, "Pair: not factory"); 
+        _;
+    }
+
+    modifier onlyAboveZero(uint256 number) {
+        require(number > 0, "Pair: not above zero");
+        _;
+    }
+
     constructor() {
         factory = msg.sender;
 
@@ -57,29 +67,24 @@ contract HelixPair is HelixLP, ReentrancyGuard {
     }
 
     // called once by the factory at time of deployment
-    function initialize(address _token0, address _token1) external {
-        require(msg.sender == factory, "Helix FORBIDDEN"); // sufficient check
+    function initialize(address _token0, address _token1) external onlyFactory {
         token0 = _token0;
         token1 = _token1;
     }
 
-    function setSwapFee(uint32 _swapFee) external {
-        require(_swapFee > 0, "HelixPair: lower then 0");
-        require(msg.sender == factory, "HelixPair: FORBIDDEN");
-        require(_swapFee <= 1000, "HelixPair: FORBIDDEN_FEE");
+    function setSwapFee(uint32 _swapFee) external onlyFactory onlyAboveZero(_swapFee) {
+        require(_swapFee <= 1000, "Pair: invalid fee");
         swapFee = _swapFee;
     }
     
-    function setDevFee(uint32 _devFee) external {
-        require(_devFee > 0, "HelixPair: lower then 0");
-        require(msg.sender == factory, "HelixPair: FORBIDDEN");
-        require(_devFee <= 500, "HelixPair: FORBIDDEN_FEE");
+    function setDevFee(uint32 _devFee) external onlyFactory onlyAboveZero(_devFee) {
+        require(_devFee <= 500, "Pair: invalid fee");
         devFee = _devFee;
     }
 
     // update reserves and, on the first call per block, price accumulators
     function _update(uint256 balance0, uint256 balance1, uint112 _reserve0, uint112 _reserve1) private {
-        require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, "Helix: OVERFLOW");
+        require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, "Pair: overflow");
         uint32 blockTimestamp = uint32(block.timestamp % 2**32);
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
         if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {
@@ -130,7 +135,7 @@ contract HelixPair is HelixLP, ReentrancyGuard {
         } else {
             liquidity = Math.min(amount0 * _totalSupply / _reserve0, amount1 * _totalSupply / _reserve1);
         }
-        require(liquidity > 0, "Helix INSUFFICIENT_LIQUIDITY_MINTED");
+        require(liquidity > 0, "Pair: insufficient minted");
         _mint(to, liquidity);
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -154,7 +159,7 @@ contract HelixPair is HelixLP, ReentrancyGuard {
         amount0 = liquidity * balance0 / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity * balance1 / _totalSupply; // using balances ensures pro-rata distribution
 
-        require(amount0 > 0 && amount1 > 0, 'Helix INSUFFICIENT_LIQUIDITY_BURNED');
+        require(amount0 > 0 && amount1 > 0, "Pair: insufficient burned");
 
         // Set the expected balance by subtracting amountX before _burn and safeTransfer calls
         // to perform all state changes before external calls and protect against reentrancy
@@ -174,16 +179,16 @@ contract HelixPair is HelixLP, ReentrancyGuard {
 
     // this low-level function should be called from a contract which performs important safety checks
     function swap(uint256 amount0Out, uint256 amount1Out, address to) external nonReentrant {
-        require(amount0Out > 0 || amount1Out > 0, "Helix INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amount0Out > 0 || amount1Out > 0, "Pair: insufficient amount out");
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        require(amount0Out < _reserve0 && amount1Out < _reserve1, "Helix INSUFFICIENT_LIQUIDITY");
+        require(amount0Out < _reserve0 && amount1Out < _reserve1, "Pair: insufficient liquidity");
 
         uint256 balance0;
         uint256 balance1;
         { // scope for _token{0,1}, avoids stack too deep errors
             address _token0 = token0;
             address _token1 = token1;
-            require(to != _token0 && to != _token1, "Helix INVALID_TO");
+            require(to != _token0 && to != _token1, "Pair: invalid to");
             if (amount0Out > 0) TransferHelper.safeTransfer(_token0, to, amount0Out);
             if (amount1Out > 0) TransferHelper.safeTransfer(_token1, to, amount1Out);
             balance0 = IERC20(_token0).balanceOf(address(this));
@@ -192,12 +197,15 @@ contract HelixPair is HelixLP, ReentrancyGuard {
 
         uint256 amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
         uint256 amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
-        require(amount0In > 0 || amount1In > 0, "Helix INSUFFICIENT_INPUT_AMOUNT");
+        require(amount0In > 0 || amount1In > 0, "Pair: insufficient amount in");
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
             uint256 _swapFee = swapFee;
             uint256 balance0Adjusted = balance0 * (1000) - (amount0In * _swapFee);
             uint256 balance1Adjusted = balance1 * (1000) - (amount1In * _swapFee);
-            require(balance0Adjusted * balance1Adjusted >= uint(_reserve0) * (_reserve1) * (1000**2), "Helix K");
+            require(
+                balance0Adjusted * balance1Adjusted >= uint(_reserve0) * (_reserve1) * (1000**2), 
+                "Pair: insufficient reserves"
+            );
         }
 
         _update(balance0, balance1, _reserve0, _reserve1);

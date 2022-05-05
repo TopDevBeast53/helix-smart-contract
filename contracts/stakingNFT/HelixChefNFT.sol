@@ -65,6 +65,16 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
     event UnstakeToken(address indexed user, uint256 amountRB, uint[] tokensId);
     event BoostHelixNFT(uint256 indexed tokenId, uint256 boostedAP);
 
+    modifier onlyRewardToken(address token) {
+        require(isRewardToken(token), "HelixChefNFT: not added");
+        _;
+    }
+
+    modifier isNotZeroRewardPerBlock(uint256 _rewardPerBlock) {
+        require(_rewardPerBlock != 0, "HelixChefNFT: zero rewardPerBlock");
+        _;
+    }
+
     constructor(IHelixNFT _helixNFT, uint256 _lastRewardBlock) {
         helixNFT = _helixNFT;
         lastRewardBlock = _lastRewardBlock;
@@ -114,15 +124,14 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      * - `tokensId` must be unstaked
      */
     function stake(uint256[] memory tokensId) public nonReentrant {
-        
         _withdrawRewardToken();// --------1
         
         UserInfo storage user = users[msg.sender];
         uint256 depositedAPs = 0;
         for(uint256 i = 0; i < tokensId.length; i++){
             (address tokenOwner, bool isStaked, uint256 helixPoints) = helixNFT.getInfoForStaking(tokensId[i]);
-            require(tokenOwner == msg.sender, "Not token owner");
-            require(!isStaked, "Token has already been staked");
+            _requireIsTokenOwner(msg.sender, tokenOwner);
+            require(!isStaked, "HelixChefNFT: already staked");
             helixNFT.setIsStaked(tokensId[i], true);
             depositedAPs += helixPoints;
             user.stakedNFTsId.push(tokensId[i]);// --------2
@@ -156,8 +165,8 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         uint256 withdrawalAPs = 0;
         for(uint256 i = 0; i < tokensId.length; i++){
             (address tokenOwner, bool isStaked, uint256 helixPoints) = helixNFT.getInfoForStaking(tokensId[i]);
-            require(tokenOwner == msg.sender, "Not token owner");
-            require(isStaked, "Token has already been unstaked");
+            _requireIsTokenOwner(msg.sender, tokenOwner);
+            require(isStaked, "HelixChefNFT: already unstaked");
             helixNFT.setIsStaked(tokensId[i], false);
             withdrawalAPs += helixPoints;
             removeTokenIdFromUsers(tokensId[i], msg.sender);// --------2
@@ -183,10 +192,13 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      * - `newToken` cannot be the zero address and it must be what doesn't exist.
      * - `rewardPerBlock` cannot be the zero.
      */
-    function addNewRewardToken(address newToken, uint256 startBlock, uint256 rewardPerBlock) external onlyOwner {
-        require(newToken != address(0), "Address shouldn't be 0");
-        require(!isRewardToken(newToken), "Token is already in the list");
-        require(rewardPerBlock != 0, "rewardPerBlock shouldn't be 0");
+    function addNewRewardToken(address newToken, uint256 startBlock, uint256 rewardPerBlock) 
+        external 
+        onlyOwner 
+        isNotZeroRewardPerBlock(rewardPerBlock)
+    {
+        require(newToken != address(0), "HelixChefNFT: zero address");
+        require(!isRewardToken(newToken), "HelixChefNFT: token already added");
 
         rewardTokenAddresses.push(newToken);
         if(startBlock == 0){
@@ -210,9 +222,9 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      * - `token` must exist.
      * - `token` must be enabled.
      */
-    function disableRewardToken(address token) external onlyOwner {
-        require(isRewardToken(token), "Token not in the list");
-        require(rewardTokens[token].enabled, "Reward token is already disabled");
+
+    function disableRewardToken(address token) external onlyOwner onlyRewardToken(token) {
+        require(rewardTokens[token].enabled, "HelixChefNFT: token disabled");
 
         updatePool();
         rewardTokens[token].enabled = false;
@@ -234,10 +246,13 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      * - `rewardPerBlock` cannot be the zero.
      * - `startBlock` must be later than current.
      */
-    function enableRewardToken(address token, uint256 startBlock, uint256 rewardPerBlock) external onlyOwner {
-        require(isRewardToken(token), "Token not in the list");
-        require(!rewardTokens[token].enabled, "Reward token is already enabled");
-        require(rewardPerBlock != 0, "rewardPerBlock shouldn't be 0");
+    function enableRewardToken(address token, uint256 startBlock, uint256 rewardPerBlock) 
+        external  
+        onlyOwner 
+        onlyRewardToken(token) 
+        isNotZeroRewardPerBlock(rewardPerBlock)
+    {
+        require(!rewardTokens[token].enabled, "HelixChefNFT: already enabled");
 
         if (startBlock == 0) {
             startBlock = block.number + 1;
@@ -272,9 +287,9 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
      */
     function boostHelixNFT(uint256 tokenId, uint256 amount) external {
         (address tokenOwner, bool isStaked, uint256 helixPoints) = helixNFT.getInfoForStaking(tokenId);
-        require(tokenOwner == msg.sender, "Not token owner");
+        _requireIsTokenOwner(msg.sender, tokenOwner);
         uint256 _accumulatedAP = helixNFT.getAccumulatedAP(msg.sender);
-        require(amount <= _accumulatedAP, "Insufficient amount of HelixPoints");
+        require(amount <= _accumulatedAP, "HelixChefNFT: insufficient balance");
 
         uint256 _remainAP = helixNFT.remainAPToNextLevel(tokenId);
         uint256 _amount = Math.min(amount, _remainAP);
@@ -421,5 +436,9 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
                 return;
             }
         }
+    }
+
+    function _requireIsTokenOwner(address caller, address tokenOwner) private pure {
+            require(caller == tokenOwner, "HelixChefNFT: not token owner");
     }
 }

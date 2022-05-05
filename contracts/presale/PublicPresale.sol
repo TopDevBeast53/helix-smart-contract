@@ -105,17 +105,22 @@ contract PublicPresale is ReentrancyGuard {
     event SetPurchasePhase(uint256 purchasePhase, uint256 startTimestamp, uint256 endTimestamp);
 
     modifier isValidPurchasePhase(uint256 phase) {
-        require(phase <= PURCHASE_PHASE_END, "PublicPresale: PHASE EXCEEDS PURCHASE PHASE END");
+        require(phase <= PURCHASE_PHASE_END, "PublicPresale: invalid purchase phase");
         _;
     }
 
-    modifier isValidAddress(address _address) {
-        require(_address != address(0), "PublicPresale: INVALID ADDRESS");
+    modifier isNotZeroAddress(address _address) {
+        require(_address != address(0), "PublicPresale: zero address");
         _;
     }
 
     modifier onlyOwner() {
-        require(isOwner[msg.sender], "PublicPresale: CALLER IS NOT OWNER");
+        require(isOwner[msg.sender], "PublicPresale: not owner");
+        _;
+    }
+
+    modifier isNotAboveTicketsAvailable(uint256 amount) {
+        require(amount <= ticketsAvailable, "PublicPresale: amount above tickets available");
         _;
     }
 
@@ -127,9 +132,9 @@ contract PublicPresale is ReentrancyGuard {
         uint256 _OUTPUT_RATE,
         uint256 _PURCHASE_PHASE_DURATION
     ) 
-        isValidAddress(_inputToken)
-        isValidAddress(_outputToken)
-        isValidAddress(_treasury)
+        isNotZeroAddress(_inputToken)
+        isNotZeroAddress(_outputToken)
+        isNotZeroAddress(_treasury)
     {
         inputToken = IERC20(_inputToken);
         outputToken = IERC20(_outputToken);
@@ -164,11 +169,11 @@ contract PublicPresale is ReentrancyGuard {
         // Pay for the `amount` of tickets
         require(
             inputTokenAmount <= inputToken.balanceOf(msg.sender), 
-            "PublicPresale: INSUFFICIENT CALLER TOKEN BALANCE"
+            "PublicPresale: insufficient balance"
         );
         require(
             inputTokenAmount <= inputToken.allowance(msg.sender, address(this)), 
-            "PublicPresale: INSUFFICIENT ALLOWANCE"
+            "PublicPresale: insufficient allowance"
         );
 
         // Pay for the tickets by withdrawing inputTokenAmount from caller
@@ -184,13 +189,12 @@ contract PublicPresale is ReentrancyGuard {
     }
 
     // validate that `user` is eligible to purchase `amount` of tickets
-    function _validatePurchase(address user, uint256 amount) private view isValidAddress(user) {
-        require(purchasePhase >= PURCHASE_PHASE_START, "PublicPresale: SALE HAS NOT STARTED");
-        require(!isPaused, "PublicPresale: SALE IS PAUSED");
-        require(amount >= MINIMUM_TICKET_PURCHASE, "PublicPresale: AMOUNT IS LESS THAN MINIMUM TICKET PURCHASE");
-        require(amount <= ticketsAvailable, "PublicPresale: TICKETS ARE SOLD OUT");
+    function _validatePurchase(address user, uint256 amount) private view isNotAboveTicketsAvailable(amount) isNotZeroAddress(user) {
+        require(purchasePhase >= PURCHASE_PHASE_START, "PublicPresale: sale not started");
+        require(!isPaused, "PublicPresale: sale is paused");
+        require(amount >= MINIMUM_TICKET_PURCHASE, "PublicPresale: amount below minimum purchase size");
         if (purchasePhase == PURCHASE_PHASE_START) { 
-            require(whitelist[user], "PublicPresale: USER IS NOT WHITELISTED");
+            require(whitelist[user], "PublicPresale: user not whitelisted");
         }
     }
 
@@ -232,11 +236,10 @@ contract PublicPresale is ReentrancyGuard {
 
     // used internally to remove `amount` of tickets from circulation and transfer an 
     // amount of `outputToken` equivalent in value to `amount` to `to`
-    function _remove(uint256 amount) private {
+    function _remove(uint256 amount) private isNotAboveTicketsAvailable(amount) {
         // proceed only if the removal is valid
         // note that only owners can make removals
-        require(isPaused, "PublicPresale: SALE IS NOT PAUSED");
-        require(amount <= ticketsAvailable, "PublicPresale: INSUFFICIENT TICKETS AVAILABLE TO REMOVE");
+        require(isPaused, "PublicPresale: sale must be paused");
 
         // decrease the tickets available by the amount being removed
         ticketsAvailable -= amount;
@@ -248,8 +251,8 @@ contract PublicPresale is ReentrancyGuard {
     }
  
     // add a new owner to the contract, only callable by an existing owner
-    function addOwner(address owner) external isValidAddress(owner) onlyOwner {
-        require(!isOwner[owner], "PublicPresale: ALREADY AN OWNER");
+    function addOwner(address owner) external isNotZeroAddress(owner) onlyOwner {
+        require(!isOwner[owner], "PublicPresale: already owner");
         isOwner[owner] = true;
         owners.push(owner);
 

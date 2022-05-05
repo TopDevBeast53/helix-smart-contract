@@ -120,31 +120,31 @@ describe('Lp Swap', () => {
     it('lpSwap: open swap with invalid toBuyer token fails', async () => {
         const invalidToBuyerToken = constants.AddressZero
         await expect(lpSwap.openSwap(invalidToBuyerToken, tokenB.address, amount, ask))
-            .to.be.revertedWith("LpSwap: INVALID TO BUYER TOKEN ADDRESS")
+            .to.be.revertedWith("LpSwap: zero address")
     })
 
     it('lpSwap: open swap with invalid toSeller token fails', async () => {
         const invalidToSellerToken = constants.AddressZero
         await expect(lpSwap.openSwap(tokenA.address, invalidToSellerToken, amount, ask))
-            .to.be.revertedWith("LpSwap: INVALID TO SELLER TOKEN ADDRESS")
+            .to.be.revertedWith("LpSwap: zero address")
     })
 
     it('lpSwap: open swap with invalid amount fails', async () => {
         const invalidAmount = 0
         await expect(lpSwap.openSwap(tokenA.address, tokenB.address, invalidAmount, ask))
-            .to.be.revertedWith("LpSwap: AMOUNT CAN'T BE ZERO")
+            .to.be.revertedWith("LpSwap: not above zero")
     })
 
     it('lpSwap: open swap with insufficient token balance fails', async () => {
         const invalidAmount = (await tokenA.balanceOf(wallet0.address)).add(expandTo18Decimals(1))
         await expect(lpSwap.openSwap(tokenA.address, tokenB.address, invalidAmount, ask))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("LpSwap: insufficient balance")
     })
 
     it('lpSwap: open swap with insufficient token allowance fails', async () => {
         // No allowance given to lpSwap
         await expect(lpSwap.openSwap(tokenA.address, tokenB.address, amount, ask))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("LpSwap: insufficient allowance")
     })
 
     it('lpSwap: open swap', async () => {
@@ -193,7 +193,7 @@ describe('Lp Swap', () => {
         // expect to fail because no swap opened
         const invalidSwapId0 = 0
         await expect(lpSwap.setAsk(invalidSwapId0, ask))
-            .to.be.revertedWith("LpSwap: NO SWAP OPENED")
+            .to.be.revertedWith("LpSwap: no swap opened")
 
         // open swap
         await openSwap() 
@@ -201,7 +201,7 @@ describe('Lp Swap', () => {
         // expect to fail because swapId too large
         const invalidSwapId1 = (await lpSwap.getSwapId()) + 1
         await expect(lpSwap.setAsk(invalidSwapId1, ask))
-            .to.be.revertedWith("LpSwap: INVALID SWAP ID")
+            .to.be.revertedWith("LpSwap: invalid swap id")
     })
 
     it('lpSwap: set ask when swap is closed fails', async () => {
@@ -215,7 +215,7 @@ describe('Lp Swap', () => {
 
         // the swap is closed and setting the ask should be prohibited
         await expect(lpSwap.setAsk(swapId, ask))
-            .to.be.revertedWith("LpSwap: SWAP IS CLOSED")
+            .to.be.revertedWith("LpSwap: swap is closed")
     })
 
     it('lpSwap: set ask when not seller fails', async () => {
@@ -225,7 +225,7 @@ describe('Lp Swap', () => {
 
         // expect calling set ask as wallet 1 to fail
         await expect(lpSwap1.setAsk(swapId, ask))
-            .to.be.revertedWith("LpSwap: ONLY SELLER CAN SET ASK")
+            .to.be.revertedWith("LpSwap: caller is not seller")
     })
 
     it('lpSwap: set ask', async () => {
@@ -253,7 +253,7 @@ describe('Lp Swap', () => {
         // expect to fail because no swap opened
         const invalidSwapId0 = 0
         await expect(lpSwap.closeSwap(invalidSwapId0))
-            .to.be.revertedWith("LpSwap: NO SWAP OPENED")
+            .to.be.revertedWith("LpSwap: no swap opened")
 
         // open swap
         await openSwap() 
@@ -261,7 +261,7 @@ describe('Lp Swap', () => {
         // expect to fail because swapId too large
         const invalidSwapId1 = (await lpSwap.getSwapId()) + 1
         await expect(lpSwap.closeSwap(invalidSwapId1))
-            .to.be.revertedWith("LpSwap: INVALID SWAP ID")
+            .to.be.revertedWith("LpSwap: invalid swap id")
     })
 
     it('lpSwap: close swap when swap is closed fails', async () => {
@@ -275,7 +275,7 @@ describe('Lp Swap', () => {
 
         // the swap is closed and closing again should be prohibited
         await expect(lpSwap.closeSwap(swapId))
-            .to.be.revertedWith("LpSwap: SWAP IS CLOSED")
+            .to.be.revertedWith("LpSwap: swap is closed")
     })
 
     it('lpSwap: close swap when not seller fails', async () => {
@@ -285,7 +285,7 @@ describe('Lp Swap', () => {
 
         // expect calling set ask as wallet 1 to fail
         await expect(lpSwap1.closeSwap(swapId))
-            .to.be.revertedWith("LpSwap: ONLY SELLER CAN CLOSE SWAP")
+            .to.be.revertedWith("LpSwap: caller is not seller")
     })
 
     it('lpSwap: close swap', async () => {
@@ -320,7 +320,7 @@ describe('Lp Swap', () => {
 
         // the swap is closed and making bid should be prohibited
         await expect(lpSwap.makeBid(swapId, bidAmount))
-            .to.be.revertedWith("LpSwap: SWAP IS CLOSED")
+            .to.be.revertedWith("LpSwap: swap is closed")
     })
 
     it('lpSwap: make bid as seller fails', async () => {
@@ -330,7 +330,7 @@ describe('Lp Swap', () => {
 
         // expect making bid as seller to fail
         await expect(lpSwap.makeBid(swapId, bidAmount))
-            .to.be.revertedWith("LpSwap: SELLER CAN'T BID ON THEIR OWN SWAP")
+            .to.be.revertedWith("LpSwap: caller is seller")
     })
 
     it('lpSwap: make bid on same swap more than once fails', async () => {
@@ -340,7 +340,7 @@ describe('Lp Swap', () => {
 
         // expect making second bid on same swap to fail
         await expect(lpSwap1.makeBid(swapId, bidAmount))
-            .to.be.revertedWith("LpSwap: CALLER HAS ALREADY MADE BID")
+            .to.be.revertedWith("LpSwap: caller has already bid")
     })
 
     it('lpSwap: make bid with no amount fails', async () => {
@@ -352,7 +352,7 @@ describe('Lp Swap', () => {
 
         // expect making second bid on same swap to fail
         await expect(lpSwap1.makeBid(swapId, bidAmount))
-            .to.be.revertedWith("LpSwap: BID AMOUNT CAN'T BE ZERO")
+            .to.be.revertedWith("LpSwap: not above zero")
     })
 
     it('lpSwap: make bid with insufficient token balance fails', async () => {
@@ -362,7 +362,7 @@ describe('Lp Swap', () => {
         const invalidAmount = (await tokenB.balanceOf(wallet1.address)).add(expandTo18Decimals(1))
 
         await expect(lpSwap1.makeBid(swapId, invalidAmount))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("LpSwap: insufficient balance")
     })
 
     it('lpSwap: make bid with insufficient token allowance fails', async () => {
@@ -372,7 +372,7 @@ describe('Lp Swap', () => {
         const invalidAmount = (await tokenA.allowance(wallet1.address, lpSwap.address)).add(expandTo18Decimals(1))
 
         await expect(lpSwap1.makeBid(swapId, invalidAmount))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("LpSwap: insufficient allowance")
     })
 
     it('lpSwap: make bid', async () => {
@@ -429,7 +429,7 @@ describe('Lp Swap', () => {
 
         const invalidBidId = (await lpSwap.getBidId()).add(1)
         await expect(lpSwap1.setBid(invalidBidId, bidAmount))
-            .to.be.revertedWith("LpSwap: INVALID BID ID")
+            .to.be.revertedWith("LpSwap: invalid bid id")
     })
 
     it('lpSwap: set bid when swap is closed fails', async () => {
@@ -442,7 +442,7 @@ describe('Lp Swap', () => {
         await lpSwap.closeSwap(swapId)
 
         await expect(lpSwap1.setBid(bidId, bidAmount))
-            .to.be.revertedWith("LpSwap: SWAP IS CLOSED")
+            .to.be.revertedWith("LpSwap: swap is closed")
     })
 
     it('lpSwap: set bid when caller is not bidder fails', async () => {
@@ -453,7 +453,7 @@ describe('Lp Swap', () => {
     
         // expect to fail because bid was made by wallet1
         await expect(lpSwap.setBid(bidId, bidAmount))
-            .to.be.revertedWith("LpSwap: CALLER IS NOT THE BIDDER")
+            .to.be.revertedWith("LpSwap: caller is not bidder")
     })
 
     it('lpSwap: set bid with insufficient token balance fails', async () => {
@@ -464,7 +464,7 @@ describe('Lp Swap', () => {
     
         const invalidBidAmount = balanceWallet1.add(expandTo18Decimals(1))
         await expect(lpSwap1.setBid(bidId, invalidBidAmount))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("LpSwap: insufficient balance")
     })
 
     it('lpSwap: set bid with insufficient token allowance fails', async () => {
@@ -475,7 +475,7 @@ describe('Lp Swap', () => {
     
         const invalidBidAmount = bidAmount.add(expandTo18Decimals(1))
         await expect(lpSwap1.setBid(bidId, invalidBidAmount))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("LpSwap: insufficient allowance")
     })
 
     it('lpSwap: set bid', async () => {
@@ -553,7 +553,7 @@ describe('Lp Swap', () => {
 
         // accept wallet1 bid as wallet0 with invalid bidId
         await expect(lpSwap.acceptBid(invalidBidId))
-            .to.be.revertedWith("LpSwap: INVALID BID ID")
+            .to.be.revertedWith("LpSwap: invalid bid id")
     })
 
     it('lpSwap: accept bid as bidder fails', async () => {
@@ -566,7 +566,7 @@ describe('Lp Swap', () => {
 
         // expect accept wallet1 bid as wallet1 to fail
         await expect(lpSwap1.acceptBid(bidId))
-            .to.be.revertedWith("LpSwap: ONLY SELLER CAN ACCEPT BID")
+            .to.be.revertedWith("LpSwap: caller is not seller")
     })
 
     it('lpSwap: accept bid when swap is closed fails', async () => {
@@ -582,7 +582,7 @@ describe('Lp Swap', () => {
 
         // expect accept bid when swap is closed to fail
         await expect(lpSwap.acceptBid(bidId))
-            .to.be.revertedWith("LpSwap: SWAP IS CLOSED")
+            .to.be.revertedWith("LpSwap: swap is closed")
     })
 
     it('lpSwap: accept bid with insufficient seller toBuyer token balance fails', async () => {
@@ -601,7 +601,7 @@ describe('Lp Swap', () => {
 
         // expect accept bid with no lp token balance to fail
         await expect(lpSwap.acceptBid(bidId))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("LpSwap: insufficient balance")
     })
 
     it('lpSwap: accept bid with insufficient seller toBuyer token allowance fails', async () => {
@@ -620,7 +620,7 @@ describe('Lp Swap', () => {
 
         // expect accept bid with no lp token allowance to fail
         await expect(lpSwap.acceptBid(bidId))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("LpSwap: insufficient allowance")
     })
 
     it('lpSwap: accept bid with insufficient bidder toSeller token balance fails', async () => {
@@ -639,7 +639,7 @@ describe('Lp Swap', () => {
 
         // expect accept bid with no ex token balance to fail
         await expect(lpSwap.acceptBid(bidId))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("LpSwap: insufficient balance")
     })
 
     it('lpSwap: accept bid with insufficient bidder toSeller token allowance fails', async () => {
@@ -658,7 +658,7 @@ describe('Lp Swap', () => {
 
         // expect accept bid with no ex token allowance to fail
         await expect(lpSwap.acceptBid(bidId))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("LpSwap: insufficient allowance")
     })
 
     it('lpSwap: accept bid', async () => {
@@ -736,7 +736,7 @@ describe('Lp Swap', () => {
 
         // accept wallet0 ask as wallet1 with invalid swapId
         await expect(lpSwap1.acceptAsk(invalidSwapId))
-            .to.be.revertedWith("LpSwap: INVALID SWAP ID")
+            .to.be.revertedWith("LpSwap: invalid swap id")
     })
 
     it('lpSwap: accept ask as seller fails', async () => {
@@ -745,7 +745,7 @@ describe('Lp Swap', () => {
     
         // expect accept wallet0 ask as wallet0 to fail
         await expect(lpSwap.acceptAsk(swapId))
-            .to.be.revertedWith("LpSwap: SELLER CAN'T ACCEPT ASK")
+            .to.be.revertedWith("LpSwap: caller is seller")
     })
 
     it('lpSwap: accept ask when swap is closed fails', async () => {
@@ -757,7 +757,7 @@ describe('Lp Swap', () => {
 
         // expect accept ask as wallet1 when swap is closed to fail
         await expect(lpSwap1.acceptAsk(swapId))
-            .to.be.revertedWith("LpSwap: SWAP IS CLOSED")
+            .to.be.revertedWith("LpSwap: swap is closed")
     })
 
     it('lpSwap: accept ask with insufficient seller toBuyer token balance fails', async () => {
@@ -772,7 +772,7 @@ describe('Lp Swap', () => {
 
         // expect accept ask as wallet0 with no wallet0 toBuyer token balance to fail
         await expect(lpSwap1.acceptAsk(swapId))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("LpSwap: insufficient balance")
     })
 
     it('lpSwap: accept ask with insufficient seller toBuyer token allowance fails', async () => {
@@ -787,7 +787,7 @@ describe('Lp Swap', () => {
 
         // expect accept ask as wallet1 with no wallet0 toBuyer token allowance to fail
         await expect(lpSwap1.acceptAsk(swapId))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("LpSwap: insufficient allowance")
     })
 
     it('lpSwap: accept ask with insufficient buyer toSeller token balance fails', async () => {
@@ -802,7 +802,7 @@ describe('Lp Swap', () => {
 
         // expect accept ask ask wallet1 with no wallet1 ex token balance to fail
         await expect(lpSwap1.acceptAsk(swapId))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN BALANCE")
+            .to.be.revertedWith("LpSwap: insufficient balance")
     })
 
     it('lpSwap: accept ask with insufficient buyer toSeller token allowance fails', async () => {
@@ -817,7 +817,7 @@ describe('Lp Swap', () => {
 
         // expect accept ask as wallet0 with no wallet1 ex token allowance to fail
         await expect(lpSwap1.acceptAsk(swapId))
-            .to.be.revertedWith("LpSwap: INSUFFICIENT TOKEN ALLOWANCE")
+            .to.be.revertedWith("LpSwap: insufficient allowance")
     })
 
     it('lpSwap: accept ask', async () => {
@@ -1064,7 +1064,7 @@ describe('Lp Swap', () => {
     it('lpSwap: set treasury with invalid address fails', async () => {
         const invalidTreasuryAddress = constants.AddressZero
         await expect(lpSwap.setTreasury(invalidTreasuryAddress))
-            .to.be.revertedWith("LpSwap: INVALID TREASURY ADDRESS")
+            .to.be.revertedWith("LpSwap: zero address")
     })
 
     it('lpSwap: set treasury', async () => {
@@ -1082,7 +1082,7 @@ describe('Lp Swap', () => {
     it('lpSwap: set seller fee with invalid fee fails', async () => {
         const invalidFee = (await lpSwap.MAX_FEE_PERCENT()).add(1)
         await expect(lpSwap.setSellerFee(invalidFee))
-            .to.be.revertedWith("LpSwap: INVALID SELLER FEE")
+            .to.be.revertedWith("LpSwap: invalid fee")
     })
 
     it('lpSwap: set seller fee', async () => {
@@ -1100,7 +1100,7 @@ describe('Lp Swap', () => {
     it('lpSwap: set buyer fee with invalid fee fails', async () => {
         const invalidFee = (await lpSwap.MAX_FEE_PERCENT()).add(1)
         await expect(lpSwap.setBuyerFee(invalidFee))
-            .to.be.revertedWith("LpSwap: INVALID BUYER FEE")
+            .to.be.revertedWith("LpSwap: invalid fee")
     })
 
     it('lpSwap: set buyer fee', async () => {

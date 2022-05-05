@@ -100,19 +100,19 @@ describe('Public Presale', () => {
 
     it('publicPresale: add owner as non-owner fails', async () => {
         await expect(publicPresale1.addOwner(wallet2.address))
-            .to.be.revertedWith('PublicPresale: CALLER IS NOT OWNER')
+            .to.be.revertedWith('PublicPresale: not owner')
     })
 
     it('publicPresale: add owner with invalid address fails', async () => {
         const invalidAddress = constants.AddressZero
         await expect(publicPresale.addOwner(invalidAddress))
-            .to.be.revertedWith('PublicPresale: INVALID ADDRESS')
+            .to.be.revertedWith('PublicPresale: zero address')
     })
 
     it('publicPresale: add owner duplicate fails', async () => {
         await publicPresale.addOwner(wallet1.address)
         await expect(publicPresale.addOwner(wallet1.address))
-            .to.be.revertedWith('PublicPresale: ALREADY AN OWNER')
+            .to.be.revertedWith('PublicPresale: already owner')
     })
  
     it('publicPresale: whitelist add', async () => {
@@ -128,7 +128,7 @@ describe('Public Presale', () => {
     it('publicPresale: whitelist add as non-owner fails', async () => {
         const users = [wallet1.address, wallet2.address]
         await expect(publicPresale1.whitelistAdd(users))
-            .to.be.revertedWith('PublicPresale: CALLER IS NOT OWNER')
+            .to.be.revertedWith('PublicPresale: not owner')
     })
 
     it('publicPresale: whitelist remove', async () => {
@@ -154,7 +154,7 @@ describe('Public Presale', () => {
         await publicPresale.whitelistAdd(users)
 
         await expect(publicPresale1.whitelistRemove(wallet1.address))
-            .to.be.revertedWith('PublicPresale: CALLER IS NOT OWNER')
+            .to.be.revertedWith('PublicPresale: not owner')
     })
 
     it('publicPresale: get amount out', async () => {  
@@ -196,7 +196,7 @@ describe('Public Presale', () => {
 
     it('publicPresale: pause as non-owner fails', async () => {
         await expect(publicPresale1.pause())
-            .to.be.revertedWith('PublicPresale: CALLER IS NOT OWNER')
+            .to.be.revertedWith('PublicPresale: not owner')
     })
 
     it('publicPresale: unpause', async () => {
@@ -207,7 +207,7 @@ describe('Public Presale', () => {
 
     it('publicPresale: uppause as non-owner fails', async () => {
         await expect(publicPresale1.unpause())
-            .to.be.revertedWith('PublicPresale: CALLER IS NOT OWNER')
+            .to.be.revertedWith('PublicPresale: not owner')
     })
 
     it('publicPresale: set purchase phase', async () => {
@@ -225,13 +225,13 @@ describe('Public Presale', () => {
         const phase = 0
         // wallet 1 is not an owner
         await expect(publicPresale1.setPurchasePhase(phase))
-            .to.be.revertedWith('PublicPresale: CALLER IS NOT OWNER')
+            .to.be.revertedWith('PublicPresale: not owner')
     })
 
     it('publicPresale: set purchase phase with invalid phase fails', async () => {
         const invalidPhase = (await publicPresale.PURCHASE_PHASE_END()).toNumber() + 1
         await expect(publicPresale.setPurchasePhase(invalidPhase))
-            .to.be.revertedWith('PublicPresale: PHASE EXCEEDS PURCHASE PHASE END')
+            .to.be.revertedWith('PublicPresale: invalid purchase phase')
     })
 
     it('publicPresale: set purchase phase emits set purchase phase event', async () => {
@@ -353,14 +353,14 @@ describe('Public Presale', () => {
     it('publicPresale: burn all tickets while unpaused fails', async () => {
         const ticketsAvailable = await publicPresale.ticketsAvailable()
         await expect(publicPresale.burn(ticketsAvailable))
-            .to.be.revertedWith("PublicPresale: SALE IS NOT PAUSED")
+            .to.be.revertedWith("PublicPresale: sale must be paused")
     })
 
     it('publicPresale: burn more tickets than available fails', async () => {
         const ticketsAvailable = MaxUint256
         await publicPresale.pause()
         await expect(publicPresale.burn(ticketsAvailable))
-            .to.be.revertedWith("PublicPresale: INSUFFICIENT TICKETS AVAILABLE")
+            .to.be.revertedWith("PublicPresale: amount above tickets available")
     })
 
     it('publicPresale: withdraw all tickets while paused as owner', async () => {
@@ -388,14 +388,14 @@ describe('Public Presale', () => {
     it('publicPresale: withdraw all tickets while unpaused fails', async () => {
         const ticketsAvailable = await publicPresale.ticketsAvailable()
         await expect(publicPresale.withdraw(ticketsAvailable))
-            .to.be.revertedWith("PublicPresale: SALE IS NOT PAUSED")
+            .to.be.revertedWith("PublicPresale: sale must be paused")
     })
 
     it('publicPresale: withdraw more tickets than available fails', async () => {
         const ticketsAvailable = MaxUint256
         await publicPresale.pause()
         await expect(publicPresale.withdraw(ticketsAvailable))
-            .to.be.revertedWith("PublicPresale: INSUFFICIENT TICKETS AVAILABLE")
+            .to.be.revertedWith("PublicPresale: amount above tickets available")
     })
 
     function print(str: string) {
