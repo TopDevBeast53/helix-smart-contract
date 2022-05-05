@@ -85,7 +85,6 @@ contract HelixMigrator is Ownable {
      * @notice Set the router address.
      */
     function setRouter(IHelixV2Router02 _router) external onlyOwner {
-        require(_router != address(0), "Migrator: invalid router address");
         require(address(_router) != address(0), "HelixMigrator: Router address is Zero");
         router = _router;
     }

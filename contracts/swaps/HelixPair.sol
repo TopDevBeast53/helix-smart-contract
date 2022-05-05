@@ -79,8 +79,6 @@ contract HelixPair is HelixLP, ReentrancyGuard {
     
     function setDevFee(uint32 _devFee) external onlyFactory onlyAboveZero(_devFee) {
         require(_devFee <= 500, "Pair: invalid fee");
-    
-    function setDevFee(uint32 _devFee) external {
         devFee = _devFee;
     }
 

@@ -42,7 +42,7 @@ library HelixLibrary {
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
                 // hex"e0ce7bfb962a25cbac92cbc4b48f91427e2de2f8795b94d1943deb6ec507d0f0" // init code hash
-                hex"07fb8bff932d0d6fc1ce85d4054bbe5c2e04bdeb5c6499b3fa215208e1f4df53" // mocha test
+                hex"89fae4790118b75af23e9ce1e0d1f99485f8d519fd071822e402018f96938989" // mocha test
             )))));
     }
 
