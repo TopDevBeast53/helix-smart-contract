@@ -189,27 +189,6 @@ describe('Public Presale', () => {
         expect(await publicPresale.getAmountOut(amountIn1, unrecognizedToken)).to.eq(expectedUnrecognizedTokenOutAmountIn1)
     })
 
-    it('publicPresale: pause', async () => {
-        await publicPresale.pause()
-        expect(await publicPresale.isPaused()).to.be.true
-    })
-
-    it('publicPresale: pause as non-owner fails', async () => {
-        await expect(publicPresale1.pause())
-            .to.be.revertedWith('PublicPresale: not owner')
-    })
-
-    it('publicPresale: unpause', async () => {
-        await publicPresale.pause()
-        await publicPresale.unpause()
-        expect(await publicPresale.isPaused()).to.be.false
-    })
-
-    it('publicPresale: uppause as non-owner fails', async () => {
-        await expect(publicPresale1.unpause())
-            .to.be.revertedWith('PublicPresale: not owner')
-    })
-
     it('publicPresale: set purchase phase', async () => {
         await publicPresale.setPurchasePhase(0);
         expect(await publicPresale.purchasePhase()).to.eq(0)
@@ -229,9 +208,9 @@ describe('Public Presale', () => {
     })
 
     it('publicPresale: set purchase phase with invalid phase fails', async () => {
-        const invalidPhase = (await publicPresale.PURCHASE_PHASE_END()).toNumber() + 1
+        const invalidPhase = 3
         await expect(publicPresale.setPurchasePhase(invalidPhase))
-            .to.be.revertedWith('PublicPresale: invalid purchase phase')
+            .to.be.revertedWith("revert")
     })
 
     it('publicPresale: set purchase phase emits set purchase phase event', async () => {
@@ -340,7 +319,8 @@ describe('Public Presale', () => {
         const expectedTicketBalance = 0
        
         // Must be paused to burn
-        await publicPresale.pause()
+        const paused = 0
+        await publicPresale.setPurchasePhase(paused)
 
         // Remove all tokens and tickets
         const ticketsAvailable = await publicPresale.ticketsAvailable()
@@ -352,21 +332,29 @@ describe('Public Presale', () => {
 
     it('publicPresale: burn all tickets while unpaused fails', async () => {
         const ticketsAvailable = await publicPresale.ticketsAvailable()
+
+        const unpaused = 1
+        await publicPresale.setPurchasePhase(unpaused)
+
         await expect(publicPresale.burn(ticketsAvailable))
-            .to.be.revertedWith("PublicPresale: sale must be paused")
+            .to.be.revertedWith("PublicPresale: invalid phase")
     })
 
     it('publicPresale: burn more tickets than available fails', async () => {
         const ticketsAvailable = MaxUint256
-        await publicPresale.pause()
+
+        const paused = 0
+        await publicPresale.setPurchasePhase(paused)
+
         await expect(publicPresale.burn(ticketsAvailable))
-            .to.be.revertedWith("PublicPresale: amount above tickets available")
+            .to.be.revertedWith("PublicPresale: insufficient tickets available")
     })
 
     it('publicPresale: withdraw all tickets while paused as owner', async () => {
         // Must be paused to withdraw as owner
         // must pause before getting maxTokens or else maxTokens == 0
-        await publicPresale.pause()
+        const paused = 0
+        await publicPresale.setPurchasePhase(paused)
 
         const owner = wallet0.address
         const outputToken = helixToken.address
@@ -387,15 +375,22 @@ describe('Public Presale', () => {
 
     it('publicPresale: withdraw all tickets while unpaused fails', async () => {
         const ticketsAvailable = await publicPresale.ticketsAvailable()
+
+        const unpaused = 1
+        await publicPresale.setPurchasePhase(unpaused)
+
         await expect(publicPresale.withdraw(ticketsAvailable))
-            .to.be.revertedWith("PublicPresale: sale must be paused")
+            .to.be.revertedWith("PublicPresale: invalid phase")
     })
 
     it('publicPresale: withdraw more tickets than available fails', async () => {
         const ticketsAvailable = MaxUint256
-        await publicPresale.pause()
+
+        const paused = 0
+        await publicPresale.setPurchasePhase(paused)
+
         await expect(publicPresale.withdraw(ticketsAvailable))
-            .to.be.revertedWith("PublicPresale: amount above tickets available")
+            .to.be.revertedWith("PublicPresale: insufficient tickets available")
     })
 
     function print(str: string) {

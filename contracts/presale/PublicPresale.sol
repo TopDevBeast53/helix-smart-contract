@@ -20,107 +20,98 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 contract PublicPresale is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    // Maximum number of tickets available for purchase at the start of the sale
-    uint256 public constant TICKET_MAX = 21000;
-
-    // Minimum number of tickets that can be purchased at a time
-    uint256 public constant MINIMUM_TICKET_PURCHASE = 1;
-
-    // Unsold tickets available for purchase
-    // ticketsAvailable = TICKET_MAX - (sum(user.purchased) for user in whitelist)
-    // where user.purchased is in range [0, user.maxTicket] for user in whitelist
-    uint256 public ticketsAvailable;
-
-    // Token exchanged to purchase tickets, i.e. BUSD
-    IERC20 public inputToken;
-
-    // Number of tickets a user gets per `inputToken`
-    uint256 public INPUT_RATE;
-
-    // Token being sold in presale and redeemable by exchanging tickets, i.e. HELIX
-    IERC20 public outputToken;
-
-    // Number of `outputTokens` a user gets per ticket
-    uint256 public OUTPUT_RATE;
-
-    // Number of decimals on the `inputToken` used for calculating ticket exchange rates
-    uint256 public constant INPUT_TOKEN_DECIMALS = 1e18;
-
-    // Number of decimals on the `outputToken` used for calculating ticket exchange rates
-    uint256 public constant OUTPUT_TOKEN_DECIMALS = 1e18;
-
-    // Address that receives `inputToken`s sold in exchange for tickets
-    address public treasury;
-
-    /*
+    /**
      * Purchase phase determines ticket purchase eligiblity
      *  0: is the default on contract creation
      *     purchases are prohibited
      *  1: manually set by the owner
      *     purchases are limited to whitelisted addresses
-     *  2: begins automatically PURCHASE_PHASE_DURATION after the start of purchase phase 1
-     *     purchases are available to any address
+     *  2: begins automatically PURCHASE_PHASE_DURATION after the start of WhitelistOnly
+     *     purchases are open to any address
      */
-    uint256 public constant PURCHASE_PHASE_START = 1;          // Phase when purchasing starts
-    uint256 public constant PURCHASE_PHASE_END = 2;            // Last phase before purchasing ends
+    enum PurchasePhase {
+        NoPurchase,
+        WhitelistOnly,
+        Purchase
+    }
 
-    uint256 public immutable PURCHASE_PHASE_DURATION;          // Length of time for a purchasePhase, 86400 == 1 day
+    /// Maximum number of tickets available for purchase at the start of the sale
+    uint256 public constant TICKET_MAX = 21000;
 
-    uint256 public purchasePhase;                  // Current purchasePhase
-    uint256 public purchasePhaseEndTimestamp;      // Timestamp after which the current purchasePhase has ended
+    /// Minimum number of tickets that can be purchased at a time
+    uint256 public constant MINIMUM_TICKET_PURCHASE = 1;
 
-    // Further purchases are prohibited if paused
-    // and owner only burn and withdraw functions are enabled
-    // only intended to be used to end the sale
-    bool public isPaused;
-    
-    // Owners who can whitelist users
+    /// Unsold tickets available for purchase
+    /// ticketsAvailable = TICKET_MAX - (sum(user.purchased) for user in whitelist)
+    /// where user.purchased is in range [0, user.maxTicket] for user in whitelist
+    uint256 public ticketsAvailable;
+
+    /// Token exchanged to purchase tickets, i.e. BUSD
+    IERC20 public inputToken;
+
+    /// Number of tickets a user gets per `inputToken`
+    uint256 public INPUT_RATE;
+
+    /// Token being sold in presale and redeemable by exchanging tickets, i.e. HELIX
+    IERC20 public outputToken;
+
+    /// Number of `outputTokens` a user gets per ticket
+    uint256 public OUTPUT_RATE;
+
+    /// Number of decimals on the `inputToken` used for calculating ticket exchange rates
+    uint256 public constant INPUT_TOKEN_DECIMALS = 1e18;
+
+    /// Number of decimals on the `outputToken` used for calculating ticket exchange rates
+    uint256 public constant OUTPUT_TOKEN_DECIMALS = 1e18;
+
+    /// Address that receives `inputToken`s sold in exchange for tickets
+    address public treasury;
+
+    /// Current PurchasePhase
+    PurchasePhase public purchasePhase;
+
+    /// Length of purchase phases > 0 (in seconds), 86400 == 1 day
+    uint256 public immutable PURCHASE_PHASE_DURATION;
+
+    /// Timestamp after which the current PurchasePhase has ended
+    uint256 public purchasePhaseEndTimestamp;
+
+    /// Owners who can whitelist users
     address[] public owners;
 
-    // true if address is an owner and false otherwise
+    /// true if address is an owner and false otherwise
     mapping(address => bool) public isOwner;
 
-    // true if user can purchase tickets during purchase phase 1 and false otherwise
+    /// true if user can purchase tickets during WhitelistOnly PurchasePhase and false otherwise
     mapping(address => bool) public whitelist;
 
-    // Emitted when a user purchases amount of tickets
+    /// Emitted when a user purchases amount of tickets
     event Purchased(address indexed user, uint256 amount);
 
-    // Emitted when an owner burns amount of tickets
+    /// Emitted when an owner burns amount of tickets
     event Burned(uint256 amount);
 
-    // Emitted when a user withdraws amount of tickets
+    /// Emitted when a user withdraws amount of tickets
     event Withdrawn(address indexed user, uint256 amount);
 
-    // Emitted when an existing owner adds a new owner
+    /// Emitted when an existing owner adds a new owner
     event OwnerAdded(address indexed owner, address indexed newOwner);
 
-    // Emitted when the owner pauses the sale
-    event Paused();
-
-    // Emitted when the owner unpauses the sale
-    event Unpaused();
-
-    // Emitted when the purchase phase is set
-    event SetPurchasePhase(uint256 purchasePhase, uint256 startTimestamp, uint256 endTimestamp);
-
-    modifier isValidPurchasePhase(uint256 phase) {
-        require(phase <= PURCHASE_PHASE_END, "PublicPresale: invalid purchase phase");
-        _;
-    }
-
-    modifier isNotZeroAddress(address _address) {
-        require(_address != address(0), "PublicPresale: zero address");
-        _;
-    }
+    /// Emitted when the purchase phase is set
+    event SetPurchasePhase(PurchasePhase purchasePhase, uint256 startTimestamp, uint256 endTimestamp);
 
     modifier onlyOwner() {
         require(isOwner[msg.sender], "PublicPresale: not owner");
         _;
     }
 
-    modifier isNotAboveTicketsAvailable(uint256 amount) {
-        require(amount <= ticketsAvailable, "PublicPresale: amount above tickets available");
+    modifier onlyNotZeroAddress(address _address) {
+        require(_address != address(0), "PublicPresale: zero address");
+        _;
+    }
+
+    modifier onlyValidAmount(uint256 _amount) {
+        require(_amount <= ticketsAvailable, "PublicPresale: insufficient tickets available");
         _;
     }
 
@@ -132,9 +123,9 @@ contract PublicPresale is ReentrancyGuard {
         uint256 _OUTPUT_RATE,
         uint256 _PURCHASE_PHASE_DURATION
     ) 
-        isNotZeroAddress(_inputToken)
-        isNotZeroAddress(_outputToken)
-        isNotZeroAddress(_treasury)
+        onlyNotZeroAddress(_inputToken)
+        onlyNotZeroAddress(_outputToken)
+        onlyNotZeroAddress(_treasury)
     {
         inputToken = IERC20(_inputToken);
         outputToken = IERC20(_outputToken);
@@ -152,19 +143,19 @@ contract PublicPresale is ReentrancyGuard {
         PURCHASE_PHASE_DURATION = _PURCHASE_PHASE_DURATION;
     }
 
-    // purchase `amount` of tickets
-    function purchase(uint256 amount) external nonReentrant {
+    /// Purchase _amount of tickets
+    function purchase(uint256 _amount) external nonReentrant onlyValidAmount(_amount) {
         // Want to be in the latest phase
-        _updatePurchasePhase();
+        updatePurchasePhase();
    
         // Proceed only if the purchase is valid
-        _validatePurchase(msg.sender, amount);
+        _validatePurchase(msg.sender, _amount);
 
         // Update the contract's remaining tickets
-        ticketsAvailable -= amount;
+        ticketsAvailable -= _amount;
         
         // Get the `inputTokenAmount` in `inputToken` to purchase `amount` of tickets
-        uint256 inputTokenAmount = getAmountOut(amount, inputToken); 
+        uint256 inputTokenAmount = getAmountOut(_amount, inputToken); 
 
         // Pay for the `amount` of tickets
         require(
@@ -180,129 +171,51 @@ contract PublicPresale is ReentrancyGuard {
         inputToken.safeTransferFrom(msg.sender, treasury, inputTokenAmount);
         
         // Get the amount of tokens caller can purchase for `amount`
-        uint256 outputTokenAmount = getAmountOut(amount, outputToken);
+        uint256 outputTokenAmount = getAmountOut(_amount, outputToken);
         
         // Transfer `amount` of tickets to caller
         outputToken.safeTransfer(msg.sender, outputTokenAmount);
 
-        emit Purchased(msg.sender, amount);
+        emit Purchased(msg.sender, _amount);
     }
 
-    // validate that `user` is eligible to purchase `amount` of tickets
-    function _validatePurchase(address user, uint256 amount) private view isNotAboveTicketsAvailable(amount) isNotZeroAddress(user) {
-        require(purchasePhase >= PURCHASE_PHASE_START, "PublicPresale: sale not started");
-        require(!isPaused, "PublicPresale: sale is paused");
-        require(amount >= MINIMUM_TICKET_PURCHASE, "PublicPresale: amount below minimum purchase size");
-        if (purchasePhase == PURCHASE_PHASE_START) { 
-            require(whitelist[user], "PublicPresale: user not whitelisted");
-        }
-    }
-
-    // get `amountOut` of `tokenOut` for `amountIn` of tickets
-    function getAmountOut(uint256 amountIn, IERC20 tokenOut) public view returns(uint256 amountOut) {
-        if (address(tokenOut) == address(inputToken)) {
-            amountOut = amountIn * INPUT_RATE * INPUT_TOKEN_DECIMALS;
-        } else if (address(tokenOut) == address(outputToken)) {
-            amountOut = amountIn * OUTPUT_RATE * OUTPUT_TOKEN_DECIMALS;
-        } else {
-            amountOut = 0;
-        }
-    }
-
-    // used to destroy `outputToken` equivalant in value to `amount` of tickets
-    // should only be used after purchasePhase 2 ends
-    function burn(uint256 amount) external onlyOwner { 
-        // remove `amount` of tickets 
-        _remove(amount);
-
-        uint256 tokenAmount = getAmountOut(amount, outputToken);
-        outputToken.burn(address(this), tokenAmount);
-
-        emit Burned(amount);
-    }
-
-    // used to withdraw `outputToken` equivalent in value to `amount` of tickets to `to`
-    // should only be used after purchasePhase 2 ends
-    function withdraw(uint256 amount) external onlyOwner {
-        // remove `amount` of tickets 
-        _remove(amount);
-
-        // transfer to `to` the `tokenAmount` equivalent in value to `amount` of tickets
-        uint256 tokenAmount = getAmountOut(amount, outputToken);
-        outputToken.safeTransfer(msg.sender, tokenAmount);
-
-        emit Withdrawn(msg.sender, amount);
-    }
-
-    // used internally to remove `amount` of tickets from circulation and transfer an 
-    // amount of `outputToken` equivalent in value to `amount` to `to`
-    function _remove(uint256 amount) private isNotAboveTicketsAvailable(amount) {
-        // proceed only if the removal is valid
-        // note that only owners can make removals
-        require(isPaused, "PublicPresale: sale must be paused");
-
-        // decrease the tickets available by the amount being removed
-        ticketsAvailable -= amount;
-    }
-
-    // returns true if `amount` is removable by address `by`
-    function isRemovable(uint256 amount) external view onlyOwner returns(bool) {
-        return amount <= ticketsAvailable;
-    }
- 
-    // add a new owner to the contract, only callable by an existing owner
-    function addOwner(address owner) external isNotZeroAddress(owner) onlyOwner {
-        require(!isOwner[owner], "PublicPresale: already owner");
-        isOwner[owner] = true;
-        owners.push(owner);
-
-        emit OwnerAdded(msg.sender, owner);
-    }
-
-    // return the address array of registered owners
+    /// Return the address array of registered owners
     function getOwners() external view returns(address[] memory) {
         return owners;
     }
-    
-    // used to end the sale manually
-    function pause() external onlyOwner {
-        isPaused = true;
-        emit Paused();
-    }
-    
-    // safety switch if accidentally paused
-    function unpause() external onlyOwner {
-        isPaused = false;
-        emit Unpaused();
+
+    /// Return true if _amount is removable by owner
+    function isRemovable(uint256 _amount) external view onlyOwner returns (bool) {
+        return _amount <= ticketsAvailable;
     }
 
-    // called periodically and, if sufficient time has elapsed, update the purchasePhase
-    function updatePurchasePhase() external {
-        _updatePurchasePhase();
+    /// Used to destroy _outputToken equivalant in value to _amount of tickets
+    function burn(uint256 _amount) external onlyOwner { 
+        _remove(_amount);
+
+        uint256 tokenAmount = getAmountOut(_amount, outputToken);
+        outputToken.burn(address(this), tokenAmount);
+
+        emit Burned(_amount);
     }
 
-    function _updatePurchasePhase() private {
-        if (block.timestamp >= purchasePhaseEndTimestamp) {
-            if (purchasePhase >= PURCHASE_PHASE_START && purchasePhase < PURCHASE_PHASE_END) {
-                _setPurchasePhase(purchasePhase + 1);
-            }
-        }
+    /// Used to withdraw _outputToken equivalent in value to _amount of tickets to owner
+    function withdraw(uint256 _amount) external onlyOwner {
+        _remove(_amount);
+
+        // transfer to `to` the `tokenAmount` equivalent in value to `amount` of tickets
+        uint256 tokenAmount = getAmountOut(_amount, outputToken);
+        outputToken.safeTransfer(msg.sender, tokenAmount);
+
+        emit Withdrawn(msg.sender, _amount);
     }
 
-    // used externally to update from purchasePhase 0 to purchasePhase 1
-    // should only ever be called to set purchasePhase == 1
-    function setPurchasePhase(uint256 phase) external onlyOwner isValidPurchasePhase(phase) {
-        _setPurchasePhase(phase);
+    /// Called externally by the owner to manually set the _purchasePhase
+    function setPurchasePhase(PurchasePhase _purchasePhase) external onlyOwner {
+        _setPurchasePhase(_purchasePhase);
     }
 
-    // used internally to update purchasePhases
-    function _setPurchasePhase(uint256 phase) private {
-        purchasePhase = phase;
-        purchasePhaseEndTimestamp = block.timestamp + PURCHASE_PHASE_DURATION;
-        emit SetPurchasePhase(phase, block.timestamp, purchasePhaseEndTimestamp);
-    }
-   
-    // used externally to grant multiple `_users` permission to purchase tickets during phase 1
+    /// Called externally to grant multiple _users permission to purchase tickets during WithdrawOnly phase
     function whitelistAdd(address[] calldata _users) external onlyOwner {
         for (uint256 i = 0; i < _users.length; i++) {
             address user = _users[i]; 
@@ -310,8 +223,65 @@ contract PublicPresale is ReentrancyGuard {
         }
     }
 
-    // revoke permission for `user` to purchase tickets
-    function whitelistRemove(address user) external onlyOwner {
-        delete whitelist[user];
+    /// Revoke permission for _user to purchase tickets
+    function whitelistRemove(address _user) external onlyOwner {
+        delete whitelist[_user];
+    }
+
+    /// Add a new _owner to the contract, only callable by an existing owner
+    function addOwner(address _owner) external onlyOwner onlyNotZeroAddress(_owner) {
+        require(!isOwner[_owner], "PublicPresale: already owner");
+        isOwner[_owner] = true;
+        owners.push(_owner);
+
+        emit OwnerAdded(msg.sender, _owner);
+    }
+
+    /// Called periodically and, if sufficient time has elapsed, update the PurchasePhase
+    function updatePurchasePhase() public {
+        if (purchasePhase == PurchasePhase.WhitelistOnly && block.timestamp >= purchasePhaseEndTimestamp) {
+            _setPurchasePhase(PurchasePhase.Purchase);
+        }
+    }
+
+    /// Get _amountOut of _tokenOut for _amountIn of tickets
+    function getAmountOut(uint256 _amountIn, IERC20 _tokenOut) public view returns (uint256 amountOut) {
+        if (address(_tokenOut) == address(inputToken)) {
+            amountOut = _amountIn * INPUT_RATE * INPUT_TOKEN_DECIMALS;
+        } else if (address(_tokenOut) == address(outputToken)) {
+            amountOut = _amountIn * OUTPUT_RATE * OUTPUT_TOKEN_DECIMALS;
+        }
+        // else default to 0
+    }
+
+    /// called internally to update the _purchasePhase
+    function _setPurchasePhase(PurchasePhase _purchasePhase) private {
+        purchasePhase = _purchasePhase;
+        purchasePhaseEndTimestamp = block.timestamp + PURCHASE_PHASE_DURATION;
+        emit SetPurchasePhase(_purchasePhase, block.timestamp, purchasePhaseEndTimestamp);
+    }
+
+    /// Validate whether _user is eligible to purchase _amount of tickets
+    function _validatePurchase(address _user, uint256 _amount) 
+        private 
+        view 
+        onlyNotZeroAddress(_user)
+    {
+        require(purchasePhase != PurchasePhase.NoPurchase, "PublicPresale: purchase prohibited");
+        require(_amount >= MINIMUM_TICKET_PURCHASE, "PublicPresale: below minimum purchase");
+        if (purchasePhase == PurchasePhase.WhitelistOnly) { 
+            require(whitelist[_user], "PublicPresale: not whitelisted");
+        }
+    }
+
+    /// Used internally to remove _amount of tickets from circulation and transfer an 
+    /// amount of _outputToken equivalent in value to _amount to owner
+    function _remove(uint256 _amount) private onlyValidAmount(_amount) {
+        // proceed only if the removal is valid
+        // note that only owners can make removals
+        require(purchasePhase == PurchasePhase.NoPurchase, "PublicPresale: invalid phase");
+
+        // decrease the tickets available by the amount being removed
+        ticketsAvailable -= _amount;
     }
 } 
