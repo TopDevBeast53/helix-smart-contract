@@ -4,6 +4,7 @@ pragma solidity >= 0.8.0;
 import "../interfaces/IERC20.sol";
 import "../libraries/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 /*
  * AirDrop user addresses a token balance
@@ -17,80 +18,75 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 contract AirDrop is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    // the name of this airdrop contract
-    string public name; 
-
     struct User {
-        uint256 airdropped;        // total tokens airdropped to the user
-        uint256 balance;           // airdropped tokens remaining after withdrawls
+        uint256 airdropped;         // total tokens airdropped to the user
+        uint256 balance;            // airdropped tokens remaining after withdrawls
     }
-    
-    // Token being airdropped, i.e. HelixToken
-    IERC20 public token;
 
-    /* 
+    /**
      * Withdraw phase determines `token` withdrawals by users
-     *  0: default on contract creation
-     *     withdrawals are prohibited
-     *  1: started manually by the owner 
-     *     withdrawls are prohibited
-     *  2: withdraw up to 25% of airdropped tokens
-     *  3: withdraw up to 50% of airdropped tokens
-     *  4: withdraw up to 75% of airdropped tokens
-     *  5: withdraw up to 100% of airdropped tokens
+     *  NoWithdraw:     default on contract creation, withdrawals are prohibited
+     *  Withdraw0:      withdraw 0% of airdropped tokens
+     *  Withdraw25:     withdraw up to 25% of airdropped tokens
+     *  Withdraw50:     withdraw up to 50% of airdropped tokens
+     *  Withdraw75:     withdraw up to 75% of airdropped tokens
+     *  Withdraw100:    withdraw up to 100% of airdropped tokens
      * 
-     * After withdraw phase 1 is started, subsequent withdraw phases automatically 
+     * After Withdraw0 is started, subsequent withdraw phases automatically 
      * begin `WITHDRAW_PHASE_DURATION` after the start of the previous withdraw phase
      */
-    uint256 public constant WITHDRAW_PHASE_START = 1;           // Phase when withdrawing starts 
-    uint256 public constant WITHDRAW_PHASE_END = 5;             // Last withdraw phase, does not end withdrawing
+    enum WithdrawPhase {
+        NoWithdraw,
+        Withdraw0,
+        Withdraw25,
+        Withdraw50,
+        Withdraw75,
+        Withdraw100
+    }
+    
+    /// Name of this airdrop contract
+    string public name; 
+    
+    /// Token being airdropped, i.e. HelixToken
+    IERC20 public token;
 
-    uint256 public immutable WITHDRAW_PHASE_DURATION;        // Length of time for a withdrawPhase, 86400 == 1 day
+    /// Current withdraw phase, dictates what percentage of tickets may be withdrawn
+    WithdrawPhase public withdrawPhase;
 
-    uint256 public withdrawPhase;                  // Current withdrawPhase
-    uint256 public withdrawPhaseEndTimestamp;      // Timestamp after which the current withdrawPhase has ended
+    /// Length of withdrawPhase in seconds, 86400 == 1 day
+    uint256 public immutable WITHDRAW_PHASE_DURATION; 
 
-    uint256 public constant WITHDRAW_PERCENT = 100;    // the denominator, withdrawPhasePercent[x]/WITHDRAW_PERCENT
+    /// Timestamp after which the current withdrawPhase has ended
+    uint256 public withdrawPhaseEndTimestamp;
 
-    // sets whether withdrawals are enabled or disabled and by whom
-    bool public isPaused;
+    /// Denominator used when calculating percentages: withdrawPhasePercent[x]/WITHDRAW_PERCENT
+    uint256 public constant WITHDRAW_PERCENT = 100;
 
-    // Owners who can airdrop tokens to users
+    /// Owners who can airdrop tokens to users
     address[] public owners;
 
-    // true if address is an owner and false otherwise
+    /// true if address is an owner and false otherwise
     mapping(address => bool) public isOwner;
 
-    // relates user addresses to their struct
+    /// Relates user addresses to their struct
     mapping(address => User) public users;
     
-    // relates a withdrawPhase to the percent of airdropped tokens a user may withdraw during that withdrawPhase
-    mapping (uint256 => uint) public withdrawPhasePercent;
+    /// Relates a withdrawPhase to the percent of airdropped tokens a user may withdraw during that withdrawPhase
+    mapping (uint256 => uint256) public withdrawPhasePercent;
 
-   // Emitted when an owner burns amount of tickets
+    // Emitted when an owner burns amount of tickets
     event Burned(uint256 amount);
 
-    // Emitted when a user withdraws amount of tickets
+    // Emitted when tickets are withdrawn
     event Withdrawn(address indexed user, uint256 amount);
 
     // Emitted when an existing owner adds a new owner
     event OwnerAdded(address indexed owner, address indexed newOwner);
 
-    // Emitted when the owner pauses the sale
-    event Paused();
-
-    // Emitted when the owner unpauses the sale
-    event Unpaused(); 
-
     // Emitted when the purchase phase is set
-    event SetWithdrawPhase(uint256 withdrawPhase, uint256 startTimestamp, uint256 endTimestamp);
+    event SetWithdrawPhase(WithdrawPhase withdrawPhase, uint256 startTimestamp, uint256 endTimestamp);
 
-    modifier isValidWithdrawPhase(uint256 phase) {
-        require(phase <= WITHDRAW_PHASE_END, "AirDrop: invalid withdraw phase");
-        _;
-    }
-
-    modifier isNotZeroAddress(address _address) {
+    modifier onlyValidAddress(address _address) {
         require(_address != address(0), "AirDrop: zero address");
         _;
     }
@@ -100,9 +96,13 @@ contract AirDrop is ReentrancyGuard {
         _;
     }
 
-    constructor(string memory _name, address _token, uint256 _WITHDRAW_PHASE_DURATION) isNotZeroAddress(_token) {
+    constructor(
+        string memory _name, 
+        IERC20 _token, 
+        uint256 _WITHDRAW_PHASE_DURATION
+    ) onlyValidAddress(address(_token)) {
         name = _name;
-        token = IERC20(_token);
+        token = _token;
 
         isOwner[msg.sender] = true;
         owners.push(msg.sender);
@@ -115,125 +115,46 @@ contract AirDrop is ReentrancyGuard {
         withdrawPhasePercent[5] = 100;      // 100%
     }
 
-    // used to destroy `amount` of token
-    function burn(uint256 amount) external onlyOwner { 
-        _validateRemoval(msg.sender, amount);
-        token.burn(address(this), amount);
-        emit Burned(amount);
-    }
+    /// Called to withdraw _amount of token to caller's address
+    function withdraw(uint256 _amount) external {
+        // Want to be in the latest phase
+        updateWithdrawPhase();
 
-    // used to withdraw `amount` of token to caller's address
-    function withdraw(uint256 amount) external {
-        // want to be in the latest phase
-        _updateWithdrawPhase();
-
-        _validateRemoval(msg.sender, amount);
+        _requireValidRemoval(msg.sender, _amount);
 
         if (!isOwner[msg.sender]) {
-            users[msg.sender].balance -= amount;
+            users[msg.sender].balance -= _amount;
         }
-        token.safeTransfer(msg.sender, amount);
+        token.safeTransfer(msg.sender, _amount);
 
-        emit Withdrawn(msg.sender, amount);
+        emit Withdrawn(msg.sender, _amount);
     }
 
-    // validate whether `amount` of tokens are removable by address `by`
-    function _validateRemoval(address by, uint256 amount) private view {
-        require(amount <= tokenBalance(), "AirDrop: insufficient contract balance");
-        require(amount <= maxRemovable(by), "AirDrop: unable to remove");
-    }
-
-    // returns `maxAmount` removable by address `by`
-    function maxRemovable(address by) public view returns(uint256 maxAmount) {
-        if (isOwner[by]) {
-            // if paused owner can remove all tokens, otherwise they can't remove tokens
-            maxAmount = isPaused ? tokenBalance() : 0;
-        } else {
-            if (isPaused) {
-                maxAmount = 0;
-            } else {
-                // Max number of tokens user can withdraw as a function of withdrawPhase and 
-                // number of tokens airdropped
-                uint256 allowed = users[by].airdropped * withdrawPhasePercent[withdrawPhase] / WITHDRAW_PERCENT;
-
-                // Number of tokens remaining in their balance
-                uint256 balance = users[by].balance;
-        
-                // Can only withdraw the max allowed if they have a large enough balance
-                maxAmount = balance < allowed ? balance : allowed;
-            }
-        }
-    }
-
-    // returns true if `amount` is removable by address `by`
-    function isRemovable(address by, uint256 amount) external view returns(bool) {
-        _validateRemoval(by, amount);
+    /// Return true if `amount` is removable by address `by`
+    function isRemovable(address _by, uint256 _amount) external view returns (bool) {
+        _requireValidRemoval(_by, _amount);
         return true;
     }
- 
-    // add a new owner to the contract, only callable by an existing owner
-    function addOwner(address owner) external isNotZeroAddress(owner) onlyOwner {
-        require(!isOwner[owner], "AirDrop: already owner");
-        isOwner[owner] = true;
-        owners.push(owner);
-        emit OwnerAdded(msg.sender, owner);
+
+    /// Called to destroy `amount` of token
+    function burn(uint256 _amount) external onlyOwner { 
+        _requireValidRemoval(msg.sender, _amount);
+        token.burn(address(this), _amount);
+        emit Burned(_amount);
     }
 
-    // return the address array of registered owners
-    function getOwners() external view returns(address[] memory) {
-        return owners;
-    }
-    
-    // disable user withdrawals manually and enable owner removals
-    function pause() external onlyOwner {
-        isPaused = true;
-        emit Paused();
-    }
-    
-    // disable owner removals and enable user withdrawls (withdrawPhase dependent)
-    function unpause() external onlyOwner {
-        isPaused = false;
-        emit Unpaused();
+    /// Called externally by owner to manually set the _withdrawPhase
+    function setWithdrawPhase(WithdrawPhase _withdrawPhase) external onlyOwner {
+        _setWithdrawPhase(_withdrawPhase);
     }
 
-    // return this contract's token balance
-    function tokenBalance() public view returns(uint256 balance) {
-        balance = token.balanceOf(address(this));
-    }
-
-    // called periodically and, if sufficient time has elapsed, update the withdrawPhase
-    function updateWithdrawPhase() external {
-        _updateWithdrawPhase();
-    }
-
-    function _updateWithdrawPhase() private {
-        if (block.timestamp >= withdrawPhaseEndTimestamp) {
-            if (withdrawPhase >= WITHDRAW_PHASE_START && withdrawPhase < WITHDRAW_PHASE_END) {
-                _setWithdrawPhase(withdrawPhase + 1);
-            }
-        }
-    }
-
-    // used externally to update from withdrawPhase 0 to withdrawPhase 1
-    // should only ever be called to set withdrawPhase == 1
-    function setWithdrawPhase(uint256 phase) external onlyOwner isValidWithdrawPhase(phase) {
-        _setWithdrawPhase(phase);
-    }
-
-    // used internally to update withdrawPhases
-    function _setWithdrawPhase(uint256 phase) private {
-        withdrawPhase = phase;
-        withdrawPhaseEndTimestamp = block.timestamp + WITHDRAW_PHASE_DURATION;
-        emit SetWithdrawPhase(phase, block.timestamp, withdrawPhaseEndTimestamp);
-    }
-   
-    // used externally to airdrop multiple `_users` tokens
-    // each _users[i] receives amounts[i] many tokens for i in range _users.length
-    function airdropAdd(address[] calldata _users, uint[] calldata amounts) external onlyOwner {
-        require(_users.length == amounts.length, "AirDrop: users and amounts must be same length");
+    /// Called externally to airdrop multiple _users tokens
+    /// each _users[i] receives amounts[i] many tokens for i in range _users.length
+    function airdropAdd(address[] calldata _users, uint256[] calldata _amounts) external onlyOwner {
+        require(_users.length == _amounts.length, "AirDrop: users and amounts must be same length");
         for (uint256 i = 0; i < _users.length; i++) {
-            uint256 amount = amounts[i];
-            require(amount <= tokenBalance(), "AirDrop: amount greater than tokens available");
+            uint256 amount = _amounts[i];
+            require(amount <= tokenBalance(), "AirDrop: amount exceeds tokens available");
 
             address user = _users[i];
             users[user].airdropped += amount;
@@ -241,12 +162,107 @@ contract AirDrop is ReentrancyGuard {
         }
     }
 
-    // used externally to reduce a `user`s airdrop balance by `amount`
-    function airdropRemove(address user, uint256 amount) external onlyOwner {
-        if (users[user].balance < amount) {
-            users[user].balance = 0;
+    /// Called externally to reduce a _user's airdrop balance by _amount
+    function airdropRemove(address _user, uint256 _amount) external onlyOwner {
+        if (users[_user].balance < _amount) {
+            users[_user].balance = 0;
         } else {
-            users[user].balance -= amount;
+            users[_user].balance -= _amount;
         }
+    }
+
+    /// Return maxAmount removable by address _by
+    function maxRemovable(address _by) public view returns (uint256 maxAmount) {
+        if (isOwner[_by]) {
+            // Owner can withdraw up to the token balance if the contract
+            // is in the NoWithdraw state (paused)
+            if (withdrawPhase == WithdrawPhase.NoWithdraw) {
+                maxAmount = tokenBalance();
+            }
+        } else {
+            // Number of tickets already withdrawn
+            uint256 withdrawn = users[_by].airdropped - users[_by].balance;
+
+            // Use the next withdrawPhase if update hasn't been called
+            uint256 _withdrawPhase = uint(withdrawPhase);
+            if (withdrawPhase != WithdrawPhase.Withdraw100 && block.timestamp >= withdrawPhaseEndTimestamp) {
+                _withdrawPhase++;
+            }
+
+            // Max number of tokens user can withdraw based on current withdrawPhase, 
+            // number of tokens airdropped, and number of tokens already withdrawn
+            uint256 phaseMax = (users[_by].airdropped * withdrawPhasePercent[_withdrawPhase] / WITHDRAW_PERCENT);
+            uint256 allowed =  phaseMax - withdrawn;
+
+            // Number of tokens remaining in their balance
+            uint256 balance = users[_by].balance;
+    
+            // Max amount will be the minimum between balance remaining and amount allowed
+            maxAmount = Math.min(balance, allowed);
+        }
+    }
+ 
+    /// Add a new _owner to the contract, only callable by an existing owner
+    function addOwner(address _owner) external onlyOwner onlyValidAddress(_owner) {
+        require(!isOwner[_owner], "AirDrop: already owner");
+        isOwner[_owner] = true;
+        owners.push(_owner);
+        emit OwnerAdded(msg.sender, _owner);
+    }
+
+    /// Remove an existing _owner from the contract, only callable by an owner
+    function removeOwner(address _owner) external onlyOwner onlyValidAddress(_owner) {
+        require(isOwner[_owner], "VipPresale: not owner");
+        delete isOwner[_owner];
+
+        // array remove by swap
+        for (uint256 i = 0; i < owners.length; i++) {
+            if (owners[i] == _owner) {
+                owners[i] = owners[owners.length - 1];
+                owners.pop();
+            }
+        }
+    }
+
+    /// Return the address array of registered owners
+    function getOwners() external view returns (address[] memory) {
+        return owners;
+    }
+    
+    /// Called periodically and, if sufficient time has elapsed, update the withdrawPhase
+    function updateWithdrawPhase() public {
+        if (block.timestamp >= withdrawPhaseEndTimestamp) {
+            if (withdrawPhase == WithdrawPhase.Withdraw0) {
+                _setWithdrawPhase(WithdrawPhase.Withdraw25);
+            }
+            else if (withdrawPhase == WithdrawPhase.Withdraw25) {
+                _setWithdrawPhase(WithdrawPhase.Withdraw50);
+            }
+            else if (withdrawPhase == WithdrawPhase.Withdraw50) {
+                _setWithdrawPhase(WithdrawPhase.Withdraw75);
+            }
+            else if (withdrawPhase == WithdrawPhase.Withdraw75) {
+                _setWithdrawPhase(WithdrawPhase.Withdraw100);
+            }
+        }
+    }
+
+    /// Return this contract's token balance
+    function tokenBalance() public view returns(uint256 balance) {
+        balance = token.balanceOf(address(this));
+    }
+
+    // Called privately to set the _withdrawPhase
+    function _setWithdrawPhase(WithdrawPhase _withdrawPhase) private {
+        withdrawPhase = _withdrawPhase;
+        withdrawPhaseEndTimestamp = block.timestamp + WITHDRAW_PHASE_DURATION;
+        emit SetWithdrawPhase(_withdrawPhase, block.timestamp, withdrawPhaseEndTimestamp);
+    }
+
+    // Require that _amount of tokens are removable by address _by
+    function _requireValidRemoval(address _by, uint256 _amount) private view {
+        require(_amount > 0, "AirDrop: zero amount");
+        require(_amount <= tokenBalance(), "AirDrop: insufficient contract balance");
+        require(_amount <= maxRemovable(_by), "AirDrop: exceeds max amount");
     }
 } 
