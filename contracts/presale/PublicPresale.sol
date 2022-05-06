@@ -254,14 +254,14 @@ contract PublicPresale is ReentrancyGuard {
         // else default to 0
     }
 
-    /// called internally to update the _purchasePhase
+    // Called internally to update the _purchasePhase
     function _setPurchasePhase(PurchasePhase _purchasePhase) private {
         purchasePhase = _purchasePhase;
         purchasePhaseEndTimestamp = block.timestamp + PURCHASE_PHASE_DURATION;
         emit SetPurchasePhase(_purchasePhase, block.timestamp, purchasePhaseEndTimestamp);
     }
 
-    /// Validate whether _user is eligible to purchase _amount of tickets
+    // Validate whether _user is eligible to purchase _amount of tickets
     function _validatePurchase(address _user, uint256 _amount) 
         private 
         view 
@@ -274,8 +274,8 @@ contract PublicPresale is ReentrancyGuard {
         }
     }
 
-    /// Used internally to remove _amount of tickets from circulation and transfer an 
-    /// amount of _outputToken equivalent in value to _amount to owner
+    // Used internally to remove _amount of tickets from circulation and transfer an 
+    // amount of _outputToken equivalent in value to _amount to owner
     function _remove(uint256 _amount) private onlyValidAmount(_amount) {
         // proceed only if the removal is valid
         // note that only owners can make removals
