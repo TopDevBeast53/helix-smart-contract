@@ -105,7 +105,7 @@ contract PublicPresale is ReentrancyGuard {
         _;
     }
 
-    modifier onlyNotZeroAddress(address _address) {
+    modifier onlyValidAddress(address _address) {
         require(_address != address(0), "PublicPresale: zero address");
         _;
     }
@@ -123,9 +123,9 @@ contract PublicPresale is ReentrancyGuard {
         uint256 _OUTPUT_RATE,
         uint256 _PURCHASE_PHASE_DURATION
     ) 
-        onlyNotZeroAddress(_inputToken)
-        onlyNotZeroAddress(_outputToken)
-        onlyNotZeroAddress(_treasury)
+        onlyValidAddress(_inputToken)
+        onlyValidAddress(_outputToken)
+        onlyValidAddress(_treasury)
     {
         inputToken = IERC20(_inputToken);
         outputToken = IERC20(_outputToken);
@@ -229,7 +229,7 @@ contract PublicPresale is ReentrancyGuard {
     }
 
     /// Add a new _owner to the contract, only callable by an existing owner
-    function addOwner(address _owner) external onlyOwner onlyNotZeroAddress(_owner) {
+    function addOwner(address _owner) external onlyOwner onlyValidAddress(_owner) {
         require(!isOwner[_owner], "PublicPresale: already owner");
         isOwner[_owner] = true;
         owners.push(_owner);
@@ -265,7 +265,7 @@ contract PublicPresale is ReentrancyGuard {
     function _validatePurchase(address _user, uint256 _amount) 
         private 
         view 
-        onlyNotZeroAddress(_user)
+        onlyValidAddress(_user)
     {
         require(purchasePhase != PurchasePhase.NoPurchase, "PublicPresale: purchase prohibited");
         require(_amount >= MINIMUM_TICKET_PURCHASE, "PublicPresale: below minimum purchase");
