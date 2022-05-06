@@ -8,17 +8,17 @@ import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 contract HelixVault is Ownable {
     struct Deposit {
         address depositor;                  // the user making the deposit
-        uint256 amount;                        // amount of token deposited
-        uint256 weight;                        // reward weight by duration 
-        uint256 depositTimestamp;              // when the deposit was made and used for calculating rewards
-        uint256 withdrawTimestamp;             // when the deposit is eligible for withdrawal
-        uint256 rewardDebt;                    // the debt owed on this deposit
+        uint256 amount;                     // amount of token deposited
+        uint256 weight;                     // reward weight by duration 
+        uint256 depositTimestamp;           // when the deposit was made and used for calculating rewards
+        uint256 withdrawTimestamp;          // when the deposit is eligible for withdrawal
+        uint256 rewardDebt;                 // the debt owed on this deposit
         bool withdrawn;                     // true if the deposit has been withdrawn and false otherwise
     }
     
     struct Duration {
-        uint256 duration;                      // length of time a deposit will be locked in seconds, 1 day == 86400
-        uint256 weight;                        // reward modifier for locking a deposit for `duration`
+        uint256 duration;                   // length of time a deposit will be locked in seconds, 1 day == 86400
+        uint256 weight;                     // reward modifier for locking a deposit for `duration`
     }
    
     // Maps depositIds to a Deposit
@@ -124,11 +124,11 @@ contract HelixVault is Ownable {
         lastRewardBlock = block.number > _startBlock ? block.number : _startBlock;
 
         // default locked deposit durations and their weights
-        durations.push(Duration(90 days, 50));
-        durations.push(Duration(180 days, 100));
-        durations.push(Duration(360 days, 300));
-        durations.push(Duration(540 days, 500));
-        durations.push(Duration(720 days, 1000));
+        durations.push(Duration(90 days, 50));          // depositId == 0
+        durations.push(Duration(180 days, 100));        // depositId == 1
+        durations.push(Duration(360 days, 300));        // depositId == 2
+        durations.push(Duration(540 days, 500));        // depositId == 3
+        durations.push(Duration(720 days, 1000));       // depositId == 4
                                 
         uint256 decimalsRewardToken = uint(token.decimals());
         require(decimalsRewardToken < 30, "Vault: invalid reward token decimals");
@@ -137,7 +137,11 @@ contract HelixVault is Ownable {
     }
 
     // Used internally to create a new deposit and lock `amount` of token for `index` 
-    function newDeposit(uint256 amount, uint256 index) external notZeroAmount(amount) {
+    function newDeposit(uint256 amount, uint256 index) 
+        external 
+        notZeroAmount(amount) 
+        isValidIndex(index) 
+    {
         updatePool();
 
         // Get the new id of this deposit and create the deposit object
@@ -160,7 +164,11 @@ contract HelixVault is Ownable {
     }
 
     // Used internally to increase deposit `id` by `amount` of token
-    function updateDeposit(uint256 amount, uint256 id) external notZeroAmount(amount) {
+    function updateDeposit(uint256 amount, uint256 id) 
+        external 
+        notZeroAmount(amount) 
+        isValidDepositId(id)
+    {
         updatePool();
 
         Deposit storage d = _getDeposit(id);
@@ -253,13 +261,17 @@ contract HelixVault is Ownable {
             return;
         }
 
-        lastRewardBlock = block.number;
-
         uint256 balance = token.balanceOf(address(this));
+        uint256 reward;
         if (balance > 0) {
             uint256 multiplier = getMultiplier(lastRewardBlock, block.number);
-            uint256 reward = multiplier * rewardPerBlock;
+            reward = multiplier * rewardPerBlock;
             accTokenPerShare += reward * PRECISION_FACTOR / balance;
+        }
+
+        lastRewardBlock = block.number;
+
+        if (reward > 0) {
             token.mint(address(this), reward);
         }
 
@@ -314,7 +326,7 @@ contract HelixVault is Ownable {
     }
 
     // Withdraw all the tokens in this contract. Emergency ONLY
-    function emergencyRewardWithdraw() external onlyOwner {
+    function emergencyWithdraw() external onlyOwner {
         TransferHelper.safeTransfer(address(token), msg.sender, token.balanceOf(address(this)));
     }
     
