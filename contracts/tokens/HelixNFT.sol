@@ -3,10 +3,11 @@ pragma solidity >=0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable {
+contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyGuard {
     using Strings for uint256;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -628,12 +629,4 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable {
         _owner = newOwner;
     }
 
-    // ReentrancyGuard ---------------------------------------------------------------
-
-    modifier nonReentrant() {
-        require(_reentrancyStatus == 1, "HelixNFT: reentrancy");
-        _reentrancyStatus = 2;
-        _;
-        _reentrancyStatus = 1;
-    }
 }
