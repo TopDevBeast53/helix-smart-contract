@@ -227,6 +227,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         ], 
         overrides
     )
+    await helixToken.addMinter(vault.address, overrides)
 
     // 14 deploy vip presale contract
     const vipPresale = await deployContract(wallet, VipPresale, 
