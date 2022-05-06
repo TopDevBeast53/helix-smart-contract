@@ -576,10 +576,7 @@ describe('Vault', () => {
 
         // check that funds were transferred
         const actualBalance = (await helixToken.balanceOf(wallet0.address)).div(expandTo18Decimals(1))
-
-        // note we check above and not eq because the reward makes the actual balance
-        // a little higher than the expected balance
-        expect(actualBalance).to.above(expectedBalance)
+        expect(actualBalance).to.eq(expectedBalance)
 
         // check that deposit is marked as withdrawn
         deposit = await vault.deposits(id)
