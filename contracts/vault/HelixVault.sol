@@ -146,21 +146,21 @@ contract HelixVault is Ownable {
 
     /// Called by the deposit _id holder to withdraw their accumulated reward
     function claimReward(uint256 _id) external {
-        Deposit storage d = _getDeposit(_id);
+        Deposit storage deposit = _getDeposit(_id);
 
-        _requireIsDepositor(msg.sender, d.depositor);
-        _requireNotWithdrawn(d.withdrawn);
+        _requireIsDepositor(msg.sender, deposit.depositor);
+        _requireNotWithdrawn(deposit.withdrawn);
 
         updatePool();
 
-        uint256 pending = _getReward(d.amount, d.weight) - d.rewardDebt;
-        d.rewardDebt = _getReward(d.amount, d.weight);
+        uint256 reward = _getReward(deposit.amount, deposit.weight) - deposit.rewardDebt;
+        deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
         
-        if (pending > 0) {
-            token.transfer(msg.sender, pending);
+        if (reward > 0) {
+            token.transfer(msg.sender, reward);
         }
 
-        emit RewardClaimed(msg.sender, _id, pending);
+        emit RewardClaimed(msg.sender, _id, reward);
     } 
 
     /// Used internally to create a new deposit and lock _amount of token for _index
@@ -174,20 +174,28 @@ contract HelixVault is Ownable {
         // Get the new id of this deposit and create the deposit object
         uint256 id = depositId++;
 
-        Deposit storage d = deposits[id];
-        d.depositor = msg.sender;
-        d.amount = _amount;
-        d.weight = durations[_index].weight;
-        d.depositTimestamp = block.timestamp;
-        d.withdrawTimestamp = block.timestamp + durations[_index].duration;
-        d.rewardDebt = _getReward(d.amount, d.weight);
-        d.withdrawn = false;
+        Deposit storage deposit = deposits[id];
+        deposit.depositor = msg.sender;
+        deposit.amount = _amount;
+        deposit.weight = durations[_index].weight;
+        deposit.depositTimestamp = block.timestamp;
+        deposit.withdrawTimestamp = block.timestamp + durations[_index].duration;
+        deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
+        deposit.withdrawn = false;
 
         // Relay the deposit id to the user's account
         depositIds[msg.sender].push(id);
 
         token.transferFrom(msg.sender, address(this), _amount);
-        emit NewDeposit(msg.sender, id, _amount, d.weight, d.depositTimestamp, d.withdrawTimestamp);
+
+        emit NewDeposit(
+            msg.sender, 
+            id, 
+            _amount, 
+            deposit.weight, 
+            deposit.depositTimestamp, 
+            deposit.withdrawTimestamp
+        );
     }
 
     /// Used internally to increase deposit _id by _amount of token
@@ -198,47 +206,47 @@ contract HelixVault is Ownable {
     {
         updatePool();
 
-        Deposit storage d = _getDeposit(_id);
+        Deposit storage deposit = _getDeposit(_id);
     
-        _requireIsDepositor(msg.sender, d.depositor);
-        _requireNotWithdrawn(d.withdrawn);
+        _requireIsDepositor(msg.sender, deposit.depositor);
+        _requireNotWithdrawn(deposit.withdrawn);
 
-        d.amount += _amount;
-        d.rewardDebt = _getReward(d.amount, d.weight);
+        deposit.amount += _amount;
+        deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
 
-        uint256 pending = _getReward(d.amount, d.weight);
-        if (pending > 0) {
-            token.transfer(msg.sender, pending);
+        uint256 reward = _getReward(deposit.amount, deposit.weight);
+        if (reward > 0) {
+            token.transfer(msg.sender, reward);
         }
         token.transferFrom(msg.sender, address(this), _amount);
 
-        emit UpdateDeposit(msg.sender, _id, _amount, d.amount);
+        emit UpdateDeposit(msg.sender, _id, _amount, deposit.amount);
     }
 
     /// Withdraw _amount of token from deposit _id
     function withdraw(uint256 _amount, uint256 _id) external onlyValidAmount(_amount) {
-        Deposit storage d = _getDeposit(_id);
+        Deposit storage deposit = _getDeposit(_id);
     
-        _requireIsDepositor(msg.sender, d.depositor); 
-        _requireNotWithdrawn(d.withdrawn);
-        require(d.amount >= _amount, "Vault: invalid amount");
-        require(block.timestamp >= d.withdrawTimestamp, "Vault: locked");
+        _requireIsDepositor(msg.sender, deposit.depositor); 
+        _requireNotWithdrawn(deposit.withdrawn);
+        require(deposit.amount >= _amount, "Vault: invalid amount");
+        require(block.timestamp >= deposit.withdrawTimestamp, "Vault: locked");
        
         // collect rewards
         updatePool();
         
-        uint256 pending = _getReward(d.amount, d.weight);
+        uint256 reward = _getReward(deposit.amount, deposit.weight);
 
-        if (d.amount == _amount) {
+        if (deposit.amount == _amount) {
             // Close the deposit if the amount deposited is being withdrawn
-            d.withdrawn = true;
+            deposit.withdrawn = true;
         } else {
-            d.amount -= _amount;
-            d.rewardDebt = _getReward(d.amount, d.weight);
+            deposit.amount -= _amount;
+            deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
         }
 
-        if (pending > 0) {
-            token.transfer(msg.sender, pending);
+        if (reward > 0) {
+            token.transfer(msg.sender, reward);
         }
         token.transfer(msg.sender, _amount);
 
@@ -258,7 +266,8 @@ contract HelixVault is Ownable {
         TransferHelper.safeTransfer(address(token), msg.sender, token.balanceOf(address(this)));
     }
     
-    /// Called by the owner to get a duration by it's _index and assign it a new _duration and _weight
+    /// Called by the owner to get a duration by it's _index and assign it a 
+    /// new _duration and _weight
     function setDuration(uint256 _index, uint256 _duration, uint256 _weight)
         external
         onlyOwner
@@ -294,11 +303,11 @@ contract HelixVault is Ownable {
     }
 
     /// Called to get deposit with _id's pending reward
-    function pendingReward(uint256 _id) external view returns(uint) {
-        Deposit storage d = _getDeposit(_id);
+    function pendingReward(uint256 _id) external view returns (uint) {
+        Deposit storage deposit = _getDeposit(_id);
         
-        _requireIsDepositor(msg.sender, d.depositor);
-        _requireNotWithdrawn(d.withdrawn);
+        _requireIsDepositor(msg.sender, deposit.depositor);
+        _requireNotWithdrawn(deposit.withdrawn);
 
         uint256 _accTokenPerShare = accTokenPerShare;
         uint256 lpSupply = token.balanceOf(address(this));
@@ -307,16 +316,18 @@ contract HelixVault is Ownable {
             uint256 reward = blocks * rewardPerBlock;
             _accTokenPerShare += reward * PRECISION_FACTOR / lpSupply;
         }
-        return _getReward(d.amount, d.weight, _accTokenPerShare) - d.rewardDebt;
+
+        uint256 reward = _getReward(deposit.amount, deposit.weight, _accTokenPerShare);
+        return reward - deposit.rewardDebt;
     }
 
     // Get the _user's deposit ids which are used for accessing their deposits
-    function getDepositIds(address _user) external view returns(uint[] memory) {
+    function getDepositIds(address _user) external view returns (uint[] memory) {
         return depositIds[_user];
     }
 
     /// Get the array of durations
-    function getDurations() external view returns(Duration[] memory) {
+    function getDurations() external view returns (Duration[] memory) {
         return durations;
     }
 
@@ -358,17 +369,27 @@ contract HelixVault is Ownable {
     }
 
     // Return the Deposit associated with the _depositId
-    function _getDeposit(uint256 _depositId) private view onlyValidDepositId(_depositId) returns (Deposit storage) {
+    function _getDeposit(uint256 _depositId) private view onlyValidDepositId(_depositId) 
+        returns (Deposit storage) 
+    {
         return deposits[_depositId];
     }
 
     // Used internally for computing reward and reward debts
-    function _getReward(uint256 _amount, uint256 _weight) private view returns(uint256 reward) {
+    function _getReward(uint256 _amount, uint256 _weight) 
+        private 
+        view 
+        returns (uint256 reward) 
+    {
         reward = _getReward(_amount, _weight, accTokenPerShare);
     }
 
     // Used internally for computing reward and reward debts
-    function _getReward(uint256 _amount, uint256 _weight, uint256 _accTokenPerShare) private view returns(uint256 reward) {
+    function _getReward(uint256 _amount, uint256 _weight, uint256 _accTokenPerShare) 
+        private 
+        view 
+        returns (uint256 reward) 
+    {
         reward = _amount * _weight * _accTokenPerShare / PRECISION_FACTOR / WEIGHT_PERCENT;
     }
     // Used to require that the _caller is the _depositor
