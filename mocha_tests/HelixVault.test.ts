@@ -14,7 +14,7 @@ const env = require('../scripts/constants/env')
 
 const rewardPerBlock = initials.HELIX_VAULT_REWARD_PER_BLOCK[env.network]
 const startBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
-const bonusEndBlock = initials.HELIX_VAULT_BONUS_END_BLOCK[env.network]
+const lastRewardBlock = initials.HELIX_VAULT_BONUS_END_BLOCK[env.network]
 
 chai.use(solidity)
 
@@ -61,7 +61,7 @@ describe('Vault', () => {
     it('vault: initialized with expected values', async () => {
         expect(await vault.token()).to.eq(helixToken.address)
         expect(await vault.rewardPerBlock()).to.eq(rewardPerBlock)
-        expect(await vault.bonusEndBlock()).to.eq(bonusEndBlock)
+        expect(await vault.lastRewardBlock()).to.eq(lastRewardBlock)
         expect(await helixToken.balanceOf(vault.address)).to.eq(expandTo18Decimals(10000))
     })
 
@@ -222,36 +222,36 @@ describe('Vault', () => {
             .to.be.revertedWith('Vault: min 0.1 per block')
     })
 
-    it('vault: get multiplier', async () => {
-        const bonusEndBlock = await vault.bonusEndBlock() 
+    it('vault: get blocks difference', async () => {
+        const lastRewardBlock = await vault.lastRewardBlock() 
 
         // Expect to enter the "if" condition
-        let to = bonusEndBlock - 1
+        let to = lastRewardBlock - 1
         let from = to - 1
-        expect(await vault.getMultiplier(from, to)).to.eq(to - from)
+        expect(await vault.getBlocksDifference(from, to)).to.eq(to - from)
 
         // Expect to enter the "else if" condition
-        to = bonusEndBlock + 2
-        from = bonusEndBlock
-        expect(await vault.getMultiplier(from, to)).to.eq(0)
+        to = lastRewardBlock + 2
+        from = lastRewardBlock
+        expect(await vault.getBlocksDifference(from, to)).to.eq(0)
 
         // Expect to enter the "else" condition
-        to = bonusEndBlock + 1
-        from = bonusEndBlock - 1
-        expect(await vault.getMultiplier(from, to)).to.eq(bonusEndBlock - from)
+        to = lastRewardBlock + 1
+        from = lastRewardBlock - 1
+        expect(await vault.getBlocksDifference(from, to)).to.eq(lastRewardBlock - from)
     }) 
 
-    it('vault: get multiplier fails if "to" preceeds "from" block', async () => {
+    it('vault: get blocks difference fails if "to" preceeds "from" block', async () => {
         const to = 998
         const from = 999
         // require "to" to be less than "from" for following test to fail as expected
         expect(to).to.be.below(from) 
-        await expect(vault.getMultiplier(from, to))
+        await expect(vault.getBlocksDifference(from, to))
             .to.be.revertedWith('Vault: invalid block values')
     })
 
     it('vault: update pool', async () => {
-        // Skip testing block.number <= lastRewardBlock condition
+        // Skip testing block.number <= lastUpdateBlock condition
 
         // First test the case where the vault contract balance is 0
         // overwrite _vault with a fresh deployment so that the contract's token balance == 0
@@ -260,31 +260,31 @@ describe('Vault', () => {
                 helixToken.address,
                 rewardPerBlock,
                 startBlock,
-                bonusEndBlock
+                lastRewardBlock
             ], 
             overrides
         )
         expect(await helixToken.balanceOf(_vault.address)).to.eq(0)
 
-        // and now after update expect lastRewardBlock to be increased 
+        // and now after update expect lastUpdateBlock to be increased 
         // but expect accTokenPerShare to stay the same
 
         let prevAccTokenPerShare = await _vault.accTokenPerShare()
         expect(prevAccTokenPerShare).to.eq(0)
 
         // +1 since update pool occurs on block after reading the block number
-        let prevLastRewardBlock = await _vault.lastRewardBlock()
+        let prevLastRewardBlock = await _vault.lastUpdateBlock()
         let expectedBlockNumber = (await provider.getBlockNumber()) + 1
 
         await _vault.updatePool()
 
         expect(await _vault.accTokenPerShare()).to.eq(prevAccTokenPerShare)
-        expect(await _vault.lastRewardBlock()).to.eq(expectedBlockNumber)
+        expect(await _vault.lastUpdateBlock()).to.eq(expectedBlockNumber)
 
         // Now test the case where the contract balance is not zero
         // Note that we're now using "vault" and not "_vault"
         prevAccTokenPerShare = await vault.accTokenPerShare()
-        prevLastRewardBlock = await vault.lastRewardBlock()
+        prevLastRewardBlock = await vault.lastUpdateBlock()
 
         expectedBlockNumber = (await provider.getBlockNumber()) + 1
         const expectedAccTokenPerShare = await getAccTokenPerShare(expectedBlockNumber)
@@ -292,7 +292,7 @@ describe('Vault', () => {
         await vault.updatePool()
 
         expect(await vault.accTokenPerShare()).to.eq(expectedAccTokenPerShare)
-        expect(await vault.lastRewardBlock()).to.eq(expectedBlockNumber)
+        expect(await vault.lastUpdateBlock()).to.eq(expectedBlockNumber)
     })
 
     it('vault: new deposit fails if invalid amount is passed', async () => {
@@ -313,7 +313,7 @@ describe('Vault', () => {
         await vault.newDeposit(amount, durationIndex); 
 
         expect(await vault.accTokenPerShare()).to.eq(expectedAccTokenPerShare)
-        expect(await vault.lastRewardBlock()).to.eq(expectedBlockNumber)
+        expect(await vault.lastUpdateBlock()).to.eq(expectedBlockNumber)
     })
 
     it('vault: new deposit fails if called with invalid index', async () => {
@@ -576,10 +576,7 @@ describe('Vault', () => {
 
         // check that funds were transferred
         const actualBalance = (await helixToken.balanceOf(wallet0.address)).div(expandTo18Decimals(1))
-
-        // note we check above and not eq because the reward makes the actual balance
-        // a little higher than the expected balance
-        expect(actualBalance).to.above(expectedBalance)
+        expect(actualBalance).to.eq(expectedBalance)
 
         // check that deposit is marked as withdrawn
         deposit = await vault.deposits(id)
@@ -659,17 +656,17 @@ describe('Vault', () => {
         /*
         const blockNumber = (await provider.getBlockNumber()) + 1
         let _accTokenPerShare = parseInt(await getAccTokenPerShare(blockNumber))
-        const lastRewardBlock = await vault.lastRewardBlock()
+        const lastUpdateBlock = await vault.lastUpdateBlock()
         const lpSupply = await helixToken.balanceOf(vault.address)
 
         // make sure that "if" condition is entered
-        expect(blockNumber).to.be.above(lastRewardBlock)
+        expect(blockNumber).to.be.above(lastUpdateBlock)
         expect(lpSupply).to.not.eq(0)
 
         // inside the "if" condition
-        const multiplier = await vault.getMultiplier(lastRewardBlock, blockNumber)
-        print(`mult ${multiplier}`)
-        const reward = multiplier * (await vault.rewardPerBlock())
+        const blocks = await vault.getBlocksDifference(lastUpdateBlock, blockNumber)
+        print(`mult ${blocks}`)
+        const reward = blocks * (await vault.rewardPerBlock())
         print(`reward ${reward}`)
         const precisionFactor = await vault.PRECISION_FACTOR()
         print(`accTok before ${_accTokenPerShare}`)
@@ -762,9 +759,9 @@ describe('Vault', () => {
     })
 
     async function getAccTokenPerShare(blockNumber: number) {
-        const multiplier = await vault.getMultiplier(await vault.lastRewardBlock(), blockNumber)
+        const blocks = await vault.getBlocksDifference(await vault.lastUpdateBlock(), blockNumber)
         const _rewardPerBlock = await vault.rewardPerBlock() // preface with _ avoid name conflict with global rewardPerBlock
-        const reward = multiplier.mul(_rewardPerBlock)
+        const reward = blocks.mul(_rewardPerBlock)
 
         const accTokenPerShare = await vault.accTokenPerShare()
         const precisionFactor = await vault.PRECISION_FACTOR()
