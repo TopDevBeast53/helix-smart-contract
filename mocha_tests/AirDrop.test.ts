@@ -137,7 +137,7 @@ describe('AirDrop Presale', () => {
         const amounts = [wallet1Amount, wallet2Amount]
         
         await expect(airDrop.airdropAdd(users, amounts))
-            .to.be.revertedWith("AirDrop: amount greater than tokens available")
+            .to.be.revertedWith("AirDrop: amount exceeds tokens available")
     })
 
     it('airDrop: airdrop remove', async () => {
@@ -175,27 +175,6 @@ describe('AirDrop Presale', () => {
             .to.be.revertedWith('AirDrop: not owner')
     })
 
-    it('airDrop: pause', async () => {
-        await airDrop.pause()
-        expect(await airDrop.isPaused()).to.be.true
-    })
-
-    it('airDrop: pause as non-owner fails', async () => {
-        await expect(airDrop1.pause())
-            .to.be.revertedWith('AirDrop: not owner')
-    })
-
-    it('airDrop: unpause', async () => {
-        await airDrop.pause()
-        await airDrop.unpause()
-        expect(await airDrop.isPaused()).to.be.false
-    })
-
-    it('airDrop: unpause as non-owner fails', async () => {
-        await expect(airDrop1.unpause())
-            .to.be.revertedWith('AirDrop: not owner')
-    })
-
     it('airDrop: set withdraw phase', async () => {
         await airDrop.setWithdrawPhase(0);
         expect(await airDrop.withdrawPhase()).to.eq(0)
@@ -223,9 +202,9 @@ describe('AirDrop Presale', () => {
     })
 
     it('airDrop: set withdraw phase with invalid phase fails', async () => {
-        const invalidPhase = (await airDrop.WITHDRAW_PHASE_END()).toNumber() + 1
+        const invalidPhase = 6
         await expect(airDrop.setWithdrawPhase(invalidPhase))
-            .to.be.revertedWith('AirDrop: invalid withdraw phase')
+            .to.be.revertedWith('revert')
     })
 
     it('airDrop: set withdraw phase emits set withdraw phase event', async () => {
@@ -242,21 +221,30 @@ describe('AirDrop Presale', () => {
 
     it('airDrop: max removable by owner when unpaused', async () => {
         const owner = wallet0.address
-        await airDrop.unpause()
+
+        const unpaused = 1
+        await airDrop.setWithdrawPhase(unpaused)
+            
         const expectedAmount = 0
         expect(await airDrop.maxRemovable(owner)).to.eq(expectedAmount)
     })
 
     it('airDrop: max removable by owner when paused', async () => {
         const owner = wallet0.address
-        await airDrop.pause()
+
+        const paused = 0
+        await airDrop.setWithdrawPhase(paused)
+
         const expectedAmount = await airDrop.tokenBalance()
         expect(await airDrop.maxRemovable(owner)).to.eq(expectedAmount)
     })
 
     it('airDrop: max removable by user when paused', async () => {
         const user = wallet1.address
-        await airDrop.pause()
+
+        const paused = 0
+        await airDrop.setWithdrawPhase(paused)
+
         const expectedAmount = 0
         expect(await airDrop.maxRemovable(user)).to.eq(expectedAmount)
     })
@@ -381,7 +369,8 @@ describe('AirDrop Presale', () => {
         const expectedTokenBalance = 0
        
         // Must be paused to burn
-        await airDrop.pause()
+        const paused = 0
+        await airDrop.setWithdrawPhase(paused)
 
         // Remove all tokens
         await airDrop.burn(await airDrop.tokenBalance())
@@ -392,7 +381,8 @@ describe('AirDrop Presale', () => {
     it('airDrop: withdraw all tokens while paused as owner', async () => {
         // Must be paused to withdraw as owner
         // must pause before getting maxTokens or else maxTokens == 0
-        await airDrop.pause()
+        const paused = 0
+        await airDrop.setWithdrawPhase(paused)
 
         const airdropBalance = await airDrop.tokenBalance()
         const expectedAirdropBalance = 0
