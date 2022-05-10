@@ -2,12 +2,13 @@
 pragma solidity >=0.8.0;
 
 import "../interfaces/IHelixToken.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
-contract ReferralRegister is Ownable, ReentrancyGuard {
-    using EnumerableSet for EnumerableSet.AddressSet;
+contract ReferralRegister is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     /**
      * Referral fees are stored as: referred address => referrer address
@@ -22,7 +23,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     /**
      * Accounts approved by the contract owner which can call the "record" functions
      */
-    EnumerableSet.AddressSet private _recorders;
+    EnumerableSetUpgradeable.AddressSet private _recorders;
 
     uint256 constant MAX_STAKING_FEE = 30; // 3%
     uint256 constant MAX_SWAP_FEE = 100; // 10%
@@ -60,10 +61,13 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
         _;
     }
 
-    // Should be initialize by default with 
-    // defaultStakingRef = 10 (meaning 1% reward for staking)
-    // defaultSwapRef = 10 (meaning 1% reward for swap)
-    constructor(IHelixToken _token, uint256 defaultStakingRef, uint256 defaultSwapRef) {
+    function initialize(
+        IHelixToken _token, 
+        uint256 defaultStakingRef, 
+        uint256 defaultSwapRef
+    ) external initializer {
+        __Ownable_init();
+        __ReentrancyGuard_init();
         token = _token;
         stakingRefFee = defaultStakingRef;
         swapRefFee = defaultSwapRef;
@@ -131,7 +135,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     * @return true if successful.
     */
     function addRecorder(address account) public onlyOwner isNotZeroAddress(account) returns(bool) {
-        return EnumerableSet.add(_recorders, account);
+        return EnumerableSetUpgradeable.add(_recorders, account);
     }
 
     /**
@@ -140,7 +144,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     * @return true if successful.
     */
     function delRecorder(address account) external onlyOwner isNotZeroAddress(account) returns(bool) {
-        return EnumerableSet.remove(_recorders, account);
+        return EnumerableSetUpgradeable.remove(_recorders, account);
     }
 
     /**
@@ -148,7 +152,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     * @return number of recorders.
     */
     function getRecorderLength() public view returns(uint256) {
-        return EnumerableSet.length(_recorders);
+        return EnumerableSetUpgradeable.length(_recorders);
     }
 
     /**
@@ -156,7 +160,7 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     * @return true or false based on recorder status.
     */
     function isRecorder(address account) public view returns(bool) {
-        return EnumerableSet.contains(_recorders, account);
+        return EnumerableSetUpgradeable.contains(_recorders, account);
     }
 
     /**
@@ -166,6 +170,6 @@ contract ReferralRegister is Ownable, ReentrancyGuard {
     */
     function getRecorder(uint256 index) external view onlyOwner returns(address) {
         require(index <= getRecorderLength() - 1, "ReferralRegister: index out of bounds");
-        return EnumerableSet.at(_recorders, index);
+        return EnumerableSetUpgradeable.at(_recorders, index);
     }
 }

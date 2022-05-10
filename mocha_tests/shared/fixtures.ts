@@ -140,10 +140,14 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await factory.setOracleFactory(oracleFactory.address)
 
     // 4 deploy referral register and register as minter with helix token
+    /*
     const refReg = await deployContract(wallet, ReferralRegister,
         [helixToken.address, refRegDefaultStakingRef, refRegDefaultSwapRef],
         overrides
     )
+    */
+    const refReg = await deployContract(wallet, ReferralRegister, [], overrides)
+    await refReg.initialize(helixToken.address, refRegDefaultStakingRef, refRegDefaultSwapRef);
     await helixToken.addMinter(refReg.address)
 
     // 5 deploy master chef and register as minter with helix token
