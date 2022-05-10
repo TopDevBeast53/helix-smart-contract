@@ -3,8 +3,9 @@ pragma solidity >=0.8.0;
 
 import "./HelixPair.sol";
 import "../interfaces/IOracleFactory.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract HelixFactory {
+contract HelixFactory is Initializable {
     address public feeTo;
     address public feeToSetter;
     address public oracleFactory; 
@@ -35,7 +36,7 @@ contract HelixFactory {
         _;
     }
 
-    constructor(address _feeToSetter) {
+    function initialize(address _feeToSetter) external initializer {
         feeToSetter = _feeToSetter;
     }
 
