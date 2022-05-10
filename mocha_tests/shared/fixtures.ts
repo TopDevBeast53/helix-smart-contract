@@ -163,10 +163,8 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await refReg.addRecorder(chef.address)
 
     // 6 deploy auto helix
-    const autoHelix = await deployContract(wallet, AutoHelix,
-        [helixToken.address, chef.address, autoHelixTreasuryAddress], 
-        overrides
-    )
+    const autoHelix = await deployContract(wallet, AutoHelix, [], overrides)
+    await autoHelix.initialize(helixToken.address, chef.address, autoHelixTreasuryAddress)
 
     // 7 deploy helixNFT and helixChefNFT and register with other contracts
     const helixNFT = await deployContract(wallet, HelixNFT, [], overrides)
