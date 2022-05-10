@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
-import "@rari-capital/solmate/src/tokens/ERC20.sol";
 import "../interfaces/IHelixNFT.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
 
-contract HelixChefNFT is Ownable, ReentrancyGuard {
+contract HelixChefNFT is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     // Total Helix Points staked in Pool across all NFTs by all users.
     uint256 public totalHelixPoints;
@@ -75,7 +76,9 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor(IHelixNFT _helixNFT, uint256 _lastRewardBlock) {
+    function initialize(IHelixNFT _helixNFT, uint256 _lastRewardBlock) external initializer {
+        __Ownable_init();
+        __ReentrancyGuard_init();
         helixNFT = _helixNFT;
         lastRewardBlock = _lastRewardBlock;
     }
@@ -104,7 +107,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
             RewardToken memory curRewardToken = rewardTokens[_tokenAddress];
             if(curRewardToken.enabled && curRewardToken.startBlock < block.number){
                 uint256 fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
-                uint256 curMultiplier = Math.min(fromRewardStartToNow, _fromLastRewardToNow);
+                uint256 curMultiplier = MathUpgradeable.min(fromRewardStartToNow, _fromLastRewardToNow);
                 rewardTokens[_tokenAddress].accTokenPerShare += (curRewardToken.rewardPerBlock * curMultiplier * PRECISION_FACTOR) / _totalHelixPoints;
             }
         }
@@ -292,7 +295,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
         require(amount <= _accumulatedAP, "HelixChefNFT: insufficient balance");
 
         uint256 _remainAP = helixNFT.remainAPToNextLevel(tokenId);
-        uint256 _amount = Math.min(amount, _remainAP);
+        uint256 _amount = MathUpgradeable.min(amount, _remainAP);
 
         uint[] memory tokensId = new uint[](1);
         tokensId[0] = tokenId;
@@ -353,7 +356,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
             RewardToken memory curRewardToken = rewardTokens[_tokenAddress];
             if (_fromLastRewardToNow != 0 && _totalHelixPoints != 0 && curRewardToken.enabled) {
                 uint256 fromRewardStartToNow = getDiffBlock(curRewardToken.startBlock, block.number);
-                uint256 curMultiplier = Math.min(fromRewardStartToNow, _fromLastRewardToNow);
+                uint256 curMultiplier = MathUpgradeable.min(fromRewardStartToNow, _fromLastRewardToNow);
                 _accTokenPerShare = curRewardToken.accTokenPerShare + (curMultiplier * curRewardToken.rewardPerBlock * PRECISION_FACTOR / _totalHelixPoints);
             } else {
                 _accTokenPerShare = curRewardToken.accTokenPerShare;
@@ -388,7 +391,7 @@ contract HelixChefNFT is Ownable, ReentrancyGuard {
             
             if (pending > 0){
                 rewardDebt[msg.sender][_rewardTokenAddresses[i]] = user.helixPointAmount * curRewardToken.accTokenPerShare / PRECISION_FACTOR;
-                ERC20(_rewardTokenAddresses[i]).transfer(address(msg.sender), pending);
+                ERC20Upgradeable(_rewardTokenAddresses[i]).transfer(address(msg.sender), pending);
             }
         }
     }
