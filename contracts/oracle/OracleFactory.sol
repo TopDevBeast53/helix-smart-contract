@@ -70,10 +70,10 @@ contract OracleFactory is Ownable {
         require(_token0 != _token1, "OracleFactory: identical addresses");
         require(
             !oracleExists(_token0, _token1), 
-            "OracleFactory: oracle was already created"
+            "OracleFactory: already created"
         );
 
-        // Create the pair instance
+        // Get the pair instance
         IUniswapV2Pair pair = IUniswapV2Pair(HelixLibrary.pairFor(factory, _token0, _token1));
 
         // Create the new oracle struct
@@ -113,16 +113,16 @@ contract OracleFactory is Ownable {
             oracle.price0CumulativeLast = price0Cumulative;
             oracle.price1CumulativeLast = price1Cumulative;
             oracle.blockTimestampLast = blockTimestamp;
-
-            emit Updated(
-                _token0,
-                _token1,
-                price0Cumulative,
-                price1Cumulative,
-                reserve0,
-                reserve1
-            );
-        }
+        } 
+    
+        emit Updated(
+            _token0,
+            _token1,
+            price0Cumulative,
+            price1Cumulative,
+            reserve0,
+            reserve1
+        );
     }
 
     /// Called by the owner to set a new period
@@ -172,12 +172,13 @@ contract OracleFactory is Ownable {
         return oracles[_token0][_token1].token0 != address(0);
     }
 
+    // Return the Oracle struct
     function _getOracle(address _token0, address _token1) private view returns (Oracle storage) {
         require(oracleExists(_token0, _token1), "OracleFactory: not created");
         return oracles[_token0][_token1];
     }
 
-    // helper function that returns the current block timestamp within the range of uint32, i.e. [0, 2**32 - 1]
+    // Helper function that returns the current block timestamp within the range of uint32, i.e. [0, 2**32 - 1]
     function _getBlockTimestamp() private view returns (uint32) {
         return uint32(block.timestamp % 2 ** 32);
     }
