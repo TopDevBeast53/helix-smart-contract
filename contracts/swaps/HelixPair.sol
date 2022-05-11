@@ -5,28 +5,17 @@ import "../tokens/HelixLP.sol";
 import "../libraries/UQ112x112.sol";
 import "../libraries/ExtraMath.sol";
 import "./HelixFactory.sol";
-import "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
-contract HelixPair is HelixLP, ReentrancyGuard {
+contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
     using UQ112x112 for uint224;
-
-    event Mint(address indexed sender, uint256 amount0, uint256 amount1);
-    event Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to);
-    event Swap(
-        address indexed sender,
-        uint256 amount0In,
-        uint256 amount1In,
-        uint256 amount0Out,
-        uint256 amount1Out,
-        address indexed to
-    );
-    event Sync(uint112 reserve0, uint112 reserve1);
-
-    uint256    public constant MINIMUM_LIQUIDITY = 10**3;
+    
+    uint256 public constant MINIMUM_LIQUIDITY = 10**3;
     address public factory;
     address public token0;
     address public token1;
@@ -42,11 +31,17 @@ contract HelixPair is HelixLP, ReentrancyGuard {
     uint32 public swapFee;              // uses 0.2% default
     uint32 public devFee;               // uses 0.5% default from swap fee
 
-    function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
-        _reserve0 = reserve0;
-        _reserve1 = reserve1;
-        _blockTimestampLast = blockTimestampLast;
-    }
+    event Mint(address indexed sender, uint256 amount0, uint256 amount1);
+    event Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to);
+    event Swap(
+        address indexed sender,
+        uint256 amount0In,
+        uint256 amount1In,
+        uint256 amount0Out,
+        uint256 amount1Out,
+        address indexed to
+    );
+    event Sync(uint112 reserve0, uint112 reserve1);
 
     modifier onlyFactory() {
         require(msg.sender == factory, "Pair: not factory"); 
@@ -58,20 +53,22 @@ contract HelixPair is HelixLP, ReentrancyGuard {
         _;
     }
 
-    constructor() {
+    function initialize(address _token0, address _token1) external initializer {
+        __ReentrancyGuard_init();
         factory = msg.sender;
+
+        token0 = _token0;
+        token1 = _token1;
 
         swapFee = 2; // uses 0.2% default
         devFee  = 5; // uses 0.5% default from swap fee
-
     }
 
-    // called once by the factory at time of deployment
-    function initialize(address _token0, address _token1) external onlyFactory {
-        token0 = _token0;
-        token1 = _token1;
+    function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
+        _reserve0 = reserve0;
+        _reserve1 = reserve1;
+        _blockTimestampLast = blockTimestampLast;
     }
-
     function setSwapFee(uint32 _swapFee) external onlyFactory onlyAboveZero(_swapFee) {
         require(_swapFee <= 1000, "Pair: invalid fee");
         swapFee = _swapFee;
@@ -133,7 +130,7 @@ contract HelixPair is HelixLP, ReentrancyGuard {
             liquidity = ExtraMath.sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;
            _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
-            liquidity = Math.min(amount0 * _totalSupply / _reserve0, amount1 * _totalSupply / _reserve1);
+            liquidity = MathUpgradeable.min(amount0 * _totalSupply / _reserve0, amount1 * _totalSupply / _reserve1);
         }
         require(liquidity > 0, "Pair: insufficient minted");
         _mint(to, liquidity);

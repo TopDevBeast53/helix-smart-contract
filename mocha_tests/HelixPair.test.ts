@@ -54,7 +54,7 @@ describe('HelixPair', () => {
         await factory.createPair(tokenA.address, tokenB.address, overrides)
         const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
         pair = new Contract(pairAddress, JSON.stringify(HelixPair.abi), provider).connect(wallet)
-
+    
         const token0Address = (await pair.token0()).address
         token0 = tokenA.address === token0Address ? tokenB : tokenA
         token1 = tokenA.address === token0Address ? tokenA : tokenB
@@ -206,7 +206,7 @@ describe('HelixPair', () => {
         await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
         const tx = await pair.swap(expectedOutputAmount, 0, wallet.address, overrides)
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(203756)
+        expect(receipt.gasUsed).to.eq(203759)
     })
 
     it('helixPair: burn', async () => {
