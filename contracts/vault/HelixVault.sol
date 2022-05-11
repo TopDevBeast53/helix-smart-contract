@@ -135,11 +135,11 @@ contract HelixVault is Ownable {
         lastUpdateBlock = block.number > _startBlock ? block.number : _startBlock;
 
         // default locked deposit durations and their weights
-        durations.push(Duration(90 days, 50));          // depositId == 0
-        durations.push(Duration(180 days, 100));        // depositId == 1
-        durations.push(Duration(360 days, 300));        // depositId == 2
-        durations.push(Duration(540 days, 500));        // depositId == 3
-        durations.push(Duration(720 days, 1000));       // depositId == 4
+        durations.push(Duration(90 days, 50));
+        durations.push(Duration(180 days, 100));
+        durations.push(Duration(360 days, 300));
+        durations.push(Duration(540 days, 500));
+        durations.push(Duration(720 days, 1000));
                                 
         uint256 decimalsRewardToken = uint(token.decimals());
         require(decimalsRewardToken < MAX_DECIMALS, "Vault: token exceeds max decimals");
