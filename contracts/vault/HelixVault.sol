@@ -313,8 +313,7 @@ contract HelixVault is Ownable {
         uint256 lpSupply = token.balanceOf(address(this));
         if (block.number > lastUpdateBlock && lpSupply != 0) {
             uint256 blocks = getBlocksDifference(lastUpdateBlock, block.number);
-            uint256 reward = blocks * rewardPerBlock;
-            _accTokenPerShare += reward * PRECISION_FACTOR / lpSupply;
+            _accTokenPerShare += blocks * rewardPerBlock * PRECISION_FACTOR / lpSupply;
         }
 
         uint256 reward = _getReward(deposit.amount, deposit.weight, _accTokenPerShare);
