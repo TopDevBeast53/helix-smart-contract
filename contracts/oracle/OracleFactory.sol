@@ -2,13 +2,14 @@
 pragma solidity >=0.8.0;
 
 import "../libraries/HelixLibrary.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol";
 import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 
 // Used for creating, updating, and consulting fixed window, token pair price oracles
-contract OracleFactory is Ownable {
+contract OracleFactory is OwnableUpgradeable {
     using FixedPoint for FixedPoint.uq112x112;
     using FixedPoint for FixedPoint.uq144x112;
 
@@ -23,7 +24,7 @@ contract OracleFactory is Ownable {
     }
     
     /// Contract approved to create new oracle pairs
-    address public immutable factory;
+    address public factory;
 
     /// Minimum time between updates in seconds, 86400 == 1 day
     uint256 public period;
@@ -55,7 +56,8 @@ contract OracleFactory is Ownable {
         _;
     }
 
-    constructor(address _factory) {
+    function initialize(address _factory) external initializer {
+        __Ownable_init();
         factory = _factory;
         period = 24 hours;
     }

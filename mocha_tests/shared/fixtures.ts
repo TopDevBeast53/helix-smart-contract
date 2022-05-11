@@ -138,7 +138,8 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const helixToken = await deployContract(wallet, HelixToken, [], overrides)
 
     // 3 deploy oracle factory and register with factory
-    const oracleFactory = await deployContract(wallet, OracleFactory, [factory.address], overrides)
+    const oracleFactory = await deployContract(wallet, OracleFactory, [], overrides)
+    await oracleFactory.initialize(factory.address)
     await factory.setOracleFactory(oracleFactory.address)
 
     // 4 deploy referral register and register as minter with helix token
@@ -216,8 +217,10 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // Add external DEX components for migrator to use.
     const externalFactory = await deployContract(wallet, HelixFactory, [], overrides);
     await externalFactory.initialize(wallet.address)
-
-    const externalOracleFactory = await deployContract(wallet, OracleFactory, [externalFactory.address], overrides)
+  
+    const externalOracleFactory = await deployContract(wallet, OracleFactory, [], overrides)
+    await externalOracleFactory.initialize(externalFactory.address)
+  
     await externalFactory.setOracleFactory(externalOracleFactory.address)
     const externalRouter = await deployContract(wallet, HelixRouterV1, [externalFactory.address, WETH.address], overrides);
 
