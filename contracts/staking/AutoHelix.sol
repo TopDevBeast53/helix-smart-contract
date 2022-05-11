@@ -3,13 +3,14 @@ pragma solidity >=0.8.0;
 
 import "../interfaces/IMigratorChef.sol";
 import "../interfaces/IMasterChef.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
-contract AutoHelix is Ownable, Pausable {
+contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
 
     struct UserInfo {
         uint256 shares; // number of shares for a user
@@ -18,9 +19,9 @@ contract AutoHelix is Ownable, Pausable {
         uint256 lastUserActionTime; // keeps track of the last user action time
     }
 
-    IERC20 public immutable token; // Helix token
+    IERC20Upgradeable public token; // Helix token
 
-    IMasterChef public immutable masterchef;
+    IMasterChef public masterchef;
 
     mapping(address => UserInfo) public userInfo;
 
@@ -57,22 +58,23 @@ contract AutoHelix is Ownable, Pausable {
     event WithdrawFeePeriodSet(uint256 withdrawFeePeriod);
 
     /**
-     * @notice Constructor
      * @param _token: Helix token contract
      * @param _masterchef: MasterChef contract
      * @param _treasury: address of the treasury (collects fees)
      */
-    constructor(
-        IERC20 _token,
+    function initialize(
+        IERC20Upgradeable _token,
         IMasterChef _masterchef,
         address _treasury
-    ) {
+    ) external initializer {
+        __Ownable_init();
+        __Pausable_init();
         token = _token;
         masterchef = _masterchef;
         treasury = _treasury;
 
         // Infinite approve
-        IERC20(_token).approve(address(_masterchef), type(uint256).max);
+        IERC20Upgradeable(_token).approve(address(_masterchef), type(uint256).max);
 
         performanceFee = 299; // 2.99%
         callFee = 25; // 0.25%
@@ -84,7 +86,7 @@ contract AutoHelix is Ownable, Pausable {
      * @notice Checks if the msg.sender is a contract or a proxy
      */
     modifier notContract() {
-        require(!Address.isContract(msg.sender), "AutoHelix: contract not allowed");
+        require(!AddressUpgradeable.isContract(msg.sender), "AutoHelix: contract not allowed");
         require(msg.sender == tx.origin, "AutoHelix: proxy not allowed");
         _;
     }
@@ -212,7 +214,7 @@ contract AutoHelix is Ownable, Pausable {
     function inCaseTokensGetStuck(address _token) external onlyOwner {
         require(_token != address(token), "AutoHelix: invalid token");
 
-        uint256 amount = IERC20(_token).balanceOf(address(this));
+        uint256 amount = IERC20Upgradeable(_token).balanceOf(address(this));
         TransferHelper.safeTransfer(address(_token), msg.sender, amount);
     }
 
