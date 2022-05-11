@@ -177,7 +177,9 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // 7 deploy helixNFT and helixChefNFT and register with other contracts
     const helixNFT = await deployContract(wallet, HelixNFT, [], overrides)
     await helixNFT.initialize("BASEURI", helixNFTInitialHelixPoints, helixNFTLevelUpPercent)
-    const helixChefNFT = await deployContract(wallet, HelixChefNFT, [helixNFT.address, helixChefNFTLastRewardBlock], overrides)
+
+    const helixChefNFT = await deployContract(wallet, HelixChefNFT, [], overrides)
+    await helixChefNFT.initialize(helixNFT.address, helixChefNFTLastRewardBlock)
 
     await helixNFT.addMinter(wallet.address, overrides)
     await helixNFT.addStaker(helixChefNFT.address, overrides)
