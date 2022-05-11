@@ -2,11 +2,11 @@
 pragma solidity >=0.8.0;
 
 import "../tokens/HelixToken.sol";
-import "../interfaces/IMasterChef.sol";
 import "../interfaces/IMigratorChef.sol";
 import "../interfaces/IReferralRegister.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 // MasterChef is the master of HelixToken. He can make HelixToken and he is a fair guy.
@@ -16,7 +16,7 @@ import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 // distributed and the community can show to govern itself.
 //
 // Have fun reading it. Hopefully it's bug-free. God bless.
-contract MasterChef is Ownable, IMasterChef {
+contract MasterChef is Initializable, OwnableUpgradeable {
     // using SafeBEP20 for IBEP20;
 
     // Info of each user.
@@ -169,7 +169,7 @@ contract MasterChef is Ownable, IMasterChef {
         _;
     }
 
-    constructor(
+    function initialize(
         HelixToken _HelixToken,
         address _devaddr,
         uint256 _HelixTokenPerBlock,
@@ -177,7 +177,8 @@ contract MasterChef is Ownable, IMasterChef {
         uint256 _stakingPercent,
         uint256 _devPercent,
         IReferralRegister _referralRegister
-    ) {
+    ) external initializer {
+        __Ownable_init();
         helixToken = _HelixToken;
         devaddr = _devaddr;
         HelixTokenPerBlock = _HelixTokenPerBlock;

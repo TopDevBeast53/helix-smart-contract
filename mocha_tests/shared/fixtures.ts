@@ -154,18 +154,17 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await helixToken.addMinter(refReg.address)
 
     // 5 deploy master chef and register as minter with helix token
-    const chef = await deployContract(wallet, MasterChef, 
-        [
-            helixToken.address,
-            chefDeveloperAddress,
-            chefHelixTokenRewardPerBlock,
-            chefStartBlock,
-            chefStakingPercent,
-            chefDevPercent,
-            refReg.address
-        ], 
-        overrides
+    const chef = await deployContract(wallet, MasterChef, [], overrides)
+    await chef.initialize(
+        helixToken.address,
+        chefDeveloperAddress,
+        chefHelixTokenRewardPerBlock,
+        chefStartBlock,
+        chefStakingPercent,
+        chefDevPercent,
+        refReg.address
     )
+
     await helixToken.addMinter(chef.address)
     await refReg.addRecorder(chef.address)
 
