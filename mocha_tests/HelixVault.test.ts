@@ -39,7 +39,7 @@ describe('Vault', () => {
     let vault: Contract
     let helixToken: Contract
 
-    // Vault owned by wallet1, used for checking isOwner privileges
+    // Vault owned by wallet1 (not the owner), used for checking isOwner privileges
     let _vault: Contract
 
     beforeEach(async () => {
@@ -756,6 +756,24 @@ describe('Vault', () => {
 
         await expect(vault.claimReward(id))
             .to.emit(vault, "RewardClaimed")
+    })
+
+    it('vault: set last reward block as non-owner fails', async () => {
+        await expect(_vault.setLastRewardBlock(1))
+            .to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it('vault: set last reward block', async () => {
+        const lastRewardBlock = 1
+        await vault.setLastRewardBlock(lastRewardBlock)
+        expect(await vault.lastRewardBlock()).to.eq(lastRewardBlock)
+    })
+
+    it('vault: set last reward block emits LastRewardBlockSet event', async () => {
+        const lastRewardBlock = 1
+        await expect(vault.setLastRewardBlock(lastRewardBlock))
+            .to.emit(vault, "LastRewardBlockSet")
+            .withArgs(lastRewardBlock)
     })
 
     async function getAccTokenPerShare(blockNumber: number) {
