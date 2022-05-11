@@ -7,11 +7,11 @@ pragma solidity >=0.8.0;
 // Which is copied and modified from COMPOUND:
 // https://github.com/compound-finance/compound-protocol/blob/master/contracts/Governance/Comp.sol
 
-import "../libraries/BEP20.sol";
+import "../libraries/ERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // Geometry token with Governance.
-contract HelixToken is BEP20("Helix", "HELIX") {
+contract HelixToken is ERC20("Helix", "HELIX") {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     EnumerableSet.AddressSet private _minters;
