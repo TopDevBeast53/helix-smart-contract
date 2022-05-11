@@ -93,6 +93,9 @@ contract HelixVault is Ownable {
     // Emitted when the reward per block is updated by the owner
     event RewardPerBlockUpdated(uint256 rewardPerBlock);
 
+    // Emitted when the owner updates the last reward block
+    event LastRewardBlockSet(uint256 lastRewardBlock);
+
     modifier onlyValidDepositId(uint256 _id) {
         require(depositId > 0, "Vault: no deposit made");
         require(_id < depositId, "Vault: invalid id");
@@ -300,6 +303,12 @@ contract HelixVault is Ownable {
             durations[i] = durations[i + 1];
         }
         durations.pop();
+    }
+
+    /// Called by the owner to set the lastRewardBlock variable
+    function setLastRewardBlock(uint256 _lastRewardBlock) external onlyOwner {
+        lastRewardBlock = _lastRewardBlock;
+        emit LastRewardBlockSet(_lastRewardBlock);
     }
 
     /// Called to get deposit with _id's pending reward
