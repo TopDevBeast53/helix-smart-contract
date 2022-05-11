@@ -127,7 +127,9 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const WETH = await deployContract(wallet, WETH9, [], overrides)
 
     // 1 deploy factory and router
-    const factory = await deployContract(wallet, HelixFactory, [wallet.address], overrides)
+    const factory = await deployContract(wallet, HelixFactory, [], overrides)
+    await factory.initialize(wallet.address)
+
     const router = await deployContract(wallet, HelixRouterV1, [factory.address, WETH.address], overrides)
     // event emitter for testing
     const routerEventEmitter = await deployContract(wallet, RouterEventEmitter, [], overrides)
@@ -210,7 +212,9 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await helixNFT.addAccruer(swapRewards.address, overrides)
 
     // Add external DEX components for migrator to use.
-    const externalFactory = await deployContract(wallet, HelixFactory, [wallet.address], overrides);
+    const externalFactory = await deployContract(wallet, HelixFactory, [], overrides);
+    await externalFactory.initialize(wallet.address)
+
     const externalOracleFactory = await deployContract(wallet, OracleFactory, [externalFactory.address], overrides)
     await externalFactory.setOracleFactory(externalOracleFactory.address)
     const externalRouter = await deployContract(wallet, HelixRouterV1, [externalFactory.address, WETH.address], overrides);
