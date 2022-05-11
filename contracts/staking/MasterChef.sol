@@ -17,8 +17,6 @@ import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 //
 // Have fun reading it. Hopefully it's bug-free. God bless.
 contract MasterChef is Initializable, OwnableUpgradeable {
-    // using SafeBEP20 for IBEP20;
-
     // Info of each user.
     struct UserInfo {
         uint256 amount; // How many LP tokens the user has provided.

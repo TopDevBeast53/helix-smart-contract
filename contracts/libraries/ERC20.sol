@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-contract BEP20 is Context, Ownable, IERC20, IERC20Metadata {
+contract ERC20 is Context, Ownable, IERC20, IERC20Metadata {
     uint256 private constant _preMineSupply = 100000000 * 1e18; // 10%
     uint256 private constant _maxSupply = 1000000000 * 1e18; // 1B
 
@@ -158,7 +158,7 @@ contract BEP20 is Context, Ownable, IERC20, IERC20Metadata {
      * @dev See {IERC20-transferFrom}.
      *
      * Emits an {Approval} event indicating the updated allowance. This is not
-     * required by the EIP. See the note at the beginning of {BEP20};
+     * required by the EIP. See the note at the beginning of {ERC20};
      *
      * Requirements:
      * - `sender` and `recipient` cannot be the zero address.
@@ -176,7 +176,7 @@ contract BEP20 is Context, Ownable, IERC20, IERC20Metadata {
         uint256 currentAllowance = _allowances[sender][_msgSender()];
         require(
             currentAllowance >= amount,
-            "BEP20: transfer amount exceeds allowance"
+            "ERC20: transfer amount exceeds allowance"
         );
         unchecked {
             _approve(sender, _msgSender(), currentAllowance - amount);
@@ -188,7 +188,7 @@ contract BEP20 is Context, Ownable, IERC20, IERC20Metadata {
      * @dev Atomically increases the allowance granted to `spender` by the caller.
      *
      * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {BEP20-approve}.
+     * problems described in {ERC20-approve}.
      *
      * Emits an {Approval} event indicating the updated allowance.
      *
@@ -212,7 +212,7 @@ contract BEP20 is Context, Ownable, IERC20, IERC20Metadata {
      * @dev Atomically decreases the allowance granted to `spender` by the caller.
      *
      * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {BEP20-approve}.
+     * problems described in {ERC20-approve}.
      *
      * Emits an {Approval} event indicating the updated allowance.
      *
@@ -229,7 +229,7 @@ contract BEP20 is Context, Ownable, IERC20, IERC20Metadata {
         uint256 currentAllowance = _allowances[_msgSender()][spender];
         require(
             currentAllowance >= subtractedValue,
-            "BEP20: decreased allowance below zero"
+            "ERC20: decreased allowance below zero"
         );
         unchecked {
             _approve(_msgSender(), spender, currentAllowance - subtractedValue);
@@ -256,8 +256,8 @@ contract BEP20 is Context, Ownable, IERC20, IERC20Metadata {
         address recipient,
         uint256 amount
     ) internal {
-        require(sender != address(0), "BEP20: transfer from the zero address");
-        require(recipient != address(0), "BEP20: transfer to the zero address");
+        require(sender != address(0), "ERC20: transfer from the zero address");
+        require(recipient != address(0), "ERC20: transfer to the zero address");
 
         _balances[sender] -= amount;
         _balances[recipient] += amount;
@@ -274,7 +274,7 @@ contract BEP20 is Context, Ownable, IERC20, IERC20Metadata {
      * - `to` cannot be the zero address.
      */
     function _mint(address account, uint256 amount) internal virtual {
-        require(account != address(0), "BEP20: mint to the zero address");
+        require(account != address(0), "ERC20: mint to the zero address");
         if (amount + _totalSupply > _maxSupply) {
             revert();
             // return false;
@@ -297,7 +297,7 @@ contract BEP20 is Context, Ownable, IERC20, IERC20Metadata {
      * - `account` must have at least `amount` tokens.
      */
     function _burn(address account, uint256 amount) internal virtual {
-        require(account != address(0), "BEP20: burn from the zero address");
+        require(account != address(0), "ERC20: burn from the zero address");
 
         _balances[account] -= amount;
         _totalSupply -= amount;
@@ -322,8 +322,8 @@ contract BEP20 is Context, Ownable, IERC20, IERC20Metadata {
         address spender,
         uint256 amount
     ) internal virtual {
-        require(owner != address(0), "BEP20: approve from the zero address");
-        require(spender != address(0), "BEP20: approve to the zero address");
+        require(owner != address(0), "ERC20: approve from the zero address");
+        require(spender != address(0), "ERC20: approve to the zero address");
 
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
