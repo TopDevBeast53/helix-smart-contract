@@ -405,26 +405,50 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         Swap storage swap = _getSwap(_swapId);
 
         require(swap.status == Status.Closed, "YieldSwap: swap not closed");
-        require(swap.buyer.party != address(0), "YieldSwap: swap had no buyer");
+        require(swap.buyer.party != address(0), "YieldSwap: swap was canceled");
         require(block.timestamp >= swap.lockUntilTimestamp, "YieldSwap: swap is locked");
 
         // Prevent further withdrawals
         swap.status = Status.Withdrawn; 
 
-        // Unstake the toBuyerTokens and return to seller 
-        // chef.bucketWithdrawAmountTo(swap.seller, _swapId, swap.poolId, swap.amount);
-
-        // Get the total yield to withdraw
-        // uint256 yield = chef.getBucketYield(_swapId, swap.poolId);
-
-        // Apply the buyer fee to the yield to get the amounts to send to the buyer and treasury
-        // (uint256 buyerAmount, uint256 treasuryAmount) = _applyBuyerFee(yield);
-
-        // Send the buyer and treasury their respective portions of the yield
-        // chef.bucketWithdrawYieldTo(treasury, _swapId, swap.poolId, treasuryAmount);
-        // chef.bucketWithdrawYieldTo(swap.buyer, _swapId, swap.poolId, buyerAmount);
+        _unstake(swap.seller, swap.buyer.party, _swapId, true);
+        _unstake(swap.buyer, swap.seller.party, _swapId, false);
 
         emit Withdrawn(_swapId);
+    }
+
+    // Handle unstaking _party's token from chef bucket with _swapId, returning amount to party, 
+    // and distributing accrued yield to _counterparty. Use _partyIsSeller to determine
+    // whether to apply buyerFee or sellerFee.
+    function _unstake(Party memory _party, address _counterparty, uint256 _swapId, bool _partyIsSeller) private {
+        IERC20 token = _party.token;
+        address party = _party.party;
+        uint256 amount = _party.amount;
+        bool isLp = _party.isLp;
+    
+        // Nothing to do if token is not lp
+        if (!isLp) return;
+
+        uint256 poolId = chef.getPoolId(address(token));
+
+        // Unstake the tokens and return to party
+        chef.bucketWithdrawAmountTo(party, _swapId, poolId, amount);
+
+        // Get the total yield to send to the _counterparty
+        uint256 yield = chef.getBucketYield(_swapId, poolId);
+
+        // Apply the fee to the yield to get the amounts to send to the counterparty and treasury
+        uint256 counterpartyAmount;
+        uint256 treasuryAmount;
+        if (_partyIsSeller) {
+            (counterpartyAmount, treasuryAmount) = _applyBuyerFee(yield);
+        } else {
+            (counterpartyAmount, treasuryAmount) = _applySellerFee(yield);
+        }
+
+        // Send the counterparty and treasury their respective portions of the yield
+        chef.bucketWithdrawYieldTo(_counterparty, _swapId, poolId, counterpartyAmount);
+        chef.bucketWithdrawYieldTo(treasury, _swapId, poolId, treasuryAmount);
     }
 
     // Verify that _address has amount of token in balance
