@@ -247,17 +247,17 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
 
     // Called by seller to update the swap's ask
-    function setAsk(uint256 _swapId, uint256 ask) external {
+    function setAsk(uint256 _swapId, uint256 _ask) external {
         Swap storage swap = _getSwap(_swapId);
     
         _requireIsOpen(swap.status);
         _requireIsSeller(msg.sender, swap.seller.party);
 
-        swap.ask = ask;
+        swap.ask = _ask;
         emit AskSet(_swapId);
     }
     
-    // Called by seller to close the swap and withdraw their toBuyerTokens
+    // Called by seller to permanently close/cancel the swap
     function closeSwap(uint256 _swapId) external {
         Swap storage swap = _getSwap(_swapId);
 
@@ -269,29 +269,30 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
 
     // Make a new bid on an open swap
-    function makeBid(uint256 _swapId, uint256 amount) external onlyAboveZero(amount) {
+    function makeBid(uint256 _swapId, uint256 _amount) external onlyAboveZero(_amount) {
         Swap storage swap = _getSwap(_swapId);
 
         _requireIsOpen(swap.status);
         _requireIsNotSeller(msg.sender, swap.seller.party);
         require(!hasBidOnSwap[msg.sender][_swapId], "YieldSwap: caller has already bid");
-        _requireValidBalanceAndAllowance(swap.buyer.token, msg.sender, amount);
+        _requireValidBalanceAndAllowance(swap.buyer.token, msg.sender, _amount);
 
         // Open the swap
         Bid memory bid;
         bid.bidder = msg.sender;
         bid.swapId = _swapId;
-        bid.amount = amount;
+        bid.amount = _amount;
 
-        // Add it to the bids array
+        // Add it to the contract's bids array
         bids.push(bid);
 
+        // Get the bid id
         uint256 bidId = _getBidId();
 
-        // Reflect the new bid in the swap
+        // And reflect the new bid on the swap
         swap.bidIds.push(bidId);
 
-        // Reflect the new bid in the buyer's list of bids
+        // And reflect the new bid in the buyer's list of bids
         bidIds[msg.sender].push(bidId);
 
         // Reflect that the user has bid on this swap
@@ -302,15 +303,15 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
 
     // Called externally by a bidder while bidding is open to set the amount being bid
-    function setBid(uint256 _bidId, uint256 amount) external {
+    function setBid(uint256 _bidId, uint256 _amount) external {
         Bid storage bid = _getBid(_bidId);
         Swap storage swap = _getSwap(bid.swapId);
    
         _requireIsOpen(swap.status);
         require(msg.sender == bid.bidder, "YieldSwap: caller is not bidder");
-        _requireValidBalanceAndAllowance(swap.buyer.token, msg.sender, amount);
+        _requireValidBalanceAndAllowance(swap.buyer.token, msg.sender, _amount);
 
-        bid.amount = amount;
+        bid.amount = _amount;
 
         emit BidSet(_bidId);
     }
