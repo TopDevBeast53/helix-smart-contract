@@ -73,8 +73,6 @@ contract MasterChef is Initializable, OwnableUpgradeable {
     IReferralRegister public refRegister;
     // Info of each pool.
     PoolInfo[] public poolInfo;
-    // Info of each user that stakes LP tokens.
-    mapping(uint256 => mapping(address => UserInfo)) public userInfo;
     // Total allocation poitns. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint;
     // The block number when HelixToken mining starts.
@@ -87,6 +85,12 @@ contract MasterChef is Initializable, OwnableUpgradeable {
     // and where those funds are only accessible by the depositor
     // Used by the bucket deposit and withdraw functions
     mapping(uint256 => mapping(address => mapping(uint256 => BucketInfo))) public bucketInfo;
+
+    // Info of each user that stakes LP tokens.
+    mapping(uint256 => mapping(address => UserInfo)) public userInfo;
+
+    // Maps a lpToken address to a poolId
+    mapping(address => uint256) public poolIds;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
@@ -193,6 +197,7 @@ contract MasterChef is Initializable, OwnableUpgradeable {
             lastRewardBlock: startBlock,
             accHelixTokenPerShare: 0
         }));
+        poolIds[address(_HelixToken)] = 0;
 
         totalAllocPoint = 1000;
         percentDec = 1000000;
@@ -210,6 +215,15 @@ contract MasterChef is Initializable, OwnableUpgradeable {
     // Return the lpToken address associated with poolId _pid
     function getLpToken(uint256 _pid) external view returns(address) {
         return address(poolInfo[_pid].lpToken);
+    }
+    
+    // Return the poolId associated with the lpToken address
+    function getPoolId(address _lpToken) external view returns (uint256) {
+        uint256 poolId = poolIds[_lpToken];
+        if (poolId == 0) {
+            require(_lpToken == address(helixToken), "MasterChef: token not added");
+        }
+        return poolId;
     }
 
     function withdrawDevAndRefFee() external {
@@ -236,8 +250,10 @@ contract MasterChef is Initializable, OwnableUpgradeable {
                 accHelixTokenPerShare: 0
             })
         );
-        
+
         uint256 poolId = poolInfo.length - 1;
+        poolIds[address(_lpToken)] = poolId;
+
         emit Added(poolId, address(_lpToken), _withUpdate);
     }
 
