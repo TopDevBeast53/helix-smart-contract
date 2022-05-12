@@ -220,6 +220,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         // Fill in part of the buyer struct
         Party memory buyer;
         buyer.token = _toSellerToken;
+        buyer.isLp = _toSellerTokenIsLp;
 
         // Fill in part of the swap struct
         Swap memory swap;
@@ -341,36 +342,75 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     // necessary checks, and transfer funds
     function _accept(
         Swap storage swap,      // swap being accepted and closed
-        address seller,         // seller of the swap
-        address buyer,          // buyer of the swap
-        uint256 swapId,            // id of swap being accepted and closed
-        uint256 exAmount           // amount paid by buyer in toSellerToken to seller for yield
+        address _seller,         // seller of the swap
+        address _buyer,          // buyer of the swap
+        uint256 _swapId,            // id of swap being accepted and closed
+        uint256 _exAmount           // amount paid by buyer in toSellerToken to seller for yield
     ) private {
         _requireIsOpen(swap.status);
 
-        IERC20 toBuyerToken = swap.seller.token;
-        _requireValidBalanceAndAllowance(toBuyerToken, seller, swap.seller.amount);
-
-        IERC20 toSellerToken = swap.buyer.token;
-        _requireValidBalanceAndAllowance(toSellerToken, buyer, exAmount);
-
         swap.status = Status.Closed;
-        swap.buyer.party = buyer;
-        swap.buyer.amount = exAmount;
+        swap.buyer.party = _buyer;
+        swap.buyer.amount = _exAmount;
         swap.lockUntilTimestamp = block.timestamp + swap.lockDuration;
 
-        // Lock and stake lpAmount of the seller's toBuyerToken
+
+        IERC20 toBuyerToken = swap.seller.token;
+        _requireValidBalanceAndAllowance(toBuyerToken, _seller, swap.seller.amount);
+
+        IERC20 toSellerToken = swap.buyer.token;
+        _requireValidBalanceAndAllowance(toSellerToken, _buyer, _exAmount);
+
+           // Lock and stake lpAmount of the seller's toBuyerToken
         uint256 lpAmount = swap.seller.amount;
-        toBuyerToken.safeTransferFrom(seller, address(this), lpAmount);
+        toBuyerToken.safeTransferFrom(_seller, address(this), lpAmount);
 
         // Approve the chef contract to enable deposit and stake toBuyerToken
         toBuyerToken.approve(address(chef), lpAmount);
         // chef.bucketDeposit(swapId, swap.poolId, lpAmount);
         
         // Transfer exAmount from the buyer to the seller minus the treasury fee
-        (uint256 sellerAmount, uint256 treasuryAmount) = _applySellerFee(exAmount);
-        toSellerToken.transferFrom(buyer, treasury, treasuryAmount);
-        toSellerToken.transferFrom(buyer, seller, sellerAmount);
+        (uint256 sellerAmount, uint256 treasuryAmount) = _applySellerFee(_exAmount);
+        toSellerToken.transferFrom(_buyer, treasury, treasuryAmount);
+        toSellerToken.transferFrom(_buyer, _seller, sellerAmount);
+    }
+
+    function _transferOrStake(Party memory _party, Party memory _counterparty, uint256 _swapId, bool _partyIsSeller) private {
+        IERC20 token = _party.token;
+        address party = _party.party;
+        uint256 amount = _party.amount;
+        bool isLp = _party.isLp;
+
+        _requireValidBalanceAndAllowance(token, party, amount);
+    
+        // Stake the token if it's an lp token
+        if (isLp) {
+            // Transfer the amount of token from party to this contract
+            token.safeTransferFrom(party, address(this), amount);
+
+            // Approve the chef to manage amount of this token in this contract
+            token.approve(address(chef), amount);
+
+            // Get the poolId for this token (already confirmed that pool exists when opening swap)
+            uint256 poolId = chef.getPoolId(address(token));
+
+            // TODO check what happens with clashing swap/pool Id
+            // Deposit amount of token in the pool identified by the _swapId
+            chef.bucketDeposit(_swapId, poolId, amount);
+        } else { 
+            // Apply the treasury fee
+            uint256 counterpartyAmount;
+            uint256 treasuryAmount;
+            if (_partyIsSeller) {
+                (counterpartyAmount, treasuryAmount) = _applySellerFee(amount);
+            } else {
+                (counterpartyAmount, treasuryAmount) = _applyBuyerFee(amount);
+            }
+
+            // Transfer the amounts from the party to the counterparty and treasury
+            token.transferFrom(party, _counterparty.party, counterpartyAmount);
+            token.transferFrom(party, treasury, treasuryAmount);
+        }
     }
 
     // Called externally after lock duration to return swap 
