@@ -22,6 +22,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     struct Swap {
         IERC20 toBuyerToken;            // Token being transferred from seller to buyer
         IERC20 toSellerToken;           // Token being transferred from buyer to seller
+        Status status;                  // The status of this swap: open, closed, or withdrawn
         uint[] bidIds;                  // Array of ids referencing bids made on this swap 
         address seller;                 // Address that opened this swap and that is selling amount of toBuyerToken
         address buyer;                  // Address of the buyer of this swap, set only after the swap is closed
@@ -30,8 +31,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         uint256 ask;                    // Amount of toSellerToken seller is asking for in exchange for toBuyerToken amount/yield
         uint256 lockUntilTimestamp;     // Timestamp after which tokens are unstaked and returned to owners and yield distributed
         uint256 lockDuration;           // Duration between (buyer accepting ask or seller accepting bid) and lockUntilTimestamp
-        bool isOpen;                    // True if bids or ask are still being accepted and false otherwise
-        bool isWithdrawn;               // True if the purchase has been withdrawn with tokens returned and yield distributed
         bool toBuyerTokenIsLp;          // True if the to buyer token is an lp token to be staked and false otherwise
         bool toSellerTokenIsLp;         // True if the to seller token is an lp token to be staked and false otherwise
     }
@@ -40,6 +39,13 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         address bidder;                 // Address making this bid
         uint256 swapId;                 // Id of the swap this bid was made on
         uint256 amount;                 // Amount of toSellerToken bidder is offering in exchange toBuyerToken amount/yield
+    }
+    
+    // Determines the permitted interactions with a swap
+    enum Status {
+        Open,                           // Swap doesn't have a buyer so bids can be made and bids/ask accepted
+        Closed,                         // Swap has a buyer so bids can't be made and bid/ask already accepted
+        Withdrawn                       // Tokens have been unstaked and returned and yield has been distributed
     }
 
     // Chef contract used to generate yield on toBuyerToken
@@ -215,7 +221,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         swap.amount = _amount;
         swap.ask = _ask;
         swap.lockDuration = _lockDuration;
-        swap.isOpen = true;
+        swap.status = Status.Open;
         swap.toBuyerTokenIsLp = _toBuyerTokenIsLp;
         swap.toSellerTokenIsLp = _toSellerTokenIsLp;
 
@@ -244,7 +250,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     function setAsk(uint256 _swapId, uint256 ask) external {
         Swap storage swap = _getSwap(_swapId);
     
-        _requireIsOpen(swap.isOpen);
+        _requireIsOpen(swap.status);
         _requireIsSeller(msg.sender, swap.seller);
 
         swap.ask = ask;
@@ -255,10 +261,10 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     function closeSwap(uint256 _swapId) external {
         Swap storage swap = _getSwap(_swapId);
 
-        _requireIsOpen(swap.isOpen);
+        _requireIsOpen(swap.status);
         _requireIsSeller(msg.sender, swap.seller);
 
-        swap.isOpen = false;
+        swap.status = Status.Closed;
         emit SwapClosed(_swapId);
     }
 
@@ -266,7 +272,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     function makeBid(uint256 _swapId, uint256 amount) external onlyAboveZero(amount) {
         Swap storage swap = _getSwap(_swapId);
 
-        _requireIsOpen(swap.isOpen);
+        _requireIsOpen(swap.status);
         _requireIsNotSeller(msg.sender, swap.seller);
         require(!hasBidOnSwap[msg.sender][_swapId], "YieldSwap: caller has already bid");
         _requireValidBalanceAndAllowance(swap.toSellerToken, msg.sender, amount);
@@ -300,7 +306,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         Bid storage bid = _getBid(_bidId);
         Swap storage swap = _getSwap(bid.swapId);
    
-        _requireIsOpen(swap.isOpen);
+        _requireIsOpen(swap.status);
         require(msg.sender == bid.bidder, "YieldSwap: caller is not bidder");
         _requireValidBalanceAndAllowance(swap.toSellerToken, msg.sender, amount);
 
@@ -339,7 +345,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         uint256 swapId,            // id of swap being accepted and closed
         uint256 exAmount           // amount paid by buyer in toSellerToken to seller for yield
     ) private {
-        _requireIsOpen(swap.isOpen);
+        _requireIsOpen(swap.status);
 
         IERC20 toBuyerToken = swap.toBuyerToken;
         _requireValidBalanceAndAllowance(toBuyerToken, seller, swap.amount);
@@ -347,7 +353,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         IERC20 toSellerToken = swap.toSellerToken;
         _requireValidBalanceAndAllowance(toSellerToken, buyer, exAmount);
 
-        swap.isOpen = false;
+        swap.status = Status.Closed;
         swap.buyer = buyer;
         swap.cost = exAmount;
         swap.lockUntilTimestamp = block.timestamp + swap.lockDuration;
@@ -371,13 +377,12 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     function withdraw(uint256 _swapId) external {
         Swap storage swap = _getSwap(_swapId);
 
-        require(!swap.isOpen, "YieldSwap: swap not closed");
-        require(!swap.isWithdrawn, "YieldSwap: swap is withdrawn");
+        require(swap.status == Status.Closed, "YieldSwap: swap not closed");
         require(swap.buyer != address(0), "YieldSwap: swap had no buyer");
         require(block.timestamp >= swap.lockUntilTimestamp, "YieldSwap: swap is locked");
 
         // Prevent further withdrawals
-        swap.isWithdrawn = true; 
+        swap.status = Status.Withdrawn; 
 
         // Unstake the toBuyerTokens and return to seller 
         // chef.bucketWithdrawAmountTo(swap.seller, _swapId, swap.poolId, swap.amount);
@@ -534,8 +539,8 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         emit MaxLockDurationSet(_MAX_LOCK_DURATION);
     }
 
-    function _requireIsOpen(bool isOpen) private pure {
-        require(isOpen, "YieldSwap: swap is closed");
+    function _requireIsOpen(Status _status) private pure {
+        require(_status == Status.Open, "YieldSwap: swap is closed");
     }
 
     function _requireIsSeller(address caller, address seller) private pure {
