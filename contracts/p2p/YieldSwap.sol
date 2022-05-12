@@ -7,14 +7,30 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /*
- * P2P swap for sellers to sell the yield on staked liquidity tokens after being locked
- * for a duration. Sellers open a swap and set the amount of liquidity tokens to
- * stake, the ask price, and the duration liquidity tokens are locked after bidding 
- * has closed. Buyers can accept the ask or make a bid. Bidding remains open until the
- * seller accepts a bid or a buyer accepts the ask. When bidding is closed, the seller 
- * recieves the bid (or ask) amount and the liquidity tokens are locked and staked until
- * the lock duration expires, after which the buyer can withdraw their liquidity tokens 
- * plus the earned yield on those tokens.
+ * Enable users (party/counterparty or seller/buyer) to engage in p2p token pair 
+ * swaps and negotiate on the price. A swap is arbitrary in that it can involve any 
+ * combination of stable token and liquidity token pairs with possible swap combinations 
+ * being: (with seller initiating)
+ *      yield for coin
+ *      coin for yield
+ *      yield for yield
+ *
+ * A swap order is opened by a seller. The seller determines which tokens are involved
+ * in the swap, how many tokens they (the seller) are offering, the duration over 
+ * which liquidity tokens are staked generating yield, and an asking price. 
+ * 
+ * After a swap is opened, prospective buyers can bid on a swap, adjust their bid amount,
+ * and/or accept the seller's ask - closing the swap. The seller can adjust their ask amount,
+ * close the order, or accept a bid - closing the swap. When a swap is closed, the buyer
+ * and the amount being exchanged from the buyer to the seller is set.
+ *
+ * After a swap is closed, stable tokens are immediately exchanged between parties while
+ * liquidity tokens are staked and the swap is locked until the duration has elapsed. 
+ * 
+ * After the duration has elapsed, either party can initiate a withdrawal which unstakes
+ * staked liquidity tokens. The party that initially held the liquidity token receives their 
+ * staked amount of liquidity token and their counterparty receives the yield earned over 
+ * the duration.
  */
 contract YieldSwap is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -411,8 +427,12 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         // Prevent further withdrawals
         swap.status = Status.Withdrawn; 
 
-        _unstake(swap.seller, swap.buyer.party, _swapId, true);
-        _unstake(swap.buyer, swap.seller.party, _swapId, false);
+        if (swap.seller.isLp) {
+            _unstake(swap.seller, swap.buyer.party, _swapId, true);
+        }
+        if (swap.buyer.isLp) {
+            _unstake(swap.buyer, swap.seller.party, _swapId, false);
+        }
 
         emit Withdrawn(_swapId);
     }
@@ -426,8 +446,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         uint256 amount = _party.amount;
         bool isLp = _party.isLp;
     
-        // Nothing to do if token is not lp
-        if (!isLp) return;
+        require(isLp, "YieldSwap: token not staked");
 
         uint256 poolId = chef.getPoolId(address(token));
 
