@@ -323,7 +323,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         Swap storage swap = _getSwap(bid.swapId);
     
         _requireIsSeller(msg.sender, swap.seller.party);
-        _accept(swap, msg.sender, bid.bidder, bid.swapId, bid.amount);
+        _accept(swap, bid.bidder, bid.swapId, bid.amount);
 
         emit BidAccepted(_bidId);
     }
@@ -333,7 +333,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         Swap storage swap = _getSwap(_swapId);
     
         _requireIsNotSeller(msg.sender, swap.seller.party);
-        _accept(swap, swap.seller.party, msg.sender, _swapId, swap.ask);
+        _accept(swap, msg.sender, _swapId, swap.ask);
 
         emit AskAccepted(_swapId);
     } 
@@ -342,40 +342,26 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     // necessary checks, and transfer funds
     function _accept(
         Swap storage swap,      // swap being accepted and closed
-        address _seller,         // seller of the swap
         address _buyer,          // buyer of the swap
         uint256 _swapId,            // id of swap being accepted and closed
-        uint256 _exAmount           // amount paid by buyer in toSellerToken to seller for yield
+        uint256 _amount           // amount paid by buyer in toSellerToken to seller for yield
     ) private {
         _requireIsOpen(swap.status);
 
         swap.status = Status.Closed;
         swap.buyer.party = _buyer;
-        swap.buyer.amount = _exAmount;
+        swap.buyer.amount = _amount;
         swap.lockUntilTimestamp = block.timestamp + swap.lockDuration;
-
-
-        IERC20 toBuyerToken = swap.seller.token;
-        _requireValidBalanceAndAllowance(toBuyerToken, _seller, swap.seller.amount);
-
-        IERC20 toSellerToken = swap.buyer.token;
-        _requireValidBalanceAndAllowance(toSellerToken, _buyer, _exAmount);
-
-           // Lock and stake lpAmount of the seller's toBuyerToken
-        uint256 lpAmount = swap.seller.amount;
-        toBuyerToken.safeTransferFrom(_seller, address(this), lpAmount);
-
-        // Approve the chef contract to enable deposit and stake toBuyerToken
-        toBuyerToken.approve(address(chef), lpAmount);
-        // chef.bucketDeposit(swapId, swap.poolId, lpAmount);
-        
-        // Transfer exAmount from the buyer to the seller minus the treasury fee
-        (uint256 sellerAmount, uint256 treasuryAmount) = _applySellerFee(_exAmount);
-        toSellerToken.transferFrom(_buyer, treasury, treasuryAmount);
-        toSellerToken.transferFrom(_buyer, _seller, sellerAmount);
+       
+        _transferOrStake(swap.seller, swap.buyer.party, _swapId, true);
+        _transferOrStake(swap.buyer, swap.seller.party, _swapId, false);
     }
 
-    function _transferOrStake(Party memory _party, Party memory _counterparty, uint256 _swapId, bool _partyIsSeller) private {
+    // Called internally to handle whether to transfer the _party's funds directly
+    // to the _counterparty or whether to stake the funds with the chef. When staking,
+    // uses _swapId to uniquely identify the chef's deposit bucket. And when transferring,
+    // uses _partyIsSeller to determine whether to apply the sellerFee or the buyerFee.
+    function _transferOrStake(Party memory _party, address _counterparty, uint256 _swapId, bool _partyIsSeller) private {
         IERC20 token = _party.token;
         address party = _party.party;
         uint256 amount = _party.amount;
@@ -408,7 +394,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
             }
 
             // Transfer the amounts from the party to the counterparty and treasury
-            token.transferFrom(party, _counterparty.party, counterpartyAmount);
+            token.transferFrom(party, _counterparty, counterpartyAmount);
             token.transferFrom(party, treasury, treasuryAmount);
         }
     }
