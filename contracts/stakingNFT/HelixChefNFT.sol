@@ -64,7 +64,7 @@ contract HelixChefNFT is Initializable, OwnableUpgradeable, ReentrancyGuardUpgra
     event ChangeRewardToken(address indexed token, uint256 rewardPerBlock);
     event StakeTokens(address indexed user, uint256 amountRB, uint[] tokensId);
     event UnstakeToken(address indexed user, uint256 amountRB, uint[] tokensId);
-    event BoostHelixNFT(uint256 indexed tokenId, uint256 boostedAP);
+    event BoostHelixNFT(uint256 indexed tokenId, uint256 boostedHP);
 
     modifier onlyRewardToken(address token) {
         require(isRewardToken(token), "HelixChefNFT: not added");
@@ -130,21 +130,21 @@ contract HelixChefNFT is Initializable, OwnableUpgradeable, ReentrancyGuardUpgra
         _withdrawRewardToken();// --------1
         
         UserInfo storage user = users[msg.sender];
-        uint256 depositedAPs = 0;
+        uint256 depositedHPs = 0;
         for(uint256 i = 0; i < tokensId.length; i++){
             (address tokenOwner, bool isStaked, uint256 helixPoints) = helixNFT.getInfoForStaking(tokensId[i]);
             _requireIsTokenOwner(msg.sender, tokenOwner);
             require(!isStaked, "HelixChefNFT: already staked");
             helixNFT.setIsStaked(tokensId[i], true);
-            depositedAPs += helixPoints;
+            depositedHPs += helixPoints;
             user.stakedNFTsId.push(tokensId[i]);// --------2
         }
-        if(depositedAPs > 0){
-            user.helixPointAmount += depositedAPs;// --------3
-            totalHelixPoints += depositedAPs;
+        if(depositedHPs > 0){
+            user.helixPointAmount += depositedHPs;// --------3
+            totalHelixPoints += depositedHPs;
         }
         _updateRewardDebt(msg.sender);// --------4
-        emit StakeTokens(msg.sender, depositedAPs, tokensId);
+        emit StakeTokens(msg.sender, depositedHPs, tokensId);
     }
 
     /**
@@ -165,21 +165,21 @@ contract HelixChefNFT is Initializable, OwnableUpgradeable, ReentrancyGuardUpgra
         _withdrawRewardToken();// --------1
         
         UserInfo storage user = users[msg.sender];
-        uint256 withdrawalAPs = 0;
+        uint256 withdrawalHPs = 0;
         for(uint256 i = 0; i < tokensId.length; i++){
             (address tokenOwner, bool isStaked, uint256 helixPoints) = helixNFT.getInfoForStaking(tokensId[i]);
             _requireIsTokenOwner(msg.sender, tokenOwner);
             require(isStaked, "HelixChefNFT: already unstaked");
             helixNFT.setIsStaked(tokensId[i], false);
-            withdrawalAPs += helixPoints;
+            withdrawalHPs += helixPoints;
             removeTokenIdFromUsers(tokensId[i], msg.sender);// --------2
         }
-        if(withdrawalAPs > 0){
-            user.helixPointAmount -= withdrawalAPs;// --------3
-            totalHelixPoints -= withdrawalAPs;
+        if(withdrawalHPs > 0){
+            user.helixPointAmount -= withdrawalHPs;// --------3
+            totalHelixPoints -= withdrawalHPs;
         }
         _updateRewardDebt(msg.sender);// --------4
-        emit UnstakeToken(msg.sender, withdrawalAPs, tokensId);
+        emit UnstakeToken(msg.sender, withdrawalHPs, tokensId);
     }
 
     //External functions -----------------------------------------------------
@@ -294,8 +294,8 @@ contract HelixChefNFT is Initializable, OwnableUpgradeable, ReentrancyGuardUpgra
         uint256 _accumulatedHP = helixNFT.getAccumulatedHP(msg.sender);
         require(amount <= _accumulatedHP, "HelixChefNFT: insufficient balance");
 
-        uint256 _remainAP = helixNFT.remainAPToNextLevel(tokenId);
-        uint256 _amount = MathUpgradeable.min(amount, _remainAP);
+        uint256 _remainHP = helixNFT.remainHPToNextLevel(tokenId);
+        uint256 _amount = MathUpgradeable.min(amount, _remainHP);
 
         uint[] memory tokensId = new uint[](1);
         tokensId[0] = tokenId;
@@ -303,15 +303,15 @@ contract HelixChefNFT is Initializable, OwnableUpgradeable, ReentrancyGuardUpgra
             unstake(tokensId);
         }
         helixNFT.setAccumulatedHP(msg.sender, _accumulatedHP - _amount);
-        uint256 newAP = helixPoints + _amount;
-        helixNFT.setHelixPoints(tokenId, newAP);
-        if (_amount == _remainAP) {
+        uint256 newHP = helixPoints + _amount;
+        helixNFT.setHelixPoints(tokenId, newHP);
+        if (_amount == _remainHP) {
             helixNFT.levelUp(tokenId);
         }
         if (isStaked) {
             stake(tokensId);
         }
-        emit BoostHelixNFT(tokenId, newAP);
+        emit BoostHelixNFT(tokenId, newHP);
     }
 
     /**
