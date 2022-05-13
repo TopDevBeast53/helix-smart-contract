@@ -3,16 +3,15 @@ pragma solidity >=0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyGuard {
+contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyGuardUpgradeable {
     using Strings for uint256;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     address private _owner;
-    uint256 private _reentrancyStatus;
 
     // Maximum length of tokens per request
     uint256 public constant MAX_ARRAY_LENGTH_PER_REQUEST = 30;
@@ -131,10 +130,10 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         uint8 levelUpPercent
     ) external initializer {
         _owner = msg.sender;
-        _reentrancyStatus = 1;
 
         __ERC721_init("Helix NFT", "HELIX-NFT");
         __ERC721Enumerable_init();
+        __ReentrancyGuard_init();
 
         _internalBaseURI = baseURI;
         _initialHelixPoints = initialHelixPoints;

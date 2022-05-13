@@ -3,7 +3,7 @@
  *
  * command for deploy on bsc-testnet: 
  * 
- *      npx hardhat run scripts/7_deployHelixNFTStaking.js --network testnetBSC
+ *      npx hardhat run scripts/8_deployHelixNFTStaking.js --network testnetBSC
  *       
  * Workflow:
  * 
@@ -42,7 +42,7 @@ async function main() {
 
     console.log(`------ Start deploying HelixChefNFT ---------`);
     const HelixChefNFT = await ethers.getContractFactory(`HelixChefNFT`);
-    helixChefNft = await HelixChefNFT.deploy(helixNft.address, lastRewardBlock);
+    helixChefNft = await upgrades.deployProxy(HelixChefNFT, [helixNft.address, lastRewardBlock], {nonce: nonce});
     await helixChefNft.deployTransaction.wait();
     console.log(`HelixChefNFT deployed to ${helixChefNft.address}`);
 
