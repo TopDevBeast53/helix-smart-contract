@@ -2,10 +2,12 @@
  * @dev HelixFactory deployment script
  * 
  * command for deploy on bsc-testnet: 
- *      npx hardhat run scripts/1_1_deployFactory.js --network testnetBSC
+ *      npx hardhat run scripts/1_deployFactory.js --network testnetBSC
+ * command for deploy on rinkeby: 
+ *      npx hardhat run scripts/1_deployFactory.js --network rinkeby
  */
 
-const { ethers } = require("hardhat");
+const { ethers, upgrades } = require("hardhat");
 const contracts = require("./constants/contracts")
 const addresses = require("./constants/addresses")
 const env = require("./constants/env")
@@ -19,15 +21,14 @@ async function main() {
 
     console.log(`------ Start deploying HelixFactory contract ---------`);
     const Factory = await ethers.getContractFactory("HelixFactory");
-    const factory = await Factory.deploy(setterFeeOnPairSwaps);
+    const factory = await upgrades.deployProxy(Factory, [setterFeeOnPairSwaps]); //upgrades. Factory.deploy(setterFeeOnPairSwaps);
     await factory.deployTransaction.wait();
 
-    let factoryInstance = await factory.deployed();
-    await factoryInstance.setFeeTo(poolReceiveTradeFee);
-    let res = await factoryInstance.feeTo();
+    await factory.setFeeTo(poolReceiveTradeFee);
+    let res = await factory.feeTo();
     console.log('fee - ', res);
 
-    let INIT_CODE_HASH = await factoryInstance.INIT_CODE_HASH.call();
+    let INIT_CODE_HASH = await factory.INIT_CODE_HASH.call();
     console.log('INIT_CODE_HASH - ', INIT_CODE_HASH);
     console.log(`Helix Factory deployed to ${factory.address}`);
 }

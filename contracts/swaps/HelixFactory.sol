@@ -9,7 +9,7 @@ contract HelixFactory is Initializable {
     address public feeTo;
     address public feeToSetter;
     address public oracleFactory; 
-    bytes32 public INIT_CODE_HASH = keccak256(abi.encodePacked(type(HelixPair).creationCode));
+    bytes32 public INIT_CODE_HASH;
 
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
@@ -38,6 +38,7 @@ contract HelixFactory is Initializable {
 
     function initialize(address _feeToSetter) external initializer {
         feeToSetter = _feeToSetter;
+        INIT_CODE_HASH = keccak256(abi.encodePacked(type(HelixPair).creationCode));
     }
 
     function allPairsLength() external view returns (uint) {
