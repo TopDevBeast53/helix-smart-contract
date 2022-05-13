@@ -1,11 +1,13 @@
 require("@nomiclabs/hardhat-waffle");
 require('@nomiclabs/hardhat-ethers');
 require("@nomiclabs/hardhat-etherscan");
+require("hardhat-gas-reporter")
 require('@openzeppelin/hardhat-upgrades');
 require("dotenv").config();
 
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
+const rinkebyURL = process.env.RINKEBY_URL;
 const privateKey = process.env["PRIVATE_KEY"];
 
 task("accounts", "Prints the list of accounts", async () => {
@@ -16,7 +18,7 @@ task("accounts", "Prints the list of accounts", async () => {
   }
 });
 
-function resolveTestNetBSCAccounts() {
+function getAccounts() {
     if (mnemonic != null) {
         return { mnemonic };
     }
@@ -43,14 +45,20 @@ module.exports = {
       chainId: 97,
       gasPrice: 20000000000,
       gas: 2100000,
-      accounts: resolveTestNetBSCAccounts(),
+      accounts: getAccounts(),
     },
     mainnetBSC: {
       url: "https://bsc-dataseed1.binance.org",
       chainId: 56,
       gasPrice: 20000000000,
       gas: 2100000,
-      accounts: resolveTestNetBSCAccounts(),
+      accounts: getAccounts(),
+    },
+    rinkeby: {
+      url: rinkebyURL || "",
+      chainId: 4,
+      gasPrice: 5000000000,
+      accounts: getAccounts(),
     },
   },
   solidity: {
@@ -66,6 +74,10 @@ module.exports = {
       }
 
     ]
+  },
+  gasReporter: {
+    enabled: true,
+    currency: "USD",
   },
   etherscan: {
     apiKey: bscScanApiKey
