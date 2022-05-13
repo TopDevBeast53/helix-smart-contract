@@ -9,6 +9,6 @@ interface IHelixNFT {
     function getInfoForStaking(uint256 tokenId) external view returns(address tokenOwner, bool isStaked, uint256 helixPoints);
     function remainAPToNextLevel(uint256 tokenId) external view returns (uint);
     function getAccumulatedHP(address user) external view returns (uint);
-    function setAccumulatedAP(address user, uint256 amount) external;
+    function setAccumulatedHP(address user, uint256 amount) external;
     function levelUp(uint256 tokenId) external;
 }
