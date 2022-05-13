@@ -58,14 +58,14 @@ async function accrueHelixPoints(val) {
     console.log('-- Now accrue --');
 
     const prevAP = await HelixNFT.getAccumulatedHP(user.address);
-    console.log('Previous AccumulatedAP balance of `user` is', prevAP.toString());
+    console.log('Previous AccumulatedHP balance of `user` is', prevAP.toString());
 
     console.log('- Adding HelixPoints', val, 'ether to `user` -');
     tx = await HelixNFT.accruePoints(user.address, expandTo18Decimals(val), {nonce: nonce_minter++, gasLimit: 3000000});//
     await tx.wait();
 
     const curAP = await HelixNFT.getAccumulatedHP(user.address);
-    console.log('Current AccumulatedAP balance of `user` is', curAP.toString());
+    console.log('Current AccumulatedHP balance of `user` is', curAP.toString());
 }
 
 async function main() {

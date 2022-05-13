@@ -291,8 +291,8 @@ contract HelixChefNFT is Initializable, OwnableUpgradeable, ReentrancyGuardUpgra
     function boostHelixNFT(uint256 tokenId, uint256 amount) external {
         (address tokenOwner, bool isStaked, uint256 helixPoints) = helixNFT.getInfoForStaking(tokenId);
         _requireIsTokenOwner(msg.sender, tokenOwner);
-        uint256 _accumulatedAP = helixNFT.getAccumulatedHP(msg.sender);
-        require(amount <= _accumulatedAP, "HelixChefNFT: insufficient balance");
+        uint256 _accumulatedHP = helixNFT.getAccumulatedHP(msg.sender);
+        require(amount <= _accumulatedHP, "HelixChefNFT: insufficient balance");
 
         uint256 _remainAP = helixNFT.remainAPToNextLevel(tokenId);
         uint256 _amount = MathUpgradeable.min(amount, _remainAP);
@@ -302,7 +302,7 @@ contract HelixChefNFT is Initializable, OwnableUpgradeable, ReentrancyGuardUpgra
         if (isStaked) {
             unstake(tokensId);
         }
-        helixNFT.setAccumulatedAP(msg.sender, _accumulatedAP - _amount);
+        helixNFT.setAccumulatedHP(msg.sender, _accumulatedHP - _amount);
         uint256 newAP = helixPoints + _amount;
         helixNFT.setHelixPoints(tokenId, newAP);
         if (_amount == _remainAP) {
