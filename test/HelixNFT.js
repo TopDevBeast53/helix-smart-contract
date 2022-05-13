@@ -64,7 +64,7 @@
 //     describe("Accrue HelixPoints", async () => {
 //         it('accumulated amount when call accruePoints by accruer', async () => {
 //             await this.helixNFT.accruePoints(alice, 100, { from: HelixNFTAccruer });
-//             assert.equal((await this.helixNFT.getAccumulatedAP(alice)).toString(), '100');
+//             assert.equal((await this.helixNFT.getAccumulatedHP(alice)).toString(), '100');
 //         });
 //     });
 
@@ -72,7 +72,7 @@
 //         it('remove helixPoints from accumulated balance once boost NFT', async () => {
 //             await this.helixNFT.accruePoints(alice, 1000, { from: HelixNFTAccruer });
 //             await this.helixChefNFT.boostHelixNFT(1, 500, { from: alice });
-//             assert.equal((await this.helixNFT.getAccumulatedAP(alice)).toString(), '500');
+//             assert.equal((await this.helixNFT.getAccumulatedHP(alice)).toString(), '500');
 //         });
 //         it('Once boost NFT which staked, check reward received for previous pending', async () => {
 //             await this.helixNFT.accruePoints(alice, 100, { from: HelixNFTAccruer });
@@ -89,7 +89,7 @@
 //             await this.helixChefNFT.boostHelixNFT(tokenId, 70, { from: alice });
 
 //             assert.equal((await this.rwt1.balanceOf(alice)).toString(), (REWARD_PER_BLOCK * (20 + 1)).toString());
-//             assert.equal((await this.helixNFT.getAccumulatedAP(alice)).toString(), '30');
+//             assert.equal((await this.helixNFT.getAccumulatedHP(alice)).toString(), '30');
 //             assert.equal((await this.helixNFT.getHelixPoints(tokenId)).toString(), '75');
 //         });
         
