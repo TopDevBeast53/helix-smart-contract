@@ -120,14 +120,14 @@ async function accrueHelixPoints() {
 
     console.log('-- Now accrue --');
 
-    const prevAP = await HelixNFT.getAccumulatedAP(user.address);
+    const prevAP = await HelixNFT.getAccumulatedHP(user.address);
     console.log('Previous HelixPoints balance of `user` is', prevAP.toString());
 
     console.log('- Adding HelixPoints 15 ether to `user` -');
     tx = await HelixNFT.accruePoints(user.address, expandTo18Decimals(15), {nonce: ++nonce_minter, gasLimit: 3000000});//
     await tx.wait();
 
-    const curAP = await HelixNFT.getAccumulatedAP(user.address);
+    const curAP = await HelixNFT.getAccumulatedHP(user.address);
     console.log('Current HelixPoints balance of `user` is', curAP.toString());
 }
 
@@ -138,7 +138,7 @@ async function boostNFT(tokenId) {
     const HelixChefNFT = IHelixChefNFT.attach(contracts.helixNFTChef[env.network]).connect(user);
     const HelixNFT = IHelixNFT.attach(contracts.helixNFT[env.network]).connect(user);
 
-    const prevAP = await HelixNFT.getAccumulatedAP(user.address);
+    const prevAP = await HelixNFT.getAccumulatedHP(user.address);
     console.log('Previous HelixPoints balance of `user` is', prevAP.toString());
 
     const prevLevel = await HelixNFT.getLevel(tokenId);
@@ -149,7 +149,7 @@ async function boostNFT(tokenId) {
     tx = await HelixChefNFT.boostHelixNFT(tokenId, prevAP, {nonce: ++nonce_user, gasLimit: 3000000})
     await tx.wait();
 
-    const curAP = await HelixNFT.getAccumulatedAP(user.address);
+    const curAP = await HelixNFT.getAccumulatedHP(user.address);
     console.log('Current HelixPoints balance of `user` is', curAP.toString());
 
     const curLevel = await HelixNFT.getLevel(tokenId);

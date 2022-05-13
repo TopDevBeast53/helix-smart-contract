@@ -483,7 +483,7 @@ async function swap(account, input, output, amount) {
     print(`swap ${amount} of token ${short(input)} for token ${short(output)} and credit account ${short(account)}.`)
 
     const prevBalance = await swapFee.getBalance(account)
-    const prevAP = await helixNFT.getAccumulatedAP(account)
+    const prevAP = await helixNFT.getAccumulatedHP(account)
     const prevAccruedAP = (await swapFee.totalAccruedAP()).toNumber()
 
     try {
@@ -496,7 +496,7 @@ async function swap(account, input, output, amount) {
 
         // Check the change in AP
         print(`account ${short(account)} previous AP: ${prevAP}`)
-        const ap = await helixNFT.getAccumulatedAP(account)
+        const ap = await helixNFT.getAccumulatedHP(account)
         print(`account ${short(account)} new balance: ${ap}`)
 
         // Check the change in total AP
