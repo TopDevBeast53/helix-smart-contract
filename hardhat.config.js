@@ -56,7 +56,7 @@ module.exports = {
     },
     rinkeby: {
       url: rinkebyURL || "",
-      chainId: 56,
+      chainId: 4,
       gasPrice: 5000000000,
       accounts: getAccounts(),
     },
