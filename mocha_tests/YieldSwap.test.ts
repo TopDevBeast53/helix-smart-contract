@@ -44,6 +44,7 @@ describe('Yield Swap', () => {
     let chef: Contract
     let helixLP: Contract
     let yieldSwap: Contract
+    let tokenA: Contract
 
     // contracts owned by wallet 1, used when wallet 1 should be msg.sender 
     let yieldSwap1: Contract
@@ -55,12 +56,14 @@ describe('Yield Swap', () => {
     let helixToken2: Contract
 
     // default arguments
-    let exToken: string
-    let poolId: number
+    let toBuyerToken: string
+    let toSellerToken: string
     let amount: BigNumber
     let ask: BigNumber
     let bidAmount: BigNumber
     let duration: number
+    let toBuyerTokenIsLp: boolean
+    let toSellerTokenIsLp: boolean
 
     beforeEach(async () => {
         const fullExchange = await loadFixture(fullExchangeFixture)
@@ -68,6 +71,7 @@ describe('Yield Swap', () => {
         chef = fullExchange.chef
         helixLP = fullExchange.helixLP
         yieldSwap = fullExchange.yieldSwap
+        tokenA = fullExchange.tokenA
 
         // Add the lp token to the staking pool
         const allocPoint = expandTo18Decimals(1000)
@@ -76,12 +80,14 @@ describe('Yield Swap', () => {
         await chef.add(allocPoint, lpToken, withUpdate)
 
         // set default open swap parameters
-        exToken = helixToken.address
-        poolId = (await chef.poolLength()) - 1
+        toBuyerToken = helixLP.address
+        toSellerToken = helixToken.address
         amount = expandTo18Decimals(1000)
         ask = expandTo18Decimals(900)
         bidAmount = expandTo18Decimals(500)
         duration = ONE_DAY * 10
+        toBuyerTokenIsLp = true
+        toSellerTokenIsLp = false
 
         // create the wallet 1 owned contracts
         yieldSwap1 = new Contract
@@ -138,44 +144,91 @@ describe('Yield Swap', () => {
         expect(await helixLP.balanceOf(wallet0.address)).to.eq(expandTo18Decimals(10000))
     })
 
-    it('yieldSwap: open swap with invalid exchange token fails', async () => {
-        const invalidExToken = constants.AddressZero
-        await expect(yieldSwap.openSwap(invalidExToken, poolId, amount, ask, duration))
+    it('yieldSwap: open swap with invalid to buyer token fails', async () => {
+        const invalidToBuyerToken = constants.AddressZero
+        await expect(yieldSwap.openSwap(invalidToBuyerToken, toSellerToken, amount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp))
+            .to.be.revertedWith("YieldSwap: zero address")
+    })
+
+    it('yieldSwap: open swap with invalid to seller token fails', async () => {
+        const invalidToSellerToken = constants.AddressZero
+        await expect(yieldSwap.openSwap(toBuyerToken, invalidToSellerToken, amount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp))
             .to.be.revertedWith("YieldSwap: zero address")
     })
 
     it('yieldSwap: open swap with invalid amount fails', async () => {
         const invalidAmount = 0
-        await expect(yieldSwap.openSwap(exToken, poolId, invalidAmount, ask, duration))
+        await expect(yieldSwap.openSwap(toBuyerToken, toSellerToken, invalidAmount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp))
             .to.be.revertedWith("YieldSwap: not above zero")
+    })
+
+    it('yieldSwap: open swap with same identical tokens fails', async () => {
+        toBuyerToken == helixToken.address
+        toSellerToken == helixToken.address
+        await expect(yieldSwap.openSwap(toBuyerToken, toSellerToken, amount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp))
+            .to.be.revertedWith("YieldSwap: ")
     })
 
     it('yieldSwap: open swap with invalid lock duration fails', async () => {
         await yieldSwap.setMinLockDuration(ONE_DAY * 1)
+
         const invalidDurationTooLow = ONE_DAY * 0
-        await expect(yieldSwap.openSwap(exToken, poolId, amount, ask, invalidDurationTooLow))
+        await expect(yieldSwap.openSwap(toBuyerToken, toSellerToken, amount, ask, invalidDurationTooLow, toBuyerTokenIsLp, toSellerTokenIsLp))
             .to.be.revertedWith("YieldSwap: invalid min lock duration")
 
         const invalidDurationTooHigh = maxLockDuration + 1
-        await expect(yieldSwap.openSwap(exToken, poolId, amount, ask, invalidDurationTooHigh))
+        await expect(yieldSwap.openSwap(toBuyerToken, toSellerToken, amount, ask, invalidDurationTooHigh, toBuyerTokenIsLp, toSellerTokenIsLp))
             .to.be.revertedWith("YieldSwap: invalid min lock duration")
     })
 
-    it('yieldSwap: open swap with invalid pool id fails', async () => {
-        const invalidPoolId = await chef.poolLength()
-        await expect(yieldSwap.openSwap(exToken, invalidPoolId, amount, ask, duration))
-            .to.be.revertedWith("YieldSwap: invalid pool id")
+    it('yieldSwap: open swap with no lp token fails', async () => {
+        toBuyerTokenIsLp = false
+        toSellerTokenIsLp = false
+        await expect(yieldSwap.openSwap(toBuyerToken, toSellerToken, amount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp))
+            .to.be.revertedWith("YieldSwap: no lp token")
+    })
+
+    it('yieldSwap: open swap with to buyer lp token not in pool fails', async () => {
+        toBuyerToken = tokenA.address
+        toBuyerTokenIsLp = true
+        await expect(yieldSwap.openSwap(toBuyerToken, toSellerToken, amount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp))
+            .to.be.revertedWith("MasterChef: token not added")
+    })
+
+    it('yieldSwap: open swap with to seller lp token not in pool fails', async () => {
+        toSellerToken = tokenA.address
+        toSellerTokenIsLp = true
+        await expect(yieldSwap.openSwap(toBuyerToken, toSellerToken, amount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp))
+            .to.be.revertedWith("MasterChef: token not added")
+    })
+
+    it('yieldSwap: open swap when to buyer token is helix and lp token fails', async () => {
+        toBuyerToken = helixToken.address
+        toBuyerTokenIsLp = true
+        toSellerToken = helixLP.address
+        toSellerTokenIsLp = true
+        await expect(yieldSwap.openSwap(toBuyerToken, toSellerToken, amount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp))
+            .to.be.revertedWith("YieldSwap: no staking helix")
+    })
+
+    it('yieldSwap: open swap when to seller token is helix and lp token fails', async () => {
+        toBuyerToken = helixLP.address
+        toBuyerTokenIsLp = true
+        toSellerToken = helixToken.address
+        toSellerTokenIsLp = true
+        await expect(yieldSwap.openSwap(toBuyerToken, toSellerToken, amount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp))
+            .to.be.revertedWith("YieldSwap: no staking helix")
     })
 
     it('yieldSwap: open swap with insufficient token balance fails', async () => {
         const invalidAmount = (await helixLP.balanceOf(wallet0.address)).add(expandTo18Decimals(1))
-        await expect(yieldSwap.openSwap(exToken, poolId, invalidAmount, ask, duration))
+        await expect(yieldSwap.openSwap(toBuyerToken, toSellerToken, invalidAmount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp))
             .to.be.revertedWith("YieldSwap: insufficient balance")
     })
 
     it('yieldSwap: open swap with insufficient token allowance fails', async () => {
         // No allowance given to yieldSwap
-        await expect(yieldSwap.openSwap(exToken, poolId, amount, ask, duration))
+        await expect(yieldSwap.openSwap(toBuyerToken, toSellerToken, amount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp))
             .to.be.revertedWith("YieldSwap: insufficient allowance")
     })
 
@@ -187,33 +240,52 @@ describe('Yield Swap', () => {
         const expectedSwapId = 0
         expect(swapId).to.eq(expectedSwapId)
 
-        // get the swap
-        const swap = await yieldSwap.getSwap(swapId)
-        
-        const expectedLpToken = helixLP.address
-        const expectedExToken = exToken
+        // expected swap
+        // expected seller
+        const expectedToBuyerToken = helixLP.address
         const expectedSeller = wallet0.address
+        const expectedToBuyerAmount = amount
+        const expectedToBuyerIsLp = true
+
+        // expected buyer
+        const expectedToSellerToken = helixToken.address
         const expectedBuyer = constants.AddressZero
-        const expectedPoolId = poolId
-        const expectedAmount = amount
+        const expectedToSellerAmount = 0
+        const expectedToSellerIsLp = false
+
+        // expected status
+        const expectedStatus = 0
+
+        // the rest of the swap
         const expectedAsk = ask
         const expectedLockUntilTimestamp = undefined
         const expectedLockDuration = duration
-        const expectedIsOpen = true
-        const expectedIsWithdrawn = false
-    
-        expect(swap.lpToken).to.eq(expectedLpToken)
-        expect(swap.exToken).to.eq(expectedExToken)
-        expect(swap.seller).to.eq(expectedSeller)
-        expect(swap.buyer).to.eq(expectedBuyer)
-        expect(swap.poolId).to.eq(expectedPoolId)
-        expect(swap.amount).to.eq(expectedAmount)
+
+        // get the swap
+        const swap = await yieldSwap.getSwap(swapId)
+      
+        // check the actual swap against the expected
+        // seller
+        expect(swap.seller.token).to.eq(expectedToBuyerToken)
+        expect(swap.seller.party).to.eq(expectedSeller)
+        expect(swap.seller.amount).to.eq(expectedToBuyerAmount)
+        expect(swap.seller.isLp).to.eq(expectedToBuyerIsLp)
+
+        // buyer
+        expect(swap.buyer.token).to.eq(expectedToSellerToken)
+        expect(swap.buyer.party).to.eq(expectedBuyer)
+        expect(swap.buyer.amount).to.eq(expectedToSellerAmount)
+        expect(swap.buyer.isLp).to.eq(expectedToSellerIsLp)
+
+        // status
+        expect(swap.status).to.eq(expectedStatus)
+
+        // the rest of the swap
         expect(swap.ask).to.eq(expectedAsk)
         expect(swap.lockUntilTimeStamp).to.eq(expectedLockUntilTimestamp)
         expect(swap.lockDuration).to.eq(expectedLockDuration)
-        expect(swap.isOpen).to.eq(expectedIsOpen)
-        expect(swap.isWithdrawn).to.eq(expectedIsWithdrawn)
-
+        
+        // check that the user's account reflects the new swap
         const expectedSwapIds = [0]
         expect((await yieldSwap.getSwapIds(wallet0.address))[0]).to.eq(expectedSwapIds[0])
     })
@@ -224,7 +296,7 @@ describe('Yield Swap', () => {
 
         // open the swap
         const expectedSwapId = 0
-        await expect(yieldSwap.openSwap(exToken, poolId, amount, ask, duration))
+        await expect(yieldSwap.openSwap(toBuyerToken, toSellerToken, amount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp))
             .to.emit(yieldSwap, 'SwapOpened')
             .withArgs(expectedSwapId)
     })
@@ -332,17 +404,16 @@ describe('Yield Swap', () => {
         await openSwap()
 
         const swapId = await yieldSwap.getSwapId()
-        const expectedIsOpen = false
+        const expectedStatus = 1
         await yieldSwap.closeSwap(swapId)
 
-        expect((await yieldSwap.getSwap(swapId)).isOpen).to.eq(expectedIsOpen)
+        expect((await yieldSwap.getSwap(swapId)).status).to.eq(expectedStatus)
     })
 
     it('yieldSwap: close swap emits SwapClosed event', async () => {
         await openSwap()
 
         const swapId = await yieldSwap.getSwapId()
-        const expectedIsOpen = false
 
         await expect(yieldSwap.closeSwap(swapId))
             .to.emit(yieldSwap, "SwapClosed")
@@ -729,10 +800,11 @@ describe('Yield Swap', () => {
         const bid = await yieldSwap.getBid(bidId)
 
         // expect the swap to be closed
-        expect(swap.isOpen).to.be.false
+        const closedStatus = 1
+        expect(swap.status).to.eq(closedStatus)
 
         // expect the buyer to be set to the bidder
-        expect(swap.buyer).to.eq(bid.bidder)
+        expect(swap.buyer.party).to.eq(bid.bidder)
 
         // expect the lock timestamp to be set
         const expectedLockUntilTimestamp = swap.lockDuration.add(await now())
@@ -740,10 +812,10 @@ describe('Yield Swap', () => {
 
         // expect the cost to be set
         const expectedCost = bid.amount
-        expect(swap.cost).to.eq(expectedCost)
+        expect(swap.buyer.amount).to.eq(expectedCost)
 
         // expect the wallet0 lp token balance to be decreased by lp amount
-        const expectedLpBal0 = prevLpBal0.sub(swap.amount)
+        const expectedLpBal0 = prevLpBal0.sub(swap.seller.amount)
         expect(await helixLP.balanceOf(wallet0.address)).to.eq(expectedLpBal0)
 
         // expect the wallet1 ex token balance to be decresed by bid amount
@@ -751,7 +823,8 @@ describe('Yield Swap', () => {
         expect(await helixToken.balanceOf(wallet1.address)).to.eq(expectedExBal1)
 
         // get the fee split for seller and treasury
-        const [sellerAmount, treasuryAmount]  = await yieldSwap.applySellerFee(bid.amount)
+        const partyIsSeller = false
+        const [sellerAmount, treasuryAmount]  = await yieldSwap.applyTreasuryFee(bid.amount, partyIsSeller)
 
         // expect the wallet0 ex token balance to be increased by bid amount minus treasury fee
         const expectedExBal0 = prevExBal0.add(sellerAmount)
@@ -892,21 +965,22 @@ describe('Yield Swap', () => {
         swap = await yieldSwap.getSwap(swapId)
 
         // expect the swap to be closed
-        expect(swap.isOpen).to.be.false
+        const closedStatus = 1
+        expect(swap.status).to.eq(closedStatus)
 
         // expect the buyer to be set to the accept ask caller (wallet1) 
-        expect(swap.buyer).to.eq(wallet1.address)
+        expect(swap.buyer.party).to.eq(wallet1.address)
 
         // expect the cost to be set to the ask amount
         const expectedCost = swap.ask
-        expect(swap.cost).to.eq(expectedCost)
+        expect(swap.buyer.amount).to.eq(expectedCost)
 
         // expect the lock timestamp to be set
         const expectedLockUntilTimestamp = swap.lockDuration.add(await now())
         expect(swap.lockUntilTimestamp).to.eq(expectedLockUntilTimestamp)
 
         // expect the wallet0 lp token balance to be decreased by lp amount
-        const expectedLpBal0 = prevLpBal0.sub(swap.amount)
+        const expectedLpBal0 = prevLpBal0.sub(swap.seller.amount)
         expect(await helixLP.balanceOf(wallet0.address)).to.eq(expectedLpBal0)
 
         // expect the wallet1 ex token balance to be decresed by ask amount
@@ -914,7 +988,8 @@ describe('Yield Swap', () => {
         expect(await helixToken.balanceOf(wallet1.address)).to.eq(expectedExBal1)
 
         // get the fee split for seller and treasury
-        const [sellerAmount, treasuryAmount]  = await yieldSwap.applySellerFee(swap.ask)
+        const partyIsSeller = false
+        const [sellerAmount, treasuryAmount]  = await yieldSwap.applyTreasuryFee(swap.ask, partyIsSeller)
 
         // expect the wallet0 ex token balance to be increased by bid amount minus treasury fee
         const expectedExBal0 = prevExBal0.add(sellerAmount)
@@ -961,7 +1036,7 @@ describe('Yield Swap', () => {
         const swapId = await yieldSwap.getSwapId()
 
         await expect(yieldSwap.withdraw(swapId))
-            .to.be.revertedWith("YieldSwap: swap not closed")
+            .to.be.revertedWith("YieldSwap: swap is open")
     })
 
     it('yieldSwap: withdraw when swap is withdrawn fails', async () => {
@@ -1005,7 +1080,7 @@ describe('Yield Swap', () => {
         await yieldSwap.closeSwap(swapId)
 
         await expect(yieldSwap.withdraw(swapId))
-            .to.be.revertedWith("YieldSwap: swap had no buyer")
+            .to.be.revertedWith("YieldSwap: swap was canceled")
     })
 
     it('yieldSwap: withdraw when swap is locked fails', async () => {
@@ -1028,7 +1103,7 @@ describe('Yield Swap', () => {
 
     it('yieldSwap: withdraw', async () => {
         // set the treasury fee to 50.0% of the yield
-        await yieldSwap.setBuyerFee(500)
+        await yieldSwap.setBuyerTreasuryFee(500)
 
         // set the min lock duration to 0 so withdraw can 
         // succeed and swap can be locked
@@ -1077,10 +1152,11 @@ describe('Yield Swap', () => {
         swap = await yieldSwap.getSwap(swapId)
 
         // expect the swap to be marked as withdrawn
-        expect(swap.isWithdrawn).to.be.true
+        const expectedStatus = 2
+        expect(swap.status).to.eq(expectedStatus)
 
         // expect the seller to have received their locked lpTokens during withdrawal
-        const expectedLpTokenBalance0 = preWithdrawLpTokenBalance0.add(swap.amount)
+        const expectedLpTokenBalance0 = preWithdrawLpTokenBalance0.add(swap.seller.amount)
         expect(await helixLP.balanceOf(wallet0.address)).to.eq(expectedLpTokenBalance0)
 
         // expect the buyer helixToken balance to increase
@@ -1127,15 +1203,15 @@ describe('Yield Swap', () => {
         // open the swaps
         const amount0 = expandTo18Decimals(100)
         await helixLP.approve(yieldSwap.address, amount0)
-        await yieldSwap.openSwap(exToken, poolId, amount0, ask, duration)
+        await yieldSwap.openSwap(toBuyerToken, toSellerToken, amount0, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp)
 
         const amount1 = expandTo18Decimals(200)
         await helixLP.approve(yieldSwap.address, amount1)
-        await yieldSwap.openSwap(exToken, poolId, amount1, ask, duration)
+        await yieldSwap.openSwap(toBuyerToken, toSellerToken, amount1, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp)
 
         const amount2 = expandTo18Decimals(300)
         await helixLP.approve(yieldSwap.address, amount2)
-        await yieldSwap.openSwap(exToken, poolId, amount2, ask, duration)
+        await yieldSwap.openSwap(toBuyerToken, toSellerToken, amount2, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp)
 
         // check that the swaps were opened
         const swapIds = await yieldSwap.getSwapIds(wallet0.address)
@@ -1154,7 +1230,7 @@ describe('Yield Swap', () => {
         // open the swaps
         const amount0 = expandTo18Decimals(100)
         await helixLP.approve(yieldSwap.address, amount0)
-        await yieldSwap.openSwap(exToken, poolId, amount0, ask, duration)
+        await yieldSwap.openSwap(toBuyerToken, toSellerToken, amount0, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp)
 
         // with next swap opened by wallet1
         const amount1 = expandTo18Decimals(200)
@@ -1162,11 +1238,11 @@ describe('Yield Swap', () => {
         // wallet1 must have helix lp balance to open swap
         await helixLP.transfer(wallet1.address, amount1)
         await helixLP1.approve(yieldSwap.address, amount1)
-        await yieldSwap1.openSwap(exToken, poolId, amount1, ask, duration)
+        await yieldSwap1.openSwap(toBuyerToken, toSellerToken, amount1, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp)
 
         const amount2 = expandTo18Decimals(300)
         await helixLP.approve(yieldSwap.address, amount2)
-        await yieldSwap.openSwap(exToken, poolId, amount2, ask, duration)
+        await yieldSwap.openSwap(toBuyerToken, toSellerToken, amount2, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp)
 
         // check that the swaps by wallet 0 were opened
         const swapIds0 = await yieldSwap.getSwapIds(wallet0.address)
@@ -1196,13 +1272,13 @@ describe('Yield Swap', () => {
         // first swap
         const expectedSwapAmount0 = expandTo18Decimals(100)
         await helixLP.approve(yieldSwap.address, expectedSwapAmount0)
-        await yieldSwap.openSwap(exToken, poolId, expectedSwapAmount0, ask, duration)
+        await yieldSwap.openSwap(toBuyerToken, toSellerToken, expectedSwapAmount0, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp)
         const swapId0 = await yieldSwap.getSwapId()
 
         // second swap
         const expectedSwapAmount1 = expandTo18Decimals(100)
         await helixLP.approve(yieldSwap.address, expectedSwapAmount1)
-        await yieldSwap.openSwap(exToken, poolId, expectedSwapAmount1, ask, duration)
+        await yieldSwap.openSwap(toBuyerToken, toSellerToken, expectedSwapAmount1, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp)
         const swapId1 = await yieldSwap.getSwapId()
 
         // make the bids
@@ -1233,13 +1309,13 @@ describe('Yield Swap', () => {
         // first swap
         const expectedSwapAmount0 = expandTo18Decimals(100)
         await helixLP.approve(yieldSwap.address, expectedSwapAmount0)
-        await yieldSwap.openSwap(exToken, poolId, expectedSwapAmount0, ask, duration)
+        await yieldSwap.openSwap(toBuyerToken, toSellerToken, expectedSwapAmount0, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp)
         const swapId0 = await yieldSwap.getSwapId()
 
         // second swap
         const expectedSwapAmount1 = expandTo18Decimals(100)
         await helixLP.approve(yieldSwap.address, expectedSwapAmount1)
-        await yieldSwap.openSwap(exToken, poolId, expectedSwapAmount1, ask, duration)
+        await yieldSwap.openSwap(toBuyerToken, toSellerToken, expectedSwapAmount1, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp)
         const swapId1 = await yieldSwap.getSwapId()
 
         // make the bids
@@ -1296,100 +1372,102 @@ describe('Yield Swap', () => {
 
     it('yieldSwap: set seller fee as non-owner fails', async () => {
         const fee = 0
-        await expect(yieldSwap1.setSellerFee(fee))
+        await expect(yieldSwap1.setSellerTreasuryFee(fee))
             .to.be.revertedWith("Ownable: caller is not the owner")
     })
 
     it('yieldSwap: set seller fee with invalid fee fails', async () => {
         const invalidFee = (await yieldSwap.MAX_FEE_PERCENT()).add(1)
-        await expect(yieldSwap.setSellerFee(invalidFee))
+        await expect(yieldSwap.setSellerTreasuryFee(invalidFee))
             .to.be.revertedWith("YieldSwap: invalid fee")
     })
 
     it('yieldSwap: set seller fee', async () => {
         const expectedFee = 0
-        await yieldSwap.setSellerFee(expectedFee)
-        expect(await yieldSwap.sellerFee()).to.eq(expectedFee)
+        await yieldSwap.setSellerTreasuryFee(expectedFee)
+        expect(await yieldSwap.sellerTreasuryFee()).to.eq(expectedFee)
     })
 
     it('yieldSwap: set buyer fee as non-owner fails', async () => {
         const fee = 0
-        await expect(yieldSwap1.setBuyerFee(fee))
+        await expect(yieldSwap1.setBuyerTreasuryFee(fee))
             .to.be.revertedWith("Ownable: caller is not the owner")
     })
 
     it('yieldSwap: set buyer fee with invalid fee fails', async () => {
         const invalidFee = (await yieldSwap.MAX_FEE_PERCENT()).add(1)
-        await expect(yieldSwap.setBuyerFee(invalidFee))
+        await expect(yieldSwap.setBuyerTreasuryFee(invalidFee))
             .to.be.revertedWith("YieldSwap: invalid fee")
     })
 
     it('yieldSwap: set buyer fee', async () => {
         const expectedFee = 0
-        await yieldSwap.setBuyerFee(expectedFee)
-        expect(await yieldSwap.sellerFee()).to.eq(expectedFee)
+        await yieldSwap.setBuyerTreasuryFee(expectedFee)
+        expect(await yieldSwap.sellerTreasuryFee()).to.eq(expectedFee)
     })
 
     it('yieldSwap: apply seller fee', async () => {
         const amount = 1000
+        const partyIsSeller = false
 
         // set treasury fee to seller fee ratio at 0 : 100
         // such that seller gets 100% of the amount with no treasury fee
         const sellerFee0To100 = 0
-        await yieldSwap.setSellerFee(sellerFee0To100)
+        await yieldSwap.setSellerTreasuryFee(sellerFee0To100)
         const expectedTreasuryAmount0To100 = 0
         const expectedSellerAmount0To100 = 1000
-        const [sellerAmount0To100, treasuryAmount0To100] = await yieldSwap.applySellerFee(amount)
+        const [sellerAmount0To100, treasuryAmount0To100] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
         expect(treasuryAmount0To100).to.eq(expectedTreasuryAmount0To100)
         expect(sellerAmount0To100).to.eq(expectedSellerAmount0To100)
 
         // set treasury:seller to 33:67
         const sellerFee33To67 = 330
-        await yieldSwap.setSellerFee(sellerFee33To67)
+        await yieldSwap.setSellerTreasuryFee(sellerFee33To67)
         const expectedTreasuryAmount33To67 = 330
         const expectedSellerAmount33To67 = 670
-        const [sellerAmount33To67, treasuryAmount33To67] = await yieldSwap.applySellerFee(amount)
+        const [sellerAmount33To67, treasuryAmount33To67] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
         expect(treasuryAmount33To67).to.eq(expectedTreasuryAmount33To67)
         expect(sellerAmount33To67).to.eq(expectedSellerAmount33To67)
 
         // set treasury:seller to 100:0
         const sellerFee100To0 = 1000
-        await yieldSwap.setSellerFee(sellerFee100To0)
+        await yieldSwap.setSellerTreasuryFee(sellerFee100To0)
         const expectedTreasuryAmount100To0 = 1000
         const expectedSellerAmount100To0 = 0
-        const [sellerAmount100To0, treasuryAmount100To0] = await yieldSwap.applySellerFee(amount)
+        const [sellerAmount100To0, treasuryAmount100To0] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
         expect(treasuryAmount100To0).to.eq(expectedTreasuryAmount100To0)
         expect(sellerAmount100To0).to.eq(expectedSellerAmount100To0)
     })
 
     it('yieldSwap: apply buyer fee', async () => {
         const amount = 1000
+        const partyIsSeller = true
 
         // set treasury fee to buyer fee ratio at 0 : 100
         // such that buyer gets 100% of the amount with no treasury fee
         const buyerFee0To100 = 0
-        await yieldSwap.setBuyerFee(buyerFee0To100)
+        await yieldSwap.setBuyerTreasuryFee(buyerFee0To100)
         const expectedTreasuryAmount0To100 = 0
         const expectedBuyerAmount0To100 = 1000
-        const [buyerAmount0To100, treasuryAmount0To100] = await yieldSwap.applyBuyerFee(amount)
+        const [buyerAmount0To100, treasuryAmount0To100] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
         expect(treasuryAmount0To100).to.eq(expectedTreasuryAmount0To100)
         expect(buyerAmount0To100).to.eq(expectedBuyerAmount0To100)
 
         // set treasury:buyer to 33:67
         const buyerFee33To67 = 330
-        await yieldSwap.setBuyerFee(buyerFee33To67)
+        await yieldSwap.setBuyerTreasuryFee(buyerFee33To67)
         const expectedTreasuryAmount33To67 = 330
         const expectedBuyerAmount33To67 = 670
-        const [buyerAmount33To67, treasuryAmount33To67] = await yieldSwap.applyBuyerFee(amount)
+        const [buyerAmount33To67, treasuryAmount33To67] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
         expect(treasuryAmount33To67).to.eq(expectedTreasuryAmount33To67)
         expect(buyerAmount33To67).to.eq(expectedBuyerAmount33To67)
 
         // set treasury:buyer to 100:0
         const buyerFee100To0 = 1000
-        await yieldSwap.setBuyerFee(buyerFee100To0)
+        await yieldSwap.setBuyerTreasuryFee(buyerFee100To0)
         const expectedTreasuryAmount100To0 = 1000
         const expectedBuyerAmount100To0 = 0
-        const [buyerAmount100To0, treasuryAmount100To0] = await yieldSwap.applyBuyerFee(amount)
+        const [buyerAmount100To0, treasuryAmount100To0] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
         expect(treasuryAmount100To0).to.eq(expectedTreasuryAmount100To0)
         expect(buyerAmount100To0).to.eq(expectedBuyerAmount100To0)
     })
@@ -1436,7 +1514,7 @@ describe('Yield Swap', () => {
         await helixLP.approve(yieldSwap.address, amount)
 
         // open the swap
-        await yieldSwap.openSwap(exToken, poolId, amount, ask, duration)
+        await yieldSwap.openSwap(toBuyerToken, toSellerToken, amount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp)
     }
 
     async function makeBid(swapId: number) {
