@@ -26,7 +26,7 @@ const oracleFactoryAddress = contracts.oracleFactory[env.network]
 const refRegAddress = contracts.referralRegister[env.network]
 const masterChefAddress = contracts.masterChef[env.network]
 const autoHelixAddress = contracts.autoHelix[env.network]
-const smartChefAddress = contracts.smartChef[env.network]
+// const smartChefAddress = contracts.smartChef[env.network]
 const helixNFTAddress = contracts.helixNFT[env.network]
 const helixNFTChefAddress = contracts.helixNFTChef[env.network]
 const helixNFTBridgeAddress = contracts.helixNFTBridge[env.network]
@@ -44,7 +44,7 @@ let oracleFactory
 let refReg
 let masterChef
 let autoHelix
-let smartChef
+// let smartChef
 let helixNFT
 let helixNFTChef
 let helixNFTBridge
@@ -116,9 +116,9 @@ async function loadContracts() {
     const IAutoHelix = await ethers.getContractFactory('AutoHelix')
     autoHelix = await IAutoHelix.attach(autoHelixAddress).connect(wallet)
 
-    print(`load smart chef: ${smartChefAddress}`)
-    const ISmartChef = await ethers.getContractFactory('SmartChef')
-    smartChef = await ISmartChef.attach(smartChefAddress).connect(wallet)
+    // print(`load smart chef: ${smartChefAddress}`)
+    // const ISmartChef = await ethers.getContractFactory('SmartChef')
+    // smartChef = await ISmartChef.attach(smartChefAddress).connect(wallet)
 
     print(`load helix NFT: ${helixNFTAddress}`)
     const IHelixNFT = await ethers.getContractFactory('HelixNFT')
@@ -212,11 +212,11 @@ async function initRefReg() {
     print(`\n`)
 }
 
-async function initSmartChef() {
-    print(`init smart chef`)
-    print(`did you remember to fund smart chef with reward tokens`)
-    print(`\n`)
-}
+// async function initSmartChef() {
+//     print(`init smart chef`)
+//     print(`did you remember to fund smart chef with reward tokens`)
+//     print(`\n`)
+// }
 
 async function initHelixNFT() {
     print(`init helix NFT`)
