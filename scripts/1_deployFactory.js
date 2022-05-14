@@ -8,7 +8,6 @@
  */
 
 const { ethers, upgrades } = require("hardhat");
-const contracts = require("./constants/contracts")
 const addresses = require("./constants/addresses")
 const env = require("./constants/env")
 
