@@ -101,6 +101,7 @@ interface FullExchangeFixture {
     helixChefNFT: Contract
     helixNFTBridge: Contract
     helixLP: Contract
+    helixLP2: Contract
     swapRewards: Contract
     externalFactory: Contract
     externalRouter: Contract
@@ -190,6 +191,8 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
 
     // 9 deploy HP/LP token
     const helixLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
+    // used in YieldSwap tests with 2 helixLP tokens
+    const helixLP2 = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
 
     // 10 deploy swapRewards and register with other contracts
     const swapRewards = await deployContract(wallet, SwapRewards, [
@@ -315,6 +318,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         helixChefNFT,
         helixNFTBridge,
         helixLP,
+        helixLP2,
         swapRewards,
         externalFactory,
         externalRouter,
