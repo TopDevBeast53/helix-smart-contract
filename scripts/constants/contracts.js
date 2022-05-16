@@ -33,7 +33,7 @@ module.exports = {
         1: '',
         4: '0xb4E6BF440Ed097175fE1d9BAC5EbdbDE5D3094B9',
         56: '',
-        97: '0xa380bD46C4Ee53f606Ca7F6665875c11C7fDF18E',
+        97: '0x56451b5Fb2A9bBe47eC6717CC6d77C3558Fe58cA',
     },
     autoHelix: { // Auto Pool
         1: '',
@@ -135,12 +135,12 @@ module.exports = {
         1: '',
         4: '0x3ce8D07f0f75b7e31eD85f4558a7244738bb65F6',
         56: '',
-        97: '0xBac68F8dA956196Af4C2C4c6cea1aA8619bC822C',
+        97: '0x3d915a41357c95fE059F07B68661aD966DfAB8A8',
     },
     lpSwap: {
         1: '',
         4: '0x8B719E5239c0e621DB5063E2B27C88d6F8244Df6',
         56: '',
-        97: '0x40f89B812123579D56eEC8e908F45D294166579E',
+        97: '0x1A6a1fcb7E6457Dd8a75c67829745B9b6b34e28f',
     },
 }
