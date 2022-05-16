@@ -2,7 +2,10 @@
  * @dev Deployment script for LP Swap contract.
  *
  * Run from project root using:
- *     npx hardhat run scripts/20_deployLpSwap.js --network testnetBSC
+ *     npx hardhat run scripts/17_deployLpSwap.js --network testnetBSC
+ * 
+ * 
+ *     npx hardhat run scripts/17_deployLpSwap.js --network rinkeby
  */
 
 // Define script parameters
