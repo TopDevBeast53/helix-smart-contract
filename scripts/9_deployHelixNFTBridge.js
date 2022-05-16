@@ -5,6 +5,8 @@
  * command for deploy on bsc-testnet: 
  * 
  *      npx hardhat run scripts/9_deployHelixNFTBridge.js --network testnetBSC
+ * 
+ *      npx hardhat run scripts/9_deployHelixNFTBridge.js --network rinkeby
  *       
  * Workflow:
  * 

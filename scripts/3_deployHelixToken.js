@@ -2,7 +2,8 @@
  * @dev Deployment script for Helix Token contract.
  *
  * Run from project root using:
- *     npx hardhat run scripts/2_deployHelixToken.js --network testnetBSC
+ *     npx hardhat run scripts/3_deployHelixToken.js --network testnetBSC
+ *     npx hardhat run scripts/3_deployHelixToken.js --network rinkeby
  */
 
 const { ethers } = require(`hardhat`);

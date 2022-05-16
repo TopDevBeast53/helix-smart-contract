@@ -3,9 +3,12 @@
  *
  * command for deploy on bsc-testnet: 
  * 
- *      npx hardhat run scripts/4_deployReferralRegister.js --network testnetBSC
+ *      npx hardhat run scripts/5_deployReferralRegister.js --network testnetBSC
+ * 
+ *      npx hardhat run scripts/5_deployReferralRegister.js --network rinkeby
+ * 
  */
-const { ethers, network } = require(`hardhat`);
+const { ethers, upgrades } = require(`hardhat`);
 const contracts = require("./constants/contracts")
 const initials = require("./constants/initials")
 const env = require("./constants/env")
@@ -19,11 +22,9 @@ async function main() {
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${ deployer.address}`);
 
-    let nonce = await network.provider.send(`eth_getTransactionCount`, [deployer.address, "latest"]);
-
     console.log(`------ Start deploying Referral Register contract ---------`);
     const ReferralRegister = await ethers.getContractFactory(`ReferralRegister`);
-    ref = await ReferralRegister.deploy(HelixTokenAddress, StakingFeePercent, SwapFeePercent);
+    ref = await upgrades.deployProxy(ReferralRegister, [HelixTokenAddress, StakingFeePercent, SwapFeePercent]);
     await ref.deployTransaction.wait();
     console.log(`Referral Register deployed to ${ref.address}`);
 
