@@ -14,7 +14,7 @@ contract('HelixToken', ([alice, bob, carol, dev, refFeeAddr, safuAddr, minter]) 
         //deploy token contract
         this.gxo = await HelixToken.new({ from: minter });
         assert.equal((await this.gxo.maxSupply()).toString(), "1000000000000000000000000000");
-        assert.equal((await this.gxo.preMineSupply()).toString(), "100000000000000000000000000");
+        assert.equal((await this.gxo.preMineSupply()).toString(), "160000000000000000000000000");
         assert.equal((await this.gxo.decimals()).toString(), "18");
     });
 
@@ -24,7 +24,7 @@ contract('HelixToken', ([alice, bob, carol, dev, refFeeAddr, safuAddr, minter]) 
         });
 
         it('Minter should have all premined supply', async () => {
-            assert.equal((await this.gxo.balanceOf(minter)).toString(), "100000000000000000000000000");
+            assert.equal((await this.gxo.balanceOf(minter)).toString(), "160000000000000000000000000");
         });
         
         it('Token should have a name and symbol', async () => {
