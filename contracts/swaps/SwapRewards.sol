@@ -3,33 +3,33 @@ pragma solidity >= 0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IOracleFactory.sol";
-import "../interfaces/ISwapRewards.sol";
 import "../interfaces/IHelixToken.sol";
 import "../interfaces/IHelixNFT.sol";
 import "../interfaces/IReferralRegister.sol";
+import "../libraries/Percent.sol";
 
 /**
  * @title Accrue HELIX/AP to the swap caller
  */
-contract SwapRewards is ISwapRewards, Ownable {
+contract SwapRewards is Ownable {
     IOracleFactory public oracleFactory;
     IHelixToken public helixToken;
     IHelixNFT public helixNFT;
+    IReferralRegister public refReg;
 
     // No functions are called on these 
     // so only addresses are needed.
     address public router;
-    address public refReg;
     address public hpToken;
 
     // Determines the split between Helix and AP rewards.
-    // 10    -> Rewards are 1% HELIX and 99% AP.
-    // 500   -> Rewards are 50% HELIX and 50% AP. 
-    // 1000  -> Rewards are 100% HELIX and 0% AP.
+    // 1    -> Rewards are 1% HELIX and 99% AP.
+    // 50   -> Rewards are 50% HELIX and 50% AP. 
+    // 100  -> Rewards are 100% HELIX and 0% AP.
     uint256 public splitRewardPercent;
 
     // Percents earned on rewards after split.
-    // 10 -> 1%, 100 -> 10%, 1000 -> 100%
+    // 1 -> 1%, 10 -> 10%, 100 -> 100%
     uint256 public helixRewardPercent;
     uint256 public apRewardPercent;
 
@@ -41,11 +41,21 @@ contract SwapRewards is ISwapRewards, Ownable {
         address indexed tokenOut, 
         uint256 amountIn
     );
-    
+
+    modifier onlyValidAddress(address _address) {
+        require(_address != address(0), "SwapFee: zero address");
+        _;
+    }
+
+    modifier onlyValidPercent(uint256 percent) {
+        require(Percent.isValidPercent(percent), "SwapFee: invalid percent");
+        _;
+    }
+
     constructor(
         address _router, 
         IOracleFactory _oracleFactory,
-        address _refReg,
+        IReferralRegister _refReg,
         IHelixToken _helixToken,
         IHelixNFT _helixNFT,
         address _hpToken,
@@ -76,7 +86,7 @@ contract SwapRewards is ISwapRewards, Ownable {
         accrueAP(account, tokenOut, apAmount);
 
         // Accrue HELIX to the swap caller referrer.
-        IReferralRegister(refReg).recordSwapReward(account, getAmountOut(tokenOut, amountIn, address(helixToken)));
+        refReg.recordSwapReward(account, getAmountOut(tokenOut, amountIn, address(helixToken)));
 
         emit Swap(
             account,
@@ -91,8 +101,7 @@ contract SwapRewards is ISwapRewards, Ownable {
      *      such that helixAmount + apAmount = `amount`
      */
     function splitReward(uint256 amount) public view returns (uint256 helixAmount, uint256 apAmount) {
-        helixAmount = amount * splitRewardPercent / 1000;
-        apAmount = amount - helixAmount;
+        (helixAmount, apAmount) = Percent.splitByPercent(amount, splitRewardPercent);
     }
 
     /**
@@ -100,7 +109,7 @@ contract SwapRewards is ISwapRewards, Ownable {
      */
     function accrueHelix(address account, address tokenIn, uint256 amountIn) private {
         uint256 helixOut = getAmountOut(tokenIn, amountIn, address(helixToken));
-        helixOut = helixOut * helixRewardPercent / 1000;
+        helixOut = Percent.getPercentage(helixOut, helixRewardPercent);
         if (helixOut > 0) {
             helixToken.mint(account, helixOut);
             emit AccrueHelix(account, helixOut);
@@ -112,7 +121,7 @@ contract SwapRewards is ISwapRewards, Ownable {
      */
     function accrueAP(address account, address tokenIn, uint256 amountIn) private {
         uint256 apOut = getAmountOut(tokenIn, amountIn, hpToken);
-        apOut = apOut * apRewardPercent / 1000;
+        apOut = Percent.getPercentage(apOut, apRewardPercent);
         if (apOut > 0) {
             helixNFT.accruePoints(account, apOut);
             emit AccrueAp(account, apOut);
@@ -126,46 +135,34 @@ contract SwapRewards is ISwapRewards, Ownable {
         amountOut = IOracleFactory(oracleFactory).consult(tokenIn, amountIn, tokenOut);
     }
 
-    modifier validAddress(address _address) {
-        require(_address != address(0), "SwapFee: zero address");
-        _;
-    }
-
-    function setRouter(address _router) external onlyOwner validAddress(_router) {
+    function setRouter(address _router) external onlyOwner onlyValidAddress(_router) {
         router = _router;
     }
 
-    function setOracleFactory(IOracleFactory _oracleFactory) external onlyOwner validAddress(address(_oracleFactory)) {
+    function setOracleFactory(IOracleFactory _oracleFactory) external onlyOwner onlyValidAddress(address(_oracleFactory)) {
         oracleFactory = _oracleFactory;
     }
 
-    function setRefReg(address _refReg) external onlyOwner validAddress(_refReg) {
+    function setRefReg(IReferralRegister _refReg) external onlyOwner onlyValidAddress(address(_refReg)) {
         refReg = _refReg;
     }
 
-    function setHelixToken(IHelixToken _helixToken) external onlyOwner validAddress(address(_helixToken)) {
+    function setHelixToken(IHelixToken _helixToken) external onlyOwner onlyValidAddress(address(_helixToken)) {
         helixToken = _helixToken;
     }
 
-    function setHelixNFT(IHelixNFT _helixNFT) external onlyOwner validAddress(address(_helixNFT)) {
+    function setHelixNFT(IHelixNFT _helixNFT) external onlyOwner onlyValidAddress(address(_helixNFT)) {
         helixNFT = _helixNFT;
     }
 
-    function setHpToken(address _hpToken) external onlyOwner validAddress(_hpToken) {
+    function setHpToken(address _hpToken) external onlyOwner onlyValidAddress(_hpToken) {
         hpToken = _hpToken;
-    }
-
-    // Note that all percentages in this contract are out of 1000,
-    // so percentage == 1 -> 0.1% and 1000 -> 100%
-    modifier validPercentage(uint256 percentage) {
-        require(percentage <= 1000, "SwapFee: invalid percentage");
-        _;
     }
 
     function setSplitRewardPercent(uint256 _splitRewardPercent) 
         external
         onlyOwner 
-        validPercentage(_splitRewardPercent) 
+        onlyValidPercent(_splitRewardPercent) 
     {
         splitRewardPercent = _splitRewardPercent;
     }
@@ -173,7 +170,7 @@ contract SwapRewards is ISwapRewards, Ownable {
     function setApRewardPercent(uint256 _apRewardPercent) 
         external
         onlyOwner 
-        validPercentage(_apRewardPercent) 
+        onlyValidPercent(_apRewardPercent) 
     {
         apRewardPercent = _apRewardPercent;
     }
@@ -181,7 +178,7 @@ contract SwapRewards is ISwapRewards, Ownable {
     function setHelixRewardPercent(uint256 _helixRewardPercent) 
         external
         onlyOwner 
-        validPercentage(_helixRewardPercent) 
+        onlyValidPercent(_helixRewardPercent) 
     {
         helixRewardPercent = _helixRewardPercent;
     }
