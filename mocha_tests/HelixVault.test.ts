@@ -69,7 +69,7 @@ describe('Vault', () => {
         const durations = await vault.getDurations()
    
         expect(durations[0].duration).to.eq(90 * SECONDS_PER_DAY)     // duration (n days * seconds per day)
-        expect(durations[0].weight).to.eq(5)                       // weight
+        expect(durations[0].weight).to.eq(5)                          // weight
 
         expect(durations[1].duration).to.eq(180 * SECONDS_PER_DAY)
         expect(durations[1].weight).to.eq(10)
