@@ -112,7 +112,7 @@ contract HelixToken is ERC20("Helix", "HELIX") {
             abi.encode(
                 DOMAIN_TYPEHASH,
                 keccak256(bytes(name())),
-                getChainId(),
+                _getChainId(),
                 address(this)
             )
         );
