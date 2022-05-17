@@ -2,6 +2,7 @@
 pragma solidity >= 0.8.0;
 
 import "../interfaces/IMasterChef.sol";
+import "../libraries/Percent.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -90,12 +91,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     /// Percent extracted for the treasury from the amount received by the buyer
     uint256 public buyerTreasuryFee;
 
-    /// Max amount that a "fee" can be set to and 
-    /// the denominator used when calculating percentages
-    /// if MAX_FEE_PERCENT == 1000, then fees are out of 1000
-    /// so if fee == 50 that's 5% and if fee == 500 that's 50%
-    uint256 public constant MAX_FEE_PERCENT = 1000;
-
     /// Map a seller address to the swaps it's opened 
     mapping(address => uint[]) public swapIds;
 
@@ -171,7 +166,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     }
 
     modifier onlyValidFee(uint256 _fee) {
-        require(_fee <= MAX_FEE_PERCENT, "YieldSwap: invalid fee");
+        require(Percent.isValidPercent(_fee), "YieldSwap: invalid fee");
         _;
     }
 
@@ -473,12 +468,12 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     function applyTreasuryFee(uint256 _amount, bool _partyIsSeller) 
         public 
         view 
-        returns (uint256 counterpartyAmount, uint256 treasuryAmount) 
+        returns (uint256 treasuryAmount, uint256 counterpartyAmount) 
     {
         if (_partyIsSeller) {   // then the counterparty is the buyer so apply the buyer fee
-            (counterpartyAmount, treasuryAmount) = _applyTreasuryFeeToBuyer(_amount);
+            (treasuryAmount, counterpartyAmount) = _applyTreasuryFeeToBuyer(_amount);
         } else {                // then the counterparty is the seller so apply the seller fee
-            (counterpartyAmount, treasuryAmount) = _applyTreasuryFeeToSeller(_amount);
+            (treasuryAmount, counterpartyAmount) = _applyTreasuryFeeToSeller(_amount);
         }
     }
 
@@ -537,7 +532,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         } else { 
             // Otherwise, transfer the amount directly from the party to the counterparty
             // (minus the treasury fee)
-            (uint256 counterpartyAmount, uint256 treasuryAmount) = applyTreasuryFee(amount, _partyIsSeller);
+            (uint256 treasuryAmount, uint256 counterpartyAmount) = applyTreasuryFee(amount, _partyIsSeller);
             token.transferFrom(party, _counterparty, counterpartyAmount);
             token.transferFrom(party, treasury, treasuryAmount);
         }
@@ -563,7 +558,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     
         // And send the yield to the _counterparty (minus the treasury fee)
         uint256 yield = chef.getBucketYield(_swapId, poolId);
-        (uint256 counterpartyAmount, uint256 treasuryAmount) = applyTreasuryFee(yield, _partyIsSeller);
+        (uint256 treasuryAmount, uint256 counterpartyAmount) = applyTreasuryFee(yield, _partyIsSeller);
         chef.bucketWithdrawYieldTo(_counterparty, _swapId, poolId, counterpartyAmount);
         chef.bucketWithdrawYieldTo(treasury, _swapId, poolId, treasuryAmount);
     }
@@ -592,20 +587,18 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     function _applyTreasuryFeeToSeller(uint256 amount) 
         private
         view 
-        returns (uint256 sellerAmount, uint256 treasuryAmount) 
+        returns (uint256 treasuryAmount, uint256 sellerAmount) 
     {
-        treasuryAmount = amount * sellerTreasuryFee / MAX_FEE_PERCENT;
-        sellerAmount = amount - treasuryAmount;
+        (treasuryAmount, sellerAmount) = Percent.splitByPercent(amount, sellerTreasuryFee);
     }
 
     // Apply the treasury fee and get the amounts that go to the buyer and to the treasury
     function _applyTreasuryFeeToBuyer(uint256 amount) 
         private  
         view 
-        returns (uint256 buyerAmount, uint256 treasuryAmount) 
+        returns (uint256 treasuryAmount, uint256 buyerAmount) 
     {
-        treasuryAmount = amount * buyerTreasuryFee / MAX_FEE_PERCENT;
-        buyerAmount = amount - treasuryAmount;
+        (treasuryAmount, buyerAmount) = Percent.splitByPercent(amount, buyerTreasuryFee);
     }
 
     // Require that the _lpToken is valid - that it's been added to the chef's pool

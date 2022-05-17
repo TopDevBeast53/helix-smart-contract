@@ -974,7 +974,7 @@ describe('Yield Swap', () => {
 
         // get the fee split for seller and treasury
         const partyIsSeller = false
-        const [sellerAmount, treasuryAmount]  = await yieldSwap.applyTreasuryFee(bid.amount, partyIsSeller)
+        const [treasuryAmount, sellerAmount]  = await yieldSwap.applyTreasuryFee(bid.amount, partyIsSeller)
 
         // expect the wallet0 ex token balance to be increased by bid amount minus treasury fee
         const expectedExBal0 = prevExBal0.add(sellerAmount)
@@ -1043,7 +1043,7 @@ describe('Yield Swap', () => {
 
         // get the fee split for seller and treasury
         const partyIsSeller = true
-        const [buyerAmount, treasuryAmount]  = await yieldSwap.applyTreasuryFee(swap.seller.amount, partyIsSeller)
+        const [treasuryAmount, buyerAmount]  = await yieldSwap.applyTreasuryFee(swap.seller.amount, partyIsSeller)
 
         // expect the wallet0 token balance to be decreased by the swap amount
         const expectedExBal0 = prevExBal0.sub(swap.seller.amount)
@@ -1288,7 +1288,7 @@ describe('Yield Swap', () => {
 
         // get the fee split for seller and treasury
         const partyIsSeller = false
-        const [sellerAmount, treasuryAmount]  = await yieldSwap.applyTreasuryFee(swap.ask, partyIsSeller)
+        const [treasuryAmount, sellerAmount]  = await yieldSwap.applyTreasuryFee(swap.ask, partyIsSeller)
 
         // expect the wallet0 ex token balance to be increased by bid amount minus treasury fee
         const expectedExBal0 = prevExBal0.add(sellerAmount)
@@ -1356,7 +1356,7 @@ describe('Yield Swap', () => {
 
         // get the fee split for seller and treasury
         const partyIsSeller = true
-        const [buyerAmount, treasuryAmount]  = await yieldSwap.applyTreasuryFee(swap.seller.amount, partyIsSeller)
+        const [treasuryAmount, buyerAmount]  = await yieldSwap.applyTreasuryFee(swap.seller.amount, partyIsSeller)
 
         // expect the wallet1 toBuyer token balance to be increased by amount minus treasury fee
         const expectedToBuyerBal1 = prevToBuyerBal1.add(buyerAmount)
@@ -1441,7 +1441,7 @@ describe('Yield Swap', () => {
 
         // accept the ask as wallet1, closing the swap and setting a buyer
         await yieldSwap1.acceptAsk(swapId)
-    
+
         // expect the withdrawal to succeed
         await yieldSwap.withdraw(swapId)
 
@@ -1481,8 +1481,8 @@ describe('Yield Swap', () => {
     })
 
     it('yieldSwap: withdraw when to buyer token is lp', async () => {
-        // set the treasury fee to 50.0% of the yield
-        await yieldSwap.setBuyerTreasuryFee(500)
+        // set the treasury fee to 50% of the yield
+        await yieldSwap.setBuyerTreasuryFee(50)
 
         // set the min lock duration to 0 so withdraw can 
         // succeed and swap can be locked
@@ -1544,8 +1544,8 @@ describe('Yield Swap', () => {
     })
 
     it('yieldSwap: withdraw when to seller token is lp', async () => {
-        // set the treasury fee to 50.0% of the yield
-        await yieldSwap.setBuyerTreasuryFee(500)
+        // set the treasury fee to 50% of the yield
+        await yieldSwap.setBuyerTreasuryFee(50)
 
         // set the min lock duration to 0 so withdraw can 
         // succeed and swap can be locked
@@ -1613,8 +1613,8 @@ describe('Yield Swap', () => {
     })
 
     it('yieldSwap: withdraw when both tokens are lp', async () => {
-        // set the treasury fee to 50.0% of the yield
-        await yieldSwap.setBuyerTreasuryFee(500)
+        // set the treasury fee to 50% of the yield
+        await yieldSwap.setBuyerTreasuryFee(50)
 
         // set the min lock duration to 0 so withdraw can 
         // succeed and swap can be locked
@@ -1914,7 +1914,7 @@ describe('Yield Swap', () => {
     })
 
     it('yieldSwap: set seller fee with invalid fee fails', async () => {
-        const invalidFee = (await yieldSwap.MAX_FEE_PERCENT()).add(1)
+        const invalidFee = 101
         await expect(yieldSwap.setSellerTreasuryFee(invalidFee))
             .to.be.revertedWith("YieldSwap: invalid fee")
     })
@@ -1932,7 +1932,7 @@ describe('Yield Swap', () => {
     })
 
     it('yieldSwap: set buyer fee with invalid fee fails', async () => {
-        const invalidFee = (await yieldSwap.MAX_FEE_PERCENT()).add(1)
+        const invalidFee = 101
         await expect(yieldSwap.setBuyerTreasuryFee(invalidFee))
             .to.be.revertedWith("YieldSwap: invalid fee")
     })
@@ -1953,25 +1953,25 @@ describe('Yield Swap', () => {
         await yieldSwap.setSellerTreasuryFee(sellerFee0To100)
         const expectedTreasuryAmount0To100 = 0
         const expectedSellerAmount0To100 = 1000
-        const [sellerAmount0To100, treasuryAmount0To100] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
+        const [treasuryAmount0To100, sellerAmount0To100] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
         expect(treasuryAmount0To100).to.eq(expectedTreasuryAmount0To100)
         expect(sellerAmount0To100).to.eq(expectedSellerAmount0To100)
 
         // set treasury:seller to 33:67
-        const sellerFee33To67 = 330
+        const sellerFee33To67 = 33
         await yieldSwap.setSellerTreasuryFee(sellerFee33To67)
         const expectedTreasuryAmount33To67 = 330
         const expectedSellerAmount33To67 = 670
-        const [sellerAmount33To67, treasuryAmount33To67] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
+        const [treasuryAmount33To67, sellerAmount33To67] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
         expect(treasuryAmount33To67).to.eq(expectedTreasuryAmount33To67)
         expect(sellerAmount33To67).to.eq(expectedSellerAmount33To67)
 
         // set treasury:seller to 100:0
-        const sellerFee100To0 = 1000
+        const sellerFee100To0 = 100
         await yieldSwap.setSellerTreasuryFee(sellerFee100To0)
         const expectedTreasuryAmount100To0 = 1000
         const expectedSellerAmount100To0 = 0
-        const [sellerAmount100To0, treasuryAmount100To0] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
+        const [treasuryAmount100To0, sellerAmount100To0] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
         expect(treasuryAmount100To0).to.eq(expectedTreasuryAmount100To0)
         expect(sellerAmount100To0).to.eq(expectedSellerAmount100To0)
     })
@@ -1986,25 +1986,25 @@ describe('Yield Swap', () => {
         await yieldSwap.setBuyerTreasuryFee(buyerFee0To100)
         const expectedTreasuryAmount0To100 = 0
         const expectedBuyerAmount0To100 = 1000
-        const [buyerAmount0To100, treasuryAmount0To100] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
+        const [treasuryAmount0To100, buyerAmount0To100] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
         expect(treasuryAmount0To100).to.eq(expectedTreasuryAmount0To100)
         expect(buyerAmount0To100).to.eq(expectedBuyerAmount0To100)
 
         // set treasury:buyer to 33:67
-        const buyerFee33To67 = 330
+        const buyerFee33To67 = 33
         await yieldSwap.setBuyerTreasuryFee(buyerFee33To67)
         const expectedTreasuryAmount33To67 = 330
         const expectedBuyerAmount33To67 = 670
-        const [buyerAmount33To67, treasuryAmount33To67] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
+        const [treasuryAmount33To67, buyerAmount33To67] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
         expect(treasuryAmount33To67).to.eq(expectedTreasuryAmount33To67)
         expect(buyerAmount33To67).to.eq(expectedBuyerAmount33To67)
 
         // set treasury:buyer to 100:0
-        const buyerFee100To0 = 1000
+        const buyerFee100To0 = 100
         await yieldSwap.setBuyerTreasuryFee(buyerFee100To0)
         const expectedTreasuryAmount100To0 = 1000
         const expectedBuyerAmount100To0 = 0
-        const [buyerAmount100To0, treasuryAmount100To0] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
+        const [treasuryAmount100To0, buyerAmount100To0] = await yieldSwap.applyTreasuryFee(amount, partyIsSeller)
         expect(treasuryAmount100To0).to.eq(expectedTreasuryAmount100To0)
         expect(buyerAmount100To0).to.eq(expectedBuyerAmount100To0)
     })
