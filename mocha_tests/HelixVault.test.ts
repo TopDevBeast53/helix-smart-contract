@@ -69,24 +69,24 @@ describe('Vault', () => {
         const durations = await vault.getDurations()
    
         expect(durations[0].duration).to.eq(90 * SECONDS_PER_DAY)     // duration (n days * seconds per day)
-        expect(durations[0].weight).to.eq(50)                       // weight
+        expect(durations[0].weight).to.eq(5)                       // weight
 
         expect(durations[1].duration).to.eq(180 * SECONDS_PER_DAY)
-        expect(durations[1].weight).to.eq(100)
+        expect(durations[1].weight).to.eq(10)
 
         expect(durations[2].duration).to.eq(360 * SECONDS_PER_DAY)
-        expect(durations[2].weight).to.eq(300)
+        expect(durations[2].weight).to.eq(30)
 
         expect(durations[3].duration).to.eq(540 * SECONDS_PER_DAY)
-        expect(durations[3].weight).to.eq(500)
+        expect(durations[3].weight).to.eq(50)
 
         expect(durations[4].duration).to.eq(720 * SECONDS_PER_DAY)
-        expect(durations[4].weight).to.eq(1000)
+        expect(durations[4].weight).to.eq(100)
     })
 
     it('vault: add duration', async () => {
         const duration = 1;
-        const weight = 1000;
+        const weight = 100;
         await vault.addDuration(duration, weight)
 
         const durations = await vault.getDurations()
@@ -99,7 +99,7 @@ describe('Vault', () => {
 
     it('vault: add duration with invalid duration fails to add', async () => {
         const invalidDuration = 0;
-        const weight = 1000;
+        const weight = 100;
         await expect(vault.addDuration(invalidDuration, weight))
             .to.be.revertedWith('Vault: zero duration')
     })
@@ -113,7 +113,7 @@ describe('Vault', () => {
 
     it('vault: add duration as non-owner fails to add', async () => {
         const duration = 1;
-        const weight = 1000;
+        const weight = 100;
         await expect(_vault.addDuration(duration, weight))
             .to.be.revertedWith('Ownable: caller is not the owner')
     })
@@ -127,16 +127,16 @@ describe('Vault', () => {
         let durations = await vault.getDurations()
 
         expect(durations[0].duration).to.eq(90 * SECONDS_PER_DAY)
-        expect(durations[0].weight).to.eq(50)
+        expect(durations[0].weight).to.eq(5)
 
         expect(durations[1].duration).to.eq(180 * SECONDS_PER_DAY)
-        expect(durations[1].weight).to.eq(100)
+        expect(durations[1].weight).to.eq(10)
 
         expect(durations[2].duration).to.eq(540 * SECONDS_PER_DAY)
-        expect(durations[2].weight).to.eq(500)
+        expect(durations[2].weight).to.eq(50)
 
         expect(durations[3].duration).to.eq(720 * SECONDS_PER_DAY)
-        expect(durations[3].weight).to.eq(1000)
+        expect(durations[3].weight).to.eq(100)
 
         // remove the first duration
         await vault.removeDuration(0)
@@ -145,13 +145,13 @@ describe('Vault', () => {
         durations = await vault.getDurations()
 
         expect(durations[0].duration).to.eq(180 * SECONDS_PER_DAY)
-        expect(durations[0].weight).to.eq(100)
+        expect(durations[0].weight).to.eq(10)
 
         expect(durations[1].duration).to.eq(540 * SECONDS_PER_DAY)
-        expect(durations[1].weight).to.eq(500)
+        expect(durations[1].weight).to.eq(50)
 
         expect(durations[2].duration).to.eq(720 * SECONDS_PER_DAY)
-        expect(durations[2].weight).to.eq(1000)
+        expect(durations[2].weight).to.eq(100)
  
         // remove the last duration
         await vault.removeDuration(2)
@@ -160,10 +160,10 @@ describe('Vault', () => {
         durations = await vault.getDurations()
 
         expect(durations[0].duration).to.eq(180 * SECONDS_PER_DAY)
-        expect(durations[0].weight).to.eq(100)
+        expect(durations[0].weight).to.eq(10)
 
         expect(durations[1].duration).to.eq(540 * SECONDS_PER_DAY)
-        expect(durations[1].weight).to.eq(500)
+        expect(durations[1].weight).to.eq(50)
  
         // remove the two remaining durations
         await vault.removeDuration(0)
@@ -410,7 +410,7 @@ describe('Vault', () => {
         let depositIds = await vault.getDepositIds(wallet0.address)
         expect(depositIds[0]).to.eq(0)
 
-        let expectedWeight = 50;  // 5%
+        let expectedWeight = 5;  // 5%
 
         let deposit = await vault.deposits(depositIds[0])
         expect(deposit.depositor).to.eq(wallet0.address)
@@ -475,7 +475,7 @@ describe('Vault', () => {
     it('vault: withdraw fails if deposit is already withdrawn', async () => {
         // Add the smallest possible duration so that a withdrawl can be made by the test
         const duration = 1
-        const weight = 1000
+        const weight = 100
         await vault.addDuration(duration, weight)
 
         // make a deposit
@@ -503,7 +503,7 @@ describe('Vault', () => {
     it('vault: withdraw fails if withdrawing amount larger than that deposited', async () => {
         // Add the smallest possible duration so that a withdrawl can be made by the test
         const duration = 1
-        const weight = 1000
+        const weight = 100
         await vault.addDuration(duration, weight)
 
         // make a deposit
@@ -544,7 +544,7 @@ describe('Vault', () => {
     it('vault: withdraw', async () => {
         // Add the smallest possible duration so that a withdrawl can be made by the test
         const duration = 1
-        const weight = 1000
+        const weight = 100
         await vault.addDuration(duration, weight)
 
         // make a deposit
@@ -603,7 +603,7 @@ describe('Vault', () => {
     it('vault: pending reward fails if deposit is already withdrawn', async () => {
         // Add the smallest possible duration so that a withdrawl can be made by the test
         const duration = 1
-        const weight = 1000
+        const weight = 100
         await vault.addDuration(duration, weight)
 
         // first deposit to vault as wallet0 resulting in depositId == 1
@@ -634,7 +634,7 @@ describe('Vault', () => {
 
         // Add the smallest possible duration so that a withdrawl can be made by the test
         const duration = 1
-        const weight = 1000
+        const weight = 100
         await vault.addDuration(duration, weight)
 
         // first deposit to vault as wallet0 resulting in depositId == 1
@@ -707,7 +707,7 @@ describe('Vault', () => {
     it('vault: claim reward fails if deposit is already withdrawn', async () => {
         // Add the smallest possible duration so that a withdrawl can be made by the test
         const duration = 1
-        const weight = 1000
+        const weight = 100
         await vault.addDuration(duration, weight)
 
         // first deposit to vault as wallet0 resulting in depositId == 1
@@ -736,7 +736,7 @@ describe('Vault', () => {
     it('vault: claim reward emits Reward Claimed event', async () => {
         // Add the smallest possible duration so that a withdrawl can be made by the test
         const duration = 1
-        const weight = 1000
+        const weight = 100
         await vault.addDuration(duration, weight)
 
         // first deposit to vault as wallet0 resulting in depositId == 1
@@ -820,7 +820,7 @@ describe('Vault', () => {
     async function getReward(amount: BigNumber, weight: number) {
         const accTokenPerShare = await vault.accTokenPerShare()
         const precisionFactor = await vault.PRECISION_FACTOR()
-        const weightPercent = await vault.WEIGHT_PERCENT()
+        const weightPercent = 100 
         return amount.mul(weight).mul(accTokenPerShare).div(precisionFactor).div(weightPercent)
     }
 })

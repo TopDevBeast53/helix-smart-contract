@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 import "../tokens/HelixToken.sol";
+import "../libraries/Percent.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -53,9 +54,6 @@ contract HelixVault is Ownable {
    
     /// Used for computing rewards
     uint256 public immutable PRECISION_FACTOR;
-
-    /// Used for a weight's percentage, i.e. weight / WEIGHT_PERCENT
-    uint256 public constant WEIGHT_PERCENT = 1000;
 
     /// Sets an upper limit on the number of decimals a token can have
     uint256 public constant MAX_DECIMALS = 30;
@@ -135,11 +133,11 @@ contract HelixVault is Ownable {
         lastUpdateBlock = block.number > _startBlock ? block.number : _startBlock;
 
         // default locked deposit durations and their weights
-        durations.push(Duration(90 days, 50));
-        durations.push(Duration(180 days, 100));
-        durations.push(Duration(360 days, 300));
-        durations.push(Duration(540 days, 500));
-        durations.push(Duration(720 days, 1000));
+        durations.push(Duration(90 days, 5));
+        durations.push(Duration(180 days, 10));
+        durations.push(Duration(360 days, 30));
+        durations.push(Duration(540 days, 50));
+        durations.push(Duration(720 days, 100));
                                 
         uint256 decimalsRewardToken = uint(token.decimals());
         require(decimalsRewardToken < MAX_DECIMALS, "Vault: token exceeds max decimals");
@@ -397,8 +395,9 @@ contract HelixVault is Ownable {
         private 
         view 
         returns (uint256 reward) 
-    {
-        reward = _amount * _weight * _accTokenPerShare / PRECISION_FACTOR / WEIGHT_PERCENT;
+    {   
+        uint256 accToken = _amount * _accTokenPerShare / PRECISION_FACTOR;
+        reward = Percent.getPercentage(accToken, _weight);
     }
     // Used to require that the _caller is the _depositor
     function _requireIsDepositor(address _caller, address _depositor) private pure {
