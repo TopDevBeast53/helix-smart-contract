@@ -1080,7 +1080,7 @@ describe('Lp Swap', () => {
     })
 
     it('lpSwap: set seller fee with invalid fee fails', async () => {
-        const invalidFee = (await lpSwap.MAX_FEE_PERCENT()).add(1)
+        const invalidFee = 101
         await expect(lpSwap.setSellerFee(invalidFee))
             .to.be.revertedWith("LpSwap: invalid fee")
     })
@@ -1098,7 +1098,7 @@ describe('Lp Swap', () => {
     })
 
     it('lpSwap: set buyer fee with invalid fee fails', async () => {
-        const invalidFee = (await lpSwap.MAX_FEE_PERCENT()).add(1)
+        const invalidFee = 101
         await expect(lpSwap.setBuyerFee(invalidFee))
             .to.be.revertedWith("LpSwap: invalid fee")
     })
@@ -1118,25 +1118,25 @@ describe('Lp Swap', () => {
         await lpSwap.setSellerFee(sellerFee0To100)
         const expectedTreasuryAmount0To100 = 0
         const expectedSellerAmount0To100 = 1000
-        const [sellerAmount0To100, treasuryAmount0To100] = await lpSwap.applySellerFee(amount)
+        const [treasuryAmount0To100, sellerAmount0To100] = await lpSwap.applySellerFee(amount)
         expect(treasuryAmount0To100).to.eq(expectedTreasuryAmount0To100)
         expect(sellerAmount0To100).to.eq(expectedSellerAmount0To100)
 
         // set treasury:seller to 33:67
-        const sellerFee33To67 = 330
+        const sellerFee33To67 = 33
         await lpSwap.setSellerFee(sellerFee33To67)
         const expectedTreasuryAmount33To67 = 330
         const expectedSellerAmount33To67 = 670
-        const [sellerAmount33To67, treasuryAmount33To67] = await lpSwap.applySellerFee(amount)
+        const [treasuryAmount33To67, sellerAmount33To67] = await lpSwap.applySellerFee(amount)
         expect(treasuryAmount33To67).to.eq(expectedTreasuryAmount33To67)
         expect(sellerAmount33To67).to.eq(expectedSellerAmount33To67)
 
         // set treasury:seller to 100:0
-        const sellerFee100To0 = 1000
+        const sellerFee100To0 = 100
         await lpSwap.setSellerFee(sellerFee100To0)
         const expectedTreasuryAmount100To0 = 1000
         const expectedSellerAmount100To0 = 0
-        const [sellerAmount100To0, treasuryAmount100To0] = await lpSwap.applySellerFee(amount)
+        const [treasuryAmount100To0, sellerAmount100To0] = await lpSwap.applySellerFee(amount)
         expect(treasuryAmount100To0).to.eq(expectedTreasuryAmount100To0)
         expect(sellerAmount100To0).to.eq(expectedSellerAmount100To0)
     })
@@ -1150,25 +1150,25 @@ describe('Lp Swap', () => {
         await lpSwap.setBuyerFee(buyerFee0To100)
         const expectedTreasuryAmount0To100 = 0
         const expectedBuyerAmount0To100 = 1000
-        const [buyerAmount0To100, treasuryAmount0To100] = await lpSwap.applyBuyerFee(amount)
+        const [treasuryAmount0To100, buyerAmount0To100] = await lpSwap.applyBuyerFee(amount)
         expect(treasuryAmount0To100).to.eq(expectedTreasuryAmount0To100)
         expect(buyerAmount0To100).to.eq(expectedBuyerAmount0To100)
 
         // set treasury:buyer to 33:67
-        const buyerFee33To67 = 330
+        const buyerFee33To67 = 33
         await lpSwap.setBuyerFee(buyerFee33To67)
         const expectedTreasuryAmount33To67 = 330
         const expectedBuyerAmount33To67 = 670
-        const [buyerAmount33To67, treasuryAmount33To67] = await lpSwap.applyBuyerFee(amount)
+        const [treasuryAmount33To67, buyerAmount33To67] = await lpSwap.applyBuyerFee(amount)
         expect(treasuryAmount33To67).to.eq(expectedTreasuryAmount33To67)
         expect(buyerAmount33To67).to.eq(expectedBuyerAmount33To67)
 
         // set treasury:buyer to 100:0
-        const buyerFee100To0 = 1000
+        const buyerFee100To0 = 100
         await lpSwap.setBuyerFee(buyerFee100To0)
         const expectedTreasuryAmount100To0 = 1000
         const expectedBuyerAmount100To0 = 0
-        const [buyerAmount100To0, treasuryAmount100To0] = await lpSwap.applyBuyerFee(amount)
+        const [treasuryAmount100To0, buyerAmount100To0] = await lpSwap.applyBuyerFee(amount)
         expect(treasuryAmount100To0).to.eq(expectedTreasuryAmount100To0)
         expect(buyerAmount100To0).to.eq(expectedBuyerAmount100To0)
     })

@@ -2,6 +2,7 @@
 pragma solidity >= 0.8.0;
 
 import "../interfaces/IMasterChef.sol";
+import "../libraries/Percent.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -48,12 +49,6 @@ contract LpSwap is Ownable, ReentrancyGuard {
 
     // Fee percent charged to buyer
     uint256 public buyerFee;
-
-    // Max amount that a "fee" can be set to and 
-    // the denominator used when calculating percentages
-    // if MAX_FEE_PERCENT == 1000, then fees are out of 1000
-    // so if fee == 50 that's 5% and if fee == 500 that's 50%
-    uint256 public constant MAX_FEE_PERCENT = 1000;
 
     // Map a seller address to the swaps it's opened 
     mapping(address => uint[]) public swapIds;
@@ -124,7 +119,7 @@ contract LpSwap is Ownable, ReentrancyGuard {
     }
 
     modifier isValidFee(uint256 _fee) {
-       require(_fee <= MAX_FEE_PERCENT, "LpSwap: invalid fee");
+       require(Percent.isValidPercent(_fee), "LpSwap: invalid fee");
        _;
     }
 
@@ -281,13 +276,13 @@ contract LpSwap is Ownable, ReentrancyGuard {
         swap.buyer = buyer;
         swap.cost = toSellerAmount;
 
-        // Seller pays the buyer and pays their swap fees
-        (uint256 buyerAmount, uint256 buyerTreasuryFee) = _applySellerFee(swap.amount);
+        // Seller pays the buyer the amount minus the swap fees
+        (uint256 buyerTreasuryFee, uint256 buyerAmount) = applySellerFee(swap.amount);
         toBuyerToken.safeTransferFrom(seller, buyer, buyerAmount);
         toBuyerToken.safeTransferFrom(seller, treasury, buyerTreasuryFee);
 
-        // Buyer pays the seller and pays their swap fees
-        (uint256 sellerAmount, uint256 sellerTreasuryFee) = _applyBuyerFee(toSellerAmount);
+        // Buyer pays the seller the amount the swap fees
+        (uint256 sellerTreasuryFee, uint256 sellerAmount) = applyBuyerFee(toSellerAmount);
         toSellerToken.safeTransferFrom(buyer, seller, sellerAmount);
         toSellerToken.safeTransferFrom(buyer, treasury, sellerTreasuryFee);
     }
@@ -399,23 +394,13 @@ contract LpSwap is Ownable, ReentrancyGuard {
     }
 
     // Apply the seller fee and get the amounts that go to the seller and to the treasury
-    function applySellerFee(uint256 amount) external view returns(uint256 sellerAmount, uint256 treasuryAmount) {
-        (sellerAmount, treasuryAmount) = _applySellerFee(amount);
-    }
-
-    function _applySellerFee(uint256 amount) private view returns(uint256 sellerAmount, uint256 treasuryAmount) {
-        treasuryAmount = amount * sellerFee / MAX_FEE_PERCENT;
-        sellerAmount = amount - treasuryAmount;
+    function applySellerFee(uint256 amount) public view returns(uint256 treasuryAmount, uint256 sellerAmount) {
+        (treasuryAmount, sellerAmount) = Percent.splitByPercent(amount, sellerFee);
     }
 
     // Apply the buyer fee and get the amounts that go to the buyer and to the treasury
-    function applyBuyerFee(uint256 amount) external view returns(uint256 buyerAmount, uint256 treasuryAmount) {
-        (buyerAmount, treasuryAmount) = _applyBuyerFee(amount);
-    }
-
-    function _applyBuyerFee(uint256 amount) private view returns(uint256 buyerAmount, uint256 treasuryAmount) {
-        treasuryAmount = amount * buyerFee / MAX_FEE_PERCENT;
-        buyerAmount = amount - treasuryAmount;
+    function applyBuyerFee(uint256 amount) public view returns(uint256 treasuryAmount, uint256 buyerAmount) {
+        (treasuryAmount, buyerAmount) = Percent.splitByPercent(amount, buyerFee);
     }
 
     function _requireIsOpen(bool isOpen) private pure {
