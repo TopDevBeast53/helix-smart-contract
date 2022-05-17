@@ -3,7 +3,9 @@
  * @dev Swap Fee Rewards Deployment
  *
  * command to deploy on bsc-testnet:
- *      npx hardhat run scripts/10_deploySwapRewards.js --network testnetBSC
+ *      npx hardhat run scripts/11_deploySwapRewards.js --network testnetBSC
+ * 
+ *      npx hardhat run scripts/11_deploySwapRewards.js --network rinkeby
  *
  * Workflow:
  *      0. Print the values that will be passed to the SwapRewards constructor

@@ -4,6 +4,8 @@
  * command for deploy on bsc-testnet: 
  * 
  *      npx hardhat run scripts/8_deployHelixNFTStaking.js --network testnetBSC
+ * 
+ *      npx hardhat run scripts/8_deployHelixNFTStaking.js --network rinkeby
  *       
  * Workflow:
  * 
@@ -12,7 +14,7 @@
  *         - Set `HelixNFT` address deployed to `IHelixNFT` of `HelixChefNFT`.
  *         - Set `HelixChefNFT` contract to staker of `HelixNFT`.
  *         - Set `deployer` to minter of `HelixNFT`, Owner(deployer) can add another man later.
- *         - Add RewardToken of `HelixChefNFT` with WBNB
+ *         - Add RewardToken of `HelixChefNFT` with helixToken
  */
 const { ethers, network, upgrades } = require(`hardhat`);
 const contracts = require("./constants/contracts")

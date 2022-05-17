@@ -2,7 +2,9 @@
  * @dev Deployment script for AP Token / Helix LP contract.
  *
  * Run from project root using:
- *     npx hardhat run scripts/9_deployHpToken.js --network testnetBSC
+ *     npx hardhat run scripts/10_deployHpToken.js --network testnetBSC
+ * 
+ *     npx hardhat run scripts/10_deployHpToken.js --network rinkeby
  */
 
 const { ethers } = require(`hardhat`);

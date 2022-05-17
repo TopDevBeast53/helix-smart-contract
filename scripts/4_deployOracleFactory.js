@@ -2,17 +2,14 @@
  * @dev Deployment script for Oracle Factory contract.
  *
  * Run from project root using:
- *     npx hardhat run scripts/3_deployOracleFactory.js --network testnetBSC
+ *     npx hardhat run scripts/4_deployOracleFactory.js --network testnetBSC
+ *     npx hardhat run scripts/4_deployOracleFactory.js --network rinkeby
  */
 
-const { ethers } = require(`hardhat`)
+const { ethers, upgrades } = require(`hardhat`)
 
 const contracts = require('./constants/contracts')
 const env = require('./constants/env')
-
-const overrides = {
-    gasLimit: 9999999
-}
 
 const factoryAddress = contracts.factory[env.network]
 
@@ -24,7 +21,7 @@ async function main() {
     console.log(`------ Start deploying Oracle -------`)
 
     const OracleFactory = await ethers.getContractFactory('OracleFactory')
-    const oracleFactory = await OracleFactory.deploy(factoryAddress, overrides)
+    const oracleFactory = await upgrades.deployProxy(OracleFactory, [factoryAddress])
     await oracleFactory.deployTransaction.wait()
     
     console.log(`Oracle deployed to ${oracleFactory.address}`)
@@ -35,7 +32,7 @@ async function main() {
 
     const Factory = await ethers.getContractFactory(`HelixFactory`)
     const factory = Factory.attach(factoryAddress)
-    await factory.setOracleFactory(oracleFactory.address, overrides)
+    await factory.setOracleFactory(oracleFactory.address)
 
     console.log('Oracle Factory is registered with Factory')
 }

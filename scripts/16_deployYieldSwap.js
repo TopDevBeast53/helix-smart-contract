@@ -2,7 +2,9 @@
  * @dev Deployment script for Yield Swap contract.
  *
  * Run from project root using:
- *     npx hardhat run scripts/19_deployYieldSwap.js --network testnetBSC
+ *     npx hardhat run scripts/16_deployYieldSwap.js --network testnetBSC
+ * 
+ *     npx hardhat run scripts/16_deployYieldSwap.js --network rinkeby
  */
 
 // Define script parameters
