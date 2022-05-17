@@ -34,12 +34,12 @@ module.exports = {
         97: '40000000000000000000', // 40 * 10e18 -> 40 helix tokens per block 
     },
     MASTERCHEF_STAKING_PERCENT : {
-        56: 999, // -> 99.9% of all farm rewards will go the users
-        97: 999, // -> 99.9% of all farm rewards will go the users
+        56: 999000, // -> 99.9% of all farm rewards will go the users
+        97: 999000, // -> 99.9% of all farm rewards will go the users
     },
     MASTERCHEF_DEV_PERCENT : {
-        56: 1, // -> 0.1% of all farm rewards will go to dev address
-        97: 1, // -> 0.1% of all farm rewards will go to dev address
+        56: 1000, // -> 0.1% of all farm rewards will go to dev address
+        97: 1000, // -> 0.1% of all farm rewards will go to dev address
     },
     
     // --------- SmartChef --------- //
