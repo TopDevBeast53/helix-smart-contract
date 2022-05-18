@@ -2,7 +2,7 @@
 pragma solidity >= 0.8.0;
 
 import "../interfaces/IMasterChef.sol";
-import "../libraries/Percent.sol";
+import "../fees/FeeCollector.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -33,7 +33,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
  * staked amount of liquidity token and their counterparty receives the yield earned over 
  * the duration.
  */
-contract YieldSwap is Ownable, ReentrancyGuard {
+contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     struct Swap {
@@ -82,15 +82,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     /// Array of all bids made
     Bid[] public bids;
 
-    /// Recipient of charged fees
-    address public treasury;
-
-    /// Percent extracted for the treasury from the amount received by the seller
-    uint256 public sellerTreasuryFee;
-
-    /// Percent extracted for the treasury from the amount received by the buyer
-    uint256 public buyerTreasuryFee;
-
     /// Map a seller address to the swaps it's opened 
     mapping(address => uint[]) public swapIds;
 
@@ -128,15 +119,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     // Emitted when a swap's lp token(s) is withdrawn after being locked
     event Withdrawn(uint256 indexed swapId);
 
-    // Emitted when the owner sets the treasury address
-    event TreasurySet(address treasury);
-
-    // Emitted when the owner sets the seller's fee
-    event SellerFeeSet(uint256 sellerTreasuryFee);
-
-    // Emitted when the owner sets the buyer's fee
-    event BuyerFeeSet(uint256 buyerTreasuryFee);
-
     // Emitted when the owner sets the minimum lock duration 
     event MinLockDurationSet(uint256 minLockDuration);
 
@@ -162,11 +144,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
 
     modifier onlyAboveZero(uint256 number) {
         require(number > 0, "YieldSwap: not above zero");
-        _;
-    }
-
-    modifier onlyValidFee(uint256 _fee) {
-        require(Percent.isValidPercent(_fee), "YieldSwap: invalid fee");
         _;
     }
 
@@ -352,10 +329,10 @@ contract YieldSwap is Ownable, ReentrancyGuard {
 
         // Only unstake if the token is an lp token
         if (swap.seller.isLp) {
-            _unstake(swap.seller, swap.buyer.party, _swapId, true);
+            _unstake(swap.seller, swap.buyer.party, _swapId);
         }
         if (swap.buyer.isLp) {
-            _unstake(swap.buyer, swap.seller.party, _swapId, false);
+            _unstake(swap.buyer, swap.seller.party, _swapId);
         }
 
         emit Withdrawn(_swapId);
@@ -401,34 +378,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         _bidderSwapIds = bidderSwapIds[_address];
     }
 
-    /// Called by the owner to set the _treasury address
-    function setTreasury(address _treasury) external onlyOwner onlyValidAddress(_treasury) {
-        treasury = _treasury;
-        emit TreasurySet(_treasury);
-    }
-
-    /// Called by the owner to set the percent fee extracted 
-    /// from the amount received by the seller
-    function setSellerTreasuryFee(uint256 _sellerTreasuryFee) 
-        external 
-        onlyOwner 
-        onlyValidFee(_sellerTreasuryFee) 
-    {
-        sellerTreasuryFee = _sellerTreasuryFee;
-        emit SellerFeeSet(_sellerTreasuryFee);
-    }
-
-    /// Called by the owner to set the percent fee extracted 
-    /// from the amount received by the buyer
-    function setBuyerTreasuryFee(uint256 _buyerTreasuryFee) 
-        external 
-        onlyOwner 
-        onlyValidFee(_buyerTreasuryFee) 
-    {
-        buyerTreasuryFee = _buyerTreasuryFee;
-        emit BuyerFeeSet(_buyerTreasuryFee);
-    }
-
     /// Called by the owner to set the minimum lock duration
     function setMinLockDuration(uint256 _MIN_LOCK_DURATION) external onlyOwner {
         require(
@@ -463,20 +412,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         return bids.length - 1;
     }
 
-    /// Apply the treasury fee to the _amount based on whether the _partyIsSeller
-    /// and return the amounts that go to the counterparty and treasury
-    function applyTreasuryFee(uint256 _amount, bool _partyIsSeller) 
-        public 
-        view 
-        returns (uint256 treasuryAmount, uint256 counterpartyAmount) 
-    {
-        if (_partyIsSeller) {   // then the counterparty is the buyer so apply the buyer fee
-            (treasuryAmount, counterpartyAmount) = _applyTreasuryFeeToBuyer(_amount);
-        } else {                // then the counterparty is the seller so apply the seller fee
-            (treasuryAmount, counterpartyAmount) = _applyTreasuryFeeToSeller(_amount);
-        }
-    }
-
     // Called internally to accept a bid or ask on the swap, perform the necessary
     // checks, mark the _buyer and the _amount they're paying for the swap, and
     // transfer any funds from party to counterparty
@@ -493,20 +428,17 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         swap.buyer.amount = _amount;
         swap.lockUntilTimestamp = block.timestamp + swap.lockDuration;
        
-        _transferOrStake(swap.seller, swap.buyer.party, _swapId, true);
-        _transferOrStake(swap.buyer, swap.seller.party, _swapId, false);
+        _transferOrStake(swap.seller, swap.buyer.party, _swapId);
+        _transferOrStake(swap.buyer, swap.seller.party, _swapId);
     }
 
     // Called internally to handle whether to transfer the _party's funds directly
     // to the _counterparty or whether to stake the funds with the chef. When staking,
-    // uses _swapId to uniquely identify the chef's deposit bucket. And when transferring,
-    // uses _partyIsSeller to determine whether to apply the sellerTreasuryFee or 
-    // the buyerTreasuryFee.
+    // uses _swapId to uniquely identify the chef's deposit bucket.
     function _transferOrStake(
         Party memory _party, 
         address _counterparty, 
-        uint256 _swapId, 
-        bool _partyIsSeller
+        uint256 _swapId
     ) private {
         IERC20 token = _party.token;
         address party = _party.party;
@@ -532,20 +464,18 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         } else { 
             // Otherwise, transfer the amount directly from the party to the counterparty
             // (minus the treasury fee)
-            (uint256 treasuryAmount, uint256 counterpartyAmount) = applyTreasuryFee(amount, _partyIsSeller);
+            (uint256 treasuryAmount, uint256 counterpartyAmount) = getTreasuryFeeSplit(amount);
             token.transferFrom(party, _counterparty, counterpartyAmount);
             token.transferFrom(party, treasury, treasuryAmount);
         }
     }
 
     // Handle unstaking _party's token from chef bucket with _swapId, returning amount to 
-    // party, and distributing accrued yield to _counterparty. Use _partyIsSeller to determine
-    // whether to apply buyerTreasuryFee or sellerTreasuryFee.
+    // party, and distributing accrued yield to _counterparty.
     function _unstake(
         Party memory _party, 
         address _counterparty, 
-        uint256 _swapId, 
-        bool _partyIsSeller
+        uint256 _swapId
     ) private {
         IERC20 token = _party.token;
         address party = _party.party;
@@ -558,7 +488,7 @@ contract YieldSwap is Ownable, ReentrancyGuard {
     
         // And send the yield to the _counterparty (minus the treasury fee)
         uint256 yield = chef.getBucketYield(_swapId, poolId);
-        (uint256 treasuryAmount, uint256 counterpartyAmount) = applyTreasuryFee(yield, _partyIsSeller);
+        (uint256 treasuryAmount, uint256 counterpartyAmount) = getTreasuryFeeSplit(yield);
         chef.bucketWithdrawYieldTo(_counterparty, _swapId, poolId, counterpartyAmount);
         chef.bucketWithdrawYieldTo(treasury, _swapId, poolId, treasuryAmount);
     }
@@ -581,24 +511,6 @@ contract YieldSwap is Ownable, ReentrancyGuard {
         returns (Bid storage) 
     {
         return bids[_bidId];
-    }
-
-    // Apply the treasury fee and get the amounts that go to the seller and to the treasury
-    function _applyTreasuryFeeToSeller(uint256 amount) 
-        private
-        view 
-        returns (uint256 treasuryAmount, uint256 sellerAmount) 
-    {
-        (treasuryAmount, sellerAmount) = Percent.splitByPercent(amount, sellerTreasuryFee);
-    }
-
-    // Apply the treasury fee and get the amounts that go to the buyer and to the treasury
-    function _applyTreasuryFeeToBuyer(uint256 amount) 
-        private  
-        view 
-        returns (uint256 treasuryAmount, uint256 buyerAmount) 
-    {
-        (treasuryAmount, buyerAmount) = Percent.splitByPercent(amount, buyerTreasuryFee);
     }
 
     // Require that the _lpToken is valid - that it's been added to the chef's pool
