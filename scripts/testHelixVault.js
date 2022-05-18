@@ -3,6 +3,7 @@
  * 
  * Run on bsc-testnet: 
  *      npx hardhat run scripts/testHelixVault.js --network testnetBSC
+ *      npx hardhat run scripts/testHelixVault.js --network rinkeby
  */
 
 const { ethers, network } = require(`hardhat`);
@@ -42,16 +43,17 @@ async function main() {
 
     // console.log(`\n`)
 
-    console.log(`adding duration`)
-    const t2 = await vault.addDuration(60, 50)
-    await t2.wait()
+    // console.log(`adding duration`)
+    // const t2 = await vault.addDuration(60, 50)
+    // await t2.wait()
 
-    console.log(`\n`)
+    // console.log(`\n`)
 
     console.log(`done`)
 
-    // console.log("DepositIDs:", await vault.getDepositIds(admin.address));
-    // console.log("Deposit by id 1:", await vault.deposits(1));
+    console.log("DepositIDs:", await vault.getDepositIds("0x5e3A0B1aaccd48E92D6BB9886F9C5159c773f9B2"));
+    console.log("Deposit by id 1:", await vault.deposits(1));
+    console.log("Deposit by id 1:", await vault.depositId());
 }
 
 main()
