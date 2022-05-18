@@ -7,6 +7,7 @@ require("dotenv").config();
 
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
+const etherscanApiKey = process.env.ETHERSCANAPIKEY;
 const rinkebyURL = process.env.RINKEBY_URL;
 const alchemyURL = process.env.ALCHEMY_URL;
 const privateKey = process.env["PRIVATE_KEY"];
@@ -40,6 +41,9 @@ module.exports = {
     },
     hardhat: {
       blockGasLimit: 99999999
+    },
+    frame: {
+      url: 'http://localhost:1248'
     },
     testnetBSC: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
@@ -87,7 +91,7 @@ module.exports = {
     currency: "USD",
   },
   etherscan: {
-    apiKey: bscScanApiKey
+    apiKey: etherscanApiKey
   },
   paths: {
     sources: "./contracts",
