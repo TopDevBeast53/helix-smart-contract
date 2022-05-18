@@ -3,6 +3,7 @@ pragma solidity >= 0.8.0;
 
 import "../interfaces/IERC20.sol";
 import "../libraries/SafeERC20.sol";
+import "../libraries/Percent.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
@@ -58,9 +59,6 @@ contract AirDrop is ReentrancyGuard {
 
     /// Timestamp after which the current withdrawPhase has ended
     uint256 public withdrawPhaseEndTimestamp;
-
-    /// Denominator used when calculating percentages: withdrawPhasePercent[x]/WITHDRAW_PERCENT
-    uint256 public constant WITHDRAW_PERCENT = 100;
 
     /// Owners who can airdrop tokens to users
     address[] public owners;
@@ -191,7 +189,7 @@ contract AirDrop is ReentrancyGuard {
 
             // Max number of tokens user can withdraw based on current withdrawPhase, 
             // number of tokens airdropped, and number of tokens already withdrawn
-            uint256 phaseMax = (users[_by].airdropped * withdrawPhasePercent[_withdrawPhase] / WITHDRAW_PERCENT);
+            uint256 phaseMax = Percent.getPercentage(users[_by].airdropped, withdrawPhasePercent[_withdrawPhase]);
             uint256 allowed =  phaseMax - withdrawn;
 
             // Number of tokens remaining in their balance

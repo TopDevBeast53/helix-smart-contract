@@ -158,17 +158,17 @@ describe('SwapRewards', () => {
     })
 
     it('swapRewards: split amount is correct', async () => {
-        await swapRewards.setSplitRewardPercent(50)     // 5% Helix and 95% Hp
+        await swapRewards.setSplitRewardPercent(5)     // 5% Helix and 95% Hp
         let [helixAmount0, hpAmount0] = await swapRewards.splitReward(100)
         expect(helixAmount0).to.eq(5)
         expect(hpAmount0).to.eq(95)
 
-        await swapRewards.setSplitRewardPercent(150)    // 15% Helix and 85% Hp
+        await swapRewards.setSplitRewardPercent(15)    // 15% Helix and 85% Hp
         let [helixAmount1, hpAmount1] = await swapRewards.splitReward(100)
         expect(helixAmount1).to.eq(15)
         expect(hpAmount1).to.eq(85)
 
-        await swapRewards.setSplitRewardPercent(500)    // 50% Helix and 50% Hp
+        await swapRewards.setSplitRewardPercent(50)    // 50% Helix and 50% Hp
         let [helixAmount2, hpAmount2] = await swapRewards.splitReward(100)
         expect(helixAmount2).to.eq(50)
         expect(hpAmount2).to.eq(50)

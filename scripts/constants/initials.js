@@ -120,22 +120,22 @@ module.exports = {
     // --------- Swap Rewards  --------- //
 
     SPLIT_REWARD_PERCENT : {
-        1: 500,
-        4: 500,
-        56: 500,        // 50% Helix and 50% Hp
-        97: 500,        // 50% Helix and 50% Hp
+        1: 50,
+        4: 50,
+        56: 50,        // 50% Helix and 50% Hp
+        97: 50,        // 50% Helix and 50% Hp
     },
     HELIX_REWARD_PERCENT : {
-        1: 50,
-        4: 50,
-        56: 50,         // 5% Helix Rewards
-        97: 50,         // 5% Helix Rewards
+        1: 5,
+        4: 5,
+        56: 5,         // 5% Helix Rewards
+        97: 5,         // 5% Helix Rewards
     },
     HP_REWARD_PERCENT : {
-        1: 50,
-        4: 50,
-        56: 50,         // 5% HP Rewards
-        97: 50,         // 5% HP Rewards
+        1: 5,
+        4: 5,
+        56: 5,         // 5% HP Rewards
+        97: 5,         // 5% HP Rewards
     },
 
     // --------- Helix Vault --------- //

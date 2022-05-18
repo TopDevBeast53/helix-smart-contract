@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Enumer
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "../libraries/Percent.sol";
 
 contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyGuardUpgradeable {
     using Strings for uint256;
@@ -118,6 +119,11 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
 
     modifier isNotZero(uint256 amount) {
         require(amount > 0, "HelixNFT: zero amount");
+        _;
+    }
+
+    modifier onlyValidPercent(uint256 percent) {
+        require(Percent.isValidPercent(percent), "HelixNFT: invalid percent");
         _;
     }
 
@@ -273,7 +279,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         require(_helixPointsTable[curLevel] == curHelixPoints, "HelixNFT: insufficient points");
 
         token.level = curLevel + 1;
-        token.helixPoints = curHelixPoints + (curHelixPoints * _levelUpPercent) / 100;
+        token.helixPoints = curHelixPoints + Percent.getPercentage(curHelixPoints, _levelUpPercent);
 
         emit LevelUp(msg.sender, (curLevel + 1), tokenId);
     }
@@ -419,7 +425,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
      *
      * NOTE: percentage value: e.g. 10%
      */
-    function setLevelUpPercent(uint8 percent) external onlyOwner isNotZero(percent) {
+    function setLevelUpPercent(uint8 percent) external onlyOwner onlyValidPercent(percent) {
         _levelUpPercent = percent;
     }
 
