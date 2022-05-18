@@ -3,6 +3,8 @@
  * 
  * Run from project root using:
  *     npx hardhat run scripts/0_deploymentHelper.js --network testnetBSC
+ * 
+ *     npx hardhat run scripts/0_deploymentHelper.js --network rinkeby
  */
 
 const verbose = true

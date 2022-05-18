@@ -39,7 +39,8 @@ module.exports = {
         56: '',
         97: '0x7167a81a3a158Fc0383124Bd7e4d4e43f2b728b8',
     },
-    //---------------- LP token address to Add into MasterChef ------------------//
+
+    //---------------- LP token address to Add into MasterChef on BSC ------------------//
     HELIX_BNB: {
         56: '',
         97: '0x33eA8E14b4B24E99016113BE3Ff092e6628B520e',
@@ -56,5 +57,25 @@ module.exports = {
         56: '',
         97: '0x0137F587119bE0D0F1efDbf87dBe409C670Ad9AD',
     },
+
+    //---------------- LP token address to Add into MasterChef on Ethereum ------------------//
+
+    HELIX_WETH: {
+        1: '',
+        4: '0xEC49C53F8f97BF4B8DF730D81e45A2c91246Ff2a',
+    },
+    HELIX_DAI: {
+        1: '',
+        4: '0xBe496AFdb960D65BA6fF2Ca1Dae5dbb7F8fc392B',
+    },
+    HELIX_USDC: {
+        1: '',
+        4: '0x40e3272d8C34a2177258580F122F8F683Ec26c62',
+    },
+    WETH_USDC: {
+        1: '',
+        4: '0x460dEb78a2E80395E27bFf590fBEF7370934c347',
+    },
+    
 }
   

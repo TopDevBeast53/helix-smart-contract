@@ -31,7 +31,7 @@ module.exports = {
     },
     masterChef: {
         1: '',
-        4: '0xb4E6BF440Ed097175fE1d9BAC5EbdbDE5D3094B9',
+        4: '0xb0e55f4eC472F5a1df6028E71A4f1A9E5f4F4156',
         56: '',
         97: '0x56451b5Fb2A9bBe47eC6717CC6d77C3558Fe58cA',
     },
@@ -133,13 +133,13 @@ module.exports = {
     },
     yieldSwap: {
         1: '',
-        4: '0x3ce8D07f0f75b7e31eD85f4558a7244738bb65F6',
+        4: '0xC8883B5D262b0791c758061533CaeAf9B312dcb4',
         56: '',
         97: '0x3d915a41357c95fE059F07B68661aD966DfAB8A8',
     },
     lpSwap: {
         1: '',
-        4: '0x8B719E5239c0e621DB5063E2B27C88d6F8244Df6',
+        4: '0x6FFc00EDd6e7567e5d31808EaB3F4D3D63E7d47f',
         56: '',
         97: '0x1A6a1fcb7E6457Dd8a75c67829745B9b6b34e28f',
     },
