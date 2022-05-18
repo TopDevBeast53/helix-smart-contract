@@ -8,6 +8,7 @@ require("dotenv").config();
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
 const rinkebyURL = process.env.RINKEBY_URL;
+const alchemyURL = process.env.ALCHEMY_URL;
 const privateKey = process.env["PRIVATE_KEY"];
 
 task("accounts", "Prints the list of accounts", async () => {
@@ -60,6 +61,12 @@ module.exports = {
       gasPrice: 5000000000,
       accounts: getAccounts(),
     },
+    mainnetETH: {
+      url: alchemyURL || "",
+      chainId: 1,
+      gasPrice: 5000000000,
+      accounts: getAccounts(),
+    }
   },
   solidity: {
     compilers:[
