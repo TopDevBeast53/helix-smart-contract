@@ -2,7 +2,7 @@
 pragma solidity >= 0.8.0;
 
 import "../interfaces/IMasterChef.sol";
-import "../libraries/Percent.sol";
+import "../fees/FeeCollector.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -14,7 +14,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
  * accepts the ask. When bidding is closed, the seller recieves the bid (or ask) 
  * amount and the buyer recieves the sell amount.
  */
-contract LpSwap is Ownable, ReentrancyGuard {
+contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
     using SafeERC20 for IERC20;
         
     struct Swap {
@@ -40,15 +40,6 @@ contract LpSwap is Ownable, ReentrancyGuard {
 
     // Array of all bids made
     Bid[] public bids;
-
-    // Recipient of charged fees
-    address public treasury;
-
-    // Fee percent charged to seller
-    uint256 public sellerFee;
-
-    // Fee percent charged to buyer
-    uint256 public buyerFee;
 
     // Map a seller address to the swaps it's opened 
     mapping(address => uint[]) public swapIds;
@@ -90,12 +81,6 @@ contract LpSwap is Ownable, ReentrancyGuard {
     // Emitted when the owner sets the treasury
     event TreasurySet(address treasury);
 
-    // Emitted when the owner sets the seller's fee
-    event SellerFeeSet(uint256 sellerFee);
-
-    // Emitted when the owner sets the buyer's fee
-    event BuyerFeeSet(uint256 buyerFee); 
-
     modifier isValidSwapId(uint256 id) {
         require(swaps.length != 0, "LpSwap: no swap opened");
         require(id < swaps.length, "LpSwap: invalid swap id");
@@ -116,11 +101,6 @@ contract LpSwap is Ownable, ReentrancyGuard {
     modifier isAboveZero(uint256 number) {
         require(number > 0, "LpSwap: not above zero");
         _;
-    }
-
-    modifier isValidFee(uint256 _fee) {
-       require(Percent.isValidPercent(_fee), "LpSwap: invalid fee");
-       _;
     }
 
     constructor(
@@ -277,12 +257,12 @@ contract LpSwap is Ownable, ReentrancyGuard {
         swap.cost = toSellerAmount;
 
         // Seller pays the buyer the amount minus the swap fees
-        (uint256 buyerTreasuryFee, uint256 buyerAmount) = applySellerFee(swap.amount);
+        (uint256 buyerTreasuryFee, uint256 buyerAmount) = getTreasuryFeeSplit(swap.amount);
         toBuyerToken.safeTransferFrom(seller, buyer, buyerAmount);
         toBuyerToken.safeTransferFrom(seller, treasury, buyerTreasuryFee);
 
         // Buyer pays the seller the amount the swap fees
-        (uint256 sellerTreasuryFee, uint256 sellerAmount) = applyBuyerFee(toSellerAmount);
+        (uint256 sellerTreasuryFee, uint256 sellerAmount) = getTreasuryFeeSplit(toSellerAmount);
         toSellerToken.safeTransferFrom(buyer, seller, sellerAmount);
         toSellerToken.safeTransferFrom(buyer, treasury, sellerTreasuryFee);
     }
@@ -376,31 +356,6 @@ contract LpSwap is Ownable, ReentrancyGuard {
         returns(Bid storage) 
     {
         return bids[_bidId];
-    }
-
-    function setTreasury(address _treasury) external onlyOwner isNotZeroAddress(_treasury) {
-        treasury = _treasury;
-        emit TreasurySet(_treasury);
-    }
-
-    function setSellerFee(uint256 _sellerFee) external onlyOwner isValidFee(_sellerFee) {
-        sellerFee = _sellerFee;
-        emit SellerFeeSet(_sellerFee);
-    }
-
-    function setBuyerFee(uint256 _buyerFee) external onlyOwner isValidFee(_buyerFee) {
-        buyerFee = _buyerFee;
-        emit BuyerFeeSet(_buyerFee);
-    }
-
-    // Apply the seller fee and get the amounts that go to the seller and to the treasury
-    function applySellerFee(uint256 amount) public view returns(uint256 treasuryAmount, uint256 sellerAmount) {
-        (treasuryAmount, sellerAmount) = Percent.splitByPercent(amount, sellerFee);
-    }
-
-    // Apply the buyer fee and get the amounts that go to the buyer and to the treasury
-    function applyBuyerFee(uint256 amount) public view returns(uint256 treasuryAmount, uint256 buyerAmount) {
-        (treasuryAmount, buyerAmount) = Percent.splitByPercent(amount, buyerFee);
     }
 
     function _requireIsOpen(bool isOpen) private pure {

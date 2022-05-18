@@ -15,6 +15,7 @@ const env = require('../scripts/constants/env')
 const rewardPerBlock = initials.HELIX_VAULT_REWARD_PER_BLOCK[env.network]
 const startBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
 const lastRewardBlock = initials.HELIX_VAULT_BONUS_END_BLOCK[env.network]
+const treasuryAddress = initials.HELIX_VAULT_TREASURY_ADDRESS[env.network]
 
 chai.use(solidity)
 
@@ -258,6 +259,7 @@ describe('Vault', () => {
         const _vault = await deployContract(wallet0, HelixVault, 
             [
                 helixToken.address,
+                treasuryAddress,
                 rewardPerBlock,
                 startBlock,
                 lastRewardBlock
@@ -774,6 +776,56 @@ describe('Vault', () => {
         await expect(vault.setLastRewardBlock(lastRewardBlock))
             .to.emit(vault, "LastRewardBlockSet")
             .withArgs(lastRewardBlock)
+    })
+
+    it('vault: set treasury as non-owner fails', async () => {
+        const treasury = wallet1.address
+        await expect(_vault.setTreasury(treasury))
+            .to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it('vault: set treasury with invalid address fails', async () => {
+        const invalidTreasury = constants.AddressZero       // invalid because 0x000..00 can not receive funds
+        await expect(vault.setTreasury(invalidTreasury))
+            .to.be.revertedWith("FeeCollector: zero address")
+    })
+
+    it('vault: set treasury', async () => {
+        const treasury = wallet1.address
+        await vault.setTreasury(treasury)
+        expect(await vault.treasury()).to.eq(treasury)
+    });
+
+    it('vault: set treasury emits SetTreasury event', async () => {
+        const treasury = wallet1.address
+        await expect(vault.setTreasury(treasury))
+            .to.emit(vault, "SetTreasury")
+            .withArgs(treasury)
+    })
+
+    it('vault: set fee as non-owner fails', async () => {
+        const fee = 0
+        await expect(_vault.setTreasuryPercent(fee))
+            .to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it('vault: set fee with invalid percent fails', async () => {
+        const invalidFee = 101      // invalid because max percent == 100
+        await expect(vault.setTreasuryPercent(invalidFee))
+            .to.be.revertedWith("FeeCollector: percent exceeds max")
+    })
+
+    it('vault: set fee', async () => {
+        const fee = 50
+        await vault.setTreasuryPercent(fee)
+        expect(await vault.treasuryPercent()).to.eq(fee)
+    });
+
+    it('vault: set fee emits SetFee event', async () => {
+        const fee = 50
+        await expect(vault.setTreasuryPercent(fee))
+            .to.emit(vault, "SetTreasuryPercent")
+            .withArgs(fee)
     })
 
     async function getAccTokenPerShare(blockNumber: number) {

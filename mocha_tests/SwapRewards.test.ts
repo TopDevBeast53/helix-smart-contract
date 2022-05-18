@@ -6,7 +6,6 @@ import { MaxUint256 } from 'legacy-ethers/constants'
 import { expandTo18Decimals } from './shared/utilities'
 
 import HelixPair from '../build/contracts/HelixPair.json'
-import Oracle from '../build/contracts/Oracle.json'
 import SwapRewards from '../build/contracts/SwapRewards.json'
 import { fullExchangeFixture } from './shared/fixtures'
 

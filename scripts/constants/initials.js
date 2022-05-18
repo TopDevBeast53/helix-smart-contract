@@ -32,7 +32,13 @@ module.exports = {
         56: 50, // 5%
         97: 50, // 5%
     },
-    
+    REFERRAL_TREASURY_ADDRESS : {
+        1: '',
+        4: '',
+        56: '0x59201fb8cb2D61118B280c8542127331DD141654',
+        97: '0x59201fb8cb2D61118B280c8542127331DD141654',
+    },
+
     // --------- MasterChef --------- //
 
     MASTERCHEF_START_BLOCK : {
@@ -160,6 +166,13 @@ module.exports = {
         4: 1000000000,
         56: 1000000000,
         97: 1000000000,
+    },
+
+    HELIX_VAULT_TREASURY_ADDRESS : {
+        1: '',
+        4: '',
+        56: '0x59201fb8cb2D61118B280c8542127331DD141654',
+        97: '0x59201fb8cb2D61118B280c8542127331DD141654',
     },
 
     // --------- VIP Presale --------- //

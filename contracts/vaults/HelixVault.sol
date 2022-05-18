@@ -3,11 +3,12 @@ pragma solidity >=0.8.0;
 
 import "../tokens/HelixToken.sol";
 import "../libraries/Percent.sol";
+import "../fees/FeeCollector.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-contract HelixVault is Ownable {
+contract HelixVault is Ownable, FeeCollector {
     struct Deposit {
         address depositor;                  // user making the deposit
         uint256 amount;                     // amount of token deposited
@@ -122,10 +123,13 @@ contract HelixVault is Ownable {
 
     constructor(
         HelixToken _token,
+        address _treasury,
         uint256 _rewardPerBlock,
         uint256 _startBlock,
         uint256 _lastRewardBlock
     ) {
+        treasury = _treasury;
+
         token = _token;
         rewardPerBlock = _rewardPerBlock;
 
@@ -156,10 +160,8 @@ contract HelixVault is Ownable {
 
         uint256 reward = _getReward(deposit.amount, deposit.weight) - deposit.rewardDebt;
         deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
-        
-        if (reward > 0) {
-            token.transfer(msg.sender, reward);
-        }
+
+        _distributeReward(reward);
 
         emit RewardClaimed(msg.sender, _id, reward);
     } 
@@ -213,12 +215,11 @@ contract HelixVault is Ownable {
         _requireNotWithdrawn(deposit.withdrawn);
 
         deposit.amount += _amount;
-        deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
 
         uint256 reward = _getReward(deposit.amount, deposit.weight);
-        if (reward > 0) {
-            token.transfer(msg.sender, reward);
-        }
+        deposit.rewardDebt = reward;
+
+        _distributeReward(reward);
         token.transferFrom(msg.sender, address(this), _amount);
 
         emit UpdateDeposit(msg.sender, _id, _amount, deposit.amount);
@@ -246,9 +247,9 @@ contract HelixVault is Ownable {
             deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
         }
 
-        if (reward > 0) {
-            token.transfer(msg.sender, reward);
-        }
+        _distributeReward(reward);
+
+        // Send the original deposit to the depositor
         token.transfer(msg.sender, _amount);
 
         emit Withdraw(msg.sender, _amount);
@@ -372,6 +373,18 @@ contract HelixVault is Ownable {
             return 0;
         }
         return Math.min(_to, lastRewardBlock) - _from;
+    }
+
+    // Split the _reward into the amount received by the depositor and the amount
+    // charged by the treasury
+    function _distributeReward(uint256 _reward) private {
+        (uint256 treasuryAmount, uint256 depositorAmount) = getTreasuryFeeSplit(_reward);
+        if (depositorAmount > 0) {
+            token.transfer(msg.sender, depositorAmount);
+        }
+        if (treasuryAmount > 0) {
+            token.transfer(treasury, treasuryAmount);
+        }
     }
 
     // Return the Deposit associated with the _depositId

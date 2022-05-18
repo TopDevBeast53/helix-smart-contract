@@ -2,12 +2,13 @@
 pragma solidity >=0.8.0;
 
 import "../interfaces/IHelixToken.sol";
+import "../fees/FeeCollectorUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
-contract ReferralRegister is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
+contract ReferralRegister is Initializable, OwnableUpgradeable, FeeCollectorUpgradeable, ReentrancyGuardUpgradeable {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     /**
@@ -63,11 +64,13 @@ contract ReferralRegister is Initializable, OwnableUpgradeable, ReentrancyGuardU
 
     function initialize(
         IHelixToken _token, 
+        address _treasury,
         uint256 defaultStakingRef, 
         uint256 defaultSwapRef
     ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
+        treasury = _treasury;
         token = _token;
         stakingRefFee = defaultStakingRef;
         swapRefFee = defaultSwapRef;
@@ -123,7 +126,14 @@ contract ReferralRegister is Initializable, OwnableUpgradeable, ReentrancyGuardU
 
         balance[msg.sender] = 0;
 
-        token.mint(msg.sender, toMint);
+        (uint256 treasuryFee, uint256 callerAmount) = getTreasuryFeeSplit(toMint);
+        if (callerAmount > 0) {
+            token.mint(msg.sender, callerAmount);
+        }
+        if (treasuryFee > 0) {
+            token.mint(treasury, treasuryFee);
+        }
+
         emit Withdrawn(msg.sender, toMint);
     }
 
