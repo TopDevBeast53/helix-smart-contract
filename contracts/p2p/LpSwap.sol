@@ -2,6 +2,7 @@
 pragma solidity >= 0.8.0;
 
 import "../interfaces/IMasterChef.sol";
+import "../interfaces/IFeeHandler.sol";
 import "../fees/FeeCollector.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -104,9 +105,9 @@ contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
     }
 
     constructor(
-        address _treasury
+        IFeeHandler _feeHandler
     ) {
-        treasury = _treasury;
+        feeHandler = _feeHandler;
     }
 
     // Called externally to open a new swap
@@ -257,14 +258,16 @@ contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
         swap.cost = toSellerAmount;
 
         // Seller pays the buyer the amount minus the swap fees
-        (uint256 buyerTreasuryFee, uint256 buyerAmount) = getTreasuryFeeSplit(swap.amount);
+        (uint256 buyerTreasuryFee, uint256 buyerAmount) = getCollectorFeeSplit(swap.amount);
         toBuyerToken.safeTransferFrom(seller, buyer, buyerAmount);
-        toBuyerToken.safeTransferFrom(seller, treasury, buyerTreasuryFee);
+        delegateTransfer(toBuyerToken, seller, buyerTreasuryFee);
+        //toBuyerToken.safeTransferFrom(seller, treasury, buyerTreasuryFee);
 
         // Buyer pays the seller the amount the swap fees
-        (uint256 sellerTreasuryFee, uint256 sellerAmount) = getTreasuryFeeSplit(toSellerAmount);
+        (uint256 sellerTreasuryFee, uint256 sellerAmount) = getCollectorFeeSplit(toSellerAmount);
         toSellerToken.safeTransferFrom(buyer, seller, sellerAmount);
-        toSellerToken.safeTransferFrom(buyer, treasury, sellerTreasuryFee);
+        delegateTransfer(toSellerToken, buyer, sellerTreasuryFee);
+        //toSellerToken.safeTransferFrom(buyer, treasury, sellerTreasuryFee);
     }
 
     // Verify that _address has amount of token in balance

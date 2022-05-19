@@ -378,7 +378,7 @@ contract HelixVault is Ownable, FeeCollector {
     // Split the _reward into the amount received by the depositor and the amount
     // charged by the treasury
     function _distributeReward(uint256 _reward) private {
-        (uint256 treasuryAmount, uint256 depositorAmount) = getTreasuryFeeSplit(_reward);
+        (uint256 treasuryAmount, uint256 depositorAmount) = getCollectorFeeSplit(_reward);
         if (depositorAmount > 0) {
             token.transfer(msg.sender, depositorAmount);
         }

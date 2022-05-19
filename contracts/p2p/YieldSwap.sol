@@ -2,6 +2,7 @@
 pragma solidity >= 0.8.0;
 
 import "../interfaces/IMasterChef.sol";
+import "../interfaces/IFeeHandler.sol";
 import "../fees/FeeCollector.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -149,14 +150,15 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
 
     constructor(
         IMasterChef _chef, 
-        address _treasury,
+        IFeeHandler _feeHandler,
         uint256 _MIN_LOCK_DURATION,
         uint256 _MAX_LOCK_DURATION
     ) 
         onlyValidAddress(address(_chef))
+        onlyValidAddress(address(_feeHandler))
     {
         chef = _chef;
-        treasury = _treasury;
+        feeHandler = _feeHandler;
 
         MIN_LOCK_DURATION = _MIN_LOCK_DURATION;
         MAX_LOCK_DURATION = _MAX_LOCK_DURATION;
@@ -464,9 +466,15 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
         } else { 
             // Otherwise, transfer the amount directly from the party to the counterparty
             // (minus the treasury fee)
-            (uint256 treasuryAmount, uint256 counterpartyAmount) = getTreasuryFeeSplit(amount);
+            (uint256 treasuryAmount, uint256 counterpartyAmount) = getCollectorFeeSplit(amount);
             token.transferFrom(party, _counterparty, counterpartyAmount);
-            token.transferFrom(party, treasury, treasuryAmount);
+            
+            // First transfer treasury amount from party to this contract
+            token.transferFrom(party, address(this), treasuryAmount);
+
+            // Then allow the handler to delegate how the amount is distributed
+            delegateTransfer(token, party, treasuryAmount);
+            //token.transferFrom(party, treasury, treasuryAmount);
         }
     }
 
@@ -488,7 +496,7 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
     
         // And send the yield to the _counterparty (minus the treasury fee)
         uint256 yield = chef.getBucketYield(_swapId, poolId);
-        (uint256 treasuryAmount, uint256 counterpartyAmount) = getTreasuryFeeSplit(yield);
+        (uint256 treasuryAmount, uint256 counterpartyAmount) = getCollectorFeeSplit(yield);
         chef.bucketWithdrawYieldTo(_counterparty, _swapId, poolId, counterpartyAmount);
         chef.bucketWithdrawYieldTo(treasury, _swapId, poolId, treasuryAmount);
     }
