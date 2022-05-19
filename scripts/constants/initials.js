@@ -34,7 +34,7 @@ module.exports = {
     },
     REFERRAL_TREASURY_ADDRESS : {
         1: '',
-        4: '',
+        4: '0x59201fb8cb2D61118B280c8542127331DD141654',
         56: '0x59201fb8cb2D61118B280c8542127331DD141654',
         97: '0x59201fb8cb2D61118B280c8542127331DD141654',
     },
@@ -170,7 +170,7 @@ module.exports = {
 
     HELIX_VAULT_TREASURY_ADDRESS : {
         1: '',
-        4: '',
+        4: '0x59201fb8cb2D61118B280c8542127331DD141654',
         56: '0x59201fb8cb2D61118B280c8542127331DD141654',
         97: '0x59201fb8cb2D61118B280c8542127331DD141654',
     },
