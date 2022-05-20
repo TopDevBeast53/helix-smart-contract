@@ -59,7 +59,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
     })
 
     it('refReg: initialized with expected values', async () => {
-        expect(await refReg.token()).to.eq(helixToken.address)
+        expect(await refReg.helixToken()).to.eq(helixToken.address)
         expect(await refReg.stakingRefFee()).to.eq(stakeFee)
         expect(await refReg.swapRefFee()).to.eq(swapFee)
     })

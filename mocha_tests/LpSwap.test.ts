@@ -37,6 +37,7 @@ describe('Lp Swap', () => {
     let tokenA: Contract        // Let tokenA be the toBuyer token
     let tokenB: Contract        // Let tokenB be the toSeller token
     let lpSwap: Contract
+    let feeHandler: Contract
 
     // contracts owned by wallet 1, used when wallet 1 should be msg.sender 
     let lpSwap1: Contract
@@ -59,6 +60,7 @@ describe('Lp Swap', () => {
         tokenA = fullExchange.tokenA
         tokenB = fullExchange.tokenB
         lpSwap = fullExchange.lpSwap
+        feeHandler = fullExchange.feeHandler
 
         // set default open swap parameters
         amount = expandTo18Decimals(1000)
@@ -114,7 +116,7 @@ describe('Lp Swap', () => {
     })
 
     it('lpSwap: initialized with expected values', async () => {
-        expect(await lpSwap.treasury()).to.eq(wallet0.address)           // use wallet0 to make checking balance change easy
+        expect(await lpSwap.feeHandler()).to.eq(feeHandler.address)           // use wallet0 to make checking balance change easy
     })
 
     it('lpSwap: open swap with invalid toBuyer token fails', async () => {
@@ -663,12 +665,13 @@ describe('Lp Swap', () => {
 
     it('lpSwap: accept bid', async () => {
         // set the treasury to be wallet2 so that we can check that it receives treasury fee
-        await lpSwap.setTreasury(wallet2.address)
+        // await lpSwap.setTreasury(wallet2.address)
+        await feeHandler.setTreasury(wallet2.address)
 
         // set the treasury fees to 0 so that the seller and buyer 
         // receive the full amounts being exchanged
-        await lpSwap.setTreasuryPercent(0)
-        await lpSwap.setTreasuryPercent(0)
+        await lpSwap.setCollectorPercent(0)
+        await lpSwap.setCollectorPercent(0)
    
         // open the swap and make a bid
         await openSwap()
@@ -822,12 +825,13 @@ describe('Lp Swap', () => {
 
     it('lpSwap: accept ask', async () => {
         // set the treasury to be wallet2 so that we can check that it receives treasury fee
-        await lpSwap.setTreasury(wallet2.address)
+        // await lpSwap.setTreasury(wallet2.address)
+        await feeHandler.setTreasury(wallet2.address)
 
         // set the treasury fees to 0 so that the seller and buyer 
         // receive the full amounts being exchanged
-        await lpSwap.setTreasuryPercent(0)
-        await lpSwap.setTreasuryPercent(0)
+        await lpSwap.setCollectorPercent(0)
+        await lpSwap.setCollectorPercent(0)
    
         // open the swap
         await openSwap()
@@ -1055,40 +1059,40 @@ describe('Lp Swap', () => {
         }
     })
 
-    it('lpSwap: set treasury as non-owner fails', async () => {
+    it('lpSwap: set fee handler as non-owner fails', async () => {
         const treasuryAddress = wallet2.address
-        await expect(lpSwap1.setTreasury(treasuryAddress))
+        await expect(lpSwap1.setFeeHandler(treasuryAddress))
             .to.be.revertedWith("Ownable: caller is not the owner")
     })
 
     it('lpSwap: set treasury with invalid address fails', async () => {
         const invalidTreasuryAddress = constants.AddressZero
-        await expect(lpSwap.setTreasury(invalidTreasuryAddress))
-            .to.be.revertedWith("FeeCollector: zero address")
+        await expect(feeHandler.setTreasury(invalidTreasuryAddress))
+            .to.be.revertedWith("FeeHandler: zero address")
     })
 
     it('lpSwap: set treasury', async () => {
         const expectedTreasuryAddress = wallet2.address
-        await lpSwap.setTreasury(expectedTreasuryAddress)
-        expect(await lpSwap.treasury()).to.eq(expectedTreasuryAddress)
+        await feeHandler.setTreasury(expectedTreasuryAddress)
+        expect(await feeHandler.treasury()).to.eq(expectedTreasuryAddress)
     })
 
     it('lpSwap: set treasury fee as non-owner fails', async () => {
         const fee = 0
-        await expect(lpSwap1.setTreasuryPercent(fee))
+        await expect(lpSwap1.setCollectorPercent(fee))
             .to.be.revertedWith("Ownable: caller is not the owner")
     })
 
     it('lpSwap: set treasury fee with invalid fee fails', async () => {
         const invalidFee = 101
-        await expect(lpSwap.setTreasuryPercent(invalidFee))
+        await expect(lpSwap.setCollectorPercent(invalidFee))
             .to.be.revertedWith("FeeCollector: percent exceeds max")
     })
 
     it('lpSwap: set treasury fee', async () => {
         const expectedFee = 0
-        await lpSwap.setTreasuryPercent(expectedFee)
-        expect(await lpSwap.treasuryPercent()).to.eq(expectedFee)
+        await lpSwap.setCollectorPercent(expectedFee)
+        expect(await lpSwap.collectorPercent()).to.eq(expectedFee)
     })
 
     it('lpSwap: apply treasury fee', async () => {
@@ -1097,28 +1101,28 @@ describe('Lp Swap', () => {
         // set treasury fee to seller fee ratio at 0 : 100
         // such that seller gets 100% of the amount with no treasury fee
         const treasuryPercent0To100 = 0
-        await lpSwap.setTreasuryPercent(treasuryPercent0To100)
+        await lpSwap.setCollectorPercent(treasuryPercent0To100)
         const expectedTreasuryAmount0To100 = 0
         const expectedSellerAmount0To100 = 1000
-        const [treasuryAmount0To100, sellerAmount0To100] = await lpSwap.getTreasuryFeeSplit(amount)
+        const [treasuryAmount0To100, sellerAmount0To100] = await lpSwap.getCollectorFeeSplit(amount)
         expect(treasuryAmount0To100).to.eq(expectedTreasuryAmount0To100)
         expect(sellerAmount0To100).to.eq(expectedSellerAmount0To100)
 
         // set treasury:seller to 33:67
         const treasuryPercent33To67 = 33
-        await lpSwap.setTreasuryPercent(treasuryPercent33To67)
+        await lpSwap.setCollectorPercent(treasuryPercent33To67)
         const expectedTreasuryAmount33To67 = 330
         const expectedSellerAmount33To67 = 670
-        const [treasuryAmount33To67, sellerAmount33To67] = await lpSwap.getTreasuryFeeSplit(amount)
+        const [treasuryAmount33To67, sellerAmount33To67] = await lpSwap.getCollectorFeeSplit(amount)
         expect(treasuryAmount33To67).to.eq(expectedTreasuryAmount33To67)
         expect(sellerAmount33To67).to.eq(expectedSellerAmount33To67)
 
         // set treasury:seller to 100:0
         const treasuryPercent100To0 = 100
-        await lpSwap.setTreasuryPercent(treasuryPercent100To0)
+        await lpSwap.setCollectorPercent(treasuryPercent100To0)
         const expectedTreasuryAmount100To0 = 1000
         const expectedSellerAmount100To0 = 0
-        const [treasuryAmount100To0, sellerAmount100To0] = await lpSwap.getTreasuryFeeSplit(amount)
+        const [treasuryAmount100To0, sellerAmount100To0] = await lpSwap.getCollectorFeeSplit(amount)
         expect(treasuryAmount100To0).to.eq(expectedTreasuryAmount100To0)
         expect(sellerAmount100To0).to.eq(expectedSellerAmount100To0)
     })

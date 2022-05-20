@@ -29,6 +29,7 @@ import PublicPresale from '../../build/contracts/PublicPresale.json'
 import AirDrop from '../../build/contracts/AirDrop.json'
 import YieldSwap from '../../build/contracts/YieldSwap.json'
 import LpSwap from '../../build/contracts/LpSwap.json'
+import FeeHandler from '../../build/contracts/FeeHandler.json'
 
 const addresses = require('../../scripts/constants/addresses')
 const initials = require('../../scripts/constants/initials')
@@ -115,6 +116,7 @@ interface FullExchangeFixture {
     airDrop: Contract
     yieldSwap: Contract
     lpSwap: Contract
+    feeHandler: Contract
 }
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
@@ -144,6 +146,10 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await oracleFactory.initialize(factory.address)
     await factory.setOracleFactory(oracleFactory.address)
 
+    // Deploy the fee handler
+    // and initialize later
+    const feeHandler = await deployContract(wallet, FeeHandler, [], overrides)
+
     // 4 deploy referral register and register as minter with helix token
     /*
     const refReg = await deployContract(wallet, ReferralRegister,
@@ -152,7 +158,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     )
     */
     const refReg = await deployContract(wallet, ReferralRegister, [], overrides)
-    await refReg.initialize(helixToken.address, refRegTreasuryAddress, refRegDefaultStakingRef, refRegDefaultSwapRef);
+    await refReg.initialize(helixToken.address, feeHandler.address, refRegDefaultStakingRef, refRegDefaultSwapRef);
     await helixToken.addMinter(refReg.address)
 
     // 5 deploy master chef and register as minter with helix token
@@ -185,11 +191,13 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await helixNFT.addStaker(helixChefNFT.address, overrides)
     await helixChefNFT.addNewRewardToken(helixToken.address, helixChefNFTStartBlock, helixChefNFTRewardPerBlock, overrides)
 
+    // Initialize the fee handler
+    await feeHandler.initialize(refRegTreasuryAddress, helixChefNFT.address)
+
     // 8 deploy helixNFTBridge, add a bridger, and register as minter
     const helixNFTBridge = await deployContract(wallet, HelixNFTBridge, [helixNFT.address], overrides)
     await helixNFTBridge.addBridger(wallet.address, overrides)
     await helixNFT.addMinter(helixNFTBridge.address, overrides)
-
 
     // 9 deploy HP/LP token
     const helixLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
@@ -235,7 +243,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const vault = await deployContract(wallet, HelixVault, 
         [
             helixToken.address,
-            helixVaultTreasuryAddress,
+            feeHandler.address,
             helixVaultRewardPerBlock,
             helixVaultStartBlock,
             helixVaultBonusEndBlock
@@ -291,7 +299,8 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const yieldSwap = await deployContract(wallet, YieldSwap, 
         [
             chef.address,                   // chef used for earning lpToken yield
-            wallet.address,                 // treasury used for receiving buy/sell fees
+            helixToken.address,             // chef reward token for yield
+            feeHandler.address,             // treasury used for receiving buy/sell fees
             yieldSwapMinLockDuration,       // minimum length of time (in seconds) a swap can be locked for
             yieldSwapMaxLockDuration,       // maximum length of time (in seconds) a swap can be locked for
         ], 
@@ -299,7 +308,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     )
 
     // 18 deploy lp swap contract with treasury address argument
-    const lpSwap = await deployContract(wallet, LpSwap, [wallet.address], overrides)
+    const lpSwap = await deployContract(wallet, LpSwap, [feeHandler.address], overrides)
 
     return {
         tokenA,
@@ -333,5 +342,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         airDrop,
         yieldSwap,
         lpSwap,
+        feeHandler,
     }
 }
