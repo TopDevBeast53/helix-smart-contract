@@ -9,7 +9,7 @@ import "@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol";
 import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 
 // Used for creating, updating, and consulting fixed window, token pair price oracles
-contract OracleFactory is OwnableUpgradeable {
+contract OracleFactory is Initializable, OwnableUpgradeable {
     using FixedPoint for FixedPoint.uq112x112;
     using FixedPoint for FixedPoint.uq144x112;
 
