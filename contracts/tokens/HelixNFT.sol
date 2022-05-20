@@ -32,13 +32,6 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
     EnumerableSet.AddressSet private _minters;
 
     /**
-     * @dev Accruers who can accrue HelixPoints to users
-     *
-     * NOTE : Accruers would be SwapRewards contract
-     */
-    EnumerableSet.AddressSet private _accruers;
-
-    /**
      * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
      * token will be the concatenation of the `baseURI` and the `tokenId`.
      */
@@ -48,32 +41,6 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
      * @dev Last NFT token id, it's increasing on mint
      */
     uint256 private _lastTokenId;
-    
-    /**
-     * @dev A HelixNFT has Helix Points amount initially when it is minted
-     *
-     * NOTE : Set its value when deploy this contract
-     */
-    uint256 private _initialHelixPoints;
-
-    /**
-     * @dev When level up, add a percentage of your previous HelixPoints.
-     */
-    uint8 private _levelUpPercent; 
-
-    //User can upgrade a NFT which he/she wants to boost, it needs to put certain Amount of Helix Points in the NFT.
-
-    //e.g.
-    //   To upgrade 1st level NFT to 2nd level, the user needs to have 10 Helix Points in the token
-    //   To upgrade 2nd level NFT to 3rd level, the user needs to have 50 Helix Points in the token
-    //   To upgrade 3rd level NFT to 4th level, the user needs to have 100 Helix Points in the token
-    //   To upgrade 4th level NFT to 5th level, the user needs to have 200 Helix Points in the token
-    //   To upgrade 5th level NFT to 6th level, the user needs to have 500 Helix Points in the token
-
-    /**
-     * @dev List of HelixPoints amount limits that a NFT can have by level
-     */
-    uint[7] private _helixPointsTable;
 
     /**
      * @dev Structure for attributes the Helix NFTs
@@ -83,29 +50,17 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         string externalTokenID;
         // External token URI to use.
         string tokenURI;
-
-        // Helix Point is a “power” of your NFT and a tool that helps you to boost your NFT and earn more crypto
-        uint256 helixPoints;
-        // Helix NFT consists of on a particular level:
-        uint256 level;
         // Timestamp the token is minted(block's timestamp)
         uint256 createTimestamp;
-
         // True if staked, false otherwise
         bool isStaked;
     }
 
     // map token info by token ID : TokenId => Token
     mapping(uint256 => Token) private _tokens;
-    // map accrued HelixPoints by user address : userAddress => accumulated HelixPoints amount
-    mapping(address => uint) private _accumulatedHP;
-
-    // event when any tokenId gain HelixPoints 
-    event AccrueHelixPoints(address indexed tokenId, uint256 amount);
-    // event when an user level up from which tokenId
-    event LevelUp(address indexed user, uint256 indexed newLevel, uint256 tokenId);
-    event Initialize(string baseURI, uint256 initialHelixPoints);
-    event TokenMint(address indexed to, uint256 indexed tokenId, uint256 level, uint256 helixPoints);
+   
+    event Initialize(string baseURI);
+    event TokenMint(address indexed to, uint256 indexed tokenId);
 
     modifier isNotZeroAddress(address _address) {
         require(_address != address(0), "HelixNFT: zero address");
@@ -131,9 +86,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
     function initialize(
-        string memory baseURI,
-        uint256 initialHelixPoints,
-        uint8 levelUpPercent
+        string memory baseURI
     ) external initializer {
         _owner = msg.sender;
 
@@ -142,18 +95,8 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         __ReentrancyGuard_init();
 
         _internalBaseURI = baseURI;
-        _initialHelixPoints = initialHelixPoints;
-        _levelUpPercent = levelUpPercent;
 
-        _helixPointsTable[0] = 100 ether;//it means nothing because level start from `1 LEVEL`
-        _helixPointsTable[1] = 10 ether;
-        _helixPointsTable[2] = 50 ether;
-        _helixPointsTable[3] = 100 ether;
-        _helixPointsTable[4] = 200 ether;
-        _helixPointsTable[5] = 500 ether;
-        _helixPointsTable[6] = 10000 ether;
-
-        emit Initialize(baseURI, initialHelixPoints);
+        emit Initialize(baseURI);
     }
     
     //Public functions --------------------------------------------------------------------------------------------
@@ -207,17 +150,11 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
 
     /**
      * @dev To mint HelixNFT
-     *
-     * Initialize:
-     *      set helixPoints as initialHelixPoints value
-     *      set level as 1 (start from 1 LEVEL)
      */
     function mint(address to) external onlyMinter nonReentrant isNotZeroAddress(to) {
         _lastTokenId += 1;
         uint256 tokenId = _lastTokenId;
-        _tokens[tokenId].helixPoints = _initialHelixPoints;
         _tokens[tokenId].createTimestamp = block.timestamp;
-        _tokens[tokenId].level = 1;
         _safeMint(to, tokenId);
     }
 
@@ -230,9 +167,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
     {
         _lastTokenId += 1;
         uint256 tokenId = _lastTokenId;
-        _tokens[tokenId].helixPoints = _initialHelixPoints;
         _tokens[tokenId].createTimestamp = block.timestamp;
-        _tokens[tokenId].level = 1;
         _tokens[tokenId].externalTokenID = externalTokenID;
         _tokens[tokenId].tokenURI = uri;
         _safeMint(to, tokenId);
@@ -263,60 +198,6 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
     }
 
     /**
-     * @dev External funtion to upgrade `tokenId` to the next level
-     *
-     * NOTE: When level up, it's added a `_levelUpPercent` percentage of your previous HelixPoints
-     *
-     * Requirements:
-     * - The current token level must be valid.
-     * - The current held HelixPoints amount must be sufficient.
-     */
-    function levelUp(uint256 tokenId) external onlyStaker {
-        Token storage token = _tokens[tokenId];
-        uint256 curLevel = token.level;
-        require(curLevel > 0 && curLevel < 7, "HelixNFT: invalid level");
-        uint256 curHelixPoints = token.helixPoints;
-        require(_helixPointsTable[curLevel] == curHelixPoints, "HelixNFT: insufficient points");
-
-        token.level = curLevel + 1;
-        token.helixPoints = curHelixPoints + Percent.getPercentage(curHelixPoints, _levelUpPercent);
-
-        emit LevelUp(msg.sender, (curLevel + 1), tokenId);
-    }
-    
-    /**
-     * @dev Returns (HelixPoints amount to upgrade to the next level - current HP amount)
-     */
-    function remainHPToNextLevel(uint256 tokenId) external view returns (uint) {
-        return _remainHPToNextLevel(tokenId);
-    }
-
-    /**
-     * @dev See accumulated HelixPoints amount by `user`
-     */
-    function getAccumulatedHP(address user) external view returns (uint) {
-        return _accumulatedHP[user];
-    }
-
-    /**
-     * @dev Set accumulated HelixPoints amount of `user`
-     */
-    function setAccumulatedHP(address user, uint256 amount) external onlyStaker isNotZero(amount) {
-        _accumulatedHP[user] = amount;
-    }
-
-    /**
-     * @dev Used by accruer to accrue HelixPoints `amount` to `user`
-     *
-     * NOTE: It would be called by swap contract(accruer).
-     *       An user can accumulate HelixPoints as a reward when Swapping
-     */
-    function accruePoints(address user, uint256 amount) external onlyAccruer isNotZero(amount) {
-        _accumulatedHP[user] += amount;
-        emit AccrueHelixPoints(user, amount);
-    }
-    
-    /**
      * @dev External function to get the information of `tokenId`
      */
     function getToken(uint256 _tokenId) 
@@ -326,9 +207,6 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         returns (
             uint256 tokenId,
             address tokenOwner,
-            uint256 level,
-            uint256 helixPoints,
-            uint256 remainHPToNextLvl,
             bool isStaked,
             uint256 createTimestamp,
             string memory externalTokenID,
@@ -338,9 +216,6 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         Token memory token = _tokens[_tokenId];
         tokenId = _tokenId;
         tokenOwner = ownerOf(_tokenId);
-        level = token.level;
-        helixPoints = token.helixPoints;
-        remainHPToNextLvl = _remainHPToNextLevel(_tokenId);
         isStaked = token.isStaked;
         createTimestamp = token.createTimestamp;
         externalTokenID = token.externalTokenID;
@@ -352,20 +227,6 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
     }
 
     /**
-     * @dev External function to get helixPoints by `tokenId`
-     */
-    function getHelixPoints(uint256 tokenId) external view returns (uint) {
-        return _tokens[tokenId].helixPoints;
-    }
-
-    /**
-     * @dev External function to set helixPoints by `tokenId`
-     */
-    function setHelixPoints(uint256 tokenId, uint256 amount) external onlyStaker isNotZero(amount) {
-        _tokens[tokenId].helixPoints = amount;
-    }
-
-    /**
      * @dev Returns the owner address and staked status among the token information with the given 'tokenId'.
      * 
      * HelixChefNFT's `stake` function calls it to get token's information by token ID
@@ -374,18 +235,10 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         external 
         view 
         tokenIdExists(tokenId) 
-        returns (address tokenOwner, bool isStaked, uint256 helixPoints) 
+        returns (address tokenOwner, bool isStaked) 
     {
         tokenOwner = ownerOf(tokenId);
         isStaked = _tokens[tokenId].isStaked;
-        helixPoints = _tokens[tokenId].helixPoints;
-    }
-
-    /**
-     * @dev External function to get level by `tokenId`
-     */
-    function getLevel(uint256 tokenId) external view returns (uint) {
-        return _tokens[tokenId].level;
     }
 
     /** 
@@ -411,29 +264,6 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
      */
     function setBaseURI(string calldata newBaseUri) external onlyOwner {
         _internalBaseURI = newBaseUri;
-    }
-
-    /**
-     * @dev External function to set HelixPointsTable
-     */
-    function setHelixPointsTable(uint[7] calldata hpTable) external onlyOwner {
-        _helixPointsTable = hpTable;
-    }
-
-    /**
-     * @dev External function to set LevelUpPercent
-     *
-     * NOTE: percentage value: e.g. 10%
-     */
-    function setLevelUpPercent(uint8 percent) external onlyOwner onlyValidPercent(percent) {
-        _levelUpPercent = percent;
-    }
-
-    /**
-     * @dev Returns (HelixPoints amount to upgrade to the next level - current HP amount)
-     */
-    function _remainHPToNextLevel(uint256 tokenId) internal view returns (uint) {
-        return _helixPointsTable[uint(_tokens[tokenId].level)] - _tokens[tokenId].helixPoints;
     }
 
     //Role functions for Staker --------------------------------------------------------------------------------------
@@ -551,61 +381,6 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
      */
     modifier onlyMinter() {
         require(isMinter(msg.sender), "HelixNFT: not minter");
-        _;
-    }
-
-    //Role functions for Accruer --------------------------------------------------------------------------------------
-
-    /**
-     * @dev used by owner to add accruer who can accrue HelixPoint to users
-     * @param _addAccruer address of accruer to be added.
-     * @return true if successful.
-     */
-    function addAccruer(address _addAccruer) external onlyOwner isNotZeroAddress(_addAccruer) returns (bool) {
-        return EnumerableSet.add(_accruers, _addAccruer);
-    }
-
-    /**
-     * @dev used by owner to delete accruer who can accrue HelixPoint to users
-     * @param _delAccruer address of accruer to be deleted.
-     * @return true if successful.
-     */
-    function delAccruer(address _delAccruer) external onlyOwner isNotZeroAddress(_delAccruer) returns (bool) {
-        return EnumerableSet.remove(_accruers, _delAccruer);
-    }
-
-    /**
-     * @dev See the number of accruers
-     * @return number of accruers.
-     */
-    function getAccruerLength() public view returns (uint256) {
-        return EnumerableSet.length(_accruers);
-    }
-
-    /**
-     * @dev Check if an address is a accruer
-     * @return true or false based on accruer status.
-     */
-    function isAccruer(address account) public view returns (bool) {
-        return EnumerableSet.contains(_accruers, account);
-    }
-
-    /**
-     * @dev Get the accruer at n location
-     * @param _index index of address set
-     * @return address of accruer at index.
-     */
-    function getAccruer(uint256 _index) external view onlyOwner returns (address)
-    {
-        require(_index <= getAccruerLength() - 1, "HelixNFT: index out of bounds");
-        return EnumerableSet.at(_accruers, _index);
-    }
-
-    /**
-     * @dev Modifier
-     */
-    modifier onlyAccruer() {
-        require(isAccruer(msg.sender), "HelixNFT: not accruer");
         _;
     }
 

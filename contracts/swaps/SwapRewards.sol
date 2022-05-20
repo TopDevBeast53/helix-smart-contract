@@ -33,7 +33,6 @@ contract SwapRewards is Ownable {
     uint256 public helixRewardPercent;
     uint256 public apRewardPercent;
 
-    event AccrueAp(address indexed account, uint256 ap);
     event AccrueHelix(address indexed account, uint256 helix);
     event Swap(
         address indexed account, 
@@ -81,9 +80,9 @@ contract SwapRewards is Ownable {
         require (msg.sender == router, "SwapFee: not router");
 
         // Accrue HELIX/AP to the swap caller
+        // TODO : apAmount should be removed
         (uint256 helixAmount, uint256 apAmount) = splitReward(amountIn);
         accrueHelix(account, tokenOut, helixAmount);
-        accrueAP(account, tokenOut, apAmount);
 
         // Accrue HELIX to the swap caller referrer.
         refReg.recordSwapReward(account, getAmountOut(tokenOut, amountIn, address(helixToken)));
@@ -113,18 +112,6 @@ contract SwapRewards is Ownable {
         if (helixOut > 0) {
             helixToken.mint(account, helixOut);
             emit AccrueHelix(account, helixOut);
-        }
-    }
-
-    /**
-     * @dev Accrue AP to `account` based on `amountIn` of `tokenIn`.
-     */
-    function accrueAP(address account, address tokenIn, uint256 amountIn) private {
-        uint256 apOut = getAmountOut(tokenIn, amountIn, hpToken);
-        apOut = Percent.getPercentage(apOut, apRewardPercent);
-        if (apOut > 0) {
-            helixNFT.accruePoints(account, apOut);
-            emit AccrueAp(account, apOut);
         }
     }
 
