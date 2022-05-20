@@ -4,10 +4,11 @@ pragma solidity >=0.8.0;
 import "../libraries/Percent.sol";
 import "../interfaces/IFeeHandler.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-abstract contract FeeCollector is Ownable {
+abstract contract FeeCollector {
+    using SafeERC20 for IERC20; 
+
     /// Handler that this collector transfers fees to
     IFeeHandler public feeHandler;
 
@@ -20,30 +21,9 @@ abstract contract FeeCollector is Ownable {
     // Emitted when a new collector percent is set by the owner
     event SetCollectorPercent(uint256 _collectorPercent);
 
-    /// Delegate feeHandler to transfer _fee amount of _token from _from
-    function delegateTransfer(IERC20 _token, address _from, uint256 _fee) internal {
-        require(_fee > 0, "FeeCollector: zero fee");
-        require(address(feeHandler) != address(0), "FeeCollector: handler not set");
-        _token.approve(address(feeHandler), _fee);
-        feeHandler.transferFee(_token, _from, _fee);
-    }
-
     /// Return true if the feeHandler address is set and false otherwise
-    function isFeeHandlerSet() external view returns (bool) {
-        return feeHandler != address(0);
-    }
-    
-    /// Called by the owner to set a new _feeHandler address
-    function setFeeHandler(IFeeHandler _feeHandler) external onlyOwner { 
-        feeHandler = _feeHandler;
-        emit SetFeeHandler(address(_feeHandler));
-    }
-
-    /// Called by the owner to set the _collectorPercent collected from transactions
-    function setCollectorPercent(uint256 _collectorPercent) external onlyOwner {
-        require(Percent.isValidPercent(_collectorPercent), "FeeCollector: percent exceeds max");
-        collectorPercent = _collectorPercent;
-        emit SetCollectorPercent(_collectorPercent);
+    function isFeeHandlerSet() public view returns (bool) {
+        return address(feeHandler) != address(0);
     }
 
     /// Return the collector fee computed from the _amount and the collectorPercent
@@ -59,5 +39,27 @@ abstract contract FeeCollector is Ownable {
         returns (uint256 collectorFee, uint256 remainder) 
     {
         (collectorFee, remainder) = Percent.splitByPercent(_amount, collectorFee);
+    }
+
+    // Delegate feeHandler to transfer _fee amount of _token from _from
+    function _delegateTransfer(IERC20 _token, address _from, uint256 _fee) internal virtual {
+        require(_fee > 0, "FeeCollector: zero fee");
+        require(address(feeHandler) != address(0), "FeeCollector: handler not set");
+        _token.approve(address(feeHandler), _fee);
+        feeHandler.transferFee(_token, _from, _fee);
+    }
+
+    /// Called by the owner to set a new _feeHandler address
+    function _setFeeHandler(address _feeHandler) internal virtual { 
+        require(_feeHandler != address(0), "FeeCollector: zero address");
+        feeHandler = IFeeHandler(_feeHandler);
+        emit SetFeeHandler(address(_feeHandler));
+    }
+
+    // Called by the owner to set the _collectorPercent collected from transactions
+    function _setCollectorPercent(uint256 _collectorPercent) internal virtual {
+        require(Percent.isValidPercent(_collectorPercent), "FeeCollector: percent exceeds max");
+        collectorPercent = _collectorPercent;
+        emit SetCollectorPercent(_collectorPercent);
     }
 }

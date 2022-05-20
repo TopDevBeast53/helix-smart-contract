@@ -4,5 +4,5 @@ pragma solidity >=0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IFeeHandler {
-    function transferFee(IERC20 _token, uint256 _fee) external;
+    function transferFee(IERC20 _token, address _from, uint256 _fee) external;
 }

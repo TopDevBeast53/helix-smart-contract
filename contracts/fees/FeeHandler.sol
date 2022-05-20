@@ -49,16 +49,16 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     
     /// Called by a FeeCollector to send _amount of _token to this FeeHandler
     /// handles sending fees to treasury and staking with nftChef
-    function transferFee(IERC20 _token, uint256 _fee) external onlyValidFee(_fee) {
+    function transferFee(IERC20 _token, address _from, uint256 _fee) external onlyValidFee(_fee) {
         (uint256 nftChefAmount, uint256 treasuryAmount) = _getSplit(_fee, nftChefPercent);
 
         if (nftChefAmount > 0) {
-            _token.transferFrom(msg.sender, address(nftChef), nftChefAmount);
+            _token.transferFrom(_from, address(nftChef), nftChefAmount);
             // TODO call the nft yield update compute function
         }
 
         if (treasuryAmount > 0) {
-            _token.transferFrom(msg.sender, address(treasury), treasuryAmount);
+            _token.transferFrom(_from, address(treasury), treasuryAmount);
         }
     }
 
