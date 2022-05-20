@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
-import "../interfaces/IMasterChef.sol";
 import "../fees/FeeCollector.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-/*
+/**
  * P2P swap for sellers to sell the liquidity tokens. Sellers open a swap and set 
  * the amount of liquidity tokens to stake and the ask price. Buyers can accept the 
  * ask or make a bid. Bidding remains open until the seller accepts a bid or a buyer 
  * accepts the ask. When bidding is closed, the seller recieves the bid (or ask) 
  * amount and the buyer recieves the sell amount.
  */
-contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
+contract LpSwap is FeeCollector, Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
         
     struct Swap {
@@ -35,23 +35,23 @@ contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
         uint256 amount;                // Amount of toSellerToken bidder is offering in exchange for amount of toBuyerToken and yield
     }
 
-    // Array of all swaps opened
+    /// Array of all swaps opened
     Swap[] public swaps;
 
-    // Array of all bids made
+    /// Array of all bids made
     Bid[] public bids;
 
-    // Map a seller address to the swaps it's opened 
+    /// Map a seller address to the swaps it's opened 
     mapping(address => uint[]) public swapIds;
 
-    // Map a bidder address to the bids it's made
+    /// Map a bidder address to the bids it's made
     mapping(address => uint[]) public bidIds;
 
-    // Used for cheap lookup for whether an address has bid on a Swap 
-    // True if the address has bid on the swapId and false otherwise
+    /// Used for cheap lookup for whether an address has bid on a Swap 
+    /// True if the address has bid on the swapId and false otherwise
     mapping(address => mapping(uint256 => bool)) public hasBidOnSwap;
 
-    // Map a bidder address to the swapIds it's bid on
+    /// Map a bidder address to the swapIds it's bid on
     mapping(address => uint[]) public bidderSwapIds;
 
     // Emitted when a new swap is opened 
@@ -78,18 +78,15 @@ contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
     // Emitted when a swap's bid is accepted by the seller
     event BidAccepted(uint256 indexed id);
     
-    // Emitted when the owner sets the treasury
-    event TreasurySet(address treasury);
-
-    modifier isValidSwapId(uint256 id) {
+    modifier isValidSwapId(uint256 _swapId) {
         require(swaps.length != 0, "LpSwap: no swap opened");
-        require(id < swaps.length, "LpSwap: invalid swap id");
+        require(_swapId < swaps.length, "LpSwap: invalid swap id");
         _;
     }
 
-    modifier isValidBidId(uint256 id) {
+    modifier isValidBidId(uint256 _bidId) {
         require(bids.length != 0, "LpSwap: no bid made");
-        require(id < bids.length, "LpSwap: invalid bid id");
+        require(_bidId < bids.length, "LpSwap: invalid bid id");
         _;
     }
 
@@ -98,45 +95,44 @@ contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
         _;
     }
 
-    modifier isAboveZero(uint256 number) {
-        require(number > 0, "LpSwap: not above zero");
+    modifier isAboveZero(uint256 _number) {
+        require(_number > 0, "LpSwap: not above zero");
         _;
     }
 
-    constructor(
-        address _treasury
-    ) {
-        treasury = _treasury;
+    constructor(address _feeHandler) {
+        _setFeeHandler(_feeHandler);
     }
 
-    // Called externally to open a new swap
+    /// Called externally to open a new swap
     function openSwap(
-        IERC20 toBuyerToken,    // Token being sold in this swap by seller to buyer
-        IERC20 toSellerToken,   // Token being sold in this swap by buyer to seller
-        uint256 amount,            // Amount of toBuyerToken to sell
-        uint256 ask                // Amount of toSellerToken seller is asking to sell toBuyerToken for
+        IERC20 _toBuyerToken,    // Token being sold in this swap by seller to buyer
+        IERC20 _toSellerToken,   // Token being sold in this swap by buyer to seller
+        uint256 _amount,            // Amount of toBuyerToken to sell
+        uint256 _ask                // Amount of toSellerToken seller is asking to sell toBuyerToken for
     ) 
         external 
-        isNotZeroAddress(address(toBuyerToken))
-        isNotZeroAddress(address(toSellerToken))
-        isAboveZero(amount)
+        whenNotPaused
+        isNotZeroAddress(address(_toBuyerToken))
+        isNotZeroAddress(address(_toSellerToken))
+        isAboveZero(_amount)
     {
-        require(address(toSellerToken) != address(toBuyerToken), "LpSwap: tokens not distinct");
-        _requireValidBalanceAndAllowance(toBuyerToken, msg.sender, amount);
+        require(address(_toSellerToken) != address(_toBuyerToken), "LpSwap: tokens not distinct");
+        _requireValidBalanceAndAllowance(_toBuyerToken, msg.sender, _amount);
 
         // Open the swap
         Swap memory swap;
-        swap.toBuyerToken = toBuyerToken;
-        swap.toSellerToken = toSellerToken;
+        swap.toBuyerToken = _toBuyerToken;
+        swap.toSellerToken = _toSellerToken;
         swap.seller = msg.sender;
-        swap.amount = amount;
-        swap.ask = ask;
+        swap.amount = _amount;
+        swap.ask = _ask;
         swap.isOpen = true;
 
         // Add it to the swaps array
         swaps.push(swap);
 
-        uint256 _swapId = _getSwapId();
+        uint256 _swapId = getSwapId();
 
         // Reflect the created swap id in the user's account
         swapIds[msg.sender].push(_swapId);
@@ -144,19 +140,19 @@ contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
         emit SwapOpened(_swapId);
     }
 
-    // Called by seller to update the swap's ask
-    function setAsk(uint256 _swapId, uint256 ask) external {
+    /// Called by seller to update the swap's ask
+    function setAsk(uint256 _swapId, uint256 _ask) external whenNotPaused {
         Swap storage swap = _getSwap(_swapId);
         
         _requireIsOpen(swap.isOpen);
         _requireIsSeller(msg.sender, swap.seller);
 
-        swap.ask = ask;
+        swap.ask = _ask;
         emit AskSet(_swapId);
     }
     
-    // Called by seller to close the swap and withdraw their toBuyerTokens
-    function closeSwap(uint256 _swapId) external {
+    /// Called by seller to close the swap and withdraw their toBuyerTokens
+    function closeSwap(uint256 _swapId) external whenNotPaused {
         Swap storage swap = _getSwap(_swapId);
 
         _requireIsOpen(swap.isOpen);
@@ -166,25 +162,25 @@ contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
         emit SwapClosed(_swapId);
     }
 
-    // Make a new bid on an open swap
-    function makeBid(uint256 _swapId, uint256 amount) external isAboveZero(amount) {
+    /// Make a new bid on an open swap
+    function makeBid(uint256 _swapId, uint256 _amount) external whenNotPaused isAboveZero(_amount) {
         Swap storage swap = _getSwap(_swapId);
 
         _requireIsOpen(swap.isOpen);
         _requireIsNotSeller(msg.sender, swap.seller);
         require(!hasBidOnSwap[msg.sender][_swapId], "LpSwap: caller has already bid");
-        _requireValidBalanceAndAllowance(swap.toSellerToken, msg.sender, amount);
+        _requireValidBalanceAndAllowance(swap.toSellerToken, msg.sender, _amount);
 
         // Open the swap
         Bid memory bid;
         bid.bidder = msg.sender;
         bid.swapId = _swapId;
-        bid.amount = amount;
+        bid.amount = _amount;
 
         // Add it to the bids array
         bids.push(bid);
 
-        uint256 bidId = _getBidId();
+        uint256 bidId = getBidId();
 
         // Reflect the new bid in the swap
         swap.bidIds.push(bidId);
@@ -199,22 +195,22 @@ contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
         emit BidMade(bidId);
     }
 
-    // Called externally by a bidder while bidding is open to set the amount being bid
-    function setBid(uint256 _bidId, uint256 amount) external {
+    /// Called externally by a bidder while bidding is open to set the amount being bid
+    function setBid(uint256 _bidId, uint256 _amount) external whenNotPaused {
         Bid storage bid = _getBid(_bidId);
         Swap storage swap = _getSwap(bid.swapId);
     
         _requireIsOpen(swap.isOpen);
         require(msg.sender == bid.bidder, "LpSwap: caller is not bidder");
-        _requireValidBalanceAndAllowance(swap.toSellerToken, msg.sender, amount);
+        _requireValidBalanceAndAllowance(swap.toSellerToken, msg.sender, _amount);
 
-        bid.amount = amount;
+        bid.amount = _amount;
 
         emit BidSet(_bidId);
     }
 
-    // Called externally by the seller to accept the bid and close the swap
-    function acceptBid(uint256 _bidId) external {
+    /// Called externally by the seller to accept the bid and close the swap
+    function acceptBid(uint256 _bidId) external whenNotPaused nonReentrant {
         Bid storage bid = _getBid(_bidId);
         Swap storage swap = _getSwap(bid.swapId);
 
@@ -224,8 +220,8 @@ contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
         emit BidAccepted(_bidId);
     }
 
-    // Called by a buyer to accept the ask and close the swap
-    function acceptAsk(uint256 _swapId) external {
+    /// Called by a buyer to accept the ask and close the swap
+    function acceptAsk(uint256 _swapId) external whenNotPaused nonReentrant {
         Swap storage swap = _getSwap(_swapId);
 
         _requireIsNotSeller(msg.sender, swap.seller);
@@ -234,74 +230,37 @@ contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
         emit AskAccepted(_swapId);
     } 
 
-    // Called internally to accept a bid or an ask, perform the
-    // necessary checks, and transfer funds
-    function _accept(
-        Swap storage swap,      // swap being accepted and closed
-        address seller,         // seller of the swap
-        address buyer,          // buyer of the swap
-        uint256 toSellerAmount     // amount being paid by buyer to seller
-    ) private {
-        _requireIsOpen(swap.isOpen);
-
-        // Verify that the buyer and seller can both cover the swap
-        IERC20 toBuyerToken = swap.toBuyerToken;
-        _requireValidBalanceAndAllowance(toBuyerToken, seller, swap.amount);
-
-        IERC20 toSellerToken = swap.toSellerToken;
-        _requireValidBalanceAndAllowance(toSellerToken, buyer, toSellerAmount);
-
-        // Update the swap's status
-        swap.isOpen = false;
-        swap.buyer = buyer;
-        swap.cost = toSellerAmount;
-
-        // Seller pays the buyer the amount minus the swap fees
-        (uint256 buyerTreasuryFee, uint256 buyerAmount) = getTreasuryFeeSplit(swap.amount);
-        toBuyerToken.safeTransferFrom(seller, buyer, buyerAmount);
-        toBuyerToken.safeTransferFrom(seller, treasury, buyerTreasuryFee);
-
-        // Buyer pays the seller the amount the swap fees
-        (uint256 sellerTreasuryFee, uint256 sellerAmount) = getTreasuryFeeSplit(toSellerAmount);
-        toSellerToken.safeTransferFrom(buyer, seller, sellerAmount);
-        toSellerToken.safeTransferFrom(buyer, treasury, sellerTreasuryFee);
+    /// Called by the owner to pause the contract
+    function pause() external onlyOwner {
+        _pause();
     }
 
-    // Verify that _address has amount of token in balance
-    // and that _address has approved this contract to transfer amount
-    function _requireValidBalanceAndAllowance(IERC20 token, address _address, uint256 amount) private view {
-        require(amount <= token.balanceOf(_address), "LpSwap: insufficient balance");
-        require(
-            amount <= token.allowance(_address, address(this)),
-            "LpSwap: insufficient allowance"
-        );
+    /// Called by the owner to unpause the contract
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
-    // Return the array of swapIds made by _address
+    /// Called by the owner to set the _feeHandler address
+    function setFeeHandler(address _feeHandler) external onlyOwner {
+        _setFeeHandler(_feeHandler);
+    }
+
+    /// Called by the owner to set the _collectorPercent
+    function setCollectorPercent(uint256 _collectorPercent) external onlyOwner {
+        _setCollectorPercent(_collectorPercent);
+    }
+
+    /// Return the array of swapIds made by _address
     function getSwapIds(address _address) external view returns(uint[] memory) {
         return swapIds[_address];
     }
 
-    // Return the array of bidIds made by _address
+    /// Return the array of bidIds made by _address
     function getBidIds(address _address) external view returns(uint[] memory) {
         return bidIds[_address];
     }
 
-    // Get the current swap id such that 
-    // for swapId i in range[0, swaps.length) i indexes a Swap in swaps
-    function getSwapId() external view returns(uint) {
-        return _getSwapId();
-    }
-
-    function _getSwapId() private view returns(uint) {
-        if (swaps.length != 0) {
-            return swaps.length - 1;
-        } else {
-            return 0;
-        }
-    }
-
-    // Return the array of all swapIds bid on by _address
+    /// Return the array of all swapIds bid on by _address
     function getBidderSwapIds(address _address) 
         external 
         view 
@@ -311,44 +270,69 @@ contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
         _bidderSwapIds = bidderSwapIds[_address];
     }
 
-    // Return the array of all opened swaps
+    /// Return the array of all opened swaps
     function getSwaps() external view returns(Swap[] memory) {
         return swaps;
     }
 
-    // Get the current bid id such that 
-    // for bid id i in range[0, bids.length) i indexes a Bid in bids 
-    function getBidId() external view returns(uint) {
-        return _getBidId();
-    }
-
-    function _getBidId() private view returns(uint) {
-        if (bids.length != 0) {
-            return bids.length - 1;
-        } else {
-            return 0;
-        }
-    }
-
-    // Return the swap associated with the given bidId
+    /// Return the Swap associated with the _swapId
     function getSwap(uint256 _swapId) external view returns(Swap memory) {
         return _getSwap(_swapId);
     }
-
-    function _getSwap(uint256 _swapId) 
-        private 
-        view 
-        isValidSwapId(_swapId) 
-        returns(Swap storage) 
-    {
-        return swaps[_swapId];
-    }
     
-    // Return the bid associated with the given bidId
+    /// Return the Bid associated with the _bidId
     function getBid(uint256 _bidId) external view returns(Bid memory) {
         return _getBid(_bidId);
     }
 
+    /// Get the current swap id such that 
+    /// for swapId i in range[0, swaps.length) i indexes a Swap in swaps
+    function getSwapId() public view returns(uint) {
+        return swaps.length != 0 ? swaps.length - 1 : 0;
+    }
+
+    /// Get the current bid id such that 
+    /// for bid id i in range[0, bids.length) i indexes a Bid in bids 
+    function getBidId() public view returns(uint) {
+        return bids.length != 0 ? bids.length - 1 : 0;
+    }
+
+    // Called internally to accept a bid or an ask, perform the
+    // necessary checks, and transfer funds
+    function _accept(
+        Swap storage _swap,      // swap being accepted and closed
+        address _seller,         // seller of the swap
+        address _buyer,          // buyer of the swap
+        uint256 _toSellerAmount     // amount being paid by buyer to seller
+    ) private {
+        _requireIsOpen(_swap.isOpen);
+
+        // Verify that the buyer and seller can both cover the swap
+        IERC20 toBuyerToken = _swap.toBuyerToken;
+        _requireValidBalanceAndAllowance(toBuyerToken, _seller, _swap.amount);
+
+        IERC20 toSellerToken = _swap.toSellerToken;
+        _requireValidBalanceAndAllowance(toSellerToken, _buyer, _toSellerAmount);
+
+        // Update the swap's status
+        _swap.isOpen = false;
+        _swap.buyer = _buyer;
+        _swap.cost = _toSellerAmount;
+
+        // Seller pays the buyer the amount minus the swap fees
+        (uint256 buyerCollectorFee, uint256 buyerAmount) = getCollectorFeeSplit(_swap.amount);
+        toBuyerToken.safeTransferFrom(_seller, _buyer, buyerAmount);
+        toBuyerToken.safeTransferFrom(_seller, address(this), buyerCollectorFee);
+        _delegateTransfer(toBuyerToken, address(this), buyerCollectorFee);
+
+        // Buyer pays the seller the amount minus the swap fees
+        (uint256 sellerCollectorFee, uint256 sellerAmount) = getCollectorFeeSplit(_toSellerAmount);
+        toSellerToken.safeTransferFrom(_buyer, _seller, sellerAmount);
+        toSellerToken.safeTransferFrom(_buyer, address(this), sellerCollectorFee);
+        _delegateTransfer(toSellerToken, address(this), sellerCollectorFee);
+    }
+
+    // Return the Bid associated with the _bidId
     function _getBid(uint256 _bidId) 
         private 
         view 
@@ -358,15 +342,38 @@ contract LpSwap is Ownable, FeeCollector, ReentrancyGuard {
         return bids[_bidId];
     }
 
-    function _requireIsOpen(bool isOpen) private pure {
-        require(isOpen, "LpSwap: swap is closed");
+    // Return the Swap associated with the _swapId
+    function _getSwap(uint256 _swapId) 
+        private 
+        view 
+        isValidSwapId(_swapId) 
+        returns(Swap storage) 
+    {
+        return swaps[_swapId];
     }
 
-    function _requireIsSeller(address caller, address seller) private pure {
-        require(caller == seller, "LpSwap: caller is not seller");
+    // Verify that _address has amount of token in balance
+    // and that _address has approved this contract to transfer amount
+    function _requireValidBalanceAndAllowance(IERC20 _token, address _address, uint256 _amount) private view {
+        require(_amount <= _token.balanceOf(_address), "LpSwap: insufficient balance");
+        require(
+            _amount <= _token.allowance(_address, address(this)),
+            "LpSwap: insufficient allowance"
+        );
     }
 
-    function _requireIsNotSeller(address caller, address seller) private pure {
-        require(caller != seller, "LpSwap: caller is seller");
+    // Require that _isOpen is true
+    function _requireIsOpen(bool _isOpen) private pure {
+        require(_isOpen, "LpSwap: swap is closed");
+    }
+
+    // Require that _caller is _seller
+    function _requireIsSeller(address _caller, address _seller) private pure {
+        require(_caller == _seller, "LpSwap: caller is not seller");
+    }
+
+    // Require that _caller is not _seller
+    function _requireIsNotSeller(address _caller, address _seller) private pure {
+        require(_caller != _seller, "LpSwap: caller is seller");
     }
 }

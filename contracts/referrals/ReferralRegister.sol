@@ -2,13 +2,20 @@
 pragma solidity >=0.8.0;
 
 import "../interfaces/IHelixToken.sol";
-import "../fees/FeeCollectorUpgradeable.sol";
+import "../fees/FeeCollector.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
-contract ReferralRegister is Initializable, OwnableUpgradeable, FeeCollectorUpgradeable, ReentrancyGuardUpgradeable {
+contract ReferralRegister is 
+    FeeCollector, 
+    Initializable, 
+    OwnableUpgradeable, 
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable 
+{
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     /**
@@ -29,7 +36,7 @@ contract ReferralRegister is Initializable, OwnableUpgradeable, FeeCollectorUpgr
     uint256 constant MAX_STAKING_FEE = 30; // 3%
     uint256 constant MAX_SWAP_FEE = 100; // 10%
 
-    IHelixToken public token;
+    IHelixToken public helixToken;
     uint256 public stakingRefFee;
     uint256 public swapRefFee;
 
@@ -63,15 +70,15 @@ contract ReferralRegister is Initializable, OwnableUpgradeable, FeeCollectorUpgr
     }
 
     function initialize(
-        IHelixToken _token, 
-        address _treasury,
+        IHelixToken _helixToken, 
+        address _feeHandler,
         uint256 defaultStakingRef, 
         uint256 defaultSwapRef
     ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
-        treasury = _treasury;
-        token = _token;
+        _setFeeHandler(_feeHandler);
+        helixToken = _helixToken;
         stakingRefFee = defaultStakingRef;
         swapRefFee = defaultSwapRef;
     }
@@ -120,18 +127,19 @@ contract ReferralRegister is Initializable, OwnableUpgradeable, FeeCollectorUpgr
         emit ReferrerRemoved(msg.sender);
     }
 
-    function withdraw() external nonReentrant {
+    function withdraw() external whenNotPaused nonReentrant {
         uint256 toMint = balance[msg.sender];
         require(toMint != 0, "ReferralRegister: nothing to withdraw");
 
         balance[msg.sender] = 0;
 
-        (uint256 treasuryFee, uint256 callerAmount) = getTreasuryFeeSplit(toMint);
+        (uint256 collectorFee, uint256 callerAmount) = getCollectorFeeSplit(toMint);
         if (callerAmount > 0) {
-            token.mint(msg.sender, callerAmount);
+            helixToken.mint(msg.sender, callerAmount);
         }
-        if (treasuryFee > 0) {
-            token.mint(treasury, treasuryFee);
+        if (collectorFee > 0) {
+            helixToken.mint(address(this), collectorFee);
+            _delegateTransfer(IERC20(address(helixToken)), address(this), collectorFee);
         }
 
         emit Withdrawn(msg.sender, toMint);
@@ -181,5 +189,24 @@ contract ReferralRegister is Initializable, OwnableUpgradeable, FeeCollectorUpgr
     function getRecorder(uint256 index) external view onlyOwner returns(address) {
         require(index <= getRecorderLength() - 1, "ReferralRegister: index out of bounds");
         return EnumerableSetUpgradeable.at(_recorders, index);
+    }
+
+    /// Called by owner to pause contract
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /// Called by owner to unpause contract
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    /// Called by owner to set feeHandler address
+    function setFeeHandler(address _feeHandler) external onlyOwner {
+        _setFeeHandler(_feeHandler);
+    }
+    
+    function setCollectorPercent(uint256 _collectorPercent) external onlyOwner {
+        _setCollectorPercent(_collectorPercent);
     }
 }

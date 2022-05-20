@@ -46,6 +46,7 @@ describe('Yield Swap', () => {
     let helixLP2: Contract
     let yieldSwap: Contract
     let tokenA: Contract
+    let feeHandler: Contract
 
     // contracts owned by wallet 1, used when wallet 1 should be msg.sender 
     let yieldSwap1: Contract
@@ -75,6 +76,7 @@ describe('Yield Swap', () => {
         helixLP2 = fullExchange.helixLP2
         yieldSwap = fullExchange.yieldSwap
         tokenA = fullExchange.tokenA
+        feeHandler = fullExchange.feeHandler
 
         // Add the lp token to the staking pool
         const allocPoint = expandTo18Decimals(1000)
@@ -160,7 +162,7 @@ describe('Yield Swap', () => {
 
     it('yieldSwap: initialized with expected values', async () => {
         expect(await yieldSwap.chef()).to.eq(chef.address)
-        expect(await yieldSwap.treasury()).to.eq(wallet0.address)           // use wallet0 to make checking balance change easy
+        expect(await yieldSwap.feeHandler()).to.eq(feeHandler.address)           // use wallet0 to make checking balance change easy
         expect(await yieldSwap.MIN_LOCK_DURATION()).to.eq(minLockDuration)      // 1 week in seconds
         expect(await yieldSwap.MAX_LOCK_DURATION()).to.eq(maxLockDuration)    // 1 year in seconds
         expect(await helixLP.balanceOf(wallet0.address)).to.eq(expandTo18Decimals(9000))
@@ -928,7 +930,7 @@ describe('Yield Swap', () => {
 
     it('yieldSwap: accept bid when to buyer token is liquidity token', async () => {
         // set the treasury to be wallet2 so that we can check that it receives treasury fee
-        await yieldSwap.setTreasury(wallet2.address)
+        await feeHandler.setTreasury(wallet2.address)
    
         // open the swap and make a bid
         await openSwap()
@@ -973,7 +975,7 @@ describe('Yield Swap', () => {
         expect(await helixToken.balanceOf(wallet1.address)).to.eq(expectedExBal1)
 
         // get the fee split for seller and treasury
-        const [treasuryAmount, sellerAmount]  = await yieldSwap.getTreasuryFeeSplit(bid.amount)
+        const [treasuryAmount, sellerAmount]  = await yieldSwap.getCollectorFeeSplit(bid.amount)
 
         // expect the wallet0 ex token balance to be increased by bid amount minus treasury fee
         const expectedExBal0 = prevExBal0.add(sellerAmount)
@@ -986,7 +988,7 @@ describe('Yield Swap', () => {
 
     it('yieldSwap: accept bid when to seller token is liquidity token', async () => {
         // set the treasury to be wallet2 so that we can check that it receives treasury fee
-        await yieldSwap.setTreasury(wallet2.address)
+        await feeHandler.setTreasury(wallet2.address)
    
         // open the swap
         const toBuyerToken = helixToken.address
@@ -1041,7 +1043,7 @@ describe('Yield Swap', () => {
         expect(await helixLP.balanceOf(wallet1.address)).to.eq(expectedLpBal1)
 
         // get the fee split for seller and treasury
-        const [treasuryAmount, buyerAmount]  = await yieldSwap.getTreasuryFeeSplit(swap.seller.amount)
+        const [treasuryAmount, buyerAmount]  = await yieldSwap.getCollectorFeeSplit(swap.seller.amount)
 
         // expect the wallet0 token balance to be decreased by the swap amount
         const expectedExBal0 = prevExBal0.sub(swap.seller.amount)
@@ -1058,7 +1060,7 @@ describe('Yield Swap', () => {
 
     it('yieldSwap: accept bid when both tokens are liquidity token', async () => {
         // set the treasury to be wallet2 so that we can check that it receives treasury fee
-        await yieldSwap.setTreasury(wallet2.address)
+        await feeHandler.setTreasury(wallet2.address)
    
         // open the swap
         const toBuyerToken = helixLP.address
@@ -1237,7 +1239,7 @@ describe('Yield Swap', () => {
 
     it('yieldSwap: accept ask when to buyer token is lp', async () => {
         // set the treasury to be wallet2 so that we can check that it receives treasury fee
-        await yieldSwap.setTreasury(wallet2.address)
+        await feeHandler.setTreasury(wallet2.address)
    
         // open the swap and make a bid
         await openSwap()
@@ -1285,7 +1287,7 @@ describe('Yield Swap', () => {
         expect(await helixToken.balanceOf(wallet1.address)).to.eq(expectedExBal1)
 
         // get the fee split for seller and treasury
-        const [treasuryAmount, sellerAmount]  = await yieldSwap.getTreasuryFeeSplit(swap.ask)
+        const [treasuryAmount, sellerAmount]  = await yieldSwap.getCollectorFeeSplit(swap.ask)
 
         // expect the wallet0 ex token balance to be increased by bid amount minus treasury fee
         const expectedExBal0 = prevExBal0.add(sellerAmount)
@@ -1298,7 +1300,7 @@ describe('Yield Swap', () => {
 
     it('yieldSwap: accept ask when to seller token is lp', async () => {
         // set the treasury to be wallet2 so that we can check that it receives treasury fee
-        await yieldSwap.setTreasury(wallet2.address)
+        await feeHandler.setTreasury(wallet2.address)
    
         // open the swap
         const toBuyerToken = helixToken.address
@@ -1352,7 +1354,7 @@ describe('Yield Swap', () => {
         expect(await helixToken.balanceOf(wallet0.address)).to.eq(expectedToBuyerBal0)
 
         // get the fee split for seller and treasury
-        const [treasuryAmount, buyerAmount]  = await yieldSwap.getTreasuryFeeSplit(swap.seller.amount)
+        const [treasuryAmount, buyerAmount]  = await yieldSwap.getCollectorFeeSplit(swap.seller.amount)
 
         // expect the wallet1 toBuyer token balance to be increased by amount minus treasury fee
         const expectedToBuyerBal1 = prevToBuyerBal1.add(buyerAmount)
@@ -1478,7 +1480,7 @@ describe('Yield Swap', () => {
 
     it('yieldSwap: withdraw when to buyer token is lp', async () => {
         // set the treasury fee to 50% of the yield
-        await yieldSwap.setTreasuryPercent(50)
+        await yieldSwap.setCollectorPercent(50)
 
         // set the min lock duration to 0 so withdraw can 
         // succeed and swap can be locked
@@ -1502,7 +1504,7 @@ describe('Yield Swap', () => {
 
         // wallet 1 must approve ask amount
         await helixToken1.approve(yieldSwap.address, swap.ask)
-    
+   
         // accept the ask as wallet1, closing the swap and setting a buyer
         await yieldSwap1.acceptAsk(swapId)
 
@@ -1541,7 +1543,7 @@ describe('Yield Swap', () => {
 
     it('yieldSwap: withdraw when to seller token is lp', async () => {
         // set the treasury fee to 50% of the yield
-        await yieldSwap.setTreasuryPercent(50)
+        await yieldSwap.setCollectorPercent(50)
 
         // set the min lock duration to 0 so withdraw can 
         // succeed and swap can be locked
@@ -1610,7 +1612,7 @@ describe('Yield Swap', () => {
 
     it('yieldSwap: withdraw when both tokens are lp', async () => {
         // set the treasury fee to 50% of the yield
-        await yieldSwap.setTreasuryPercent(50)
+        await yieldSwap.setCollectorPercent(50)
 
         // set the min lock duration to 0 so withdraw can 
         // succeed and swap can be locked
@@ -1885,40 +1887,40 @@ describe('Yield Swap', () => {
         }
     })
 
-    it('yieldSwap: set treasury as non-owner fails', async () => {
+    it('yieldSwap: set feeHandler as non-owner fails', async () => {
         const treasuryAddress = wallet2.address
-        await expect(yieldSwap1.setTreasury(treasuryAddress))
+        await expect(yieldSwap1.setFeeHandler(treasuryAddress))
             .to.be.revertedWith("Ownable: caller is not the owner")
     })
 
     it('yieldSwap: set treasury with invalid address fails', async () => {
         const invalidTreasuryAddress = constants.AddressZero
-        await expect(yieldSwap.setTreasury(invalidTreasuryAddress))
-            .to.be.revertedWith("FeeCollector: zero address")
+        await expect(feeHandler.setTreasury(invalidTreasuryAddress))
+            .to.be.revertedWith("FeeHandler: zero address")
     })
 
     it('yieldSwap: set treasury', async () => {
         const expectedTreasuryAddress = wallet2.address
-        await yieldSwap.setTreasury(expectedTreasuryAddress)
-        expect(await yieldSwap.treasury()).to.eq(expectedTreasuryAddress)
+        await feeHandler.setTreasury(expectedTreasuryAddress)
+        expect(await feeHandler.treasury()).to.eq(expectedTreasuryAddress)
     })
 
     it('yieldSwap: set treasury fee as non-owner fails', async () => {
         const fee = 0
-        await expect(yieldSwap1.setTreasuryPercent(fee))
+        await expect(yieldSwap1.setCollectorPercent(fee))
             .to.be.revertedWith("Ownable: caller is not the owner")
     })
 
     it('yieldSwap: set treasury fee with invalid fee fails', async () => {
         const invalidFee = 101
-        await expect(yieldSwap.setTreasuryPercent(invalidFee))
+        await expect(yieldSwap.setCollectorPercent(invalidFee))
             .to.be.revertedWith("FeeCollector: percent exceeds max")
     })
 
     it('yieldSwap: set treasury fee', async () => {
         const expectedFee = 0
-        await yieldSwap.setTreasuryPercent(expectedFee)
-        expect(await yieldSwap.treasuryPercent()).to.eq(expectedFee)
+        await yieldSwap.setCollectorPercent(expectedFee)
+        expect(await yieldSwap.collectorPercent()).to.eq(expectedFee)
     })
 
     it('yieldSwap: apply treasury fee', async () => {
@@ -1927,28 +1929,28 @@ describe('Yield Swap', () => {
         // set treasury fee to seller fee ratio at 0 : 100
         // such that seller gets 100% of the amount with no treasury fee
         const sellerFee0To100 = 0
-        await yieldSwap.setTreasuryPercent(sellerFee0To100)
+        await yieldSwap.setCollectorPercent(sellerFee0To100)
         const expectedTreasuryAmount0To100 = 0
         const expectedSellerAmount0To100 = 1000
-        const [treasuryAmount0To100, sellerAmount0To100] = await yieldSwap.getTreasuryFeeSplit(amount)
+        const [treasuryAmount0To100, sellerAmount0To100] = await yieldSwap.getCollectorFeeSplit(amount)
         expect(treasuryAmount0To100).to.eq(expectedTreasuryAmount0To100)
         expect(sellerAmount0To100).to.eq(expectedSellerAmount0To100)
 
         // set treasury:seller to 33:67
         const sellerFee33To67 = 33
-        await yieldSwap.setTreasuryPercent(sellerFee33To67)
+        await yieldSwap.setCollectorPercent(sellerFee33To67)
         const expectedTreasuryAmount33To67 = 330
         const expectedSellerAmount33To67 = 670
-        const [treasuryAmount33To67, sellerAmount33To67] = await yieldSwap.getTreasuryFeeSplit(amount)
+        const [treasuryAmount33To67, sellerAmount33To67] = await yieldSwap.getCollectorFeeSplit(amount)
         expect(treasuryAmount33To67).to.eq(expectedTreasuryAmount33To67)
         expect(sellerAmount33To67).to.eq(expectedSellerAmount33To67)
 
         // set treasury:seller to 100:0
         const sellerFee100To0 = 100
-        await yieldSwap.setTreasuryPercent(sellerFee100To0)
+        await yieldSwap.setCollectorPercent(sellerFee100To0)
         const expectedTreasuryAmount100To0 = 1000
         const expectedSellerAmount100To0 = 0
-        const [treasuryAmount100To0, sellerAmount100To0] = await yieldSwap.getTreasuryFeeSplit(amount)
+        const [treasuryAmount100To0, sellerAmount100To0] = await yieldSwap.getCollectorFeeSplit(amount)
         expect(treasuryAmount100To0).to.eq(expectedTreasuryAmount100To0)
         expect(sellerAmount100To0).to.eq(expectedSellerAmount100To0)
     })
@@ -2016,7 +2018,7 @@ describe('Yield Swap', () => {
     async function waitUntil(timestamp: number) {
         // wait until timestamp is passed
         while (await now() <= timestamp) {
-            await yieldSwap.setTreasury(wallet0.address)
+            await feeHandler.setTreasury(wallet0.address)
         }
     }
 

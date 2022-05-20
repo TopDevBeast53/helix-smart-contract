@@ -3,9 +3,10 @@ pragma solidity >= 0.8.0;
 
 import "../interfaces/IMasterChef.sol";
 import "../fees/FeeCollector.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * Enable users (party/counterparty or seller/buyer) to engage in p2p token pair 
@@ -33,7 +34,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
  * staked amount of liquidity token and their counterparty receives the yield earned over 
  * the duration.
  */
-contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
+contract YieldSwap is FeeCollector, Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     struct Swap {
@@ -69,6 +70,9 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
 
     /// Chef contract used to generate yield on toBuyerToken
     IMasterChef public chef;
+
+    /// Token paid by the chef as staking reward (HELIX)
+    IERC20 public rewardToken;
 
     /// Minimum duration in seconds that a swap can be locked before allowing withdrawal
     uint256 public MIN_LOCK_DURATION;
@@ -119,6 +123,12 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
     // Emitted when a swap's lp token(s) is withdrawn after being locked
     event Withdrawn(uint256 indexed swapId);
 
+    // Emitted when the owner sets a new chef address
+    event SetChef(address chef);
+
+    // Emitted when the owner sets a new rewardToken address
+    event SetRewardToken(address rewardToken);
+
     // Emitted when the owner sets the minimum lock duration 
     event MinLockDurationSet(uint256 minLockDuration);
 
@@ -149,14 +159,17 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
 
     constructor(
         IMasterChef _chef, 
-        address _treasury,
+        IERC20 _rewardToken,
+        address _feeHandler,
         uint256 _MIN_LOCK_DURATION,
         uint256 _MAX_LOCK_DURATION
     ) 
         onlyValidAddress(address(_chef))
+        onlyValidAddress(address(_rewardToken))
     {
         chef = _chef;
-        treasury = _treasury;
+        rewardToken = _rewardToken;
+        _setFeeHandler(_feeHandler);
 
         MIN_LOCK_DURATION = _MIN_LOCK_DURATION;
         MAX_LOCK_DURATION = _MAX_LOCK_DURATION;
@@ -173,6 +186,7 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
         bool _toSellerTokenIsLp     // True if _toSellerToken is an lp token to stake and false otherwise
     ) 
         external
+        whenNotPaused
         onlyValidAddress(address(_toBuyerToken))
         onlyValidAddress(address(_toSellerToken))
         onlyAboveZero(_amount)
@@ -224,7 +238,7 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
     }
 
     /// Called by seller to update the _ask on the swap with _swapId
-    function setAsk(uint256 _swapId, uint256 _ask) external {
+    function setAsk(uint256 _swapId, uint256 _ask) external whenNotPaused {
         Swap storage swap = _getSwap(_swapId);
     
         _requireIsOpen(swap.status);
@@ -235,7 +249,7 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
     }
     
     /// Called by seller to permanently close/cancel the swap with _swapId
-    function closeSwap(uint256 _swapId) external {
+    function closeSwap(uint256 _swapId) external whenNotPaused {
         Swap storage swap = _getSwap(_swapId);
 
         _requireIsOpen(swap.status);
@@ -246,7 +260,7 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
     }
 
     /// Make a new bid of _amount on an open swap with _swapId
-    function makeBid(uint256 _swapId, uint256 _amount) external onlyAboveZero(_amount) {
+    function makeBid(uint256 _swapId, uint256 _amount) external whenNotPaused onlyAboveZero(_amount) {
         Swap storage swap = _getSwap(_swapId);
 
         _requireIsOpen(swap.status);
@@ -280,7 +294,7 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
     }
 
     /// Called by the bidder who has made bid with _bidId to set the _amount
-    function setBid(uint256 _bidId, uint256 _amount) external {
+    function setBid(uint256 _bidId, uint256 _amount) external whenNotPaused {
         Bid storage bid = _getBid(_bidId);
         Swap storage swap = _getSwap(bid.swapId);
    
@@ -294,7 +308,7 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
     }
 
     /// Called by the seller to accept the bid with _bidId and close the swap
-    function acceptBid(uint256 _bidId) external {
+    function acceptBid(uint256 _bidId) external whenNotPaused nonReentrant {
         Bid storage bid = _getBid(_bidId);
         Swap storage swap = _getSwap(bid.swapId);
     
@@ -305,7 +319,7 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
     }
 
     /// Called by a buyer to accept the ask and close the swap with _swapId
-    function acceptAsk(uint256 _swapId) external {
+    function acceptAsk(uint256 _swapId) external whenNotPaused nonReentrant {
         Swap storage swap = _getSwap(_swapId);
     
         _requireIsNotSeller(msg.sender, swap.seller.party);
@@ -317,7 +331,7 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
     /// Called after the lock duration has elapsed on swap with _swapId to unstake any
     /// staked liquidity tokens, return them to the original party, and withdraw any
     /// yield to the counterparty
-    function withdraw(uint256 _swapId) external {
+    function withdraw(uint256 _swapId) external whenNotPaused nonReentrant {
         Swap storage swap = _getSwap(_swapId);
     
         _requireSwapIsClosed(swap.status);
@@ -398,6 +412,38 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
         emit MaxLockDurationSet(_MAX_LOCK_DURATION);
     }
 
+    /// Called by the owner to pause the contract
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /// Called by the owner to unpause the contract
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    /// Called by the owner to set the _masterChef address
+    function setChef(IMasterChef _chef) external onlyOwner onlyValidAddress(address(_chef)) {
+        chef = _chef;
+        emit SetChef(address(_chef));
+    }
+
+    /// Called by the owner to set the _rewardToken address
+    function setRewardToken(IERC20 _rewardToken) external onlyOwner onlyValidAddress(address(_rewardToken)) {
+        rewardToken = _rewardToken;
+        emit SetRewardToken(address(_rewardToken));
+    }
+
+    /// Called by the owner to set the _feeHandler address
+    function setFeeHandler(address _feeHandler) external onlyOwner {
+        _setFeeHandler(_feeHandler);
+    }
+
+    /// Called by the owner to set the _collectorPercent
+    function setCollectorPercent(uint256 _collectorPercent) external onlyOwner {
+        _setCollectorPercent(_collectorPercent);
+    }
+
     /// Get the current swap id such that 
     /// for swapId i in range[0, swaps.length) i indexes a Swap in swaps
     function getSwapId() public view returns (uint) {
@@ -463,10 +509,14 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
             chef.bucketDeposit(_swapId, poolId, amount);
         } else { 
             // Otherwise, transfer the amount directly from the party to the counterparty
-            // (minus the treasury fee)
-            (uint256 treasuryAmount, uint256 counterpartyAmount) = getTreasuryFeeSplit(amount);
+            // (minus the collector fee)
+            (uint256 collectorFee, uint256 counterpartyAmount) = getCollectorFeeSplit(amount);
             token.transferFrom(party, _counterparty, counterpartyAmount);
-            token.transferFrom(party, treasury, treasuryAmount);
+            
+            // Transfer collector fee from party to this contract and 
+            // allow the handler to delegate how the amount is distributed
+            token.transferFrom(party, address(this), collectorFee);
+            _delegateTransfer(token, address(this), collectorFee);
         }
     }
 
@@ -485,12 +535,20 @@ contract YieldSwap is Ownable, FeeCollector, ReentrancyGuard {
 
         // Unstake and return the lp token to the party
         chef.bucketWithdrawAmountTo(party, _swapId, poolId, amount);
-    
-        // And send the yield to the _counterparty (minus the treasury fee)
+   
+        // Get the yield earned while the token was locked
         uint256 yield = chef.getBucketYield(_swapId, poolId);
-        (uint256 treasuryAmount, uint256 counterpartyAmount) = getTreasuryFeeSplit(yield);
+    
+        // Split the yield into the counterparty amount (buyer or seller) and 
+        // the collectorFee (the fee charged for the swap)
+        (uint256 collectorFee, uint256 counterpartyAmount) = getCollectorFeeSplit(yield);
+   
+        // Send the counterparty their portion of the yield
         chef.bucketWithdrawYieldTo(_counterparty, _swapId, poolId, counterpartyAmount);
-        chef.bucketWithdrawYieldTo(treasury, _swapId, poolId, treasuryAmount);
+
+        // And send the handler it's portion of the yield
+        chef.bucketWithdrawYieldTo(address(this), _swapId, poolId, collectorFee);
+        _delegateTransfer(rewardToken, address(this), collectorFee);
     }
 
     // Return the swap associated with _swapId
