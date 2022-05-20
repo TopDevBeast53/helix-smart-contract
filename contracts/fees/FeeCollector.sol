@@ -3,12 +3,9 @@ pragma solidity >=0.8.0;
 
 import "../libraries/Percent.sol";
 import "../interfaces/IFeeHandler.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract FeeCollector {
-    using SafeERC20 for IERC20; 
-
     /// Handler that this collector transfers fees to
     IFeeHandler public feeHandler;
 
@@ -38,15 +35,16 @@ abstract contract FeeCollector {
         view 
         returns (uint256 collectorFee, uint256 remainder) 
     {
-        (collectorFee, remainder) = Percent.splitByPercent(_amount, collectorFee);
+        (collectorFee, remainder) = Percent.splitByPercent(_amount, collectorPercent);
     }
 
     // Delegate feeHandler to transfer _fee amount of _token from _from
     function _delegateTransfer(IERC20 _token, address _from, uint256 _fee) internal virtual {
-        require(_fee > 0, "FeeCollector: zero fee");
         require(address(feeHandler) != address(0), "FeeCollector: handler not set");
-        _token.approve(address(feeHandler), _fee);
-        feeHandler.transferFee(_token, _from, _fee);
+        if (_fee > 0) {
+            _token.approve(address(feeHandler), _fee);
+            feeHandler.transferFee(_token, _from, _fee);
+        }
     }
 
     /// Called by the owner to set a new _feeHandler address

@@ -32,7 +32,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     }
 
     modifier onlyValidAddress(address _address) {
-        require(_address != address(0), "FeeCollector: zero address");
+        require(_address != address(0), "FeeHandler: zero address");
         _;
     }
 
@@ -107,7 +107,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     /// Return the fee computed from the _amount and the _percent
     function _getFee(uint256 _amount, uint256 _percent) 
         private 
-        view 
+        pure 
         returns (uint256 fee) 
     {
         fee = Percent.getPercentage(_amount, _percent);
