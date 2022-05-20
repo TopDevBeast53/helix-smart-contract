@@ -198,15 +198,11 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
 
     // 10 deploy swapRewards and register with other contracts
     const swapRewards = await deployContract(wallet, SwapRewards, [
-            router.address,
+            helixToken.address,
             oracleFactory.address,
             refReg.address,
-            helixToken.address,
-            helixNFT.address,
-            helixLP.address,
-            swapRewardsSplitRewardPercent,
+            router.address,
             swapRewardsHelixRewardPercent,
-            swapRewardsApRewardPercent
         ], 
         overrides
     )

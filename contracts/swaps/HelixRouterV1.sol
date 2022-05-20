@@ -236,7 +236,7 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
             );
 
             if (swapRewards != address(0)) {
-                ISwapRewards(swapRewards).swap(msg.sender, input, output, amountOut);
+                ISwapRewards(swapRewards).swap(msg.sender, output, amountOut);
             }
         }
     }
@@ -356,7 +356,7 @@ contract HelixRouterV1 is IHelixV2Router02, Ownable {
             pair.swap(amount0Out, amount1Out, to);
 
             if (swapRewards != address(0)) {
-                ISwapRewards(swapRewards).swap(msg.sender, input, output, amountOutput);
+                ISwapRewards(swapRewards).swap(msg.sender, output, amountOutput);
             }
         }
     }
