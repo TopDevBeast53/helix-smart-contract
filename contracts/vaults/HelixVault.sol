@@ -7,8 +7,10 @@ import "../fees/FeeCollector.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract HelixVault is Ownable, FeeCollector {
+contract HelixVault is FeeCollector, Ownable, Pausable, ReentrancyGuard {
     struct Deposit {
         address depositor;                  // user making the deposit
         uint256 amount;                     // amount of token deposited
@@ -123,12 +125,12 @@ contract HelixVault is Ownable, FeeCollector {
 
     constructor(
         HelixToken _token,
-        address _treasury,
+        address _feeHandler,
         uint256 _rewardPerBlock,
         uint256 _startBlock,
         uint256 _lastRewardBlock
     ) {
-        treasury = _treasury;
+        feeHandler = _feeHandler;
 
         token = _token;
         rewardPerBlock = _rewardPerBlock;
@@ -378,12 +380,12 @@ contract HelixVault is Ownable, FeeCollector {
     // Split the _reward into the amount received by the depositor and the amount
     // charged by the treasury
     function _distributeReward(uint256 _reward) private {
-        (uint256 treasuryAmount, uint256 depositorAmount) = getCollectorFeeSplit(_reward);
+        (uint256 collectorFee, uint256 depositorAmount) = getCollectorFeeSplit(_reward);
         if (depositorAmount > 0) {
             token.transfer(msg.sender, depositorAmount);
         }
-        if (treasuryAmount > 0) {
-            token.transfer(treasury, treasuryAmount);
+        if (collectorFee > 0) {
+            _delegateTransfer(token, address(this), collectorFee);
         }
     }
 
