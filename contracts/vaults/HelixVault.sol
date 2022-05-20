@@ -130,7 +130,7 @@ contract HelixVault is FeeCollector, Ownable, Pausable, ReentrancyGuard {
         uint256 _startBlock,
         uint256 _lastRewardBlock
     ) {
-        feeHandler = _feeHandler;
+        _setFeeHandler(_feeHandler);
 
         token = _token;
         rewardPerBlock = _rewardPerBlock;
@@ -152,7 +152,7 @@ contract HelixVault is FeeCollector, Ownable, Pausable, ReentrancyGuard {
     }
 
     /// Called by the deposit _id holder to withdraw their accumulated reward
-    function claimReward(uint256 _id) external {
+    function claimReward(uint256 _id) external whenNotPaused nonReentrant {
         Deposit storage deposit = _getDeposit(_id);
 
         _requireIsDepositor(msg.sender, deposit.depositor);
@@ -171,6 +171,8 @@ contract HelixVault is FeeCollector, Ownable, Pausable, ReentrancyGuard {
     /// Used internally to create a new deposit and lock _amount of token for _index
     function newDeposit(uint256 _amount, uint256 _index) 
         external 
+        whenNotPaused
+        nonReentrant
         onlyValidAmount(_amount) 
         onlyValidIndex(_index) 
     {
@@ -206,6 +208,8 @@ contract HelixVault is FeeCollector, Ownable, Pausable, ReentrancyGuard {
     /// Used internally to increase deposit _id by _amount of token
     function updateDeposit(uint256 _amount, uint256 _id) 
         external 
+        whenNotPaused
+        nonReentrant
         onlyValidAmount(_amount) 
         onlyValidDepositId(_id)
     {
@@ -228,7 +232,7 @@ contract HelixVault is FeeCollector, Ownable, Pausable, ReentrancyGuard {
     }
 
     /// Withdraw _amount of token from deposit _id
-    function withdraw(uint256 _amount, uint256 _id) external onlyValidAmount(_amount) {
+    function withdraw(uint256 _amount, uint256 _id) external whenNotPaused nonReentrant onlyValidAmount(_amount) {
         Deposit storage deposit = _getDeposit(_id);
     
         _requireIsDepositor(msg.sender, deposit.depositor); 
@@ -310,6 +314,26 @@ contract HelixVault is FeeCollector, Ownable, Pausable, ReentrancyGuard {
     function setLastRewardBlock(uint256 _lastRewardBlock) external onlyOwner {
         lastRewardBlock = _lastRewardBlock;
         emit LastRewardBlockSet(_lastRewardBlock);
+    }
+
+    /// Called by the owner to pause the contract
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /// Called by the owner to unpause the contract
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    /// Called by the owner to set the _feeHandler address
+    function setFeeHandler(address _feeHandler) external onlyOwner {
+        _setFeeHandler(_feeHandler);
+    }
+
+    /// Called by the owner to set the _collectorPercent
+    function setCollectorPercent(uint256 _collectorPercent) external onlyOwner {
+        _setCollectorPercent(_collectorPercent);
     }
 
     /// Called to get deposit with _id's pending reward

@@ -6,6 +6,7 @@ import "../fees/FeeCollector.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * Enable users (party/counterparty or seller/buyer) to engage in p2p token pair 
@@ -71,7 +72,7 @@ contract YieldSwap is FeeCollector, Ownable, Pausable, ReentrancyGuard {
     IMasterChef public chef;
 
     /// Token paid by the chef as staking reward (HELIX)
-    address public rewardToken;
+    IERC20 public rewardToken;
 
     /// Minimum duration in seconds that a swap can be locked before allowing withdrawal
     uint256 public MIN_LOCK_DURATION;
@@ -158,13 +159,13 @@ contract YieldSwap is FeeCollector, Ownable, Pausable, ReentrancyGuard {
 
     constructor(
         IMasterChef _chef, 
-        address _rewardToken,
+        IERC20 _rewardToken,
         address _feeHandler,
         uint256 _MIN_LOCK_DURATION,
         uint256 _MAX_LOCK_DURATION
     ) 
         onlyValidAddress(address(_chef))
-        onlyValidAddress(_rewardToken)
+        onlyValidAddress(address(_rewardToken))
     {
         chef = _chef;
         rewardToken = _rewardToken;
@@ -424,13 +425,13 @@ contract YieldSwap is FeeCollector, Ownable, Pausable, ReentrancyGuard {
     /// Called by the owner to set the _masterChef address
     function setChef(IMasterChef _chef) external onlyOwner onlyValidAddress(address(_chef)) {
         chef = _chef;
-        SetChef(address(_chef));
+        emit SetChef(address(_chef));
     }
 
     /// Called by the owner to set the _rewardToken address
-    function setRewardToken(address _rewardToken) external onlyOwner onlyValidAddress(_rewardToken) {
+    function setRewardToken(IERC20 _rewardToken) external onlyOwner onlyValidAddress(address(_rewardToken)) {
         rewardToken = _rewardToken;
-        SetRewardToken(_rewardToken);
+        emit SetRewardToken(address(_rewardToken));
     }
 
     /// Called by the owner to set the _feeHandler address
@@ -515,7 +516,7 @@ contract YieldSwap is FeeCollector, Ownable, Pausable, ReentrancyGuard {
             // Transfer collector fee from party to this contract and 
             // allow the handler to delegate how the amount is distributed
             token.transferFrom(party, address(this), collectorFee);
-            _delegateTransfer(token, party, collectorFee);
+            _delegateTransfer(token, address(this), collectorFee);
         }
     }
 
