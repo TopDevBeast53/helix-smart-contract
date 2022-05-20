@@ -148,10 +148,6 @@ describe('SwapRewards', () => {
         expect(await refReg.isRecorder(swapRewards.address)).to.be.true
     })
 
-    it('swapRewards: helixNFT is initialized', async () => {
-        expect(await helixNFT.isAccruer(swapRewards.address)).to.be.true
-    })
-
     it('swapRewards: helix token is initialized', async () => {
         expect(await helixToken.isMinter(swapRewards.address)).to.be.true
     })
@@ -167,7 +163,6 @@ describe('SwapRewards', () => {
 
         // Store the previous values of interest before swap 
         const prevAccountHelix = await helixToken.balanceOf(account)
-        const prevAccountHp = await helixNFT.getAccumulatedHP(account)
         const prevReferrerHelix = await refReg.balance(referrer)
 
         // Swap A for B and collect rewards
@@ -187,7 +182,6 @@ describe('SwapRewards', () => {
 
         // Store the previous values of interest before swap 
         const prevAccountHelix = await helixToken.balanceOf(account)
-        const prevAccountHp = await helixNFT.getAccumulatedHP(account)
         const prevReferrerHelix = await refReg.balance(referrer)
 
         // Swap A for B and collect rewards
@@ -195,16 +189,10 @@ describe('SwapRewards', () => {
 
         // Get the updated values after swap
         const newAccountHelix = await helixToken.balanceOf(account)
-        const newAccountHp = await helixNFT.getAccumulatedHP(account)
         const newReferrerHelix = await refReg.balance(referrer)
-
-        print(`account Helix was ${prevAccountHelix} and now is ${newAccountHelix}`)
-        print(`account Hp was ${prevAccountHp} and now is ${newAccountHp}`)
-        print(`referrer Helix was ${prevReferrerHelix} and now is ${newReferrerHelix}`)
 
         // We don't actually expect any rewards to accrue because a swap hasn't been triggered.
         expect(prevAccountHelix).to.be.at.most(newAccountHelix)
-        expect(prevAccountHp).to.be.at.most(newAccountHp)
         expect(prevReferrerHelix).to.be.at.most(newReferrerHelix)
     })
 
@@ -214,7 +202,6 @@ describe('SwapRewards', () => {
 
         // Store the previous values of interest before swap 
         const prevAccountHelix = await helixToken.balanceOf(account)
-        const prevAccountHp = await helixNFT.getAccumulatedHP(account)
         const prevReferrerHelix = await refReg.balance(referrer)
 
         // Swap twice and earn rewards
@@ -247,18 +234,11 @@ describe('SwapRewards', () => {
 
         // Get the updated values after swap
         const newAccountHelix = await helixToken.balanceOf(account)
-        const newAccountHp = await helixNFT.getAccumulatedHP(account)
         const newReferrerHelix = await refReg.balance(referrer)
 
-        print(`account Helix was ${prevAccountHelix} and now is ${newAccountHelix}`)
-        print(`account Hp was ${prevAccountHp} and now is ${newAccountHp}`)
-        print(`referrer Helix was ${prevReferrerHelix} and now is ${newReferrerHelix}`)
-
         expect(prevAccountHelix).to.be.at.most(newAccountHelix)
-        expect(prevAccountHp).to.be.at.most(newAccountHp)
         expect(prevReferrerHelix).to.be.at.most(newReferrerHelix)
     })
-
     
     function print(str: string) {
         if (verbose) console.log(str)

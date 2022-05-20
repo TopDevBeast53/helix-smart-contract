@@ -182,14 +182,13 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
 
     // 7 deploy helixNFT and helixChefNFT and register with other contracts
     const helixNFT = await deployContract(wallet, HelixNFT, [], overrides)
-    await helixNFT.initialize("BASEURI", helixNFTInitialHelixPoints, helixNFTLevelUpPercent)
+    await helixNFT.initialize("BASEURI")
 
     const helixChefNFT = await deployContract(wallet, HelixChefNFT, [], overrides)
-    await helixChefNFT.initialize(helixNFT.address, helixChefNFTLastRewardBlock)
+    await helixChefNFT.initialize(helixNFT.address, helixToken.address)
 
     await helixNFT.addMinter(wallet.address, overrides)
     await helixNFT.addStaker(helixChefNFT.address, overrides)
-    await helixChefNFT.addNewRewardToken(helixToken.address, helixChefNFTStartBlock, helixChefNFTRewardPerBlock, overrides)
 
     // Initialize the fee handler
     await feeHandler.initialize(refRegTreasuryAddress, helixChefNFT.address)
@@ -217,7 +216,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await router.setSwapRewards(swapRewards.address, overrides)
     await refReg.addRecorder(swapRewards.address, overrides)
     await helixToken.addMinter(swapRewards.address, overrides)
-    await helixNFT.addAccruer(swapRewards.address, overrides)
 
     // Add external DEX components for migrator to use.
     const externalFactory = await deployContract(wallet, HelixFactory, [], overrides);
