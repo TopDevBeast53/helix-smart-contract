@@ -156,21 +156,23 @@ describe('SwapRewards', () => {
         expect(await helixToken.isMinter(swapRewards.address)).to.be.true
     })
 
-    it('swapRewards: split amount is correct', async () => {
-        await swapRewards.setSplitRewardPercent(5)     // 5% Helix and 95% Hp
-        let [helixAmount0, hpAmount0] = await swapRewards.splitReward(100)
-        expect(helixAmount0).to.eq(5)
-        expect(hpAmount0).to.eq(95)
+    it('swapRewards: swap when paused fails', async () => {
+        await swapRewards.pause();
 
-        await swapRewards.setSplitRewardPercent(15)    // 15% Helix and 85% Hp
-        let [helixAmount1, hpAmount1] = await swapRewards.splitReward(100)
-        expect(helixAmount1).to.eq(15)
-        expect(hpAmount1).to.eq(85)
+        const account = wallet.address
+        const referrer = user.address
 
-        await swapRewards.setSplitRewardPercent(50)    // 50% Helix and 50% Hp
-        let [helixAmount2, hpAmount2] = await swapRewards.splitReward(100)
-        expect(helixAmount2).to.eq(50)
-        expect(hpAmount2).to.eq(50)
+        // Mimic the wallet as the router
+        await swapRewards.setRouter(account)
+
+        // Store the previous values of interest before swap 
+        const prevAccountHelix = await helixToken.balanceOf(account)
+        const prevAccountHp = await helixNFT.getAccumulatedHP(account)
+        const prevReferrerHelix = await refReg.balance(referrer)
+
+        // Swap A for B and collect rewards
+        await expect(swapRewards.swap(account, tokenB.address, 1000))
+            .to.be.revertedWith("Pausable: paused")
     })
 
     it('swapRewards: swap tokens from swapRewards', async () => {
@@ -189,7 +191,7 @@ describe('SwapRewards', () => {
         const prevReferrerHelix = await refReg.balance(referrer)
 
         // Swap A for B and collect rewards
-        await swapRewards.swap(account, tokenA.address, tokenB.address, 1000)
+        await swapRewards.swap(account, tokenB.address, 1000)
 
         // Get the updated values after swap
         const newAccountHelix = await helixToken.balanceOf(account)
@@ -257,6 +259,7 @@ describe('SwapRewards', () => {
         expect(prevReferrerHelix).to.be.at.most(newReferrerHelix)
     })
 
+    
     function print(str: string) {
         if (verbose) console.log(str)
     }
