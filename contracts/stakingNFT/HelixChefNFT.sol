@@ -2,35 +2,45 @@
 pragma solidity >= 0.8.0;
 
 import "../interfaces/IHelixNFT.sol";
-import "../tokens/HelixToken.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
+/// Enable users to stake NFTs and earn rewards
 contract HelixChefNFT is 
     Initializable, 
     OwnableUpgradeable, 
     ReentrancyGuardUpgradeable,
     PausableUpgradeable
 {
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+
     // Info on each user who has NFTs staked in this contract
     struct UserInfo {
         uint[] stakedNFTsId;        // Ids of the NFTs this user has staked
-        uint accrued;               // TODO: Accrued but unwithdrawn from percentage of yield
+        uint pendingReward;         // Amount of unwithdrawn rewardToken
     }
 
-    // Instance of HelixNFT
-    IHelixNFT private helixNFT;
+    /// Owner approved contracts which can accrue user rewards
+    EnumerableSetUpgradeable.AddressSet private _accruers;
 
-    /// Token deposited into this contract
-    HelixToken public token;
+    /// Instance of HelixNFT
+    IHelixNFT public helixNFT;
+
+    /// Token that reward are earned in (HELIX)
+    IERC20 public rewardToken;
 
     /// Total number of NFTs staked in this contract
-    uint totalAmountStakedNfts; // TODO:
+    uint256 public totalStakedNfts;
 
     /// Maps a user's address to their info struct
-    mapping (address => UserInfo) public users;
+    mapping(address => UserInfo) public users;
+
+    /// Maps a user's address to the number of NFTs they've staked
+    mapping(address => uint256) public usersStakedNfts;
 
     // Emitted when an NFTs are staked
     event StakeTokens(address indexed user, uint256[] tokenIds);
@@ -38,11 +48,24 @@ contract HelixChefNFT is
     // Emitted when an NFTs are unstaked
     event UnstakeTokens(address indexed user, uint256[] tokenIds);
 
-    function initialize(IHelixNFT _helixNFT, HelixToken _token) external initializer {
+    // Emitted when a user's transaction results in accrued reward
+    event AccrueReward(address indexed user, uint256 accruedReward);
+
+    modifier onlyAccruer {
+        require(isAccruer(msg.sender), "HelixChefNFT: not an accruer");
+        _;
+    }
+
+    modifier onlyValidAddress(address _address) {
+        require(_address != address(0), "HelixChefNFT: zero address");
+        _;
+    }
+
+    function initialize(IHelixNFT _helixNFT, IERC20 _rewardToken) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
         helixNFT = _helixNFT;
-        token = _token;
+        rewardToken = _rewardToken;
     }
 
     /// Stake the tokens with _tokenIds in the pool
@@ -58,6 +81,9 @@ contract HelixChefNFT is
 
             helixNFT.setIsStaked(_tokenIds[i], true);
             user.stakedNFTsId.push(_tokenIds[i]);
+
+            usersStakedNfts[msg.sender]++;
+            totalStakedNfts++;
         }
 
         emit StakeTokens(msg.sender, _tokenIds);
@@ -66,28 +92,46 @@ contract HelixChefNFT is
     /// Unstake the tokens with _tokenIds in the pool
     function unstake(uint256[] memory _tokenIds) external whenNotPaused nonReentrant {
         _withdrawRewardToken();
-        
+
         for(uint256 i = 0; i < _tokenIds.length; i++){
             (address tokenOwner, bool isStaked) = helixNFT.getInfoForStaking(_tokenIds[i]);
             _requireIsTokenOwner(msg.sender, tokenOwner);
             require(isStaked, "HelixChefNFT: already unstaked");
 
             helixNFT.setIsStaked(_tokenIds[i], false);
-            _removeTokenIdFromUsers(_tokenIds[i], msg.sender);
+            _removeTokenIdFromUsers(msg.sender, _tokenIds[i]);
+
+            usersStakedNfts[msg.sender]--;
+            totalStakedNfts--;
         }
         
         emit UnstakeTokens(msg.sender, _tokenIds);
     }
 
-    /// Return the number of NFTs the _user has staked
-    function getAmountStaked(address _user) external view returns(uint) {
-        return users[_user].stakedNFTsId.length;
+    /// Accrue reward to the _user's account based on the transaction _fee
+    function accrueReward(address _user, uint256 _fee) external onlyAccruer {
+        uint256 reward = getAccruedReward(_user, _fee);
+        if (reward > 0) {
+            users[_user].pendingReward += reward;
+            emit AccrueReward(_user, reward);
+        }
     }
 
     /// Withdraw accrued reward token
     function withdrawRewardToken() external nonReentrant {
         _withdrawRewardToken();
     }
+
+    /// Called by the owner to add an accruer
+    function addAccruer(address _address) external onlyOwner onlyValidAddress(_address) {
+        EnumerableSetUpgradeable.add(_accruers, _address);
+    }
+
+    /// Called by the owner to remove an accruer
+    function removeAccruer(address _address) external onlyOwner {
+        require(isAccruer(_address), "HelixChefNFT: not an accruer");
+        EnumerableSetUpgradeable.remove(_accruers, _address);
+    }   
     
     /// Called by the owner to pause the contract
     function pause() external onlyOwner {
@@ -99,26 +143,53 @@ contract HelixChefNFT is
         _unpause();
     }
 
+    /// Return the accruer at _index
+    function getAccruer(uint256 _index) external view returns (address) {
+        require(_index <= getNumAccruers() - 1, "HelixChefNFT: index out of bounds");
+        return EnumerableSetUpgradeable.at(_accruers, _index);
+    }
+
     /// Return the array of NFT ids that _user has staked
     function getUserStakedTokens(address _user) external view returns(uint[] memory){
-        uint[] memory tokenIds = new uint[](users[_user].stakedNFTsId.length);
+        uint[] memory tokenIds = new uint[](usersStakedNfts[_user]);
         tokenIds = users[_user].stakedNFTsId;
         return tokenIds;
     }
 
+    /// Return the number of NFTs the _user has staked
+    function getUsersStakedNfts(address _user) external view returns(uint) {
+        return usersStakedNfts[_user];
+    }
+
     /// Return the _user's pending reward
     function pendingReward(address _user) external view returns (uint) {
-        return users[_user].accrued;
+        return users[_user].pendingReward;
     }
+
+    /// Return the number of added _accruers
+    function getNumAccruers() public view returns (uint256) {
+        return EnumerableSetUpgradeable.length(_accruers);
+    }
+
+    /// Return the reward accrued to _user based on the transaction _fee
+    function getAccruedReward(address _user, uint256 _fee) public view returns (uint256 reward) {
+        reward = usersStakedNfts[_user] / totalStakedNfts * _fee;
+    }
+
+    /// Return true if the _address is a registered accruer and false otherwise
+    function isAccruer(address _address) public view returns (bool) {
+        return EnumerableSetUpgradeable.contains(_accruers, _address);
+    }
+
     // Withdraw accrued reward token
-    function _withdrawRewardToken() internal {
-        uint _amount = users[msg.sender].accrued;
-        users[msg.sender].accrued = 0;
-        token.transfer(address(msg.sender), _amount);
+    function _withdrawRewardToken() private {
+        uint _amount = users[msg.sender].pendingReward;
+        users[msg.sender].pendingReward = 0;
+        rewardToken.transfer(address(msg.sender), _amount);
     }
 
     // Remove _tokenId from _user's account
-    function _removeTokenIdFromUsers(uint256 _tokenId, address _user) private {
+    function _removeTokenIdFromUsers(address _user, uint256 _tokenId) private {
         uint[] storage tokenIds = users[_user].stakedNFTsId;
         for (uint256 i = 0; i < tokenIds.length; i++) {
             if (_tokenId == tokenIds[i]) {
