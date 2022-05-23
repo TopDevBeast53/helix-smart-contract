@@ -43,7 +43,7 @@ abstract contract FeeCollector {
         require(address(feeHandler) != address(0), "FeeCollector: handler not set");
         if (_fee > 0) {
             _token.approve(address(feeHandler), _fee);
-            feeHandler.transferFee(_token, _from, _fee);
+            feeHandler.transferFee(_token, _from, msg.sender, _fee);
         }
     }
 
