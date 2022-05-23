@@ -5,9 +5,10 @@ import "../interfaces/IERC20.sol";
 import "../libraries/SafeERC20.sol";
 import "../libraries/Percent.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-/*
+/**
  * AirDrop user addresses a token balance
  * 
  * Withdrawing tokens occurs over 4 phases:
@@ -16,7 +17,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
  *  3: withrawals are limited to 75% of tokens purchased
  *  4: withrawals are unlimited
  */
-contract AirDrop is ReentrancyGuard {
+contract AirDrop is Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     struct User {
@@ -114,7 +115,7 @@ contract AirDrop is ReentrancyGuard {
     }
 
     /// Called to withdraw _amount of token to caller's address
-    function withdraw(uint256 _amount) external {
+    function withdraw(uint256 _amount) external whenNotPaused {
         // Want to be in the latest phase
         updateWithdrawPhase();
 
@@ -199,7 +200,17 @@ contract AirDrop is ReentrancyGuard {
             maxAmount = Math.min(balance, allowed);
         }
     }
- 
+
+    /// Called by the owner to pause the contract
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /// Called by the owner to unpause the contract
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
     /// Add a new _owner to the contract, only callable by an existing owner
     function addOwner(address _owner) external onlyOwner onlyValidAddress(_owner) {
         require(!isOwner[_owner], "AirDrop: already owner");
