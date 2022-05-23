@@ -2,6 +2,8 @@
 pragma solidity >=0.8.0;
 
 import "../libraries/Percent.sol";
+
+import "../interfaces/IHelixChefNFT.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -12,7 +14,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     address public treasury;
 
     /// Owner defined pool where fees can be staked
-    address public nftChef;
+    IHelixChefNFT public nftChef;
 
     /// Determines percentage of collector fees sent to nftChef
     uint256 public nftChefPercent;
@@ -44,17 +46,17 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     function initialize(address _treasury, address _nftChef) external initializer {
         __Ownable_init();
         treasury = _treasury;
-        nftChef = _nftChef;
+        nftChef = IHelixChefNFT(_nftChef);
     }
     
     /// Called by a FeeCollector to send _amount of _token to this FeeHandler
     /// handles sending fees to treasury and staking with nftChef
-    function transferFee(IERC20 _token, address _from, uint256 _fee) external onlyValidFee(_fee) {
+    function transferFee(IERC20 _token, address _from, address _rewardAccruer, uint256 _fee) external onlyValidFee(_fee) {
         (uint256 nftChefAmount, uint256 treasuryAmount) = _getSplit(_fee, nftChefPercent);
 
         if (nftChefAmount > 0) {
             _token.transferFrom(_from, address(nftChef), nftChefAmount);
-            // TODO call the nft yield update compute function
+            nftChef.accrueReward(_rewardAccruer, nftChefAmount);
         }
 
         if (treasuryAmount > 0) {
@@ -74,7 +76,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
         onlyOwner 
         onlyValidAddress(_nftChef) 
     {
-        nftChef = _nftChef;
+        nftChef = IHelixChefNFT(_nftChef);
         emit SetNftChef(_nftChef);
     }
 
