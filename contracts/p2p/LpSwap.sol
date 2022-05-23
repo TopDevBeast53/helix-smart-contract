@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
-import "../fees/FeeCollector.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -14,7 +13,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
  * accepts the ask. When bidding is closed, the seller recieves the bid (or ask) 
  * amount and the buyer recieves the sell amount.
  */
-contract LpSwap is FeeCollector, Ownable, Pausable, ReentrancyGuard {
+contract LpSwap is Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
         
     struct Swap {
@@ -98,10 +97,6 @@ contract LpSwap is FeeCollector, Ownable, Pausable, ReentrancyGuard {
     modifier isAboveZero(uint256 _number) {
         require(_number > 0, "LpSwap: not above zero");
         _;
-    }
-
-    constructor(address _feeHandler) {
-        _setFeeHandler(_feeHandler);
     }
 
     /// Called externally to open a new swap
@@ -240,16 +235,6 @@ contract LpSwap is FeeCollector, Ownable, Pausable, ReentrancyGuard {
         _unpause();
     }
 
-    /// Called by the owner to set the _feeHandler address
-    function setFeeHandler(address _feeHandler) external onlyOwner {
-        _setFeeHandler(_feeHandler);
-    }
-
-    /// Called by the owner to set the _collectorPercent
-    function setCollectorPercent(uint256 _collectorPercent) external onlyOwner {
-        _setCollectorPercent(_collectorPercent);
-    }
-
     /// Return the array of swapIds made by _address
     function getSwapIds(address _address) external view returns(uint[] memory) {
         return swapIds[_address];
@@ -319,17 +304,11 @@ contract LpSwap is FeeCollector, Ownable, Pausable, ReentrancyGuard {
         _swap.buyer = _buyer;
         _swap.cost = _toSellerAmount;
 
-        // Seller pays the buyer the amount minus the swap fees
-        (uint256 buyerCollectorFee, uint256 buyerAmount) = getCollectorFeeSplit(_swap.amount);
-        toBuyerToken.safeTransferFrom(_seller, _buyer, buyerAmount);
-        toBuyerToken.safeTransferFrom(_seller, address(this), buyerCollectorFee);
-        _delegateTransfer(toBuyerToken, address(this), buyerCollectorFee);
+        // Seller pays the buyer
+        toBuyerToken.safeTransferFrom(_seller, _buyer, _swap.amount);
 
-        // Buyer pays the seller the amount minus the swap fees
-        (uint256 sellerCollectorFee, uint256 sellerAmount) = getCollectorFeeSplit(_toSellerAmount);
-        toSellerToken.safeTransferFrom(_buyer, _seller, sellerAmount);
-        toSellerToken.safeTransferFrom(_buyer, address(this), sellerCollectorFee);
-        _delegateTransfer(toSellerToken, address(this), sellerCollectorFee);
+        // Buyer pays the seller
+        toSellerToken.safeTransferFrom(_buyer, _seller, _toSellerAmount);
     }
 
     // Return the Bid associated with the _bidId
