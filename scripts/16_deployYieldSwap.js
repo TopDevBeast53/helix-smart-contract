@@ -15,6 +15,7 @@ const initials = require('./constants/initials')
 
 // Define contract constructor arguments
 const chef = contracts.masterChef[env.network]
+const rewardToken = contracts.helixToken[env.network]
 const treasury = initials.YIELD_SWAP_TREASURY[env.network]
 const minLockDuration = initials.YIELD_SWAP_MIN_LOCK_DURATION[env.network]
 const maxLockDuration = initials.YIELD_SWAP_MAX_LOCK_DURATION[env.network]
@@ -27,6 +28,7 @@ async function main() {
     const ContractFactory = await ethers.getContractFactory('YieldSwap');
     const contract = await ContractFactory.deploy(
         chef,               // stakes and earns yield on lp tokens
+        rewardToken,
         treasury,           // receives buyer and seller fees
         minLockDuration,    // minimum duration for which lp tokens can be locked 
         maxLockDuration     // maximum duration for which lp tokens can be locked

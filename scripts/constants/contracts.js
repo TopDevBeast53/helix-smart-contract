@@ -51,19 +51,19 @@ module.exports = {
         1: '',
         4: '0x77f6fBC82Cf7236460C6DE6BE457154cEb0a9Db6',
         56: '',
-        97: '0xa63dDc4e7cF6f0C3F2F9188c3862e60118B94295',
+        97: '0x27D056ACc52033D0680dA1932497F70A3Ee1f51f',
     },
     helixNFTChef: {
         1: '',
         4: '0x9da01A4402a904B2FeB608CD474cC95f50Ce6940',
         56: '',
-        97: '0x04F6B92Ee96a69C5dfAaB26c5C6C3e940d84c3bA',
+        97: '0x491FAefdf0C8995F8C8FE0b76984eB93e206E64C',
     },
     helixNFTBridge: {
         1: '',
         4: '0xE9Bf1603aa7648118a1D309BA86c84834C2d8269',
         56: '',
-        97: '0xF7f01A687c3eFE3c931a8c52d030B9AC50D5d3FD',
+        97: '0x1080694300484786fDe5Ed5127442e9874428a7d',
     },
     hpToken: {
         1: '',
@@ -133,13 +133,13 @@ module.exports = {
     },
     yieldSwap: {
         1: '',
-        4: '0xD1Cb5A2d352635e377d8676660E6175247ba8A10',
+        4: '0x6F11a3F4C4281ef735854cC2930429095dD66fbD',
         56: '',
         97: '0x3d915a41357c95fE059F07B68661aD966DfAB8A8',
     },
     lpSwap: {
         1: '',
-        4: '0xC193F98463274bA4DA23bFb7A45993bB52465E7B',
+        4: '0x0D46D55b0fC9f98557869f05134294f4aBFB0004',
         56: '',
         97: '0x1A6a1fcb7E6457Dd8a75c67829745B9b6b34e28f',
     },
