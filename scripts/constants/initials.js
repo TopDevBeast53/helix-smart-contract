@@ -91,38 +91,6 @@ module.exports = {
     
     // --------- Helix NFT & Chef --------- //
 
-    // NFT_INITIAL_HELIXPOINTS : {
-    //     1: '',
-    //     4: '1000000000000000000',
-    //     56: '1000000000000000000', 
-    //     97: '1000000000000000000', // currently this value means 1 HELIXPOINTS
-    // },
-    // NFT_LEVEL_UP_PERCENT : {
-    //     1: 10,
-    //     4: 10,
-    //     56: 10,
-    //     97: 10,
-    // },
-    // NFTCHEF_START_BLOCK : {
-    //     1: 0,
-    //     4: 0,
-    //     56: 0, 
-    //     97: 0,
-    // },
-    //Reward will calculate from this blocknum
-    // NFTCHEF_LAST_REWARD_BLOCK : {
-    //     1: 0,
-    //     4: 0,
-    //     56: 0, 
-    //     97: 0,
-    // },
-    // NFTCHEF_REWARD_PER_BLOCK : {
-    //     1: '',
-    //     4: '1000000000000000000',
-    //     56: '1000000000000000000', 
-    //     97: '1000000000000000000', // currently this value means 1 HELIX per block
-    // },
-
     // --------- Swap Rewards  --------- //
 
     SPLIT_REWARD_PERCENT : {
