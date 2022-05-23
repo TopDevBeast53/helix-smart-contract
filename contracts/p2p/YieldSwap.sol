@@ -509,14 +509,7 @@ contract YieldSwap is FeeCollector, Ownable, Pausable, ReentrancyGuard {
             chef.bucketDeposit(_swapId, poolId, amount);
         } else { 
             // Otherwise, transfer the amount directly from the party to the counterparty
-            // (minus the collector fee)
-            (uint256 collectorFee, uint256 counterpartyAmount) = getCollectorFeeSplit(amount);
-            token.transferFrom(party, _counterparty, counterpartyAmount);
-            
-            // Transfer collector fee from party to this contract and 
-            // allow the handler to delegate how the amount is distributed
-            token.transferFrom(party, address(this), collectorFee);
-            _delegateTransfer(token, address(this), collectorFee);
+            token.transferFrom(party, _counterparty, amount);
         }
     }
 
