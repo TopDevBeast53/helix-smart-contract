@@ -20,8 +20,8 @@ contract HelixChefNFT is
 
     // Info on each user who has NFTs staked in this contract
     struct UserInfo {
-        uint[] stakedNFTsId;        // Ids of the NFTs this user has staked
-        uint pendingReward;         // Amount of unwithdrawn rewardToken
+        uint256[] stakedNFTsId;        // Ids of the NFTs this user has staked
+        uint256 pendingReward;         // Amount of unwithdrawn rewardToken
     }
 
     /// Owner approved contracts which can accrue user rewards
@@ -150,19 +150,19 @@ contract HelixChefNFT is
     }
 
     /// Return the array of NFT ids that _user has staked
-    function getUserStakedTokens(address _user) external view returns(uint[] memory){
-        uint[] memory tokenIds = new uint[](usersStakedNfts[_user]);
+    function getUserStakedTokens(address _user) external view returns(uint256[] memory){
+        uint256[] memory tokenIds = new uint256[](usersStakedNfts[_user]);
         tokenIds = users[_user].stakedNFTsId;
         return tokenIds;
     }
 
     /// Return the number of NFTs the _user has staked
-    function getUsersStakedNfts(address _user) external view returns(uint) {
+    function getUsersStakedNfts(address _user) external view returns(uint256) {
         return usersStakedNfts[_user];
     }
 
     /// Return the _user's pending reward
-    function pendingReward(address _user) external view returns (uint) {
+    function pendingReward(address _user) external view returns (uint256) {
         return users[_user].pendingReward;
     }
 
@@ -183,14 +183,14 @@ contract HelixChefNFT is
 
     // Withdraw accrued reward token
     function _withdrawRewardToken() private {
-        uint _amount = users[msg.sender].pendingReward;
+        uint256 _amount = users[msg.sender].pendingReward;
         users[msg.sender].pendingReward = 0;
         rewardToken.transfer(address(msg.sender), _amount);
     }
 
     // Remove _tokenId from _user's account
     function _removeTokenIdFromUsers(address _user, uint256 _tokenId) private {
-        uint[] storage tokenIds = users[_user].stakedNFTsId;
+        uint256[] storage tokenIds = users[_user].stakedNFTsId;
         for (uint256 i = 0; i < tokenIds.length; i++) {
             if (_tokenId == tokenIds[i]) {
                 tokenIds[i] = tokenIds[tokenIds.length - 1];
