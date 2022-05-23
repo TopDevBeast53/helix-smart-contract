@@ -5,18 +5,12 @@ import "../tokens/HelixToken.sol";
 import "../interfaces/IMigratorChef.sol";
 import "../interfaces/IReferralRegister.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
-// MasterChef is the master of HelixToken. He can make HelixToken and he is a fair guy.
-//
-// Note that it's ownable and the owner wields tremendous power. The ownership
-// will be transferred to a governance smart contract once HelixToken is sufficiently
-// distributed and the community can show to govern itself.
-//
-// Have fun reading it. Hopefully it's bug-free. God bless.
-contract MasterChef is Initializable, OwnableUpgradeable {
+contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     // Info of each user.
     struct UserInfo {
         uint256 amount; // How many LP tokens the user has provided.
@@ -274,6 +268,16 @@ contract MasterChef is Initializable, OwnableUpgradeable {
         emit MigratorSet(address(_migrator));
     }
 
+    /// Called by the owner to pause the contract
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /// Called by the owner to unpause the contract
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
     // Migrate lp token to another lp contract. Can be called by anyone. We trust that migrator contract is good.
     function migrate(uint256 _pid) external {
         require(address(migrator) != address(0), "MasterChef: no migrator");
@@ -351,7 +355,7 @@ contract MasterChef is Initializable, OwnableUpgradeable {
     }
 
     // Deposit LP tokens to MasterChef for HelixToken allocation.
-    function deposit(uint256 _pid, uint256 _amount) external isNotHelixPoolId(_pid) {
+    function deposit(uint256 _pid, uint256 _amount) external whenNotPaused isNotHelixPoolId(_pid) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
@@ -372,7 +376,7 @@ contract MasterChef is Initializable, OwnableUpgradeable {
     }
 
     // Withdraw LP tokens from MasterChef.
-    function withdraw(uint256 _pid, uint256 _amount) external isNotHelixPoolId(_pid) {
+    function withdraw(uint256 _pid, uint256 _amount) external whenNotPaused isNotHelixPoolId(_pid) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
@@ -402,6 +406,7 @@ contract MasterChef is Initializable, OwnableUpgradeable {
         uint256 _amount             // Amount of lpToken being deposited
     ) 
         external 
+        whenNotPaused
         isNotHelixPoolId(_poolId)
     {
         PoolInfo storage pool = poolInfo[_poolId];
@@ -430,7 +435,7 @@ contract MasterChef is Initializable, OwnableUpgradeable {
     }
 
     // Withdraw _amount of lpToken and all accrued yield from _bucketId and _poolId
-    function bucketWithdraw(uint256 _bucketId, uint256 _poolId, uint256 _amount) external isNotHelixPoolId(_poolId) {
+    function bucketWithdraw(uint256 _bucketId, uint256 _poolId, uint256 _amount) external whenNotPaused isNotHelixPoolId(_poolId) {
         PoolInfo storage pool = poolInfo[_poolId];
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
 
@@ -463,6 +468,7 @@ contract MasterChef is Initializable, OwnableUpgradeable {
         uint256 _amount
     ) 
         external 
+        whenNotPaused
         isNotZeroAddress(_recipient)
         isNotHelixPoolId(_poolId)
     {
@@ -495,6 +501,7 @@ contract MasterChef is Initializable, OwnableUpgradeable {
         uint256 _yield
     ) 
         external 
+        whenNotPaused
         isNotZeroAddress(_recipient)
         isNotHelixPoolId(_poolId)
     {
@@ -545,7 +552,7 @@ contract MasterChef is Initializable, OwnableUpgradeable {
     }
 
     // Stake HelixToken tokens to MasterChef
-    function enterStaking(uint256 _amount) external {
+    function enterStaking(uint256 _amount) external whenNotPaused {
         updatePool(0);
         depositedHelix += _amount;
 
@@ -567,7 +574,7 @@ contract MasterChef is Initializable, OwnableUpgradeable {
     }
 
     // Withdraw HelixToken tokens from STAKING.
-    function leaveStaking(uint256 _amount) external {
+    function leaveStaking(uint256 _amount) external whenNotPaused {
         updatePool(0);
         depositedHelix -= _amount;
         
