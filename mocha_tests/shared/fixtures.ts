@@ -47,13 +47,6 @@ const chefDevPercent = initials.MASTERCHEF_DEV_PERCENT[env.network];
 
 const autoHelixTreasuryAddress = addresses.autoHelixTreasuryAddress[env.network];
 
-const helixNFTInitialHelixPoints = initials.NFT_INITIAL_HELIXPOINTS[env.network];
-const helixNFTLevelUpPercent = initials.NFT_LEVEL_UP_PERCENT[env.network];
-
-const helixChefNFTStartBlock = initials.NFTCHEF_START_BLOCK[env.network];
-const helixChefNFTRewardPerBlock = initials.NFTCHEF_REWARD_PER_BLOCK[env.network];
-const helixChefNFTLastRewardBlock = initials.NFTCHEF_LAST_REWARD_BLOCK[env.network];
-
 const swapRewardsSplitRewardPercent = initials.SPLIT_REWARD_PERCENT[env.network]
 const swapRewardsHelixRewardPercent = initials.HELIX_REWARD_PERCENT[env.network]
 const swapRewardsApRewardPercent = initials.HP_REWARD_PERCENT[env.network]
