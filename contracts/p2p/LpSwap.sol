@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
@@ -13,7 +13,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
  * accepts the ask. When bidding is closed, the seller recieves the bid (or ask) 
  * amount and the buyer recieves the sell amount.
  */
-contract LpSwap is Ownable, Pausable, ReentrancyGuard {
+contract LpSwap is 
+    OwnableUpgradeable, 
+    PausableUpgradeable, 
+    ReentrancyGuardUpgradeable 
+{
     using SafeERC20 for IERC20;
         
     struct Swap {

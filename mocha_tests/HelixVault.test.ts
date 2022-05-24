@@ -258,15 +258,13 @@ describe('Vault', () => {
 
         // First test the case where the vault contract balance is 0
         // overwrite _vault with a fresh deployment so that the contract's token balance == 0
-        const _vault = await deployContract(wallet0, HelixVault, 
-            [
+        const _vault = await deployContract(wallet0, HelixVault, [], overrides)
+        await _vault.initialize(
                 helixToken.address,
                 treasuryAddress,
                 rewardPerBlock,
                 startBlock,
                 lastRewardBlock
-            ], 
-            overrides
         )
         expect(await helixToken.balanceOf(_vault.address)).to.eq(0)
 

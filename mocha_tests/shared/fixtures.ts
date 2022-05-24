@@ -230,15 +230,13 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const tokenTools = await deployContract(wallet, TokenTools, [], overrides)
 
     // 13 deploy helix vault
-    const vault = await deployContract(wallet, HelixVault, 
-        [
+    const vault = await deployContract(wallet, HelixVault, [], overrides)
+    await vault.initialize(
             helixToken.address,
             feeHandler.address,
             helixVaultRewardPerBlock,
             helixVaultStartBlock,
             helixVaultBonusEndBlock
-        ], 
-        overrides
     )
     await helixToken.addMinter(vault.address, overrides)
 

@@ -4,13 +4,18 @@ pragma solidity >=0.8.0;
 import "../tokens/HelixToken.sol";
 import "../libraries/Percent.sol";
 import "../fees/FeeCollector.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
-contract HelixVault is FeeCollector, Ownable, Pausable, ReentrancyGuard {
+contract HelixVault is 
+    FeeCollector, 
+    OwnableUpgradeable, 
+    PausableUpgradeable, 
+    ReentrancyGuardUpgradeable 
+{
     struct Deposit {
         address depositor;                  // user making the deposit
         uint256 amount;                     // amount of token deposited
@@ -56,7 +61,7 @@ contract HelixVault is FeeCollector, Ownable, Pausable, ReentrancyGuard {
     uint256 public lastRewardBlock;
    
     /// Used for computing rewards
-    uint256 public immutable PRECISION_FACTOR;
+    uint256 public PRECISION_FACTOR;
 
     /// Sets an upper limit on the number of decimals a token can have
     uint256 public constant MAX_DECIMALS = 30;
@@ -123,13 +128,17 @@ contract HelixVault is FeeCollector, Ownable, Pausable, ReentrancyGuard {
         _;
     }
 
-    constructor(
+    function initialize(
         HelixToken _token,
         address _feeHandler,
         uint256 _rewardPerBlock,
         uint256 _startBlock,
         uint256 _lastRewardBlock
-    ) {
+    ) external initializer {
+        __Ownable_init();
+        __Pausable_init();
+        __ReentrancyGuard_init();
+
         _setFeeHandler(_feeHandler);
 
         token = _token;
