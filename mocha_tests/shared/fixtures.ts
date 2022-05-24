@@ -284,15 +284,13 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await helixToken.addMinter(airDrop.address)
 
     // 17 deploy yield swap contract
-    const yieldSwap = await deployContract(wallet, YieldSwap, 
-        [
+    const yieldSwap = await deployContract(wallet, YieldSwap, [], overrides)
+    await yieldSwap.initialize(
             chef.address,                   // chef used for earning lpToken yield
             helixToken.address,             // chef reward token for yield
             feeHandler.address,             // treasury used for receiving buy/sell fees
             yieldSwapMinLockDuration,       // minimum length of time (in seconds) a swap can be locked for
             yieldSwapMaxLockDuration,       // maximum length of time (in seconds) a swap can be locked for
-        ], 
-        overrides
     )
 
     // 18 deploy lp swap contract with treasury address argument

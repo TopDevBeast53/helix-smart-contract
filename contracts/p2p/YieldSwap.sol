@@ -3,9 +3,9 @@ pragma solidity >= 0.8.0;
 
 import "../interfaces/IMasterChef.sol";
 import "../fees/FeeCollector.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
@@ -34,7 +34,12 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
  * staked amount of liquidity token and their counterparty receives the yield earned over 
  * the duration.
  */
-contract YieldSwap is FeeCollector, Ownable, Pausable, ReentrancyGuard {
+contract YieldSwap is 
+    FeeCollector, 
+    OwnableUpgradeable, 
+    PausableUpgradeable, 
+    ReentrancyGuardUpgradeable 
+{
     using SafeERC20 for IERC20;
 
     struct Swap {
@@ -157,16 +162,22 @@ contract YieldSwap is FeeCollector, Ownable, Pausable, ReentrancyGuard {
         _;
     }
 
-    constructor(
+    function initialize(
         IMasterChef _chef, 
         IERC20 _rewardToken,
         address _feeHandler,
         uint256 _MIN_LOCK_DURATION,
         uint256 _MAX_LOCK_DURATION
     ) 
+        external
+        initializer
         onlyValidAddress(address(_chef))
         onlyValidAddress(address(_rewardToken))
     {
+        __Ownable_init();
+        __Pausable_init();
+        __ReentrancyGuard_init();
+
         chef = _chef;
         rewardToken = _rewardToken;
         _setFeeHandler(_feeHandler);
