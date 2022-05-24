@@ -188,7 +188,10 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
 
     // 8 deploy helixNFTBridge, add a bridger, and register as minter
     const helixNFTBridge = await deployContract(wallet, HelixNFTBridge, [helixNFT.address], overrides)
-    await helixNFTBridge.addBridger(wallet.address, overrides)
+
+    // Comment to prevent error since no externalTokenID is being passed
+    // await helixNFTBridge.addBridger(wallet.address, overrides)
+
     await helixNFT.addMinter(helixNFTBridge.address, overrides)
 
     // 9 deploy HP/LP token
