@@ -49,21 +49,21 @@ module.exports = {
     },
     helixNFT: {
         1: '',
-        4: '0x77f6fBC82Cf7236460C6DE6BE457154cEb0a9Db6',
+        4: '0xE73F274906C8114c4Ff1C501dc549768c57A0308',
         56: '',
-        97: '0x27D056ACc52033D0680dA1932497F70A3Ee1f51f',
+        97: '0xf18B53099206a7E2981877B08d82d0A85BB7bf81',
     },
     helixNFTChef: {
         1: '',
-        4: '0x9da01A4402a904B2FeB608CD474cC95f50Ce6940',
+        4: '0x042e360fDeA372968865d0998D8224c0D65a258F',
         56: '',
-        97: '0x491FAefdf0C8995F8C8FE0b76984eB93e206E64C',
+        97: '0xdAEB3653557c61229F95A788E2A67A3d7CB32984',
     },
     helixNFTBridge: {
         1: '',
-        4: '0xE9Bf1603aa7648118a1D309BA86c84834C2d8269',
+        4: '0x0088F8DAa52219315682f694ad986653993d6F51',
         56: '',
-        97: '0x1080694300484786fDe5Ed5127442e9874428a7d',
+        97: '0x44829876ab3FD8F89E9E88430e6746763C3c7acc',
     },
     hpToken: {
         1: '',

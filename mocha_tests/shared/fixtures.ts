@@ -295,7 +295,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     )
 
     // 18 deploy lp swap contract with treasury address argument
-    const lpSwap = await deployContract(wallet, LpSwap, [feeHandler.address], overrides)
+    const lpSwap = await deployContract(wallet, LpSwap, [], overrides)
 
     return {
         tokenA,
