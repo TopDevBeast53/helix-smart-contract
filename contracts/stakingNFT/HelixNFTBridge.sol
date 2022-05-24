@@ -33,6 +33,10 @@ contract HelixNFTBridge is Ownable {
      */
     mapping(string => uint256) private _minted;
 
+    /// for counting whenever add bridge once approve on solana 
+    /// if it's down to 0, will call to remove bridger
+    /// user => counts
+    mapping(address => uint256) private _countAddBridge;
     /**
      * @dev Bridgers are Helix service accounts which listen to the events
      *      happening on the Solana chain and then enabling the NFT for
@@ -41,7 +45,7 @@ contract HelixNFTBridge is Ownable {
     EnumerableSet.AddressSet private _bridgers;
 
     event BridgeToSolana(string externalTokenID, string externalRecipientAddr, uint256 timestamp);
-    event AddBridger(address indexed user);
+    event AddBridger(address indexed user, string externalTokenID);
     
     /**
      * @dev HelixNFT contract    
@@ -57,6 +61,7 @@ contract HelixNFTBridge is Ownable {
      */
     function bridgeToBSC(string calldata externalTokenID, address owner, string calldata uri) onlyBridger external returns(bool) {
         require(!_bridgedExternalTokenIDs[externalTokenID], "HelixNFTBridge: The token is already bridged to Binance");
+        require(_countAddBridge[owner] > 0, "HelixNFTBridge: You are not a Bridger");
         _bridgedExternalTokenIDs[externalTokenID] = true;
         _bridgedExternalTokenIDsPickUp[externalTokenID] = owner;
 
@@ -66,7 +71,10 @@ contract HelixNFTBridge is Ownable {
         } else {
             _externalIDToURI[externalTokenID] = uri;
         }
-        return _delBridger(owner);
+        _countAddBridge[owner]--;
+        if (_countAddBridge[owner] == 0) 
+            return _delBridger(owner);
+        return true;
     }
 
     /**
@@ -126,12 +134,13 @@ contract HelixNFTBridge is Ownable {
      * @param _bridger address of bridger to be added.
      * @return true if successful.
      */
-    function addBridger(address _bridger) external onlyOwner returns (bool) {
+    function addBridger(address _bridger, string calldata externalTokenID) external onlyOwner returns (bool) {
         require(
             _bridger != address(0),
             "HelixNFTBridge: _bridger is the zero address"
         );
-        emit AddBridger(_bridger);
+        _countAddBridge[_bridger]++;
+        emit AddBridger(_bridger, externalTokenID);
         return EnumerableSet.add(_bridgers, _bridger);
     }
 
