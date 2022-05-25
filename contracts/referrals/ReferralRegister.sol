@@ -183,7 +183,7 @@ contract ReferralRegister is
         }      
 
         // number of blocks since last update * the number of tokens to mint per block
-        uint256 toMint = (block.number - lastRewardBlock) * _getMintRate();
+        uint256 toMint = (block.number - lastRewardBlock) * (MINT_RATE / 100);
         lastRewardBlock = block.number;
 
         helixToken.mint(address(this), toMint);
@@ -196,12 +196,6 @@ contract ReferralRegister is
         return helixToken.balanceOf(address(this));
     }
     
-    // Return the actual mintRate for calculating the number of reward tokens to mint
-    function _getMintRate() private view returns (uint256) {
-        // if MINT_RATE == 468 then /= 100 == 4.68
-        return MINT_RATE / 100;
-    }
-
     /**
     * @dev used by owner to add recorder who can call a record function
     * @param account address of recorder to be added.
