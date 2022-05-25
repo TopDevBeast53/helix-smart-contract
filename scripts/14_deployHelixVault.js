@@ -35,6 +35,11 @@ async function main() {
     await vaultContract.deployTransaction.wait();
     
     console.log(`Helix Vault deployed to ${vaultContract.address}`);
+
+    const implementationAddress = await upgrades.erc1967.getImplementationAddress(
+        vaultContract.address
+    )
+    console.log(`Implementation address: ${implementationAddress}`)
     
     console.log(`------ Add MasterChef as Minter to HelixToken ---------`);
     const HelixToken = await ethers.getContractFactory(`HelixToken`);
