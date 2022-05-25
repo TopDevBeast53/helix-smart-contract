@@ -7,7 +7,7 @@
  *      npx hardhat run scripts/1_deployFactory.js --network rinkeby
  */
 
-const { ethers, upgrades } = require("hardhat");
+const { ethers, upgrades } = require("hardhat")
 const addresses = require("./constants/addresses")
 const env = require("./constants/env")
 
@@ -15,26 +15,32 @@ const setterFeeOnPairSwaps = addresses.setterFeeOnPairSwaps[env.network]
 const poolReceiveTradeFee = addresses.poolReceiveTradeFee[env.network]
 
 async function main() {
-    const [deployer] = await ethers.getSigners();
-    console.log(`Deployer address: ${deployer.address}`);
+    console.log(`Deploy HelixFactory Proxy and Implementation`)
 
-    console.log(`------ Start deploying HelixFactory contract ---------`);
-    const Factory = await ethers.getContractFactory("HelixFactory");
-    const factory = await upgrades.deployProxy(Factory, [setterFeeOnPairSwaps]); //upgrades. Factory.deploy(setterFeeOnPairSwaps);
-    await factory.deployTransaction.wait();
+    const [deployer] = await ethers.getSigners()
+    console.log(`Deployer address: ${deployer.address}`)
+    
+    const Factory = await ethers.getContractFactory("HelixFactory")
+    const factoryProxy = await upgrades.deployProxy(Factory, [setterFeeOnPairSwaps]) 
+    await factoryProxy.deployTransaction.wait()
+    console.log(`HelixFactory Proxy address: ${factoryProxy.address}`)
 
-    await factory.setFeeTo(poolReceiveTradeFee);
-    let res = await factory.feeTo();
-    console.log('fee - ', res);
+    const factoryImplementationAddress = await upgrades.erc1967.getImplementationAddress(
+        factoryProxy.address
+    )
+    console.log(`HelixFactory Implmentation address: ${factoryImplementationAddress}`)
 
-    let INIT_CODE_HASH = await factory.INIT_CODE_HASH.call();
-    console.log('INIT_CODE_HASH - ', INIT_CODE_HASH);
-    console.log(`Helix Factory deployed to ${factory.address}`);
+    let INIT_CODE_HASH = await factoryProxy.INIT_CODE_HASH.call()
+    console.log(`INIT_CODE_HASH: ${INIT_CODE_HASH}`)
+
+    await factoryProxy.setFeeTo(poolReceiveTradeFee)
+    let feeTo = await factoryProxy.feeTo()
+    console.log(`feeTo: ${feeTo}`)
 }
 
 main()
     .then(() => process.exit(0))
     .catch((error) => {
-        console.error(error);
-        process.exit(1);
-    });
+        console.error(error)
+        process.exit(1)
+    })

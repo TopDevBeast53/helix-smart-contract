@@ -31,6 +31,11 @@ async function main() {
 
     await autoHelix.deployTransaction.wait();
     console.log(`AutoHelix deployed to ${autoHelix.address}`);
+
+    const implementationAddress = await upgrades.erc1967.getImplementationAddress(
+        autoHelix.address
+    )
+    console.log(`Implementation address: ${implementationAddress}`)
 }
 
 main()

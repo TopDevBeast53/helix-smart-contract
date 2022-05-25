@@ -51,6 +51,11 @@ async function main() {
     await chef.deployTransaction.wait();
     console.log(`Master Chef deployed to ${chef.address}`);
 
+    const implementationAddress = await upgrades.erc1967.getImplementationAddress(
+        chef.address
+    )
+    console.log(`Implementation address: ${implementationAddress}`)
+
     console.log(`------ Add MasterChef as Minter to HelixToken ---------`);
     const HelixToken = await ethers.getContractFactory(`HelixToken`);
     const helixToken = HelixToken.attach(HelixTokenAddress);

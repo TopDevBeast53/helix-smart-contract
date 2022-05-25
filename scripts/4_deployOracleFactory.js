@@ -26,6 +26,11 @@ async function main() {
     
     console.log(`Oracle deployed to ${oracleFactory.address}`)
 
+    const implementationAddress = await upgrades.erc1967.getImplementationAddress(
+        oracleFactory.address
+    )
+    console.log(`Implementation address: ${implementationAddress}`)
+
     // 2. Register the Oracle Factory with Factory
     //    Calls to createPair fail if Oracle Factory not registered
     console.log(`------ Register Oracle Factory with Factory ---------`)
