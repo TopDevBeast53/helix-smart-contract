@@ -47,13 +47,15 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
      */
     struct Token {
         // ID of the bridged NFT.
-        string externalTokenID;
+        string[] externalTokenIDs;
         // External token URI to use.
         string tokenURI;
         // Timestamp the token is minted(block's timestamp)
         uint256 createTimestamp;
         // True if staked, false otherwise
         bool isStaked;
+        // how many it is wrapped from solana
+        uint256 wrappedNfts;
     }
 
     // map token info by token ID : TokenId => Token
@@ -159,7 +161,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
     }
 
     // Mints external NFT
-    function mintExternal(address to, string calldata externalTokenID, string calldata uri) 
+    function mintExternal(address to, string[] calldata externalTokenIDs, string calldata uri) 
         external 
         onlyMinter 
         nonReentrant 
@@ -168,12 +170,15 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         _lastTokenId += 1;
         uint256 tokenId = _lastTokenId;
         _tokens[tokenId].createTimestamp = block.timestamp;
-        _tokens[tokenId].externalTokenID = externalTokenID;
         _tokens[tokenId].tokenURI = uri;
+        for (uint256 i = 0; i < externalTokenIDs.length; i++) {
+            string memory externalID = externalTokenIDs[i];
+            _tokens[tokenId].externalTokenIDs.push(externalID);
+        }
         _safeMint(to, tokenId);
     }
 
-    function burn(uint256 tokenId) external nonReentrant {
+    function burn(uint256 tokenId) external onlyMinter nonReentrant {
         _burn(tokenId);
     }
     
@@ -205,25 +210,21 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         view
         tokenIdExists(_tokenId)
         returns (
-            uint256 tokenId,
-            address tokenOwner,
-            bool isStaked,
-            uint256 createTimestamp,
-            string memory externalTokenID,
-            string memory uri
+            address,
+            string memory,
+            uint256,
+            Token memory
         )
     {
+        address tokenOwner = ownerOf(_tokenId);
+        string memory uri = tokenURI(_tokenId);
+        uint256 tokenId = _tokenId;
         Token memory token = _tokens[_tokenId];
-        tokenId = _tokenId;
-        tokenOwner = ownerOf(_tokenId);
-        isStaked = token.isStaked;
-        createTimestamp = token.createTimestamp;
-        externalTokenID = token.externalTokenID;
-        uri = tokenURI(_tokenId);
+        return(tokenOwner, uri, tokenId, token);
     }
 
-    function getExternalTokenID(uint256 _tokenId) external view tokenIdExists(_tokenId) returns (string memory) {
-        return _tokens[_tokenId].externalTokenID;
+    function getExternalTokenIDs(uint256 _tokenId) external view tokenIdExists(_tokenId) returns (string[] memory) {
+        return _tokens[_tokenId].externalTokenIDs;
     }
 
     /**
