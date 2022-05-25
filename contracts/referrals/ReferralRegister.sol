@@ -3,6 +3,7 @@ pragma solidity >=0.8.0;
 
 import "../interfaces/IHelixToken.sol";
 import "../fees/FeeCollector.sol";
+import "../libraries/Percent.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -20,7 +21,7 @@ contract ReferralRegister is
 {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-    /// Rate at which new helix tokens are minted as referrer rewards
+    /// Per-block rate at which new helix tokens are minted as referrer rewards
     uint256 public constant MINT_RATE = 468;
 
     /// Token distributed as rewards to referrers
@@ -47,8 +48,11 @@ contract ReferralRegister is
     /// Rewards balance of each referrer.
     mapping(address => uint256) public balance;
 
-    uint256 constant MAX_STAKING_FEE = 30; // 3%
-    uint256 constant MAX_SWAP_FEE = 100; // 10%
+    /// Percent earned by staking
+    uint256 constant MAX_STAKING_FEE = 3;   // 3%
+
+    /// Percent earned by swaps
+    uint256 constant MAX_SWAP_FEE = 10;     // 10%
 
     // Emitted when a referrer earns amount because referred made a transaction
     event ReferralReward(
@@ -91,35 +95,33 @@ contract ReferralRegister is
         __Ownable_init();
         __ReentrancyGuard_init();
         _setFeeHandler(_feeHandler);
+
         helixToken = _helixToken;
         stakingRefFee = defaultStakingRef;
         swapRefFee = defaultSwapRef;
     }
 
-    function recordStakingRewardWithdrawal(address user, uint256 amount) 
-        external 
-        onlyRecorder 
-        isNotZeroAddress(user)
-    {
-        uint256 stakingRefReward = ((amount * stakingRefFee) / 1000);
-        balance[ref[user]] += stakingRefReward;
-        totalBalance += stakingRefReward;
-        _update();
-
-        emit ReferralReward(user, ref[user], stakingRefReward);
+    /// Accrue rewards to _user referrer for staking
+    function recordStakingRewardWithdrawal(address _user, uint256 _amount) external onlyRecorder {
+        _accrueReward(_user, _amount, stakingRefRee);
     }
 
-    function recordSwapReward(address user, uint256 amount) 
-        external 
-        onlyRecorder 
-        isNotZeroAddress(user)
+    /// Accrue rewards to _user referrer for swaps
+    function recordSwapReward(address _user, uint256 _amount) external onlyRecorder {
+        _accrueReward(_user, _amount, swapRefFee);
+    }
+
+    // Accrue rewards to _user referrer based on _amount and _rate
+    function _accrueReward(address _user, uint256 _amount, uint256 _rate)
+        private
+        isNotZeroAddress(_user)
     {
-        uint256 swapRefReward = ((amount * swapRefFee) / 1000);
-        balance[ref[user]] += swapRefReward;
-        totalBalance += swapRefReward;
+        uint256 reward = Percent.getPercentage(_amount, _rate);
+        balance[ref[user]] += reward;
+        totalBalance += reward;
         _update();
 
-        emit ReferralReward(user, ref[user], swapRefReward);
+        emit ReferralReward(user, ref[user], reward);
     }
 
     function setFees(uint256 _stakingRefFee, uint256 _swapRefFee) external onlyOwner {
