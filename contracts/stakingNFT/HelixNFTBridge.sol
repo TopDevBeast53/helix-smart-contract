@@ -56,13 +56,11 @@ contract HelixNFTBridge is Ownable {
         require(_countAddBridge[owner] > 0, "HelixNFTBridge: You are not a Bridger");
         for (uint256 i = 0; i < externalTokenIDs.length; i++) {
             string memory externalID = externalTokenIDs[i];
-            require(!_bridgedExternalTokenIDs[externalID], "HelixNFTBridge: The token is already bridged to Ethereum");
-        }
-        for (uint256 i = 0; i < externalTokenIDs.length; i++) {
-            string memory externalID = externalTokenIDs[i];
+            require(!_bridgedExternalTokenIDs[externalID], "HelixNFTBridge: The token is already bridged to Ethereum Or there are duplicate tokens");
             _bridgedExternalTokenIDs[externalID] = true;
             _bridgedExternalTokenIDsPickUp[externalID] = owner;
         }
+        
         _countAddBridge[owner]--;
 
         helixNFT.mintExternal(owner, externalTokenIDs, uri);
