@@ -8,7 +8,7 @@ This repo contains the smart contracts used by the Helix DEX categorized by func
 The `contracts` directory contains the bulk of the code supporting the Helix DEX backend.
 
 | Category | Description |
-| ---------------------- |
+| :------- | :---------- |
 | Fees | Collect and handle administrative fees |
 | Interfaces | Interfaces implemented by the contracts in this repo |
 | Libraries | Libraries used by the contracts in this repo |
