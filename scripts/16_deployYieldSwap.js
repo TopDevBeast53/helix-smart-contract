@@ -26,16 +26,25 @@ async function main() {
 
     console.log(`Deploy Yield Swap`);
     const ContractFactory = await ethers.getContractFactory('YieldSwap');
-    const contract = await ContractFactory.deploy(
-        chef,               // stakes and earns yield on lp tokens
-        rewardToken,
-        treasury,           // receives buyer and seller fees
-        minLockDuration,    // minimum duration for which lp tokens can be locked 
-        maxLockDuration     // maximum duration for which lp tokens can be locked
+    const contract = await upgrades.deployProxy(
+        ContractFactory,
+        [
+            chef,               // stakes and earns yield on lp tokens
+            rewardToken,
+            treasury,           // receives buyer and seller fees
+            minLockDuration,    // minimum duration for which lp tokens can be locked 
+            maxLockDuration     // maximum duration for which lp tokens can be locked
+        ]
     );     
     await contract.deployTransaction.wait();
     
     console.log(`Yield Swap deployed to ${contract.address}`);
+
+    const implementationAddress = await upgrades.erc1967.getImplementationAddress(
+        contract.address
+    )   
+    console.log(`Implementation address: ${implementationAddress}`)       
+
     console.log(`Done`)
 }
 

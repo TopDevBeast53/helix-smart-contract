@@ -24,11 +24,15 @@ async function main() {
     
     console.log(`Deploy LP Swap`)
     const ContractFactory = await ethers.getContractFactory('LpSwap')
-    const contract = await ContractFactory.deploy(
-        treasuryAddress
-    )     
+    const contract = await upgrades.deployProxy(ContractFactory, [treasuryAddress])     
     await contract.deployTransaction.wait()
     console.log(`LP Swap deployed to ${contract.address}`)
+
+    const implementationAddress = await upgrades.erc1967.getImplementationAddress(
+        contract.address
+    )
+    console.log(`Implementation address: ${implementationAddress}`)
+
     console.log(`Remember to save this address to ./scripts/constants/contracts.js\n`)
 
     console.log('Done')
