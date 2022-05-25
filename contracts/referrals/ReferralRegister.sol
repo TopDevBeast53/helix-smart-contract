@@ -9,6 +9,8 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
+/// Users (referrers) refer other users (referred) and referrers earn rewards when
+/// referred users swap or stake
 contract ReferralRegister is 
     FeeCollector, 
     Initializable, 
@@ -18,27 +20,35 @@ contract ReferralRegister is
 {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-    /**
-     * Referral fees are stored as: referred address => referrer address
-     */
+    /// Rate at which new helix tokens are minted as referrer rewards
+    uint256 public constant MINT_RATE = 468;
+
+    /// Token distributed as rewards to referrers
+    IHelixToken public helixToken;
+
+    /// Reward percent for staker referrers
+    uint256 public stakingRefFee;
+
+    /// Reward percent for swap referrers
+    uint256 public swapRefFee;
+
+    /// Sum of all referrer balances
+    uint256 public totalBalance;
+
+    /// Last block that reward tokens were minted
+    uint256 public lastRewardBlock;
+
+    /// Accounts approved by the contract owner which can call the "record" functions
+    EnumerableSetUpgradeable.AddressSet private _recorders;
+
+    /// Referral fees are stored as: referred address => referrer address
     mapping(address => address) public ref;
 
-    /**
-     * Rewards balance of each referrer.
-     */
+    /// Rewards balance of each referrer.
     mapping(address => uint256) public balance;
-
-    /**
-     * Accounts approved by the contract owner which can call the "record" functions
-     */
-    EnumerableSetUpgradeable.AddressSet private _recorders;
 
     uint256 constant MAX_STAKING_FEE = 30; // 3%
     uint256 constant MAX_SWAP_FEE = 100; // 10%
-
-    IHelixToken public helixToken;
-    uint256 public stakingRefFee;
-    uint256 public swapRefFee;
 
     // Emitted when a referrer earns amount because referred made a transaction
     event ReferralReward(
@@ -58,6 +68,9 @@ contract ReferralRegister is
 
     // Emitted when a referrer withdraws their earned referral rewards
     event Withdrawn(address referrer, uint256 rewards);
+
+    // Emitted when the contract is updated and new tokens are minted
+    event Update(uint256 minted);
 
     modifier isNotZeroAddress(address _address) {
         require(_address != address(0), "ReferralRegister: zero address");
@@ -90,6 +103,8 @@ contract ReferralRegister is
     {
         uint256 stakingRefReward = ((amount * stakingRefFee) / 1000);
         balance[ref[user]] += stakingRefReward;
+        totalBalance += stakingRefReward;
+        _update();
 
         emit ReferralReward(user, ref[user], stakingRefReward);
     }
@@ -101,6 +116,8 @@ contract ReferralRegister is
     {
         uint256 swapRefReward = ((amount * swapRefFee) / 1000);
         balance[ref[user]] += swapRefReward;
+        totalBalance += swapRefReward;
+        _update();
 
         emit ReferralReward(user, ref[user], swapRefReward);
     }
@@ -128,24 +145,62 @@ contract ReferralRegister is
     }
 
     function withdraw() external whenNotPaused nonReentrant {
-        uint256 toMint = balance[msg.sender];
-        require(toMint != 0, "ReferralRegister: nothing to withdraw");
-
+        uint256 _balance = balance[msg.sender];
+        require(_balance != 0, "ReferralRegister: nothing to withdraw");
+        
+        // Update the amount of helixToken in the contract
+        _update();
+   
+        // Reward the caller with some percentage of the total helix token balance
+        // based on their percentage of the balance out of the total balance
+        uint256 reward = _balance / totalBalance * getHelixTokenBalance();
+    
+        // Update the balances
         balance[msg.sender] = 0;
-
-        (uint256 collectorFee, uint256 callerAmount) = getCollectorFeeSplit(toMint);
+        totalBalance -= _balance;
+    
+        // Split the reward and extract the collector fee
+        (uint256 collectorFee, uint256 callerAmount) = getCollectorFeeSplit(reward);
         if (callerAmount > 0) {
-            helixToken.mint(msg.sender, callerAmount);
+            helixToken.transfer(msg.sender, callerAmount);
         }
         if (collectorFee > 0) {
-            helixToken.mint(address(this), collectorFee);
             _delegateTransfer(IERC20(address(helixToken)), address(this), collectorFee);
         }
 
-        emit Withdrawn(msg.sender, toMint);
+        emit Withdrawn(msg.sender, reward);
     }
 
-    // Role functions for Recorders --------------------------------------------------------------------------------------
+    /// Mint new reward tokens to the contract according to the mintRate
+    function update() external nonReentrant {
+        _update();
+    }
+
+    // Mint new helix tokens to the contract according to the mintRate
+    function _update() private {
+        if (block.number <= lastRewardBlock) {
+            return;
+        }      
+
+        // number of blocks since last update * the number of tokens to mint per block
+        uint256 toMint = (block.number - lastRewardBlock) * _getMintRate();
+        lastRewardBlock = block.number;
+
+        helixToken.mint(address(this), toMint);
+
+        emit Update(toMint);
+    }
+    
+    /// Return the helixToken balance in this contract 
+    function getHelixTokenBalance() public view returns (uint256) {
+        return helixToken.balanceOf(address(this));
+    }
+    
+    // Return the actual mintRate for calculating the number of reward tokens to mint
+    function _getMintRate() private view returns (uint256) {
+        // if MINT_RATE == 468 then /= 100 == 4.68
+        return MINT_RATE / 100;
+    }
 
     /**
     * @dev used by owner to add recorder who can call a record function
