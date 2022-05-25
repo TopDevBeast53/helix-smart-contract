@@ -4,6 +4,7 @@ pragma solidity >= 0.8.0;
 import "../interfaces/IERC20.sol";
 import "../libraries/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
 /*
  * Allow users to purchase outputToken using inputToken via the medium of tickets
@@ -17,7 +18,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
  * Withdrawals of tokens equivalent in value to purchased tickets occurs immediately
  * upon completion of purchase transaction
  */
-contract PublicPresale is ReentrancyGuard {
+contract PublicPresale is Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /**
@@ -144,7 +145,12 @@ contract PublicPresale is ReentrancyGuard {
     }
 
     /// Purchase _amount of tickets
-    function purchase(uint256 _amount) external nonReentrant onlyValidAmount(_amount) {
+    function purchase(uint256 _amount) 
+        external 
+        whenNotPaused
+        nonReentrant 
+        onlyValidAmount(_amount) 
+    {
         // Want to be in the latest phase
         updatePurchasePhase();
    
@@ -235,6 +241,16 @@ contract PublicPresale is ReentrancyGuard {
         owners.push(_owner);
 
         emit OwnerAdded(msg.sender, _owner);
+    }
+
+    /// Called by the owner to pause the contract
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /// Called by the owner to unpause the contract
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
     /// Called periodically and, if sufficient time has elapsed, update the PurchasePhase
