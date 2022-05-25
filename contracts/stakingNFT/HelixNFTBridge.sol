@@ -2,6 +2,7 @@
 pragma solidity >= 0.8.0;
 
 import "../tokens/HelixNFT.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
@@ -10,7 +11,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
  * Solana blockchain. Here's the full list:
  *  - allow Solana NFT to be minted on Ethereum (bridgeFromSolana)
  */
-contract HelixNFTBridge is Ownable {
+contract HelixNFTBridge is Ownable, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /**
@@ -52,7 +53,12 @@ contract HelixNFTBridge is Ownable {
     /**
      * @dev This function is called ONLY by bridgers to bridge the token to Ethereum
      */
-    function bridgeToEthereum(string[] calldata externalTokenIDs, address owner, string calldata uri) onlyBridger external returns(bool) {
+    function bridgeToEthereum(string[] calldata externalTokenIDs, address owner, string calldata uri)
+      onlyBridger
+      external
+      whenNotPaused
+      returns(bool) 
+    {
         require(_countAddBridge[owner] > 0, "HelixNFTBridge: You are not a Bridger");
         for (uint256 i = 0; i < externalTokenIDs.length; i++) {
             string memory externalID = externalTokenIDs[i];
@@ -73,21 +79,34 @@ contract HelixNFTBridge is Ownable {
     /**
      * @dev Whether the token is bridged or not.
      */
-    function isBridged(string calldata externalTokenID) view external returns (bool) {
+    function isBridged(string calldata externalTokenID) external view returns (bool) {
         return _bridgedExternalTokenIDs[externalTokenID];
     }
 
     /**
      * @dev Get the owner to pick up the NFT from the bridge contract.
      */
-    function getPickUpOwner(string calldata externalTokenID) view external returns (address) {
+    function getPickUpOwner(string calldata externalTokenID) external view returns (address) {
         return _bridgedExternalTokenIDsPickUp[externalTokenID];
+    }
+
+    /// Called by the owner to pause the contract
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /// Called by the owner to unpause the contract
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
     /**
      * @dev Mark token as unavailable on Ethereum.
      */
-    function bridgeToSolana(uint256 tokenId, string calldata externalRecipientAddr) external {
+    function bridgeToSolana(uint256 tokenId, string calldata externalRecipientAddr) 
+       external 
+       whenNotPaused
+    {
         string[] memory externalTokenIDs = helixNFT.getExternalTokenIDs(tokenId);
         for (uint256 i = 0; i < externalTokenIDs.length; i++) {
             string memory externalID = externalTokenIDs[i];
