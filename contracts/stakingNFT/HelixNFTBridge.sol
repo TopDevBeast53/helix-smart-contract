@@ -8,30 +8,23 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 /**
  * HelixNFTBridge is responsible for many things related to NFT Bridging from-/to-
  * Solana blockchain. Here's the full list:
- *  - allow Solana NFT to be minted on BSC (bridgeFromSolana)
+ *  - allow Solana NFT to be minted on Ethereum (bridgeFromSolana)
  */
 contract HelixNFTBridge is Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /**
-     * @dev If the NFT is available on the BSC, then this map stores true
+     * @dev If the NFT is available on the Ethereum, then this map stores true
      * for the externalID, false otherwise.
      */
     mapping(string => bool) private _bridgedExternalTokenIDs;
 
     /**
-     * @dev If the NFT is available on the BSC, but it either:
+     * @dev If the NFT is available on the Ethereum, but it either:
      * - has not been minted
      * - has not been picked up by the owner from the bridge contract
      */
     mapping(string => address) private _bridgedExternalTokenIDsPickUp;
-    mapping(string => string) private _externalIDToURI;
-
-    /**
-     * @dev Stores the mapping between external token IDs and addresses of the actual
-     * minted HelixNFTs.
-     */
-    mapping(string => uint256) private _minted;
 
     /// for counting whenever add bridge once approve on solana 
     /// if it's down to 0, will call to remove bridger
@@ -40,11 +33,11 @@ contract HelixNFTBridge is Ownable {
     /**
      * @dev Bridgers are Helix service accounts which listen to the events
      *      happening on the Solana chain and then enabling the NFT for
-     *      minting / unlocking it for usage on BSC.
+     *      minting / unlocking it for usage on Ethereum.
      */
     EnumerableSet.AddressSet private _bridgers;
 
-    event BridgeToSolana(string externalTokenID, string externalRecipientAddr, uint256 timestamp);
+    event BridgeToSolana(string externalRecipientAddr, uint256 timestamp);
     event AddBridger(address indexed user, string externalTokenID);
     
     /**
@@ -57,38 +50,26 @@ contract HelixNFTBridge is Ownable {
     }
     
     /**
-     * @dev This function is called ONLY by bridgers to bridge the token to BSC
+     * @dev This function is called ONLY by bridgers to bridge the token to Ethereum
      */
-    function bridgeToBSC(string calldata externalTokenID, address owner, string calldata uri) onlyBridger external returns(bool) {
-        require(!_bridgedExternalTokenIDs[externalTokenID], "HelixNFTBridge: The token is already bridged to Binance");
+    function bridgeToEthereum(string[] calldata externalTokenIDs, address owner, string calldata uri) onlyBridger external returns(bool) {
         require(_countAddBridge[owner] > 0, "HelixNFTBridge: You are not a Bridger");
-        _bridgedExternalTokenIDs[externalTokenID] = true;
-        _bridgedExternalTokenIDsPickUp[externalTokenID] = owner;
-
-        // If the token is already minted, we could send it directly to the user's wallet
-        if (_minted[externalTokenID] > 0) {
-            helixNFT.transferFrom(address(this), owner, _minted[externalTokenID]);
-        } else {
-            _externalIDToURI[externalTokenID] = uri;
+        for (uint256 i = 0; i < externalTokenIDs.length; i++) {
+            string memory externalID = externalTokenIDs[i];
+            require(!_bridgedExternalTokenIDs[externalID], "HelixNFTBridge: The token is already bridged to Ethereum");
+        }
+        for (uint256 i = 0; i < externalTokenIDs.length; i++) {
+            string memory externalID = externalTokenIDs[i];
+            _bridgedExternalTokenIDs[externalID] = true;
+            _bridgedExternalTokenIDsPickUp[externalID] = owner;
         }
         _countAddBridge[owner]--;
+
+        helixNFT.mintExternal(owner, externalTokenIDs, uri);
+        // If the token is already minted, we could send it directly to the user's wallet
         if (_countAddBridge[owner] == 0) 
             return _delBridger(owner);
         return true;
-    }
-
-    /**
-     * @dev Used for minting the NFT first-time bridged to BSC from Solana.
-     */
-    function mintBridgedNFT(string calldata externalTokenID) external {
-        require(_bridgedExternalTokenIDs[externalTokenID], "HelixNFTBridge: not available");
-        require(_bridgedExternalTokenIDsPickUp[externalTokenID] == msg.sender, "HelixNFTBridge: pick up not allowed");
-
-        // Add 1 in expectation of _lastTokenId being incremented during mintExternal call
-        _minted[externalTokenID] = helixNFT.getLastTokenId() + 1;
-
-        helixNFT.mintExternal(msg.sender, externalTokenID, _externalIDToURI[externalTokenID]);
-
     }
 
     /**
@@ -106,27 +87,20 @@ contract HelixNFTBridge is Ownable {
     }
 
     /**
-     * @dev Returns the address of the minted NFT if available, address(0) otherwise.
-     */
-    function getMinted(string calldata externalTokenID) view external returns (uint256) {
-        return _minted[externalTokenID];
-    }
-
-    /**
-     * @dev Mark token as unavailable on BSC.
+     * @dev Mark token as unavailable on Ethereum.
      */
     function bridgeToSolana(uint256 tokenId, string calldata externalRecipientAddr) external {
-        string memory externalTokenID = helixNFT.getExternalTokenID(tokenId);
-        require(_bridgedExternalTokenIDs[externalTokenID], "HelixNFTBridge: already bridged to Solana");
-        require(_bridgedExternalTokenIDsPickUp[externalTokenID] == msg.sender, "HelixNFTBridge: Not owner");
-
-        // Mark as unavailable on BSC.
-        _bridgedExternalTokenIDs[externalTokenID] = false;
-        _bridgedExternalTokenIDsPickUp[externalTokenID] = address(0);
-
-        helixNFT.transferFrom(msg.sender, address(this), tokenId);
-
-        emit BridgeToSolana(externalTokenID, externalRecipientAddr, block.timestamp);
+        string[] memory externalTokenIDs = helixNFT.getExternalTokenIDs(tokenId);
+        for (uint256 i = 0; i < externalTokenIDs.length; i++) {
+            string memory externalID = externalTokenIDs[i];
+            require(_bridgedExternalTokenIDs[externalID], "HelixNFTBridge: already bridged to Solana");
+            require(_bridgedExternalTokenIDsPickUp[externalID] == msg.sender, "HelixNFTBridge: Not owner");
+            // Mark as unavailable on Ethereum.
+            _bridgedExternalTokenIDs[externalID] = false;
+            _bridgedExternalTokenIDsPickUp[externalID] = address(0);
+        }
+        helixNFT.burn(tokenId);
+        emit BridgeToSolana(externalRecipientAddr, block.timestamp);
     }
 
     /**
