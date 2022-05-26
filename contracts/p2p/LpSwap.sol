@@ -58,28 +58,60 @@ contract LpSwap is
     mapping(address => uint[]) public bidderSwapIds;
 
     // Emitted when a new swap is opened 
-    event SwapOpened(uint256 indexed id);
+    event OpenSwap(
+        address indexed seller,
+        uint256 indexed swapId,
+        address toBuyerToken,
+        address toSellerToken,
+        uint256 amount,
+        uint256 ask
+    );
 
     // Emitted when a swap is closed with no buyer
-    event SwapClosed(uint256 indexed id);
+    event CloseSwap(
+        address indexed seller, 
+        uint256 indexed swapId
+    );
 
     // Emitted when a swap's ask is set by the seller
-    event AskSet(uint256 indexed id);
+    event SetAsk(
+        address indexed seller,
+        uint256 indexed swapId,
+        uint256 ask
+    );
 
     // Emitted when a swap's ask is accepted by a buyer
-    event AskAccepted(uint256 indexed id);
+    event AcceptAsk(
+        address indexed buyer,
+        address indexed seller,
+        uint256 indexed swapId,
+        uint256 ask
+    );
 
     // Emitted when a bid is made on a swap by a bidder
-    event BidMade(uint256 indexed id);
-
-    // Emitted when a bid is withdrawn by a bidder after the swap has closed
-    event BidWithdrawn(uint256 indexed id);
+    event MakeBid(
+        address indexed bidder,
+        uint256 indexed swapId,
+        uint256 indexed bidId,
+        uint256 amount
+    );
 
     // Emitted when a bid amount is set by a bidder
-    event BidSet(uint256 indexed id);
+    event SetBid(
+        address indexed bidder, 
+        uint256 indexed swapId,
+        uint256 indexed bidId,
+        uint256 amount
+    );
 
     // Emitted when a swap's bid is accepted by the seller
-    event BidAccepted(uint256 indexed id);
+    event AcceptBid(
+        address indexed seller,
+        address indexed buyer,
+        uint256 indexed swapId,
+        uint256 bidId,
+        uint256 amount
+    );
     
     modifier isValidSwapId(uint256 _swapId) {
         require(swaps.length != 0, "LpSwap: no swap opened");
@@ -105,8 +137,8 @@ contract LpSwap is
 
     /// Called externally to open a new swap
     function openSwap(
-        IERC20 _toBuyerToken,    // Token being sold in this swap by seller to buyer
-        IERC20 _toSellerToken,   // Token being sold in this swap by buyer to seller
+        IERC20 _toBuyerToken,       // Token being sold in this swap by seller to buyer
+        IERC20 _toSellerToken,      // Token being sold in this swap by buyer to seller
         uint256 _amount,            // Amount of toBuyerToken to sell
         uint256 _ask                // Amount of toSellerToken seller is asking to sell toBuyerToken for
     ) 
@@ -136,9 +168,16 @@ contract LpSwap is
         // Reflect the created swap id in the user's account
         swapIds[msg.sender].push(_swapId);
 
-        emit SwapOpened(_swapId);
+        emit OpenSwap(
+            msg.sender,
+            _swapId,
+            address(_toBuyerToken),
+            address(_toSellerToken),
+            _amount,
+            _ask
+        );
     }
-
+    
     /// Called by seller to update the swap's ask
     function setAsk(uint256 _swapId, uint256 _ask) external whenNotPaused {
         Swap storage swap = _getSwap(_swapId);
@@ -147,9 +186,9 @@ contract LpSwap is
         _requireIsSeller(msg.sender, swap.seller);
 
         swap.ask = _ask;
-        emit AskSet(_swapId);
+        emit SetAsk(msg.sender, _swapId, _ask);
     }
-    
+
     /// Called by seller to close the swap and withdraw their toBuyerTokens
     function closeSwap(uint256 _swapId) external whenNotPaused {
         Swap storage swap = _getSwap(_swapId);
@@ -158,7 +197,7 @@ contract LpSwap is
         _requireIsSeller(msg.sender, swap.seller);
 
         swap.isOpen = false;
-        emit SwapClosed(_swapId);
+        emit CloseSwap(msg.sender, _swapId);
     }
 
     /// Make a new bid on an open swap
@@ -191,7 +230,12 @@ contract LpSwap is
         hasBidOnSwap[msg.sender][_swapId] = true;
         bidderSwapIds[msg.sender].push(_swapId);
         
-        emit BidMade(bidId);
+        emit MakeBid(
+            msg.sender,
+            _swapId,
+            bidId,
+            _amount
+        );
     }
 
     /// Called externally by a bidder while bidding is open to set the amount being bid
@@ -205,7 +249,7 @@ contract LpSwap is
 
         bid.amount = _amount;
 
-        emit BidSet(_bidId);
+        emit SetBid(msg.sender, bid.swapId, _bidId, _amount);
     }
 
     /// Called externally by the seller to accept the bid and close the swap
@@ -216,7 +260,7 @@ contract LpSwap is
         _requireIsSeller(msg.sender, swap.seller);
         _accept(swap, msg.sender, bid.bidder, bid.amount);
 
-        emit BidAccepted(_bidId);
+        emit AcceptBid(msg.sender, bid.bidder, bid.swapId, _bidId, bid.amount);
     }
 
     /// Called by a buyer to accept the ask and close the swap
@@ -226,7 +270,7 @@ contract LpSwap is
         _requireIsNotSeller(msg.sender, swap.seller);
         _accept(swap, swap.seller, msg.sender, swap.ask);
 
-        emit AskAccepted(_swapId);
+        emit AcceptAsk(msg.sender, swap.seller, _swapId, swap.ask);
     } 
 
     /// Called by the owner to pause the contract
