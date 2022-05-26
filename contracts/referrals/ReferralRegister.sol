@@ -20,8 +20,8 @@ contract ReferralRegister is
 {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-    /// Rate at which new helix tokens are minted as referrer rewards
-    uint256 public constant MINT_RATE = 468;
+    /// HelixToken tokens created per block.
+    uint256 public HelixTokenPerBlock;
 
     /// Token distributed as rewards to referrers
     IHelixToken public helixToken;
@@ -32,8 +32,10 @@ contract ReferralRegister is
     /// Reward percent for swap referrers
     uint256 public swapRefFee;
 
-    /// Sum of all referrer balances
-    uint256 public totalBalance;
+    /// accumulated amount
+    uint256 public accHelixTokenPerShare;
+
+    uint256 public totalAmount;
 
     /// Last block that reward tokens were minted
     uint256 public lastRewardBlock;
@@ -72,6 +74,8 @@ contract ReferralRegister is
     // Emitted when the contract is updated and new tokens are minted
     event Update(uint256 minted);
 
+    event HelixTokenPerBlockSet(uint256 _HelixTokenPerBlock);
+
     modifier isNotZeroAddress(address _address) {
         require(_address != address(0), "ReferralRegister: zero address");
         _;
@@ -86,7 +90,8 @@ contract ReferralRegister is
         IHelixToken _helixToken, 
         address _feeHandler,
         uint256 defaultStakingRef, 
-        uint256 defaultSwapRef
+        uint256 defaultSwapRef,
+        uint256 _HelixTokenPerBlock
     ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
@@ -94,6 +99,7 @@ contract ReferralRegister is
         helixToken = _helixToken;
         stakingRefFee = defaultStakingRef;
         swapRefFee = defaultSwapRef;
+        HelixTokenPerBlock = _HelixTokenPerBlock;
     }
 
     function recordStakingRewardWithdrawal(address user, uint256 amount) 
@@ -101,12 +107,14 @@ contract ReferralRegister is
         onlyRecorder 
         isNotZeroAddress(user)
     {
-        uint256 stakingRefReward = ((amount * stakingRefFee) / 1000);
-        balance[ref[user]] += stakingRefReward;
-        totalBalance += stakingRefReward;
         _update();
 
-        emit ReferralReward(user, ref[user], stakingRefReward);
+        uint256 stakingRefReward = ((amount * stakingRefFee) / 1000);
+        uint256 reward = stakingRefReward * accHelixTokenPerShare / (1e12);
+        balance[ref[user]] += reward;
+        totalAmount += stakingRefReward;
+
+        emit ReferralReward(user, ref[user], reward);
     }
 
     function recordSwapReward(address user, uint256 amount) 
@@ -114,12 +122,19 @@ contract ReferralRegister is
         onlyRecorder 
         isNotZeroAddress(user)
     {
-        uint256 swapRefReward = ((amount * swapRefFee) / 1000);
-        balance[ref[user]] += swapRefReward;
-        totalBalance += swapRefReward;
         _update();
 
-        emit ReferralReward(user, ref[user], swapRefReward);
+        uint256 swapRefReward = ((amount * swapRefFee) / 1000);
+        uint256 reward = swapRefReward * accHelixTokenPerShare / (1e12);
+        balance[ref[user]] += reward;
+        totalAmount += swapRefReward;
+
+        emit ReferralReward(user, ref[user], reward);
+    }
+    
+    function setHelixTokenPerBlock(uint256 _HelixTokenPerBlock) external onlyOwner {
+        HelixTokenPerBlock = _HelixTokenPerBlock;
+        emit HelixTokenPerBlockSet(_HelixTokenPerBlock);
     }
 
     function setFees(uint256 _stakingRefFee, uint256 _swapRefFee) external onlyOwner {
@@ -148,16 +163,12 @@ contract ReferralRegister is
         uint256 _balance = balance[msg.sender];
         require(_balance != 0, "ReferralRegister: nothing to withdraw");
         
-        // Update the amount of helixToken in the contract
-        _update();
-   
-        // Reward the caller with some percentage of the total helix token balance
-        // based on their percentage of the balance out of the total balance
-        uint256 reward = _balance / totalBalance * getHelixTokenBalance();
-    
+        uint256 reward = _balance;
+
+        // TODO: totalAmount -= ?
+        
         // Update the balances
         balance[msg.sender] = 0;
-        totalBalance -= _balance;
     
         // Split the reward and extract the collector fee
         (uint256 collectorFee, uint256 callerAmount) = getCollectorFeeSplit(reward);
@@ -182,13 +193,16 @@ contract ReferralRegister is
             return;
         }      
 
-        // number of blocks since last update * the number of tokens to mint per block
-        uint256 toMint = (block.number - lastRewardBlock) * (MINT_RATE / 100);
+        if (totalAmount <= 0) {
+            lastRewardBlock = block.number;
+            return;
+        }
+        uint256 HelixTokenReward = (block.number - lastRewardBlock) * HelixTokenPerBlock;
+        accHelixTokenPerShare = accHelixTokenPerShare + (HelixTokenReward * (1e12) / totalAmount);
         lastRewardBlock = block.number;
 
-        helixToken.mint(address(this), toMint);
-
-        emit Update(toMint);
+        helixToken.mint(address(this), HelixTokenReward);
+        emit Update(HelixTokenReward);
     }
     
     /// Return the helixToken balance in this contract 
