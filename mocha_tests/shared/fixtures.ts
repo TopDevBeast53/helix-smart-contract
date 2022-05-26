@@ -186,6 +186,9 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // Initialize the fee handler
     await feeHandler.initialize(refRegTreasuryAddress, helixChefNFT.address)
 
+    // Mark the feeHandler as a helixChefNFT accruer
+    await helixChefNFT.addAccruer(feeHandler.address)
+
     // 8 deploy helixNFTBridge, add a bridger, and register as minter
     const helixNFTBridge = await deployContract(wallet, HelixNFTBridge, [helixNFT.address], overrides)
 

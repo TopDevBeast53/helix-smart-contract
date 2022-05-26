@@ -88,6 +88,15 @@ module.exports = {
         56: '1000000000000000000', 
         97: '1000000000000000000', // currently this value means 1 HELIX per block
     },
+
+    // --------- Fee Handler ------------ //
+
+    FEE_HANDLER_TREASURY_ADDRESS : {
+        1: '',
+        4: '0x59201fb8cb2D61118B280c8542127331DD141654',
+        56: '0x59201fb8cb2D61118B280c8542127331DD141654',
+        97: '0x59201fb8cb2D61118B280c8542127331DD141654',
+    },
     
     // --------- Helix NFT & Chef --------- //
 

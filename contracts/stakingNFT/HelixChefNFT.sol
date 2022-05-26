@@ -172,8 +172,11 @@ contract HelixChefNFT is
     }
 
     /// Return the reward accrued to _user based on the transaction _fee
-    function getAccruedReward(address _user, uint256 _fee) public view returns (uint256 reward) {
-        reward = usersStakedNfts[_user] / totalStakedNfts * _fee;
+    function getAccruedReward(address _user, uint256 _fee) public view returns (uint256) {
+        if (totalStakedNfts == 0) {
+            return 0;
+        }
+        return usersStakedNfts[_user] / totalStakedNfts * _fee;
     }
 
     /// Return true if the _address is a registered accruer and false otherwise

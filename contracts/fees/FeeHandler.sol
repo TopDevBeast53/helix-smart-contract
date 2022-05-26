@@ -39,7 +39,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     }
 
     modifier onlyValidPercent(uint256 _percent) {
-        require(Percent.isValidPercent(_percent), "FeeCollector: percent exceeds max");
+        require(Percent.isValidPercent(_percent), "FeeHandler: percent exceeds max");
         _;
     } 
 
@@ -51,7 +51,10 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     
     /// Called by a FeeCollector to send _amount of _token to this FeeHandler
     /// handles sending fees to treasury and staking with nftChef
-    function transferFee(IERC20 _token, address _from, address _rewardAccruer, uint256 _fee) external onlyValidFee(_fee) {
+    function transferFee(IERC20 _token, address _from, address _rewardAccruer, uint256 _fee) 
+        external 
+        onlyValidFee(_fee) 
+    {
         (uint256 nftChefAmount, uint256 treasuryAmount) = _getSplit(_fee, nftChefPercent);
 
         if (nftChefAmount > 0) {
@@ -60,7 +63,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
         }
 
         if (treasuryAmount > 0) {
-            _token.transferFrom(_from, address(treasury), treasuryAmount);
+            _token.transferFrom(_from, treasury, treasuryAmount);
         }
     }
 
