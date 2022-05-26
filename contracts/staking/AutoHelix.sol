@@ -11,7 +11,6 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
-
     struct UserInfo {
         uint256 shares; // number of shares for a user
         uint256 lastDepositedTime; // keeps track of deposited time for potential penalty
@@ -22,8 +21,6 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
     IERC20Upgradeable public token; // Helix token
 
     IMasterChef public masterchef;
-
-    mapping(address => UserInfo) public userInfo;
 
     uint256 public totalShares;
     uint256 public lastHarvestedTime;
@@ -39,23 +36,50 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
     uint256 public withdrawFee;
     uint256 public withdrawFeePeriod;
 
-    event Deposit(address indexed sender, uint256 amount, uint256 shares, uint256 lastDepositedTime);
-    event Withdraw(address indexed sender, uint256 amount, uint256 shares);
-    event Harvest(address indexed sender, uint256 performanceFee, uint256 callFee);
-    event Pause();
-    event Unpause();
+    mapping(address => UserInfo) public userInfo;
+
+    // Emitted when a deposit is made
+    event Deposit(
+        address indexed sender, 
+        uint256 amount, 
+        uint256 shares, 
+        uint256 lastDepositedTime
+    );
+
+    // Emitted when tokens are withdrawn
+    event Withdraw(
+        address indexed sender, 
+        uint256 amount, 
+        uint256 shares
+    );
+
+    // Emitted when tokens are harvested
+    event Harvest(
+        address indexed sender, 
+        uint256 performanceFee, 
+        uint256 callFee
+    );
 
     // Emitted when the owner updates the performance fee
-    event PerformanceFeeSet(uint256 performanceFee);
+    event SetPerformanceFee(address indexed setter, uint256 performanceFee);
 
     // Emitted when the owner updates the call fee
-    event CallFeeSet(uint256 callFee);
+    event SetCallFee(address indexed setter, uint256 callFee);
 
     // Emitted when the owner updates the withdraw fee
-    event WithdrawFeeSet(uint256 withdrawFee);
+    event SetWithdrawFee(address indexed setter, uint256 withdrawFee);
 
     // Emitted when the owner updates the withdraw fee period
-    event WithdrawFeePeriodSet(uint256 withdrawFeePeriod);
+    event SetWithdrawFeePeriod(address indexed setter, uint256 withdrawFeePeriod);
+
+    /**
+     * @notice Checks if the msg.sender is a contract or a proxy
+     */
+    modifier notContract() {
+        require(!AddressUpgradeable.isContract(msg.sender), "AutoHelix: contract not allowed");
+        require(msg.sender == tx.origin, "AutoHelix: proxy not allowed");
+        _;
+    }
 
     /**
      * @param _token: Helix token contract
@@ -83,15 +107,6 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
     }
 
     /**
-     * @notice Checks if the msg.sender is a contract or a proxy
-     */
-    modifier notContract() {
-        require(!AddressUpgradeable.isContract(msg.sender), "AutoHelix: contract not allowed");
-        require(msg.sender == tx.origin, "AutoHelix: proxy not allowed");
-        _;
-    }
-
-    /**
      * @notice Deposits funds into the Helix Vault
      * @dev Only possible when contract not paused.
      * @param _amount: number of tokens to deposit (in Helix)
@@ -116,7 +131,12 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
         TransferHelper.safeTransferFrom(address(token), msg.sender, address(this), _amount);
         _earn();
 
-        emit Deposit(msg.sender, _amount, currentShares, block.timestamp);
+        emit Deposit(
+            msg.sender, 
+            _amount, 
+            currentShares, 
+            block.timestamp
+        );
     }
 
     /**
@@ -164,7 +184,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
     function setPerformanceFee(uint256 _performanceFee) external onlyOwner {
         require(_performanceFee <= MAX_PERFORMANCE_FEE, "AutoHelix: invalid fee");
         performanceFee = _performanceFee;
-        emit PerformanceFeeSet(_performanceFee);
+        emit SetPerformanceFee(msg.sender, _performanceFee);
     }
 
     /**
@@ -174,7 +194,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
     function setCallFee(uint256 _callFee) external onlyOwner {
         require(_callFee <= MAX_CALL_FEE, "AutoHelix: invalid fee");
         callFee = _callFee;
-        emit CallFeeSet(_callFee);
+        emit SetCallFee(msg.sender, _callFee);
     }
 
     /**
@@ -184,7 +204,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
     function setWithdrawFee(uint256 _withdrawFee) external onlyOwner {
         require(_withdrawFee <= MAX_WITHDRAW_FEE, "AutoHelix: invalid fee");
         withdrawFee = _withdrawFee;
-        emit WithdrawFeeSet(_withdrawFee);
+        emit SetWithdrawFee(msg.sender, _withdrawFee);
     }
 
     /**
@@ -197,7 +217,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
             "AutoHelix: invalid fee period"
         );
         withdrawFeePeriod = _withdrawFeePeriod;
-        emit WithdrawFeePeriodSet(_withdrawFeePeriod);
+        emit SetWithdrawFeePeriod(msg.sender, _withdrawFeePeriod);
     }
 
     /**
@@ -224,7 +244,6 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
      */
     function pause() external onlyOwner whenNotPaused {
         _pause();
-        emit Pause();
     }
 
     /**
@@ -233,7 +252,6 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
      */
     function unpause() external onlyOwner whenPaused {
         _unpause();
-        emit Unpause();
     }
 
     /**
