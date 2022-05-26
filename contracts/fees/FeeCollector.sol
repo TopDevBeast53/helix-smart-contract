@@ -13,10 +13,10 @@ abstract contract FeeCollector {
     uint256 public collectorPercent;
 
     // Emitted when a new _feeHandler address is set by the owner
-    event SetFeeHandler(address _feeHandler);
+    event SetFeeHandler(address indexed setter, address feeHandler);
 
     // Emitted when a new collector percent is set by the owner
-    event SetCollectorPercent(uint256 _collectorPercent);
+    event SetCollectorPercent(address indexed setter, uint256 collectorPercent);
 
     /// Return true if the feeHandler address is set and false otherwise
     function isFeeHandlerSet() public view returns (bool) {
@@ -51,13 +51,13 @@ abstract contract FeeCollector {
     function _setFeeHandler(address _feeHandler) internal virtual { 
         require(_feeHandler != address(0), "FeeCollector: zero address");
         feeHandler = IFeeHandler(_feeHandler);
-        emit SetFeeHandler(address(_feeHandler));
+        emit SetFeeHandler(msg.sender, address(_feeHandler));
     }
 
     // Called by the owner to set the _collectorPercent collected from transactions
     function _setCollectorPercent(uint256 _collectorPercent) internal virtual {
         require(Percent.isValidPercent(_collectorPercent), "FeeCollector: percent exceeds max");
         collectorPercent = _collectorPercent;
-        emit SetCollectorPercent(_collectorPercent);
+        emit SetCollectorPercent(msg.sender, _collectorPercent);
     }
 }
