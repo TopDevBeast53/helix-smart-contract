@@ -82,7 +82,7 @@ contract SwapRewards is ISwapRewards, Ownable, Pausable {
             helixToken.mint(_user, helixOut);
 
             // Accrue HELIX to the swap caller referrer
-            refReg.recordSwapReward(_user, helixOut);
+            refReg.rewardSwap(_user, helixOut);
         }
         
         emit Swap(_user, _tokenIn, _amountIn, helixOut);

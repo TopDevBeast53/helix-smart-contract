@@ -3,12 +3,15 @@ pragma solidity >=0.8.0;
 
 import "../interfaces/IHelixToken.sol";
 import "../fees/FeeCollector.sol";
+import "../libraries/Percent.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
+/// Users (referrers) refer other users (referred) and referrers earn rewards when
+/// referred users perform stakes or swaps
 contract ReferralRegister is 
     FeeCollector, 
     Initializable, 
@@ -18,46 +21,75 @@ contract ReferralRegister is
 {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-    /**
-     * Referral fees are stored as: referred address => referrer address
-     */
-    mapping(address => address) public ref;
+    /// Rate at which new tokens are minted as referrer rewards
+    /// Divided by 100 to have 2 decimals of precision
+    uint256 public toMintPerBlock;
 
-    /**
-     * Rewards balance of each referrer.
-     */
-    mapping(address => uint256) public balance;
+    /// Token distributed as referrer rewards
+    IHelixToken public helixToken;
 
-    /**
-     * Accounts approved by the contract owner which can call the "record" functions
-     */
+    /// Reward percent for staker referrers
+    uint256 public stakeRewardPercent;
+
+    /// Reward percent for swap referrers
+    uint256 public swapRewardPercent;
+
+    /// Last block that reward tokens were minted
+    uint256 public lastMintBlock;
+
+    /// Accounts approved by the contract owner which can call the "record" functions
     EnumerableSetUpgradeable.AddressSet private _recorders;
 
-    uint256 constant MAX_STAKING_FEE = 30; // 3%
-    uint256 constant MAX_SWAP_FEE = 100; // 10%
+    /// Referral fees are stored as: referred address => referrer address
+    mapping(address => address) public referrers;
 
-    IHelixToken public helixToken;
-    uint256 public stakingRefFee;
-    uint256 public swapRefFee;
+    /// Rewards balance of each referrer.
+    mapping(address => uint256) public rewards;
 
-    // Emitted when a referrer earns amount because referred made a transaction
-    event ReferralReward(
-        address indexed referred,
+    // Emitted when a referrer earns a reward because referred made a stake transaction
+    event RewardStake(
         address indexed referrer,
-        uint256 amount
+        address indexed referred,
+        uint256 indexed reward,
+        uint256 stakeAmount
     );
 
-    // Emitted when the owner sets the referral fees
-    event FeesSet(uint256 stakingRefFee, uint256 swapRefFee);
+    // Emitted when a referrer earns a reward because referred made a swap transaction
+    event RewardSwap(
+        address indexed referrer,
+        address indexed referred,
+        uint256 indexed reward,
+        uint256 swapAmount
+    );
+
+    // Emitted when the stakeRewardPercent is set
+    event SetStakeRewardPercent(address indexed setter, uint256 stakeRewardPercent);
+
+    // Emitted when the swapRewardPercent is set
+    event SetSwapRewardPercent(address indexed setter, uint256 stakeRewardPercent);
 
     // Emitted when a referred adds a referrer
-    event ReferrerAdded(address referred, address referrer);
+    event AddReferrer(address referred, address referrer);
 
     // Emitted when a referred removes their referrer
     event ReferrerRemoved(address referred);
 
     // Emitted when a referrer withdraws their earned referral rewards
-    event Withdrawn(address referrer, uint256 rewards);
+    event Withdraw(
+        address indexed referrer,
+        uint256 indexed referrerReward,
+        uint256 indexed collectorFee,
+        uint256 rewardBalance
+    );
+
+    // Emitted when the contract is updated and new tokens are minted
+    event Update(uint256 minted);
+
+    // Emitted when the lastMintBlock is manually set
+    event SetLastRewardBlock(address indexed setter, uint256 lastMintBlock);
+
+    // Emitted when the toMintPerBlock rate is set
+    event SetToMintPerBlock(address indexed setter, uint256 _toMintPerBlock);
 
     modifier isNotZeroAddress(address _address) {
         require(_address != address(0), "ReferralRegister: zero address");
@@ -72,123 +104,126 @@ contract ReferralRegister is
     function initialize(
         IHelixToken _helixToken, 
         address _feeHandler,
-        uint256 defaultStakingRef, 
-        uint256 defaultSwapRef
+        uint256 _stakeRewardPercent, 
+        uint256 _swapRewardPercent,
+        uint256 _toMintPerBlock,
+        uint256 _lastMintBlock
     ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
         _setFeeHandler(_feeHandler);
+
         helixToken = _helixToken;
-        stakingRefFee = defaultStakingRef;
-        swapRefFee = defaultSwapRef;
+        stakeRewardPercent = _stakeRewardPercent;
+        swapRewardPercent = _swapRewardPercent;
+        toMintPerBlock = _toMintPerBlock;
+        lastMintBlock = _lastMintBlock;
     }
 
-    function recordStakingRewardWithdrawal(address user, uint256 amount) 
-        external 
-        onlyRecorder 
-        isNotZeroAddress(user)
-    {
-        uint256 stakingRefReward = ((amount * stakingRefFee) / 1000);
-        balance[ref[user]] += stakingRefReward;
-
-        emit ReferralReward(user, ref[user], stakingRefReward);
+    /// Reward _referred's referrer when _referred _stakeAmount
+    function rewardStake(address _referred, uint256 _stakeAmount) external onlyRecorder {
+        address referrer = referrers[_referred];
+        uint256 reward = _reward(referrer, _stakeAmount, stakeRewardPercent);
+        emit RewardStake(referrer, _referred, reward, _stakeAmount);
     }
 
-    function recordSwapReward(address user, uint256 amount) 
-        external 
-        onlyRecorder 
-        isNotZeroAddress(user)
-    {
-        uint256 swapRefReward = ((amount * swapRefFee) / 1000);
-        balance[ref[user]] += swapRefReward;
-
-        emit ReferralReward(user, ref[user], swapRefReward);
+    /// Reward _referred's referrer when _referred _swapAmount
+    function rewardSwap(address _referred, uint256 _swapAmount) external onlyRecorder {
+        address referrer = referrers[_referred];
+        uint256 reward = _reward(referrer, _swapAmount, swapRewardPercent);
+        emit RewardSwap(referrer, _referred, reward, _swapAmount);
     }
 
-    function setFees(uint256 _stakingRefFee, uint256 _swapRefFee) external onlyOwner {
-        // Prevent the owner from increasing referral rewards - values to be determined
-        require(_stakingRefFee <= MAX_STAKING_FEE, "ReferralRegister: invalid staking fee");
-        require(_swapRefFee <= MAX_SWAP_FEE, "ReferralRegister: invalid swap fee");
-        stakingRefFee = _stakingRefFee;
-        swapRefFee = _swapRefFee;
-        emit FeesSet(_stakingRefFee, _swapRefFee);
-    }
-
-    function addRef(address _referrer) external {
-        require(ref[msg.sender] == address(0), "ReferralRegister: already referred");
-        require(msg.sender != _referrer, "ReferralRegister: no self referral");
-        ref[msg.sender] = _referrer;
-        emit ReferrerAdded(msg.sender, _referrer);
-    }
-
-    function removeRef() external {
-        require(ref[msg.sender] != address(0), "ReferralRegister: not referred");
-        ref[msg.sender] = address(0);
-        emit ReferrerRemoved(msg.sender);
-    }
-
+    /// Called by a referrer to withdraw their accrued rewards
     function withdraw() external whenNotPaused nonReentrant {
-        uint256 toMint = balance[msg.sender];
-        require(toMint != 0, "ReferralRegister: nothing to withdraw");
+        uint256 reward = rewards[msg.sender];
+        require(reward > 0, "ReferralRegister: nothing to withdraw");
 
-        balance[msg.sender] = 0;
+        uint256 contractBalance  = helixToken.balanceOf(address(this));
+        require(contractBalance > 0, "ReferralRegister: no helix in contract");
+    
+        // Prevent withdrawing more than the contract balance
+        reward = reward < contractBalance ? reward : contractBalance;
 
-        (uint256 collectorFee, uint256 callerAmount) = getCollectorFeeSplit(toMint);
-        if (callerAmount > 0) {
-            helixToken.mint(msg.sender, callerAmount);
+        // Update the referrer's reward balance
+        rewards[msg.sender] -= reward;
+    
+        // Split the reward and extract the collector fee
+        (uint256 collectorFee, uint256 referrerReward) = getCollectorFeeSplit(reward);
+        if (referrerReward > 0) {
+            helixToken.transfer(msg.sender, referrerReward);
         }
         if (collectorFee > 0) {
-            helixToken.mint(address(this), collectorFee);
             _delegateTransfer(IERC20(address(helixToken)), address(this), collectorFee);
         }
 
-        emit Withdrawn(msg.sender, toMint);
+        emit Withdraw(msg.sender, referrerReward, collectorFee, rewards[msg.sender]);
     }
 
-    // Role functions for Recorders --------------------------------------------------------------------------------------
-
-    /**
-    * @dev used by owner to add recorder who can call a record function
-    * @param account address of recorder to be added.
-    * @return true if successful.
-    */
-    function addRecorder(address account) public onlyOwner isNotZeroAddress(account) returns(bool) {
-        return EnumerableSetUpgradeable.add(_recorders, account);
+    /// Called by the owner to set the rate at which new tokens are minted per block
+    function setToMintPerBlock(uint256 _toMintPerBlock) external onlyOwner {
+        toMintPerBlock = _toMintPerBlock;
+        emit SetToMintPerBlock(msg.sender, _toMintPerBlock);
     }
 
-    /**
-    * @dev used by owner to delete recorder who can call a record function
-    * @param account address of recorder to be deleted.
-    * @return true if successful.
-    */
-    function delRecorder(address account) external onlyOwner isNotZeroAddress(account) returns(bool) {
-        return EnumerableSetUpgradeable.remove(_recorders, account);
+    /// Called by the owner to set the percent earned by referrers on stake transactions
+    function setStakeRewardPercent(uint256 _stakeRewardPercent) external onlyOwner {
+        stakeRewardPercent = _stakeRewardPercent;
+        emit SetStakeRewardPercent(msg.sender, _stakeRewardPercent);
     }
 
-    /**
-    * @dev See the number of recorders
-    * @return number of recorders.
-    */
-    function getRecorderLength() public view returns(uint256) {
-        return EnumerableSetUpgradeable.length(_recorders);
+    /// Called by the owner to set the percent earned by referrers on swap transactions
+    function setSwapRewardPercent(uint256 _swapRewardPercent) external onlyOwner {
+        swapRewardPercent = _swapRewardPercent;
+        emit SetSwapRewardPercent(msg.sender, _swapRewardPercent);
     }
 
-    /**
-    * @dev Check if an address is a recorder
-    * @return true or false based on recorder status.
-    */
-    function isRecorder(address account) public view returns(bool) {
-        return EnumerableSetUpgradeable.contains(_recorders, account);
+    /// Set the caller's (referred's) referrer
+    function addReferrer(address _referrer) external {
+        require(referrers[msg.sender] == address(0), "ReferralRegister: referrer already set");
+        require(msg.sender != _referrer, "ReferralRegister: no self referral");
+        referrers[msg.sender] = _referrer;
+        emit AddReferrer(msg.sender, _referrer);
     }
 
-    /**
-    * @dev Get the recorder at n location
-    * @param index index of address set
-    * @return address of recorder at index.
-    */
-    function getRecorder(uint256 index) external view onlyOwner returns(address) {
-        require(index <= getRecorderLength() - 1, "ReferralRegister: index out of bounds");
-        return EnumerableSetUpgradeable.at(_recorders, index);
+    /// Remove the caller's referrer
+    function removeReferrer() external {
+        referrers[msg.sender] = address(0);
+        emit ReferrerRemoved(msg.sender);
+    }
+
+    /// Mint new reward tokens to the contract according to the mint rate
+    function update() external nonReentrant {
+        _update();
+    }
+
+    // Mint new helix tokens to the contract according to the mint rate
+    function _update() private {
+        if (block.number <= lastMintBlock) {
+            return;
+        }      
+
+        uint256 toMint = (block.number - lastMintBlock) * (toMintPerBlock / 100);
+        lastMintBlock = block.number;
+
+        helixToken.mint(address(this), toMint);
+        emit Update(toMint);
+    }
+    
+    /// Called by the owner to register a new recorder
+    function addRecorder(address _recorder) external onlyOwner isNotZeroAddress(_recorder) returns (bool) {
+        return EnumerableSetUpgradeable.add(_recorders, _recorder);
+    }
+    
+    /// Called by the owner to remove a recorder
+    function removeRecorder(address _recorder) external onlyOwner isNotZeroAddress(_recorder) returns (bool) {
+        return EnumerableSetUpgradeable.remove(_recorders, _recorder);
+    }
+    
+    /// Called by the owner to set the _lastMintBlock
+    function setLastRewardBlock(uint256 _lastMintBlock) external onlyOwner {
+        lastMintBlock = _lastMintBlock;
+        emit SetLastRewardBlock(msg.sender, _lastMintBlock);
     }
 
     /// Called by owner to pause contract
@@ -205,8 +240,37 @@ contract ReferralRegister is
     function setFeeHandler(address _feeHandler) external onlyOwner {
         _setFeeHandler(_feeHandler);
     }
-    
+   
+    /// Called by the owner to set the percent charged on withdrawals
     function setCollectorPercent(uint256 _collectorPercent) external onlyOwner {
         _setCollectorPercent(_collectorPercent);
+    }
+
+    /// Return the address of the recorder at _index
+    function getRecorder(uint256 _index) external view onlyOwner returns (address) {
+        require(_index <= getRecorderLength() - 1, "ReferralRegister: index out of bounds");
+        return EnumerableSetUpgradeable.at(_recorders, _index);
+    }
+
+    /// Return number of recorders.
+    function getRecorderLength() public view returns (uint256) {
+        return EnumerableSetUpgradeable.length(_recorders);
+    }
+
+    /// Return true if _address is a recorder and false otherwise
+    function isRecorder(address _address) public view returns (bool) {
+        return EnumerableSetUpgradeable.contains(_recorders, _address);
+    }
+
+    // Reward _referred's referrer based on transaction _amount and _rate
+    function _reward(address _referred, uint256 _amount, uint256 _rate)
+        private
+        isNotZeroAddress(_referred)
+        returns (uint256 reward)
+    {
+        _update();
+
+        reward = Percent.getPercentage(_amount, _rate);
+        rewards[referrers[_referred]] += reward;
     }
 }
