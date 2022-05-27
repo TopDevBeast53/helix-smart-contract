@@ -127,18 +127,7 @@ describe('HelixMigrator', () => {
             token1.address,                 // tokenB
             externalPair.address,           // lpToken
             externalRouter.address          // externalRouter
-        ))
-            .to.emit(migrator, "MigrateLiquidity")
-            .withArgs(
-                wallet.address,             // Migrate liquidity function caller 
-                externalRouter.address,     // External DEX's router 
-                99000,                      // Liquidity in external DEX
-                99000,                      // Token A balance in external DEX
-                99000,                      // Token B balance in external DEX
-                98000,                      // Liquidity moved to DEX -- NOTE liquidity is reduced
-                99000,                      // Token A balance moved to DEX
-                99000,                      // Token B balance moved to DEX
-            );
+        )).to.emit(migrator, "MigrateLiquidity")
     });
 
     it('migrator: set the router', async () => {

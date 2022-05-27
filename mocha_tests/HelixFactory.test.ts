@@ -45,7 +45,7 @@ describe('HelixFactory', () => {
     const bytecode = `${HelixPair.bytecode}`
     const create2Address = getCreate2Address(factory.address, tokens, bytecode)
     await expect(factory.createPair(...tokens))
-      .to.emit(factory, 'PairCreated')
+      .to.emit(factory, 'CreatePair')
       .withArgs(TEST_ADDRESSES[0], TEST_ADDRESSES[1], create2Address, bigNumberify(1))
 
     await expect(factory.createPair(...tokens)).to.be.reverted // Helix: PAIR_EXISTS
@@ -72,7 +72,7 @@ describe('HelixFactory', () => {
   it('factory: createPair:gas', async () => {
     const tx = await factory.createPair(...TEST_ADDRESSES)
     const receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(2416340)
+    expect(receipt.gasUsed).to.eq(2419240)
   })
 
   it('factory: setFeeTo', async () => {

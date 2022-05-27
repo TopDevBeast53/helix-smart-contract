@@ -116,15 +116,9 @@ describe('OracleFactory', () => {
         expect(oracle0.token1).to.eq(oracle1.token1)
     })
 
-    it('oracleFactory: create oracle emits Created event', async () => {
+    it('oracleFactory: create oracle emits Create event', async () => {
         await expect(factory.createPair(tokenC.address, tokenD.address))
-            .to.emit(oracleFactory, "Created")
-            .withArgs(
-                tokenD.address,
-                tokenC.address,
-                0,
-                0
-            )
+            .to.emit(oracleFactory, "Create")
     })
 
     it('oracleFactory: update when oracle not created fails', async () => {
@@ -218,7 +212,7 @@ describe('OracleFactory', () => {
         expect(oracle.blockTimestampLast).to.be.eq(expectedTimestamp) 
     })
 
-    it('oracleFactory: update emits Updated event', async () => {
+    it('oracleFactory: update emits Update event', async () => {
         // create the pair/oracle
         await factory.createPair(tokenB.address, tokenC.address)
 
@@ -237,15 +231,7 @@ describe('OracleFactory', () => {
         
         // update the oracle
         await expect(oracleFactory.update(tokenB.address, tokenC.address))
-            .to.emit(oracleFactory, 'Updated')
-            .withArgs(
-                tokenB.address, 
-                tokenC.address, 
-                expectedPrice0,
-                expectedPrice1,
-                expectedReserve0, 
-                expectedReserve1
-            )
+            .to.emit(oracleFactory, 'Update')
     })
 
     it('oracleFactory: consult returns amount in if oracle doesn\'t exist', async () => {

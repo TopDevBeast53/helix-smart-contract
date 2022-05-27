@@ -800,7 +800,7 @@ describe('Vault', () => {
         const treasury = wallet1.address
         await expect(feeHandler.setTreasury(treasury))
             .to.emit(feeHandler, "SetTreasury")
-            .withArgs(treasury)
+            .withArgs(wallet0.address, treasury)
     })
 
     it('vault: set fee as non-owner fails', async () => {
@@ -825,7 +825,7 @@ describe('Vault', () => {
         const fee = 50
         await expect(vault.setCollectorPercent(fee))
             .to.emit(vault, "SetCollectorPercent")
-            .withArgs(fee)
+            .withArgs(wallet0.address, fee)
     })
 
     async function getAccTokenPerShare(blockNumber: number) {

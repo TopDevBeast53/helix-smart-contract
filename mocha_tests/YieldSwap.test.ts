@@ -442,15 +442,14 @@ describe('Yield Swap', () => {
         expect((await yieldSwap.getSwapIds(wallet0.address))[0]).to.eq(expectedSwapIds[0])
     })
 
-    it('yieldSwap: open swap emits SwapOpened event', async () => {
+    it('yieldSwap: open swap emits OpenSwap event', async () => {
         // must set an allowance
         await helixLP.approve(yieldSwap.address, amount)
 
         // open the swap
         const expectedSwapId = 0
         await expect(yieldSwap.openSwap(toBuyerToken, toSellerToken, amount, ask, duration, toBuyerTokenIsLp, toSellerTokenIsLp))
-            .to.emit(yieldSwap, 'SwapOpened')
-            .withArgs(expectedSwapId)
+            .to.emit(yieldSwap, 'OpenSwap')
     })
 
     it('yieldSwap: set ask with invalid swapId fails', async () => {
@@ -502,15 +501,14 @@ describe('Yield Swap', () => {
         expect((await yieldSwap.getSwap(swapId)).ask).to.eq(expectedAsk)
     })
 
-    it('yieldSwap: set ask emits AskSet event', async () => {
+    it('yieldSwap: set ask emits SetAsk event', async () => {
         await openSwap()
 
         const swapId = await yieldSwap.getSwapId()
         const expectedAsk = expandTo18Decimals(10000)
 
         await expect(yieldSwap.setAsk(swapId, expectedAsk))
-            .to.emit(yieldSwap, "AskSet")
-            .withArgs(swapId)
+            .to.emit(yieldSwap, "SetAsk")
     })
 
     it('yieldSwap: close swap with invalid swapId fails', async () => {
@@ -562,14 +560,13 @@ describe('Yield Swap', () => {
         expect((await yieldSwap.getSwap(swapId)).status).to.eq(expectedStatus)
     })
 
-    it('yieldSwap: close swap emits SwapClosed event', async () => {
+    it('yieldSwap: close swap emits CloseSwap event', async () => {
         await openSwap()
 
         const swapId = await yieldSwap.getSwapId()
 
         await expect(yieldSwap.closeSwap(swapId))
-            .to.emit(yieldSwap, "SwapClosed")
-            .withArgs(swapId)
+            .to.emit(yieldSwap, "CloseSwap")
     })
 
     it('yieldSwap: make bid when swap is closed fails', async () => {
@@ -674,7 +671,7 @@ describe('Yield Swap', () => {
         expect(bidderSwapIds[0]).to.eq(swapId)
     })
 
-    it('yieldSwap: make bid emits BidMade event', async () => {
+    it('yieldSwap: make bid emits MakeBid event', async () => {
         await openSwap()
         const swapId = await yieldSwap.getSwapId()
 
@@ -685,8 +682,7 @@ describe('Yield Swap', () => {
         
         // make the bid
         await expect(yieldSwap1.makeBid(swapId, bidAmount))
-            .to.emit(yieldSwap, 'BidMade')
-            .withArgs(expectedBidId)
+            .to.emit(yieldSwap, 'MakeBid')
     })
 
     it('yieldSwap: set bid with invalid bidId fails', async () => {
@@ -800,15 +796,14 @@ describe('Yield Swap', () => {
         expect(bid.amount).to.eq(expectedBidAmount)
     })
 
-    it('yieldSwap: set bid emits BidSet event', async () => {
+    it('yieldSwap: set bid emits SetBid event', async () => {
         await openSwap()
         const swapId = await yieldSwap.getSwapId()
         await makeBid(swapId)
         const bidId = await yieldSwap.getBidId()
     
         await expect(yieldSwap1.setBid(bidId, bidAmount))
-            .to.emit(yieldSwap, 'BidSet')
-            .withArgs(bidId)
+            .to.emit(yieldSwap, 'SetBid')
     })
 
     it('yieldSwap: accept bid with invalid bidId fails', async () => {
@@ -1134,7 +1129,7 @@ describe('Yield Swap', () => {
         expect(await helixLP2.balanceOf(wallet2.address)).to.eq(expectedToSellerBalTreasury)
     })
 
-    it('yieldSwap: accept bid emits BidAccepted event', async () => {
+    it('yieldSwap: accept bid emits AcceptBid event', async () => {
         // open the swap and make a bid
         await openSwap()
         const swapId = await yieldSwap.getSwapId()
@@ -1143,8 +1138,7 @@ describe('Yield Swap', () => {
         // accept the bid
         const bidId = await yieldSwap.getBidId()
         await expect(yieldSwap.acceptBid(bidId))
-            .to.emit(yieldSwap, 'BidAccepted')
-            .withArgs(bidId)
+            .to.emit(yieldSwap, 'AcceptBid')
     })
 
     it('yieldSwap: accept ask with invalid swapId fails', async () => {
@@ -1377,7 +1371,7 @@ describe('Yield Swap', () => {
         expect(await helixToken.balanceOf(wallet2.address)).to.eq(expectedToSellerBalTreasury)
     })
 
-    it('yieldSwap: accept ask emits AskAccepted event', async () => {
+    it('yieldSwap: accept ask emits AcceptAsk event', async () => {
         // open the swap
         await openSwap()
         const swapId = await yieldSwap.getSwapId()
@@ -1390,8 +1384,7 @@ describe('Yield Swap', () => {
 
         // accept the ask as wallet1
         await expect(yieldSwap1.acceptAsk(swapId))
-            .to.emit(yieldSwap, 'AskAccepted')
-            .withArgs(swapId)
+            .to.emit(yieldSwap, 'AcceptAsk')
     })
 
     it('yieldSwap: withdraw with invalid swapId fails', async () => {
@@ -1699,7 +1692,7 @@ describe('Yield Swap', () => {
         expect(await helixLP2.balanceOf(wallet1.address)).to.eq(expectedLp2Balance1)
    })
 
-    it('yieldSwap: withdraw emits Withdrawn event', async () => {
+    it('yieldSwap: withdraw emits Withdraw event', async () => {
         // set the min lock duration to 0 so withdraw can 
         // succeed and swap can be locked
         await yieldSwap.setMinLockDuration(0)
@@ -1720,10 +1713,9 @@ describe('Yield Swap', () => {
         // accept the ask as wallet1, closing the swap and setting a buyer
         await yieldSwap1.acceptAsk(swapId)
 
-        // expect the withdrawal to emit Withdrawn
+        // expect the withdrawal to emit Withdraw
         await expect(yieldSwap.withdraw(swapId))
-            .to.emit(yieldSwap, "Withdrawn")
-            .withArgs(swapId)
+            .to.emit(yieldSwap, "Withdraw")
     })
 
     it('yieldSwap: get swap ids with no swaps opened', async () => {

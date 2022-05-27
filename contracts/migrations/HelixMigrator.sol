@@ -38,7 +38,6 @@ contract HelixMigrator is Pausable, Ownable {
     ) 
         external 
         whenNotPaused
-        returns (bool) 
     {
         // Transfer the caller's external liquidity balance to this contract
         uint256 exLiquidity = IERC20(_lpToken).balanceOf(msg.sender);
@@ -101,8 +100,6 @@ contract HelixMigrator is Pausable, Ownable {
             balanceTokenA,
             balanceTokenB
         );
-
-        return true;
     }
 
     /// Called by the owner to set the router address
