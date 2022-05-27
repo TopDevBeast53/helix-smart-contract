@@ -79,8 +79,6 @@ contract SwapRewards is ISwapRewards, Ownable, Pausable {
         helixOut = Percent.getPercentage(helixOut, rewardPercent);
 
         if (helixOut > 0) {
-            helixToken.mint(_user, helixOut);
-
             // Accrue HELIX to the swap caller referrer
             refReg.rewardSwap(_user, helixOut);
         }
