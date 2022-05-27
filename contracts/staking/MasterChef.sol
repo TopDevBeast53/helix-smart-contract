@@ -47,30 +47,43 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
      
     // The HelixToken TOKEN!
     HelixToken public helixToken;
+
     //Pools, Farms, Dev, Refs percent decimals
     uint256 public percentDec;
+
     //Pools and Farms percent from token per block
     uint256 public stakingPercent;
+
     //Developers percent from token per block
     uint256 public devPercent;
+
     // Dev address.
     address public devaddr;
+
     // Last block then develeper withdraw dev and ref fee
     uint256 public lastBlockDevWithdraw;
+
     // HelixToken tokens created per block.
     uint256 public HelixTokenPerBlock;
+
     // Bonus muliplier for early HelixToken makers.
     uint256 public BONUS_MULTIPLIER;
+
     // The migrator contract. It has a lot of power. Can only be set through governance (owner).
     IMigratorChef public migrator;
+
     // Referral Register contract
     IReferralRegister public refRegister;
+
     // Info of each pool.
     PoolInfo[] public poolInfo;
+
     // Total allocation poitns. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint;
+
     // The block number when HelixToken mining starts.
     uint256 public startBlock;
+
     // Deposited amount HelixToken in MasterChef
     uint256 public depositedHelix;
 
@@ -86,8 +99,18 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     // Maps a lpToken address to a poolId
     mapping(address => uint256) public poolIds;
 
-    event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
-    event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
+    event Deposit(
+        address indexed user, 
+        uint256 indexed pid, 
+        uint256 amount
+    );
+
+    event Withdraw(
+        address indexed user, 
+        uint256 indexed pid, 
+        uint256 amount
+    );
+
     event EmergencyWithdraw(
         address indexed user,
         uint256 indexed pid,
@@ -230,7 +253,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Add a new lp to the pool. Can only be called by the owner.
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
-    function add( uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate ) external onlyOwner {
+    function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) external onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
         }
