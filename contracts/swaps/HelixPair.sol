@@ -31,17 +31,30 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
     uint32 public swapFee;              // uses 0.2% default
     uint32 public devFee;               // uses 0.5% default from swap fee
 
-    event Mint(address indexed sender, uint256 amount0, uint256 amount1);
-    event Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to);
+    event Mint(
+        address indexed sender, 
+        address indexed to,
+        uint256 amount0, 
+        uint256 amount1
+    );
+
+    event Burn(
+        address indexed sender, 
+        address indexed to,
+        uint256 amount0, 
+        uint256 amount1 
+    );
+
     event Swap(
         address indexed sender,
+        address indexed to,
         uint256 amount0In,
         uint256 amount1In,
         uint256 amount0Out,
-        uint256 amount1Out,
-        address indexed to
+        uint256 amount1Out
     );
-    event Sync(uint112 reserve0, uint112 reserve1);
+
+    event Update(uint112 reserve0, uint112 reserve1);
 
     modifier onlyFactory() {
         require(msg.sender == factory, "Pair: not factory"); 
@@ -92,7 +105,7 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
         reserve0 = uint112(balance0);
         reserve1 = uint112(balance1);
         blockTimestampLast = blockTimestamp;
-        emit Sync(reserve0, reserve1);
+        emit Update(reserve0, reserve1);
     }
 
     // if fee is on, mint liquidity equivalent to 1/6th of the growth in sqrt(k)
@@ -137,7 +150,7 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
 
         _update(balance0, balance1, _reserve0, _reserve1);
         if (feeOn) kLast = uint(reserve0) * reserve1; // reserve0 and reserve1 are up-to-date
-        emit Mint(msg.sender, amount0, amount1);
+        emit Mint(msg.sender, to, amount0, amount1);
     }
 
     // this low-level function should be called from a contract which performs important safety checks
@@ -171,7 +184,7 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
         TransferHelper.safeTransfer(_token0, to, amount0);
         TransferHelper.safeTransfer(_token1, to, amount1);
 
-        emit Burn(msg.sender, amount0, amount1, to);
+        emit Burn(msg.sender, to, amount0, amount1);
     }
 
     // this low-level function should be called from a contract which performs important safety checks
@@ -206,9 +219,9 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
         }
 
         _update(balance0, balance1, _reserve0, _reserve1);
-        emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);
-
         HelixFactory(factory).updateOracle(token0, token1);
+
+        emit Swap(msg.sender, to, amount0In, amount1In, amount0Out, amount1Out);
     }
 
     // force balances to match reserves
