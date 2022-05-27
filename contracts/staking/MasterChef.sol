@@ -385,7 +385,7 @@ contract MasterChef is Initializable, OwnableUpgradeable {
         user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
 
         if (pending > 0) {
-            refRegister.recordStakingRewardWithdrawal(msg.sender, pending);
+            refRegister.rewardStake(msg.sender, pending);
             safeHelixTokenTransfer(msg.sender, pending);
         }
         if (_amount > 0) {
@@ -581,7 +581,7 @@ contract MasterChef is Initializable, OwnableUpgradeable {
         user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
 
         if (pending > 0) {
-            refRegister.recordStakingRewardWithdrawal(msg.sender, pending);
+            refRegister.rewardStake(msg.sender, pending);
             safeHelixTokenTransfer(msg.sender, pending);
         }
         if (_amount > 0) {
