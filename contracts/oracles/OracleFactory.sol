@@ -34,21 +34,31 @@ contract OracleFactory is Initializable, OwnableUpgradeable {
     mapping(address => mapping(address => Oracle)) public oracles;
 
     // Emitted when a new oracle is created
-    event Created(
+    event Create(
+        address indexed pair,
         address indexed token0,
         address indexed token1,
+        address creator,
         uint256 price0CumulativeLast,
         uint256 price1CumulativeLast
     );
     
     // Emitted when an existing oracle is updated
-    event Updated(
+    event Update(
+        address indexed pair,
         address indexed token0, 
         address indexed token1, 
+        address updater,
         uint256 price0Cumulative,
         uint256 price1Cumulative,
         uint256 reserve0,
         uint256 reserve1
+    );
+
+    // Emitted when the owner sets a period
+    event SetPeriod(
+        address indexed setter,
+        uint256 period
     );
 
     modifier onlyValidAddress(address _address) {
@@ -89,9 +99,11 @@ contract OracleFactory is Initializable, OwnableUpgradeable {
         oracles[_token0][_token1] = oracle;
         oracles[_token1][_token0] = oracle;
 
-        emit Created(
+        emit Create(
+            address(pair),
             _token0,
             _token1,
+            msg.sender,
             pair.price0CumulativeLast(),
             pair.price1CumulativeLast()
         );
@@ -117,9 +129,11 @@ contract OracleFactory is Initializable, OwnableUpgradeable {
             oracle.blockTimestampLast = blockTimestamp;
         } 
     
-        emit Updated(
+        emit Update(
+            address(pair),
             _token0,
             _token1,
+            msg.sender,
             price0Cumulative,
             price1Cumulative,
             reserve0,
@@ -130,6 +144,7 @@ contract OracleFactory is Initializable, OwnableUpgradeable {
     /// Called by the owner to set a new period
     function setPeriod(uint256 _period) external onlyOwner {
         period = _period;
+        emit SetPeriod(msg.sender, _period);
     }
 
     /// Get the amountOut of _tokenOut equivalent in value to _amountIn of _tokenIn

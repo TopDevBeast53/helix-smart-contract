@@ -14,22 +14,23 @@ contract HelixFactory is Initializable {
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
 
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
+    // Emitted when a new pair is created
+    event CreatePair(address indexed token0, address indexed token1, address pair, uint);
 
     // Emitted when the owner sets the "feeTo"
-    event FeeToSet(address indexed feeTo);
+    event SetFeeTo(address indexed feeTo);
 
     // Emitted when the owner sets the "feeToSetter"
-    event FeeToSetterSet(address indexed feeToSetter);
+    event SetFeeToSetter(address indexed feeToSetter);
 
     // Emitted when a pair's dev fee is set
-    event DevFeeSet(address indexed pair, uint256 devFee);
+    event SetDevFee(address indexed pair, uint256 devFee);
 
     // Emitted when a pair's swap fee is set
-    event SwapFeeSet(address indexed pair, uint256 swapFee);
+    event SetSwapFee(address indexed pair, uint256 swapFee);
 
     // Emitted when the owner sets the Oracle Factory contract
-    event OracleFactorySet(address oracleFactory);
+    event SetOracleFactory(address oracleFactory);
 
     modifier onlyFeeToSetter() {
         require(msg.sender == feeToSetter, "Factory: not feeToSetter");
@@ -64,33 +65,33 @@ contract HelixFactory is Initializable {
 
         IOracleFactory(oracleFactory).create(token0, token1);
 
-        emit PairCreated(token0, token1, pair, allPairs.length);
+        emit CreatePair(token0, token1, pair, allPairs.length);
     }
 
     function setFeeTo(address _feeTo) external onlyFeeToSetter {
         feeTo = _feeTo;
-        emit FeeToSet(_feeTo);
+        emit SetFeeTo(_feeTo);
     }
 
     function setFeeToSetter(address _feeToSetter) external onlyFeeToSetter {
         feeToSetter = _feeToSetter;
-        emit FeeToSetterSet(_feeToSetter);
+        emit SetFeeToSetter(_feeToSetter);
     }
 
     function setDevFee(address _pair, uint8 _devFee) external onlyFeeToSetter {
         require(_devFee > 0, "Factory: invalid fee");
         HelixPair(_pair).setDevFee(_devFee);
-        emit DevFeeSet(_pair, _devFee);
+        emit SetDevFee(_pair, _devFee);
     }
     
     function setSwapFee(address _pair, uint32 _swapFee) external onlyFeeToSetter {
         HelixPair(_pair).setSwapFee(_swapFee);
-        emit SwapFeeSet(_pair, _swapFee);
+        emit SetSwapFee(_pair, _swapFee);
     }
 
     function setOracleFactory(address _oracleFactory) external onlyFeeToSetter {
         oracleFactory = _oracleFactory;
-        emit OracleFactorySet(_oracleFactory);
+        emit SetOracleFactory(_oracleFactory);
     }
 
     function updateOracle(address token0, address token1) external {

@@ -176,15 +176,14 @@ describe('Lp Swap', () => {
         expect((await lpSwap.getSwapIds(wallet0.address))[0]).to.eq(expectedSwapIds[0])
     })
 
-    it('lpSwap: open swap emits SwapOpened event', async () => {
+    it('lpSwap: open swap emits OpenSwap event', async () => {
         // must set an allowance
         await tokenA.approve(lpSwap.address, amount)
 
         // open the swap
         const expectedSwapId = 0
         await expect(lpSwap.openSwap(tokenA.address, tokenB.address, amount, ask))
-            .to.emit(lpSwap, 'SwapOpened')
-            .withArgs(expectedSwapId)
+            .to.emit(lpSwap, 'OpenSwap')
     })
 
     it('lpSwap: set ask with invalid swapId fails', async () => {
@@ -236,15 +235,14 @@ describe('Lp Swap', () => {
         expect((await lpSwap.getSwap(swapId)).ask).to.eq(expectedAsk)
     })
 
-    it('lpSwap: set ask emits AskSet event', async () => {
+    it('lpSwap: set ask emits SetAsk event', async () => {
         await openSwap()
 
         const swapId = await lpSwap.getSwapId()
         const expectedAsk = expandTo18Decimals(10000)
 
         await expect(lpSwap.setAsk(swapId, expectedAsk))
-            .to.emit(lpSwap, "AskSet")
-            .withArgs(swapId)
+            .to.emit(lpSwap, "SetAsk")
     })
 
     it('lpSwap: close swap with invalid swapId fails', async () => {
@@ -296,15 +294,14 @@ describe('Lp Swap', () => {
         expect((await lpSwap.getSwap(swapId)).isOpen).to.eq(expectedIsOpen)
     })
 
-    it('lpSwap: close swap emits SwapClosed event', async () => {
+    it('lpSwap: close swap emits CloseSwap event', async () => {
         await openSwap()
 
         const swapId = await lpSwap.getSwapId()
         const expectedIsOpen = false
 
         await expect(lpSwap.closeSwap(swapId))
-            .to.emit(lpSwap, "SwapClosed")
-            .withArgs(swapId)
+            .to.emit(lpSwap, "CloseSwap")
     })
 
     it('lpSwap: make bid when swap is closed fails', async () => {
@@ -405,7 +402,7 @@ describe('Lp Swap', () => {
         expect(await lpSwap.hasBidOnSwap(wallet1.address, swapId)).to.be.true
     })
 
-    it('lpSwap: make bid emits BidMade event', async () => {
+    it('lpSwap: make bid emits MakeBid event', async () => {
         await openSwap()
         const swapId = await lpSwap.getSwapId()
 
@@ -416,8 +413,7 @@ describe('Lp Swap', () => {
         
         // make the bid
         await expect(lpSwap1.makeBid(swapId, bidAmount))
-            .to.emit(lpSwap, 'BidMade')
-            .withArgs(expectedBidId)
+            .to.emit(lpSwap, 'MakeBid')
     })
 
     it('lpSwap: set bid with invalid bidId fails', async () => {
@@ -531,15 +527,14 @@ describe('Lp Swap', () => {
         expect(bid.amount).to.eq(expectedBidAmount)
     })
 
-    it('lpSwap: set bid emits BidSet event', async () => {
+    it('lpSwap: set bid emits SetBid event', async () => {
         await openSwap()
         const swapId = await lpSwap.getSwapId()
         await makeBid(swapId)
         const bidId = await lpSwap.getBidId()
     
         await expect(lpSwap1.setBid(bidId, bidAmount))
-            .to.emit(lpSwap, 'BidSet')
-            .withArgs(bidId)
+            .to.emit(lpSwap, 'SetBid')
     })
 
     it('lpSwap: accept bid with invalid bidId fails', async () => {
@@ -707,7 +702,7 @@ describe('Lp Swap', () => {
         expect(await tokenA.balanceOf(wallet1.address)).to.eq(expectedToBuyerBal1)
     })
 
-    it('lpSwap: accept bid emits BidAccepted event', async () => {
+    it('lpSwap: accept bid emits AcceptBid event', async () => {
         // open the swap and make a bid
         await openSwap()
         const swapId = await lpSwap.getSwapId()
@@ -716,8 +711,7 @@ describe('Lp Swap', () => {
         // accept the bid
         const bidId = await lpSwap.getBidId()
         await expect(lpSwap.acceptBid(bidId))
-            .to.emit(lpSwap, 'BidAccepted')
-            .withArgs(bidId)
+            .to.emit(lpSwap, 'AcceptBid')
     })
 
     it('lpSwap: accept ask with invalid swapId fails', async () => {
@@ -859,7 +853,7 @@ describe('Lp Swap', () => {
         expect(await tokenA.balanceOf(wallet1.address)).to.eq(expectedToBuyerBal1)
     })
 
-    it('lpSwap: accept ask emits AskAccepted event', async () => {
+    it('lpSwap: accept ask emits AcceptAsk event', async () => {
         // open the swap
         await openSwap()
         const swapId = await lpSwap.getSwapId()
@@ -872,8 +866,7 @@ describe('Lp Swap', () => {
 
         // accept the ask as wallet1
         await expect(lpSwap1.acceptAsk(swapId))
-            .to.emit(lpSwap, 'AskAccepted')
-            .withArgs(swapId)
+            .to.emit(lpSwap, 'AcceptAsk')
     })
     
     it('lpSwap: get swap ids with no swaps opened', async () => {

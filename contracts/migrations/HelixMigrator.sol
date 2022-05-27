@@ -18,7 +18,9 @@ contract HelixMigrator is Pausable, Ownable {
 
     event MigrateLiquidity(
         address indexed sender,             // Migrate liquidity function caller
-        address indexed externalRouter,     // External DEX's router
+        address indexed tokenA,             // First token migrated
+        address indexed tokenB,             // Second token migrated
+        address externalRouter,             // External DEX's router
         uint256 exLiquidity,                // Liquidity in external DEX
         uint256 exBalanceTokenA,            // Token A balance in external DEX
         uint256 exBalanceTokenB,            // Token B balance in external DEX
@@ -36,7 +38,6 @@ contract HelixMigrator is Pausable, Ownable {
     ) 
         external 
         whenNotPaused
-        returns (bool) 
     {
         // Transfer the caller's external liquidity balance to this contract
         uint256 exLiquidity = IERC20(_lpToken).balanceOf(msg.sender);
@@ -89,6 +90,8 @@ contract HelixMigrator is Pausable, Ownable {
         // Log relevant migration details
         emit MigrateLiquidity(
             msg.sender,
+            _tokenA,
+            _tokenB,
             _externalRouter,
             exLiquidity,
             exBalanceTokenA,
@@ -97,8 +100,6 @@ contract HelixMigrator is Pausable, Ownable {
             balanceTokenA,
             balanceTokenB
         );
-
-        return true;
     }
 
     /// Called by the owner to set the router address

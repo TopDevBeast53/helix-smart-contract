@@ -105,40 +105,73 @@ contract YieldSwap is
     mapping(address => uint[]) public bidderSwapIds;
 
     // Emitted when a new swap is opened 
-    event SwapOpened(uint256 indexed swapId);
+    event OpenSwap(
+        address indexed toBuyerToken,
+        address indexed toSellerToken,
+        uint256 indexed swapId,
+        address seller
+    );
 
     // Emitted when a swap is closed with no buyer
-    event SwapClosed(uint256 indexed swapId);
+    event CloseSwap(address indexed seller, uint256 indexed swapId);
 
     // Emitted when a swap's ask is set by the seller
-    event AskSet(uint256 indexed swapId);
+    event SetAsk(
+        address indexed seller, 
+        uint256 indexed swapId,
+        uint256 ask
+    );
 
     // Emitted when a swap's ask is accepted by a buyer
-    event AskAccepted(uint256 indexed swapId);
+    event AcceptAsk(
+        address indexed buyer, 
+        address indexed seller,
+        uint256 indexed swapId,
+        uint256 ask
+    );
 
     // Emitted when a bid is made on a swap by a bidder
-    event BidMade(uint256 indexed bidId);
+    event MakeBid(
+        address indexed bidder, 
+        uint256 indexed swapId,
+        uint256 indexed bidId,
+        uint256 amount
+    );
 
     // Emitted when a bid amount is set by a bidder
-    event BidSet(uint256 indexed bidId);
+    event SetBid(
+        address indexed bidder, 
+        uint256 indexed bidId,
+        uint256 amount
+    );
 
     // Emitted when a swap's bid is accepted by the seller
-    event BidAccepted(uint256 indexed bidId);
+    event AcceptBid(
+        address indexed seller,
+        address indexed buyer,
+        uint256 indexed swapId,
+        uint256 bidId,
+        uint256 amount
+    );
 
     // Emitted when a swap's lp token(s) is withdrawn after being locked
-    event Withdrawn(uint256 indexed swapId);
+    event Withdraw(
+        address indexed seller,
+        address indexed buyer,
+        uint256 indexed swapId
+    );
 
     // Emitted when the owner sets a new chef address
-    event SetChef(address chef);
+    event SetChef(address indexed setter, address chef);
 
     // Emitted when the owner sets a new rewardToken address
-    event SetRewardToken(address rewardToken);
+    event SetRewardToken(address indexed setter, address rewardToken);
 
     // Emitted when the owner sets the minimum lock duration 
-    event MinLockDurationSet(uint256 minLockDuration);
+    event MinLockDurationSet(address indexed setter, uint256 minLockDuration);
 
     // Emitted when the owner sets the maximum lock duration 
-    event MaxLockDurationSet(uint256 maxLockDuration);
+    event MaxLockDurationSet(address indexed setter, uint256 maxLockDuration);
 
     modifier onlyValidSwapId(uint256 id) {
         require(swaps.length != 0, "YieldSwap: no swap opened");
@@ -245,7 +278,12 @@ contract YieldSwap is
         // And reflect the created swap id in the user's account
         swapIds[msg.sender].push(swapId);
 
-        emit SwapOpened(swapId);
+        emit OpenSwap(
+            address(_toBuyerToken),
+            address(_toSellerToken),
+            swapId,
+            msg.sender
+        );
     }
 
     /// Called by seller to update the _ask on the swap with _swapId
@@ -256,7 +294,7 @@ contract YieldSwap is
         _requireIsSeller(msg.sender, swap.seller.party);
 
         swap.ask = _ask;
-        emit AskSet(_swapId);
+        emit SetAsk(msg.sender, _swapId, _ask);
     }
     
     /// Called by seller to permanently close/cancel the swap with _swapId
@@ -267,7 +305,7 @@ contract YieldSwap is
         _requireIsSeller(msg.sender, swap.seller.party);
 
         swap.status = Status.Closed;
-        emit SwapClosed(_swapId);
+        emit CloseSwap(msg.sender, _swapId);
     }
 
     /// Make a new bid of _amount on an open swap with _swapId
@@ -301,7 +339,7 @@ contract YieldSwap is
         hasBidOnSwap[msg.sender][_swapId] = true;
         bidderSwapIds[msg.sender].push(_swapId);
 
-        emit BidMade(bidId);
+        emit MakeBid(msg.sender, _swapId, bidId, _amount);
     }
 
     /// Called by the bidder who has made bid with _bidId to set the _amount
@@ -315,7 +353,7 @@ contract YieldSwap is
 
         bid.amount = _amount;
 
-        emit BidSet(_bidId);
+        emit SetBid(msg.sender, _bidId, _amount);
     }
 
     /// Called by the seller to accept the bid with _bidId and close the swap
@@ -326,7 +364,7 @@ contract YieldSwap is
         _requireIsSeller(msg.sender, swap.seller.party);
         _accept(swap, bid.bidder, bid.swapId, bid.amount);
 
-        emit BidAccepted(_bidId);
+        emit AcceptBid(msg.sender, bid.bidder, bid.swapId, _bidId, bid.amount);
     }
 
     /// Called by a buyer to accept the ask and close the swap with _swapId
@@ -336,7 +374,7 @@ contract YieldSwap is
         _requireIsNotSeller(msg.sender, swap.seller.party);
         _accept(swap, msg.sender, _swapId, swap.ask);
 
-        emit AskAccepted(_swapId);
+        emit AcceptAsk(msg.sender, swap.seller.party, _swapId, swap.ask);
     } 
 
     /// Called after the lock duration has elapsed on swap with _swapId to unstake any
@@ -360,7 +398,7 @@ contract YieldSwap is
             _unstake(swap.buyer, swap.seller.party, _swapId);
         }
 
-        emit Withdrawn(_swapId);
+        emit Withdraw(swap.seller.party, swap.buyer.party, _swapId);
     }
 
     /// Return the array of swapIds made by _address
@@ -410,7 +448,7 @@ contract YieldSwap is
             "YieldSwap: invalid min lock duration"
         );
         MIN_LOCK_DURATION = _MIN_LOCK_DURATION;
-        emit MinLockDurationSet(_MIN_LOCK_DURATION);
+        emit MinLockDurationSet(msg.sender, _MIN_LOCK_DURATION);
     }
 
     /// Called by the owner to set the maximum lock duration
@@ -420,7 +458,7 @@ contract YieldSwap is
             "YieldSwap: invalid max lock duration"
         );
         MAX_LOCK_DURATION = _MAX_LOCK_DURATION;
-        emit MaxLockDurationSet(_MAX_LOCK_DURATION);
+        emit MaxLockDurationSet(msg.sender, _MAX_LOCK_DURATION);
     }
 
     /// Called by the owner to pause the contract
@@ -436,13 +474,13 @@ contract YieldSwap is
     /// Called by the owner to set the _masterChef address
     function setChef(IMasterChef _chef) external onlyOwner onlyValidAddress(address(_chef)) {
         chef = _chef;
-        emit SetChef(address(_chef));
+        emit SetChef(msg.sender, address(_chef));
     }
 
     /// Called by the owner to set the _rewardToken address
     function setRewardToken(IERC20 _rewardToken) external onlyOwner onlyValidAddress(address(_rewardToken)) {
         rewardToken = _rewardToken;
-        emit SetRewardToken(address(_rewardToken));
+        emit SetRewardToken(msg.sender, address(_rewardToken));
     }
 
     /// Called by the owner to set the _feeHandler address

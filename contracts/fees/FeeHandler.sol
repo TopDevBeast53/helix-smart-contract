@@ -20,13 +20,25 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     uint256 public nftChefPercent;
 
     // Emitted when a new treasury address is set by the owner
-    event SetTreasury(address _treasury);
+    event SetTreasury(address indexed setter, address _treasury);
 
     // Emitted when a new nftChef address is set by the owner
-    event SetNftChef(address _nftChef);
+    event SetNftChef(address indexed setter, address _nftChef);
 
     // Emitted when a new nftChef percent is set by the owner
-    event SetNftChefPercent(uint256 _nftChefPercent);
+    event SetNftChefPercent(address indexed setter, uint256 _nftChefPercent);
+
+    // Emitted when fees are transferred by the handler
+    event TransferFee(
+        address indexed token,
+        address indexed from,
+        address indexed rewardAccruer,
+        address nftChef,
+        address treasury,
+        uint256 fee,
+        uint256 nftChefAmount,
+        uint256 treasuryAmount
+    );
 
     modifier onlyValidFee(uint256 _fee) {
         require(_fee > 0, "FeeHandler: zero fee");
@@ -65,12 +77,23 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
         if (treasuryAmount > 0) {
             _token.transferFrom(_from, treasury, treasuryAmount);
         }
+
+        emit TransferFee(
+            address(_token),
+            _from,
+            _rewardAccruer,
+            address(nftChef),
+            treasury,
+            _fee,
+            nftChefAmount,
+            treasuryAmount
+        );
     }
 
     /// Called by the owner to set a new _treasury address
     function setTreasury(address _treasury) external onlyOwner onlyValidAddress(_treasury) { 
         treasury = _treasury;
-        emit SetTreasury(_treasury);
+        emit SetTreasury(msg.sender, _treasury);
     }
 
     /// Called by the owner to set a new _nftChef address
@@ -80,7 +103,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
         onlyValidAddress(_nftChef) 
     {
         nftChef = IHelixChefNFT(_nftChef);
-        emit SetNftChef(_nftChef);
+        emit SetNftChef(msg.sender, _nftChef);
     }
 
     /// Called by the owner to set the _nftChefPercent taken from the total collector fees
@@ -91,7 +114,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
         onlyValidPercent(_nftChefPercent) 
     {
         nftChefPercent = _nftChefPercent;
-        emit SetNftChefPercent(_nftChefPercent);
+        emit SetNftChefPercent(msg.sender, _nftChefPercent);
     }
 
     /// Return the nftChef fee computed from the _amount and the nftChefPercent

@@ -16,6 +16,38 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
     address public immutable _WETH;
     address public swapRewards;
 
+    // Emitted when liquidity is added
+    event AddLiquidity(
+        address indexed tokenA,
+        address indexed tokenB,
+        uint256 amountAReturned,
+        uint256 amountBReturned,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin
+    );
+
+    // Emitted when liquidity is removed
+    event RemoveLiquidity(
+        address indexed tokenA,
+        address indexed tokenB,
+        address indexed pair,
+        address to,
+        uint256 amountARemoved,
+        uint256 amountBRemoved
+    );
+
+    // Emitted when tokens are swapped
+    event Swap(
+        uint256[] indexed amounts,
+        address[] indexed path,
+        address indexed to
+    );
+
+    // Emitted when tokens supporting fees are swapped
+    event SwapSupportingFeeOnTransferTokens(address[] indexed path, address indexed to);
+
     modifier onlyValidDeadline(uint256 deadline) {
         require(deadline >= block.timestamp, "Router: invalid deadline");
         _;
@@ -76,6 +108,17 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }
         }
+
+        emit AddLiquidity(
+            tokenA,
+            tokenB,
+            amountA,
+            amountB,
+            amountADesired,
+            amountBDesired,
+            amountAMin,
+            amountBMin
+        );
     }
 
     function addLiquidity(
@@ -163,6 +206,15 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
         _requireGEQ(amountA, amountAMin);
         _requireGEQ(amountB, amountBMin);
+
+        emit RemoveLiquidity(
+            tokenA,
+            tokenB,
+            pair,
+            to,
+            amountA,
+            amountB
+        );
     }
 
     function removeLiquidityETH(
@@ -296,7 +348,7 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
     // **** SWAP ****
 
     // requires the initial amount to have already been sent to the first pair
-    function _swap(uint[] memory amounts, address[] memory path, address _to) 
+    function _swap(uint256[] memory amounts, address[] memory path, address _to) 
         internal 
         virtual 
         whenNotPaused
@@ -321,6 +373,8 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
                 ISwapRewards(swapRewards).swap(msg.sender, output, amountOut);
             }
         }
+
+        emit Swap(amounts, path, _to);
     }
 
     function swapExactTokensForTokens(
@@ -334,7 +388,7 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
         virtual 
         override 
         onlyValidDeadline(deadline) 
-        returns (uint[] memory amounts) 
+        returns (uint256[] memory amounts) 
     {
         amounts = HelixLibrary.getAmountsOut(_factory, amountIn, path);
         _requireGEQ(amounts[amounts.length - 1], amountOutMin);
@@ -355,7 +409,7 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
         virtual 
         override 
         onlyValidDeadline(deadline) 
-        returns (uint[] memory amounts) 
+        returns (uint256[] memory amounts) 
     {
         amounts = HelixLibrary.getAmountsIn(_factory, amountOut, path);
         _requireLEQ(amounts[0], amountInMax);
@@ -376,7 +430,7 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
         override
         payable
         onlyValidDeadline(deadline)
-        returns (uint[] memory amounts)
+        returns (uint256[] memory amounts)
     {
         _requireValidPath(path[0]);
         amounts = HelixLibrary.getAmountsOut(_factory, msg.value, path);
@@ -397,7 +451,7 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
         virtual
         override
         onlyValidDeadline(deadline)
-        returns (uint[] memory amounts)
+        returns (uint256[] memory amounts)
     {
         _requireValidPath(path[path.length - 1]);
         amounts = HelixLibrary.getAmountsIn(_factory, amountOut, path);
@@ -421,7 +475,7 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
         virtual
         override
         onlyValidDeadline(deadline)
-        returns (uint[] memory amounts)
+        returns (uint256[] memory amounts)
     {
         _requireValidPath(path[path.length - 1]); 
         amounts = HelixLibrary.getAmountsOut(_factory, amountIn, path);
@@ -445,7 +499,7 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
         override
         payable
         onlyValidDeadline(deadline)
-        returns (uint[] memory amounts)
+        returns (uint256[] memory amounts)
     {
         _requireValidPath(path[0]);
         amounts = HelixLibrary.getAmountsIn(_factory, amountOut, path);
@@ -501,6 +555,8 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
                 ISwapRewards(swapRewards).swap(msg.sender, output, amountOutput);
             }
         }
+
+        emit SwapSupportingFeeOnTransferTokens(path, _to);
     }
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(
@@ -633,7 +689,7 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
         view
         virtual
         override
-        returns (uint[] memory amounts)
+        returns (uint256[] memory amounts)
     {
         return HelixLibrary.getAmountsOut(_factory, amountIn, path);
     }
@@ -643,7 +699,7 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
         view
         virtual
         override
-        returns (uint[] memory amounts)
+        returns (uint256[] memory amounts)
     {
         return HelixLibrary.getAmountsIn(_factory, amountOut, path);
     }

@@ -73,7 +73,7 @@ describe('Fee Handler', () => {
         const treasuryAddress = wallet0.address
         await expect(feeHandler.setTreasury(treasuryAddress))
             .to.emit(feeHandler, "SetTreasury")
-            .withArgs(wallet0.address)
+            .withArgs(wallet0.address, wallet0.address)
     })
 
     it("feeHandler: set treasury", async () => {
@@ -98,7 +98,7 @@ describe('Fee Handler', () => {
         const nftChefAddress = helixChefNFT.address
         await expect(feeHandler.setNftChef(nftChefAddress))
             .to.emit(feeHandler, "SetNftChef")
-            .withArgs(nftChefAddress)
+            .withArgs(wallet0.address, nftChefAddress)
     })
 
     it("feeHandler: set nft chef", async () => {
@@ -123,7 +123,7 @@ describe('Fee Handler', () => {
         const percent = 50
         await expect(feeHandler.setNftChefPercent(percent))
             .to.emit(feeHandler, "SetNftChefPercent")
-            .withArgs(percent)
+            .withArgs(wallet0.address, percent)
     })
 
     it("feeHandler: set nft chef percent", async () => {
