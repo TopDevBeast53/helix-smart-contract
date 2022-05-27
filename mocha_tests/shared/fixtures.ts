@@ -37,7 +37,7 @@ const env = require('../../scripts/constants/env')
 
 const refRegDefaultStakingRef = initials.REFERRAL_STAKING_FEE_PERCENT[env.network]
 const refRegDefaultSwapRef = initials.REFERRAL_SWAP_FEE_PERCENT[env.network]
-const refRegTreasuryAddress = initials.REFERRAL_TREASURY_ADDRESS[env.network]
+const refRegToMintPerBlock = initials.REFERRAL_TO_MINT_PER_BLOCK[env.network]
 
 const chefDeveloperAddress = addresses.masterChefDeveloper[env.network];
 const chefStartBlock = initials.MASTERCHEF_START_BLOCK[env.network];
@@ -144,14 +144,15 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const feeHandler = await deployContract(wallet, FeeHandler, [], overrides)
 
     // 4 deploy referral register and register as minter with helix token
-    /*
-    const refReg = await deployContract(wallet, ReferralRegister,
-        [helixToken.address, refRegDefaultStakingRef, refRegDefaultSwapRef],
-        overrides
-    )
-    */
     const refReg = await deployContract(wallet, ReferralRegister, [], overrides)
-    await refReg.initialize(helixToken.address, feeHandler.address, refRegDefaultStakingRef, refRegDefaultSwapRef);
+    await refReg.initialize(
+        helixToken.address, 
+        feeHandler.address, 
+        refRegDefaultStakingRef, 
+        refRegDefaultSwapRef,
+        refRegToMintPerBlock,
+        0      // TODO replace
+    );
     await helixToken.addMinter(refReg.address)
 
     // 5 deploy master chef and register as minter with helix token
