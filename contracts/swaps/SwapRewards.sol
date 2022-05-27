@@ -34,6 +34,21 @@ contract SwapRewards is ISwapRewards, Ownable, Pausable {
         uint256 helixOut
     );
 
+    // Emitted when the helixToken is set
+    event SetHelixToken(address indexed setter, address indexed helixToken);
+
+    // Emitted when the oracleFactory is set
+    event SetOracleFactory(address indexed setter, address indexed oracleFactory);
+
+    // Emitted when the refReg is set
+    event SetRefReg(address indexed setter, address indexed refReg);
+
+    // Emitted when the router is set
+    event SetRouter(address indexed setter, address indexed router);
+
+    // Emitted when the rewardPercent is set
+    event SetRewardPercent(address indexed setter, uint256 indexed rewardPercent);
+
     modifier onlyValidAddress(address _address) {
         require(_address != address(0), "SwapFee: zero address");
         _;
@@ -80,6 +95,7 @@ contract SwapRewards is ISwapRewards, Ownable, Pausable {
         onlyValidAddress(address(_helixToken)) 
     {
         helixToken = _helixToken;
+        emit SetHelixToken(msg.sender, address(_helixToken));
     }
 
     /// Called by the owner to set the _oracleFactory
@@ -89,6 +105,7 @@ contract SwapRewards is ISwapRewards, Ownable, Pausable {
         onlyValidAddress(address(_oracleFactory)) 
     {
         oracleFactory = _oracleFactory;
+        emit SetOracleFactory(msg.sender, address(_oracleFactory));
     }
 
     /// Called by the owner to set the _refReg
@@ -98,17 +115,20 @@ contract SwapRewards is ISwapRewards, Ownable, Pausable {
         onlyValidAddress(address(_refReg)) 
     {
         refReg = _refReg;
+        emit SetRefReg(msg.sender, address(_refReg));
     }
 
     /// Called by the owner to set the _router
     function setRouter(address _router) external onlyOwner onlyValidAddress(_router) {
         router = _router;
+        emit SetRouter(msg.sender, address(_router));
     }
 
     /// Called by the owner to set the _rewardPercent
     function setRewardPercent(uint256 _rewardPercent) external onlyOwner {
         require(Percent.isValidPercent(_rewardPercent), "SwapFee: invalid percent");
         rewardPercent = _rewardPercent;
+        emit SetRewardPercent(msg.sender, _rewardPercent);
     }
 
     /// Called by the owner to pause swaps
@@ -120,5 +140,4 @@ contract SwapRewards is ISwapRewards, Ownable, Pausable {
     function unpause() external onlyOwner {
         _unpause();
     }
-
 }
