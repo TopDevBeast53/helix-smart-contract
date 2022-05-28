@@ -57,7 +57,11 @@ module.exports = {
     },
     masterChef: {
         1: '',
-        4: '0xd2c91c108eA227EF56f756224c729C13B85DCf65',
+        4: '0x8b2b085339D11DcF0FA0aaD985C30f82eb49a880',
+    },
+    masterChefImplementation: {
+        1: '',
+        4: '0x06cce55E6961fBA479E08bE6D12578ED148FEa90',
     },
     autoHelix: { // Auto Pool
         1: '',

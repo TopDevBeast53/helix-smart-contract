@@ -3,9 +3,9 @@
  *
  * command for deploy on bsc-testnet: 
  * 
- *      npx hardhat run scripts/6_deployMasterChef.js --network testnetBSC
+ *      npx hardhat run scripts/8_deployMasterChef.js --network testnetBSC
  * 
- *      npx hardhat run scripts/6_deployMasterChef.js --network rinkeby
+ *      npx hardhat run scripts/8_deployMasterChef.js --network rinkeby
  *       
  * Workflow:
  * 
