@@ -63,9 +63,13 @@ module.exports = {
         1: '',
         4: '0x06cce55E6961fBA479E08bE6D12578ED148FEa90',
     },
-    autoHelix: { // Auto Pool
+    autoHelix: {
         1: '',
-        4: '0x049602E6f3169a73F0fEE4c4a5e6696e1B218b87',
+        4: '0xa3eeD6bC18764fEA80f7FEB25544b9Ea9fDA7f6E',
+    },
+    autoHelixImplementation: {
+        1: '',
+        4: '0x96ee8f93cD812BeCD7233bC6Ff0d515Ec25c0Ac2',
     },
     smartChef: {
         1: '',

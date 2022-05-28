@@ -125,25 +125,39 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
 
     const WETH = await deployContract(wallet, WETH9, [], overrides)
 
-    // 1 deploy factory and router
+    // 1 deploy factory
     const factory = await deployContract(wallet, HelixFactory, [], overrides)
     await factory.initialize(wallet.address)
 
+    // 2 deploy router
     const router = await deployContract(wallet, HelixRouterV1, [factory.address, WETH.address], overrides)
     // event emitter for testing
     const routerEventEmitter = await deployContract(wallet, RouterEventEmitter, [], overrides)
 
-    // 2 deploy helix token
+    // 3 deploy helix token
     const helixToken = await deployContract(wallet, HelixToken, [], overrides)
 
-    // 3 deploy oracle factory and register with factory
+    // 4 deploy oracle factory and register with factory
     const oracleFactory = await deployContract(wallet, OracleFactory, [], overrides)
     await oracleFactory.initialize(factory.address)
     await factory.setOracleFactory(oracleFactory.address)
 
-    // Deploy the fee handler
-    // and initialize later
+    // 5 deploy helixNFT and helixChefNFT and register with other contracts
+    const helixNFT = await deployContract(wallet, HelixNFT, [], overrides)
+    await helixNFT.initialize("BASEURI")
+
+    const helixChefNFT = await deployContract(wallet, HelixChefNFT, [], overrides)
+    await helixChefNFT.initialize(helixNFT.address, helixToken.address)
+
+    await helixNFT.addMinter(wallet.address, overrides)
+    await helixNFT.addStaker(helixChefNFT.address, overrides)
+
+    // 6 Deploy the fee handler and initialize the fee handler
     const feeHandler = await deployContract(wallet, FeeHandler, [], overrides)
+    await feeHandler.initialize(treasuryAddress, helixChefNFT.address)
+
+    // Mark the feeHandler as a helixChefNFT accruer
+    await helixChefNFT.addAccruer(feeHandler.address)
 
     // 7 deploy referral register and register as minter with helix token
     const refReg = await deployContract(wallet, ReferralRegister, [], overrides)
@@ -175,22 +189,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // 9 deploy auto helix
     const autoHelix = await deployContract(wallet, AutoHelix, [], overrides)
     await autoHelix.initialize(helixToken.address, chef.address, autoHelixTreasuryAddress)
-
-    // 7 deploy helixNFT and helixChefNFT and register with other contracts
-    const helixNFT = await deployContract(wallet, HelixNFT, [], overrides)
-    await helixNFT.initialize("BASEURI")
-
-    const helixChefNFT = await deployContract(wallet, HelixChefNFT, [], overrides)
-    await helixChefNFT.initialize(helixNFT.address, helixToken.address)
-
-    await helixNFT.addMinter(wallet.address, overrides)
-    await helixNFT.addStaker(helixChefNFT.address, overrides)
-
-    // Initialize the fee handler
-    await feeHandler.initialize(treasuryAddress, helixChefNFT.address)
-
-    // Mark the feeHandler as a helixChefNFT accruer
-    await helixChefNFT.addAccruer(feeHandler.address)
 
     // 8 deploy helixNFTBridge, add a bridger, and register as minter
     const helixNFTBridge = await deployContract(wallet, HelixNFTBridge, [helixNFT.address], overrides)
