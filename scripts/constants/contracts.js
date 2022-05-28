@@ -75,10 +75,6 @@ module.exports = {
         1: '',
         4: '0xB4E681C2a778A74874c30f0677Fd2ff9815eF31C',
     },
-    hpToken: {
-        1: '',
-        4: '0xd8B85aeb69EBE11FA133070457c34649A78e908A',
-    },
     swapRewards: {
         1: '',
         4: '0x22643261B4aEF1E33e2cb39dB0585b047c8a7ecb',

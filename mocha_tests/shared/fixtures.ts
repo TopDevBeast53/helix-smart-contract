@@ -198,7 +198,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
 
     await helixNFT.addMinter(helixNFTBridge.address, overrides)
 
-    // 9 deploy HP/LP token
+    // 9 deploy LP token
     const helixLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
     // used in YieldSwap tests with 2 helixLP tokens
     const helixLP2 = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);

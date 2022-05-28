@@ -141,14 +141,6 @@ Check and update all variables:
 Run `npx hardhat run scripts/8_deployHelixNFTBridge.js --network testnetBSC`
 Copy the address of the Helix NFT contract and **put it into the `helixNFTBridge` map** to `scripts/constants/contracts.js`.
 
-## 9. HelixPoints Token / Helix LP
-
-This is the Helix Points / Liquidity Pool token
-
-Run `npx hardhat run scripts/9_deployHpToken.js --network testnetBSC` (or mainnet)
-
-Now, copy the address of the HelixPoint Token contract and **put it into the `hpToken` map** to `scripts/constants/contracts.js`.
-
 ## 10. SwapRewards
 
 It's called by the router when the user performs a token swap and will credit helixToken/hpToken to the user's balance

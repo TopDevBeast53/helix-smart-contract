@@ -36,11 +36,8 @@ const refRegAddress = contracts.referralRegister[env.network]
 
 const helixTokenAddress = contracts.helixToken[env.network]
 const helixNFTAddress = contracts.helixNFT[env.network]
-const hpTokenAddress = contracts.hpToken[env.network]
 
-const splitRewardPercent = initials.SPLIT_REWARD_PERCENT[env.network]
 const helixRewardPercent = initials.HELIX_REWARD_PERCENT[env.network]
-const hpRewardPercent = initials.HP_REWARD_PERCENT[env.network]
 
 async function main() {
     const [deployer] = await ethers.getSigners()
@@ -67,11 +64,8 @@ function displayConstructorArgs() {
 
     print(`\thelix token:\t\t${helixTokenAddress}`)
     print(`\thelix NFT:\t\t${helixNFTAddress}`)
-    print(`\thp token:\t\t${hpTokenAddress}`)
 
-    print(`\tsplit reward percent:\t${splitRewardPercent / 10}%`)
     print(`\thelix reward percent:\t${helixRewardPercent / 10}%`)
-    print(`\thp reward percent:\t${hpRewardPercent / 10}%\n`)
 }
 
 // 1. Deploy the Swap Rewards contract
@@ -85,10 +79,7 @@ async function deploySwapRewards() {
         refRegAddress,
         helixTokenAddress,
         helixNFTAddress,
-        hpTokenAddress,
-        splitRewardPercent,
         helixRewardPercent,
-        hpRewardPercent
     )
     await swapRewards.deployTransaction.wait()
 
