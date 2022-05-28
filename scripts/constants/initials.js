@@ -38,6 +38,12 @@ module.exports = {
         56: '0x59201fb8cb2D61118B280c8542127331DD141654',
         97: '0x59201fb8cb2D61118B280c8542127331DD141654',
     },
+    REFERRAL_TO_MINT_PER_BLOCK : {
+        1: 0,
+        4: 4760000000000000000,     // 4.76 * 10e18 -> 4.76 helix tokens per block
+        56: 4760000000000000000,    // 4.76
+        97: 4760000000000000000,    // 4.76
+    },
 
     // --------- MasterChef --------- //
 
@@ -48,47 +54,24 @@ module.exports = {
         97: 0,
     },
     MASTERCHEF_HELIX_TOKEN_REWARD_PER_BLOCK : {
-        1: '40000000000000000000',
-        4: '40000000000000000000',
-        56: '40000000000000000000', // 40 * 10e18 -> 40 helix tokens per block 
-        97: '40000000000000000000', // 40 * 10e18 -> 40 helix tokens per block 
+        1: '81900000000000000000',
+        4: '81900000000000000000',   
+        56: '81900000000000000000', // 81.9 * 10e18 -> 81.9 helix tokens per block 
+        97: '81900000000000000000', // 81.9 * 10e18 -> 81.9 helix tokens per block 
     },
     MASTERCHEF_STAKING_PERCENT : {
-        1: 999000,
-        4: 999000,
-        56: 999000, // -> 99.9% of all farm rewards will go the users
-        97: 999000, // -> 99.9% of all farm rewards will go the users
+        1: 675000,
+        4: 675000,
+        56: 675000, // -> 67.5% of all farm rewards will go the users
+        97: 675000, // -> 67.5% of all farm rewards will go the users
     },
     MASTERCHEF_DEV_PERCENT : {
-        1: 1000,
-        4: 1000,
-        56: 1000, // -> 0.1% of all farm rewards will go to dev address
-        97: 1000, // -> 0.1% of all farm rewards will go to dev address
+        1: 325000,
+        4: 325000,
+        56: 325000, // -> 32.5% of all farm rewards will go to dev address
+        97: 325000, // -> 32.5% of all farm rewards will go to dev address
     },
     
-    // --------- SmartChef --------- //
-
-    //block when users can deposit their money into this pool and get rewards
-    SMARTCHEF_START_BLOCK : {
-        1: 1000,
-        4: 1000,
-        56: 1,
-        97: 1,
-    },
-    //block when rewards are no longer being given away
-    SMARTCHEF_END_BLOCK : {
-        1: 1000,
-        4: 1000,
-        56: 1000000000,
-        97: 1000000000,
-    },
-    SMARTCHEF_REWARD_PER_BLOCK : {
-        1: 1000,
-        4: 1000,
-        56: '1000000000000000000', 
-        97: '1000000000000000000', // currently this value means 1 HELIX per block
-    },
-
     // --------- Fee Handler ------------ //
 
     FEE_HANDLER_TREASURY_ADDRESS : {
@@ -125,9 +108,9 @@ module.exports = {
 
     HELIX_VAULT_REWARD_PER_BLOCK: {
         1: '',
-        4: '1000000000000000000',
-        56: '1000000000000000000', 
-        97: '1000000000000000000', // currently this value means 1 HELIX per block
+        4: '11700000000000000000',
+        56: '11700000000000000000', 
+        97: '11700000000000000000', // 11.7 * 10^18 -> helix tokens per block
     },
 
     HELIX_VAULT_START_BLOCK : {
