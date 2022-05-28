@@ -14,31 +14,15 @@ const env = require("./constants/env")
 
 const treasuryAddress = addresses.TREASURY[env.network]
 const nftChefAddress = contracts.helixChefNFT[env.network]
+const feeHandlerAddress = contracts.feeHandler[env.network]
 
 async function main() {
-    console.log(`Deploy FeeHandler Proxy and Implementation`)
 
-    const [deployer] = await ethers.getSigners()
-    console.log(`Deployer address: ${deployer.address}`)
-    
-    const FeeHandlerContractFactory = await ethers.getContractFactory("FeeHandler")
-
-    // Deploy the fee handler proxy
-    const feeHandlerProxy = await upgrades.deployProxy(
-        FeeHandlerContractFactory, 
-        [
-            treasuryAddress, 
-            nftChefAddress
-        ]
-    ) 
-    await feeHandlerProxy.deployTransaction.wait()
-    console.log(`FeeHandler Proxy address: ${feeHandlerProxy.address}`)
-
-    // Output the fee handler implementation address
-    const feeHandlerImplementationAddress = await upgrades.erc1967.getImplementationAddress(
-        feeHandlerProxy.address
-    )
-    console.log(`FeeHandler Implementation address: ${feeHandlerImplementationAddress}`)
+    console.log(`Register fee handler as nft chef accruer`)
+    const NftChef = await ethers.getContractFactory("HelixChefNFT")
+    const nftChef = await NftChef.attach(nftChefAddress)
+    let tx = await nftChef.addAccruer(feeHandlerAddress)
+    await tx.wait()
 }
 
 main()
