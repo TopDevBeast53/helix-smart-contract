@@ -1,7 +1,11 @@
 module.exports = {
     factory: {
         1: '',
-        4: '0xE88483356E811f567C10Cf2B6724819fbE42e5f4',
+        4: '0x68aC93C039962B3d19ec45C08Cac21fD54A48531',
+    },
+    factoryImplementation: {
+        1: '',
+        4: '0xB8B179DC12915316b94eAB4fa4b219D6762D04Cd',
     },
     router: {
         1: '',
