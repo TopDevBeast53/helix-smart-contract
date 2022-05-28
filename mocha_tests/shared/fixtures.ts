@@ -190,7 +190,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const autoHelix = await deployContract(wallet, AutoHelix, [], overrides)
     await autoHelix.initialize(helixToken.address, chef.address, autoHelixTreasuryAddress)
 
-    // 8 deploy helixNFTBridge, add a bridger, and register as minter
+    // 10 deploy helixNFTBridge, add a bridger, and register as minter
     const helixNFTBridge = await deployContract(wallet, HelixNFTBridge, [helixNFT.address], overrides)
 
     // Comment to prevent error since no externalTokenID is being passed
@@ -198,12 +198,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
 
     await helixNFT.addMinter(helixNFTBridge.address, overrides)
 
-    // 9 deploy LP token
-    const helixLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
-    // used in YieldSwap tests with 2 helixLP tokens
-    const helixLP2 = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
-
-    // 10 deploy swapRewards and register with other contracts
+    // 11 deploy swapRewards and register with other contracts
     const swapRewards = await deployContract(wallet, SwapRewards, [
             helixToken.address,
             oracleFactory.address,
@@ -215,6 +210,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await router.setSwapRewards(swapRewards.address, overrides)
     await refReg.addRecorder(swapRewards.address, overrides)
 
+    // 12 deploy migrator
     // Add external DEX components for migrator to use.
     const externalFactory = await deployContract(wallet, HelixFactory, [], overrides);
     await externalFactory.initialize(wallet.address)
@@ -225,7 +221,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await externalFactory.setOracleFactory(externalOracleFactory.address)
     const externalRouter = await deployContract(wallet, HelixRouterV1, [externalFactory.address, WETH.address], overrides);
 
-    // 11 deploy migrator
     const migrator = await deployContract(wallet, HelixMigrator, [router.address], overrides);
 
     // 12 deploy token tools
@@ -284,6 +279,11 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     )
     // presale must be registered as helixToken minter to be able to burn tokens
     await helixToken.addMinter(airDrop.address)
+
+    // Used by yield swap
+    const helixLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
+    // used in YieldSwap tests with 2 helixLP tokens
+    const helixLP2 = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
 
     // 17 deploy yield swap contract
     const yieldSwap = await deployContract(wallet, YieldSwap, [], overrides)

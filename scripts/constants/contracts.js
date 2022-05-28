@@ -81,7 +81,7 @@ module.exports = {
     },
     helixMigrator: {
         1: '',
-        4: '0x130b5EB2631C009e88153841774C3C8f844762a2',
+        4: '0x4C42DbF2f056de4D95F25d8b08115814383597e9',
     },
     tokenTools: {
         1: '',
