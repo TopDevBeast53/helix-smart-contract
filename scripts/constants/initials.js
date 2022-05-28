@@ -21,13 +21,13 @@ module.exports = {
     // --------- Referral Register --------- //
 
     REFERRAL_STAKING_FEE_PERCENT : {
-        1: 3,
+        1: 0,
         4: 3,
         56: 3, // 3%
         97: 3, // 3%
     },
     REFERRAL_SWAP_FEE_PERCENT : {
-        1: 5,
+        1: 0,
         4: 5,
         56: 5, // 5%
         97: 5, // 5%
