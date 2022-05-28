@@ -208,14 +208,12 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
             helixToken.address,
             oracleFactory.address,
             refReg.address,
-            router.address,
-            swapRewardsHelixRewardPercent,
+            router.address
         ], 
         overrides
     )
     await router.setSwapRewards(swapRewards.address, overrides)
     await refReg.addRecorder(swapRewards.address, overrides)
-    await helixToken.addMinter(swapRewards.address, overrides)
 
     // Add external DEX components for migrator to use.
     const externalFactory = await deployContract(wallet, HelixFactory, [], overrides);

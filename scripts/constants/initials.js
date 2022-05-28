@@ -69,27 +69,6 @@ module.exports = {
     
     // --------- Helix NFT & Chef --------- //
 
-    // --------- Swap Rewards  --------- //
-
-    SPLIT_REWARD_PERCENT : {
-        1: 50,
-        4: 50,
-        56: 50,        // 50% Helix and 50% Hp
-        97: 50,        // 50% Helix and 50% Hp
-    },
-    HELIX_REWARD_PERCENT : {
-        1: 5,
-        4: 5,
-        56: 5,         // 5% Helix Rewards
-        97: 5,         // 5% Helix Rewards
-    },
-    HP_REWARD_PERCENT : {
-        1: 5,
-        4: 5,
-        56: 5,         // 5% HP Rewards
-        97: 5,         // 5% HP Rewards
-    },
-
     // --------- Helix Vault --------- //
 
     HELIX_VAULT_REWARD_PER_BLOCK: {

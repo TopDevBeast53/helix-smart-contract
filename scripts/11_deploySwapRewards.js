@@ -12,9 +12,6 @@
  *      1. Deploy the Swap Rewards contract
  *      2. Register SwapRewards with Router.
  *      3. Register the swapRewards contract with the referralRegister as a recorder.
- *      4. Register the swapRewards contract with the helixToken as a minter.
- *      5. Register swapRewards contract with the exchange's helixNFT as an accruer.
- *
  */
 
 // Define script parameters
@@ -30,14 +27,10 @@ const overrides = {
 const verbose = true
 
 // Define SwapRewards contract constructor arguments
-const routerAddress = contracts.router[env.network]
+const helixTokenAddress = contracts.helixToken[env.network]
 const oracleFactoryAddress = contracts.oracleFactory[env.network]
 const refRegAddress = contracts.referralRegister[env.network]
-
-const helixTokenAddress = contracts.helixToken[env.network]
-const helixNFTAddress = contracts.helixNFT[env.network]
-
-const helixRewardPercent = initials.HELIX_REWARD_PERCENT[env.network]
+const routerAddress = contracts.router[env.network]
 
 async function main() {
     const [deployer] = await ethers.getSigners()
@@ -50,22 +43,16 @@ async function main() {
     // Call setters on contracts which depend on swapRewards
     await registerWithRouter(swapRewardsAddress)
     await registerAsRecorder(swapRewardsAddress)
-    await registerAsMinter(swapRewardsAddress)
-    await registerAsAccruer(swapRewardsAddress)
 }
 
 // 0. Print the values that will be passed to the SwapRewards constructor
 function displayConstructorArgs() {
     print(`SwapRewards constructor arguments:`)
 
-    print(`\trouter:\t\t\t${routerAddress}`)
+    print(`\thelix token:\t\t${helixTokenAddress}`)
     print(`\toracle factory:\t\t${oracleFactoryAddress}`)
     print(`\trefReg:\t\t\t${refRegAddress}`)
-
-    print(`\thelix token:\t\t${helixTokenAddress}`)
-    print(`\thelix NFT:\t\t${helixNFTAddress}`)
-
-    print(`\thelix reward percent:\t${helixRewardPercent / 10}%`)
+    print(`\trouter:\t\t\t${routerAddress}`)
 }
 
 // 1. Deploy the Swap Rewards contract
@@ -74,12 +61,10 @@ async function deploySwapRewards() {
 
     const SwapRewards = await ethers.getContractFactory('SwapRewards')
     const swapRewards = await SwapRewards.deploy(
-        routerAddress,
+        helixTokenAddress,
         oracleFactoryAddress,
         refRegAddress,
-        helixTokenAddress,
-        helixNFTAddress,
-        helixRewardPercent,
+        routerAddress
     )
     await swapRewards.deployTransaction.wait()
 
@@ -106,28 +91,6 @@ async function registerAsRecorder(swapRewardsAddress) {
     const RefReg = await ethers.getContractFactory('ReferralRegister')
     const refReg = RefReg.attach(refRegAddress)
     await refReg.addRecorder(swapRewardsAddress, overrides)
-
-    print(`Done\n`)
-}
-
-// 4. Register the swapRewards contract with the helixToken as a minter.
-async function registerAsMinter(swapRewardsAddress) {
-    print(`Register SwapRewards ${short(swapRewardsAddress)} as Helix Token minter`)
-
-    const HelixToken = await ethers.getContractFactory('HelixToken')
-    const helixToken = HelixToken.attach(helixTokenAddress)
-    await helixToken.addMinter(swapRewardsAddress, overrides)
-
-    print(`Done\n`)
-}
-
-// 5. Register swapRewards contract with the exchange's helixNFT as an accruer.
-async function registerAsAccruer(swapRewardsAddress) {
-    print(`Register SwapRewards ${short(swapRewardsAddress)} as HelixNFT accruer`)
-
-    const HelixNFT = await ethers.getContractFactory('HelixNFT')
-    const helixNFT = HelixNFT.attach(helixNFTAddress)
-    await helixNFT.addAccruer(swapRewardsAddress, overrides)
 
     print(`Done\n`)
 }

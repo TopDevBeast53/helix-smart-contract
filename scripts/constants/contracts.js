@@ -77,7 +77,7 @@ module.exports = {
     },
     swapRewards: {
         1: '',
-        4: '0x22643261B4aEF1E33e2cb39dB0585b047c8a7ecb',
+        4: '0x6eD0879BBbC72c1F193dA55C48572ACFae33c34C',
     },
     helixMigrator: {
         1: '',
