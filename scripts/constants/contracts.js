@@ -17,7 +17,11 @@ module.exports = {
     },
     oracleFactory: {
         1: '',
-        4: '0x1fA7b66468012f663a8667e8Cf1C798D76679251',
+        4: '0x56C582aabf8Ec51519B29A1fD77e02C6377c6B43',
+    },
+    oracleFactoryImplementation: {
+        1: '',
+        4: '0xD60dFd1C4A2a7da89E678DD2F7Ac56C410628Bff',
     },
     referralRegister: {
         1: '',
