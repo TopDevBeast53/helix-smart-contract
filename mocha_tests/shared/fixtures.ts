@@ -71,6 +71,8 @@ const yieldSwapTreasury = initials.YIELD_SWAP_TREASURY[env.network]
 const yieldSwapMinLockDuration = initials.YIELD_SWAP_MIN_LOCK_DURATION[env.network]
 const yieldSwapMaxLockDuration = initials.YIELD_SWAP_MAX_LOCK_DURATION[env.network]
 
+const treasuryAddress = addresses.TREASURY[env.network]
+
 const overrides = {
     gasLimit: 9999999
 }
@@ -185,7 +187,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await helixNFT.addStaker(helixChefNFT.address, overrides)
 
     // Initialize the fee handler
-    await feeHandler.initialize(refRegTreasuryAddress, helixChefNFT.address)
+    await feeHandler.initialize(treasuryAddress, helixChefNFT.address)
 
     // Mark the feeHandler as a helixChefNFT accruer
     await helixChefNFT.addAccruer(feeHandler.address)

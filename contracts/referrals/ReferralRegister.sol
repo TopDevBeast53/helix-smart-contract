@@ -91,7 +91,7 @@ contract ReferralRegister is
     // Emitted when the toMintPerBlock rate is set
     event SetToMintPerBlock(address indexed setter, uint256 _toMintPerBlock);
 
-    modifier isNotZeroAddress(address _address) {
+    modifier onlyValidAddress(address _address) {
         require(_address != address(0), "ReferralRegister: zero address");
         _;
     }
@@ -121,14 +121,22 @@ contract ReferralRegister is
     }
 
     /// Reward _referred's referrer when _referred _stakeAmount
-    function rewardStake(address _referred, uint256 _stakeAmount) external onlyRecorder {
+    function rewardStake(address _referred, uint256 _stakeAmount) 
+        external 
+        onlyRecorder 
+        onlyValidAddress(_referred) 
+    {
         address referrer = referrers[_referred];
         uint256 reward = _reward(referrer, _stakeAmount, stakeRewardPercent);
         emit RewardStake(referrer, _referred, reward, _stakeAmount);
     }
 
     /// Reward _referred's referrer when _referred _swapAmount
-    function rewardSwap(address _referred, uint256 _swapAmount) external onlyRecorder {
+    function rewardSwap(address _referred, uint256 _swapAmount) 
+        external 
+        onlyRecorder 
+        onlyValidAddress(_referred) 
+    {
         address referrer = referrers[_referred];
         uint256 reward = _reward(referrer, _swapAmount, swapRewardPercent);
         emit RewardSwap(referrer, _referred, reward, _swapAmount);
@@ -211,12 +219,12 @@ contract ReferralRegister is
     }
     
     /// Called by the owner to register a new recorder
-    function addRecorder(address _recorder) external onlyOwner isNotZeroAddress(_recorder) returns (bool) {
+    function addRecorder(address _recorder) external onlyOwner onlyValidAddress(_recorder) returns (bool) {
         return EnumerableSetUpgradeable.add(_recorders, _recorder);
     }
     
     /// Called by the owner to remove a recorder
-    function removeRecorder(address _recorder) external onlyOwner isNotZeroAddress(_recorder) returns (bool) {
+    function removeRecorder(address _recorder) external onlyOwner onlyValidAddress(_recorder) returns (bool) {
         return EnumerableSetUpgradeable.remove(_recorders, _recorder);
     }
     
@@ -263,14 +271,13 @@ contract ReferralRegister is
     }
 
     // Reward _referred's referrer based on transaction _amount and _rate
-    function _reward(address _referred, uint256 _amount, uint256 _rate)
+    function _reward(address _referrer, uint256 _amount, uint256 _rate)
         private
-        isNotZeroAddress(_referred)
         returns (uint256 reward)
     {
         _update();
 
         reward = Percent.getPercentage(_amount, _rate);
-        rewards[referrers[_referred]] += reward;
+        rewards[_referrer] += reward;
     }
 }
