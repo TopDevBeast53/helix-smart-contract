@@ -2,9 +2,9 @@
  * @dev FeeHandler deployment script
  * 
  * command for deploy on bsc-testnet: 
- *      npx hardhat run scripts/deployFeeHandler.js --network testnetBSC
+ *      npx hardhat run scripts/6_deployFeeHandler.js --network testnetBSC
  * command for deploy on rinkeby: 
- *      npx hardhat run scripts/deployFeeHandler.js --network rinkeby
+ *      npx hardhat run scripts/6_deployFeeHandler.js --network rinkeby
  */
 
 const { ethers, upgrades } = require("hardhat")
@@ -32,7 +32,7 @@ async function main() {
         ]
     ) 
     await feeHandlerProxy.deployTransaction.wait()
-    console.log(`FeeHandler Proxy address: ${factoryProxy.address}`)
+    console.log(`FeeHandler Proxy address: ${feeHandlerProxy.address}`)
 
     // Output the fee handler implementation address
     const feeHandlerImplementationAddress = await upgrades.erc1967.getImplementationAddress(

@@ -31,13 +31,21 @@ module.exports = {
         1: '',
         4: '0xB8dF9dbf268E18026705757e91fAeEbb1B5b916E',
     },
-    helixNFTChef: {
+    helixChefNFT: {
         1: '',
         4: '0x4e7Feef69F7707aDB0542D64359A03EC40e48c75',
     },
-    helixNFTChefImpl: {
+    helixChefNFTImpl: {
         1: '',
         4: '0x61B427041D3393b41d188507a94E91810B15f679',
+    },
+    feeHandler: {
+        1: '',
+        4: '0x2285d7792f5992A7816037F01B05110D4D41FF13',
+    },
+    feeHandlerImplementation: {
+        1: '',
+        4: '0x8Fae8Fb22F008AC66293F5de21E571D078B552d3',
     },
     referralRegister: {
         1: '',
