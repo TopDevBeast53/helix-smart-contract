@@ -49,7 +49,11 @@ module.exports = {
     },
     referralRegister: {
         1: '',
-        4: '0x2D0bEd91Fa17bE81F80eEB7e1A59567954817F64',
+        4: '0x64196f5664dCb6f5Dd79a9cAb4F6598B74067d1B',
+    },
+    referralRegisterImplementation: {
+        1: '',
+        4: '0x8e60A4e0c5b5E24bA5f2F72D039F04EC876FDf7A',
     },
     masterChef: {
         1: '',

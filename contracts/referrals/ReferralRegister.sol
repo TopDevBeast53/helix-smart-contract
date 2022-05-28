@@ -102,7 +102,7 @@ contract ReferralRegister is
     }
 
     function initialize(
-        IHelixToken _helixToken, 
+        address _helixToken, 
         address _feeHandler,
         uint256 _stakeRewardPercent, 
         uint256 _swapRewardPercent,
@@ -113,11 +113,11 @@ contract ReferralRegister is
         __ReentrancyGuard_init();
         _setFeeHandler(_feeHandler);
 
-        helixToken = _helixToken;
+        helixToken = IHelixToken(_helixToken);
         stakeRewardPercent = _stakeRewardPercent;
         swapRewardPercent = _swapRewardPercent;
         toMintPerBlock = _toMintPerBlock;
-        lastMintBlock = _lastMintBlock;
+        lastMintBlock = _lastMintBlock != 0 ? _lastMintBlock : block.number;
     }
 
     /// Reward _referred's referrer when _referred _stakeAmount

@@ -5,44 +5,30 @@ module.exports = {
         56: '',
         97: '0xe0ce7bfb962a25cbac92cbc4b48f91427e2de2f8795b94d1943deb6ec507d0f0',
     },
-    ORACLE_WINDOW_SIZE : {
-        1: 48,
-        4: 48,
-        56: 48,
-        97: 48,
-    },
-    ORACLE_GRANULARITY : {
-        1: 24,
-        4: 24,
-        56: 24,
-        97: 24,
-    },
 
     // --------- Referral Register --------- //
 
-    REFERRAL_STAKING_FEE_PERCENT : {
+    REFERRAL_STAKE_REWARD_PERCENT: {
         1: 0,
         4: 3,
         56: 3, // 3%
         97: 3, // 3%
     },
-    REFERRAL_SWAP_FEE_PERCENT : {
+    REFERRAL_SWAP_REWARD_PERCENT: {
         1: 0,
         4: 5,
         56: 5, // 5%
         97: 5, // 5%
-    },
-    REFERRAL_TREASURY_ADDRESS : {
-        1: '',
-        4: '0x59201fb8cb2D61118B280c8542127331DD141654',
-        56: '0x59201fb8cb2D61118B280c8542127331DD141654',
-        97: '0x59201fb8cb2D61118B280c8542127331DD141654',
     },
     REFERRAL_TO_MINT_PER_BLOCK : {
         1: '4760000000000000000',
         4: '4760000000000000000',     // 4.76 * 10e18 -> 4.76 helix tokens per block
         56: '4760000000000000000',    // 4.76
         97: '4760000000000000000',    // 4.76
+    },
+    REFERRAL_LAST_MINT_BLOCK: {
+        1: 0,
+        4: 0,
     },
 
     // --------- MasterChef --------- //
