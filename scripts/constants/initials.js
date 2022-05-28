@@ -86,18 +86,11 @@ module.exports = {
     },
 
     //block when rewards are no longer being given away
-    HELIX_VAULT_BONUS_END_BLOCK : {
+    HELIX_VAULT_LAST_REWARD_BLOCK : {
         1: 1000000000,
         4: 1000000000,
         56: 1000000000,
         97: 1000000000,
-    },
-
-    HELIX_VAULT_TREASURY_ADDRESS : {
-        1: '',
-        4: '0x59201fb8cb2D61118B280c8542127331DD141654',
-        56: '0x59201fb8cb2D61118B280c8542127331DD141654',
-        97: '0x59201fb8cb2D61118B280c8542127331DD141654',
     },
 
     // --------- VIP Presale --------- //

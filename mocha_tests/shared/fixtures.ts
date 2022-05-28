@@ -223,9 +223,6 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
 
     const migrator = await deployContract(wallet, HelixMigrator, [router.address], overrides);
 
-    // 12 deploy token tools
-    const tokenTools = await deployContract(wallet, TokenTools, [], overrides)
-
     // 13 deploy helix vault
     const vault = await deployContract(wallet, HelixVault, [], overrides)
     await vault.initialize(

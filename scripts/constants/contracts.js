@@ -83,13 +83,13 @@ module.exports = {
         1: '',
         4: '0x4C42DbF2f056de4D95F25d8b08115814383597e9',
     },
-    tokenTools: {
-        1: '',
-        4: '0x3C353C12C843208E6b6eD8F22e71519279422a65',
-    },
     helixVault: {
         1: '',
-        4: '0xb83E0D192c69385822548684681BCdbdAF827902',
+        4: '0xc677D42179501a42F7cE44Cf7235BF6Bd4A41124',
+    },
+    helixVaultImplementation: {
+        1: '',
+        4: '0x2Bf1cbD28109b75F6E1914476E67BDc35c958084',
     },
     multicall2: {
         1: '',
