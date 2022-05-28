@@ -13,7 +13,7 @@ module.exports = {
     },
     helixToken: {
         1: '0x231CC03E6d8b7368eC2aBfAfb5f73D216c8af980', // launched 05/19
-        4: '0x0600D5569E3011233BF1df7fc84de595Ef13f4B6',
+        4: '0x3D3AF4f1505E0bD43a332071286E4fa10d049d26',
     },
     oracleFactory: {
         1: '',
