@@ -57,7 +57,7 @@ module.exports = {
     },
     masterChef: {
         1: '',
-        4: '0x8b2b085339D11DcF0FA0aaD985C30f82eb49a880',
+        4: '0x9C580053ED020aF3185De5bbeB8290498Fd730CC',
     },
     masterChefImplementation: {
         1: '',

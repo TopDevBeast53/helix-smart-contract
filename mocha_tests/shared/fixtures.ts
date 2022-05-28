@@ -145,7 +145,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // and initialize later
     const feeHandler = await deployContract(wallet, FeeHandler, [], overrides)
 
-    // 4 deploy referral register and register as minter with helix token
+    // 7 deploy referral register and register as minter with helix token
     const refReg = await deployContract(wallet, ReferralRegister, [], overrides)
     await refReg.initialize(
         helixToken.address, 
@@ -157,7 +157,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     );
     await helixToken.addMinter(refReg.address)
 
-    // 5 deploy master chef and register as minter with helix token
+    // 8 deploy master chef and register as minter with helix token
     const chef = await deployContract(wallet, MasterChef, [], overrides)
     await chef.initialize(
         helixToken.address,
@@ -172,7 +172,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await helixToken.addMinter(chef.address)
     await refReg.addRecorder(chef.address)
 
-    // 6 deploy auto helix
+    // 9 deploy auto helix
     const autoHelix = await deployContract(wallet, AutoHelix, [], overrides)
     await autoHelix.initialize(helixToken.address, chef.address, autoHelixTreasuryAddress)
 

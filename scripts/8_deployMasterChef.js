@@ -44,7 +44,7 @@ async function main() {
         /*start block=*/StartBlock,
         /*staking percent=*/StakingPercent,
         /*dev percent=*/DevPercent,
-        /*ref=*/ ReferralRegister
+        /*ref=*/ referralRegisterAddress
     ]);
 
     await chef.deployTransaction.wait();
@@ -62,6 +62,7 @@ async function main() {
     await tx.wait();
 
     // register the master chef as a referral register recorder
+    console.log(`------ Register master chef as referral register recorder ------`)
     const ReferralRegister = await ethers.getContractFactory('ReferralRegister')
     const referralRegister = ReferralRegister.attach(referralRegisterAddress)
     tx = await referralRegister.addRecorder(chef.address)
