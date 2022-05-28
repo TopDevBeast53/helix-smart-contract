@@ -9,7 +9,7 @@ module.exports = {
     },
     router: {
         1: '',
-        4: '0xd6517DE0F0D52c2c3589cAEcA54B9c9d73Aa0892',
+        4: '0xC0Bb1a08a32728b28b3f3AFb16Bf6404Cd0Acfd4',
     },
     helixToken: {
         1: '0x231CC03E6d8b7368eC2aBfAfb5f73D216c8af980', // launched 05/19
