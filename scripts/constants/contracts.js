@@ -71,13 +71,9 @@ module.exports = {
         1: '',
         4: '0x96ee8f93cD812BeCD7233bC6Ff0d515Ec25c0Ac2',
     },
-    smartChef: {
-        1: '',
-        4: '',
-    },
     helixNFTBridge: {
         1: '',
-        4: '0x01Fdf7E59E9e3E751BBd9Ee0E732D60fB4a1a688',
+        4: '0xB4E681C2a778A74874c30f0677Fd2ff9815eF31C',
     },
     hpToken: {
         1: '',
