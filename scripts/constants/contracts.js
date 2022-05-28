@@ -1,7 +1,7 @@
 module.exports = {
     factory: {
         1: '',
-        4: '0x68aC93C039962B3d19ec45C08Cac21fD54A48531',
+        4: '0x1Ed71D2D4ac77A5C0a9f2b4121A73C720D5feC73',
     },
     factoryImplementation: {
         1: '',
@@ -9,15 +9,15 @@ module.exports = {
     },
     router: {
         1: '',
-        4: '0xC0Bb1a08a32728b28b3f3AFb16Bf6404Cd0Acfd4',
+        4: '0xDF192Dda9d8ffe0958E9a93Af9031bC7b148a33A',
     },
     helixToken: {
         1: '0x231CC03E6d8b7368eC2aBfAfb5f73D216c8af980', // launched 05/19
-        4: '0x3D3AF4f1505E0bD43a332071286E4fa10d049d26',
+        4: '0x79DD2dad8D04F9279F94580DBEd2306A0aE118Bd',
     },
     oracleFactory: {
         1: '',
-        4: '0x56C582aabf8Ec51519B29A1fD77e02C6377c6B43',
+        4: '0x5B746462211d3b5D0f04e31fE58b7021a34CA525',
     },
     oracleFactoryImplementation: {
         1: '',
@@ -25,7 +25,7 @@ module.exports = {
     },
     helixNFT: {
         1: '',
-        4: '0x5421e465f24aD3efC17275056B7c8E66c7814dA0',
+        4: '0xE54Ae8147af2B800CA0b47036176b37f42a94800',
     },
     helixNFTImplementation: {
         1: '',
@@ -33,7 +33,7 @@ module.exports = {
     },
     helixChefNFT: {
         1: '',
-        4: '0x4e7Feef69F7707aDB0542D64359A03EC40e48c75',
+        4: '0x9D5aD9644CAE37f8A89D3fa6756A38E944bbfAb8',
     },
     helixChefNFTImpl: {
         1: '',
@@ -41,7 +41,7 @@ module.exports = {
     },
     feeHandler: {
         1: '',
-        4: '0x2285d7792f5992A7816037F01B05110D4D41FF13',
+        4: '0x65FB68FF81c7CEB40B4888ea3ccd361dd97FFf8b',
     },
     feeHandlerImplementation: {
         1: '',
@@ -49,7 +49,7 @@ module.exports = {
     },
     referralRegister: {
         1: '',
-        4: '0x64196f5664dCb6f5Dd79a9cAb4F6598B74067d1B',
+        4: '0x79f06e19cE76eEd33FEf1fC27c2e9B1ACB0E9B57',
     },
     referralRegisterImplementation: {
         1: '',
@@ -57,7 +57,7 @@ module.exports = {
     },
     masterChef: {
         1: '',
-        4: '0x9C580053ED020aF3185De5bbeB8290498Fd730CC',
+        4: '0x9c344695a43E85774F8F886DaBF9AE5C11428bC2',
     },
     masterChefImplementation: {
         1: '',
@@ -65,7 +65,7 @@ module.exports = {
     },
     autoHelix: {
         1: '',
-        4: '0xa3eeD6bC18764fEA80f7FEB25544b9Ea9fDA7f6E',
+        4: '0x6C3f85c7F3979308751EBFba244F6eF5400aA911',
     },
     autoHelixImplementation: {
         1: '',
@@ -73,31 +73,43 @@ module.exports = {
     },
     helixNFTBridge: {
         1: '',
-        4: '0xB4E681C2a778A74874c30f0677Fd2ff9815eF31C',
+        4: '0x3E9bdCfF21871c0751b8Fb3b17AC883e36aBa23B',
     },
     swapRewards: {
         1: '',
-        4: '0x6eD0879BBbC72c1F193dA55C48572ACFae33c34C',
+        4: '0x9b2E0a33E1c09e3C062c811d269C74B414007fc1',
     },
     helixMigrator: {
         1: '',
-        4: '0x4C42DbF2f056de4D95F25d8b08115814383597e9',
+        4: '0xC5B43C8fdb3c487b6582E5321f43381AB83A8119',
     },
     helixVault: {
         1: '',
-        4: '0xc677D42179501a42F7cE44Cf7235BF6Bd4A41124',
+        4: '0xF9a8da398f852968203C975426653d4336Ea249B',
     },
     helixVaultImplementation: {
         1: '',
         4: '0x2Bf1cbD28109b75F6E1914476E67BDc35c958084',
     },
+    yieldSwap: {
+        1: '',
+        4: '0xaEaD56A540873130c5B973E1A64378aca343F6BC',
+    },
+    yieldSwapImplementation: {
+        1: '',
+        4: '0x6adb0f41dc115168eb14Af8EaD14B7D432E42D71',
+    },
+    lpSwap: {
+        1: '',
+        4: '0xe9987A2fFCe10623680de0F4c5f66566b53E739E',
+    },
+    lpSwapImplementation: {
+        1: '',
+        4: '0xd0Ab9e57ED6a72c31F36DC82f94539b462455d84',
+    },
     multicall2: {
         1: '',
         4: '0x6CfcdedFed8122029d8457Aab73ee855D4B92fC5',
-    },
-    helixP: {
-        1: '',
-        4: '',
     },
     vipPresale: {
         1: '',
@@ -110,13 +122,5 @@ module.exports = {
     airDrop: {
         1: '',
         4: '',
-    },
-    yieldSwap: {
-        1: '',
-        4: '0x6F11a3F4C4281ef735854cC2930429095dD66fbD',
-    },
-    lpSwap: {
-        1: '',
-        4: '0x0D46D55b0fC9f98557869f05134294f4aBFB0004',
     },
 }

@@ -3,10 +3,10 @@ pragma solidity >= 0.8.0;
 
 import "../interfaces/IMasterChef.sol";
 import "../fees/FeeCollector.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * Enable users (party/counterparty or seller/buyer) to engage in p2p token pair 
@@ -40,8 +40,6 @@ contract YieldSwap is
     PausableUpgradeable, 
     ReentrancyGuardUpgradeable 
 {
-    using SafeERC20 for IERC20;
-
     struct Swap {
         Party seller;                   // Address that opened this swap and that is selling amount of toBuyerToken
         Party buyer;                    // Address of the buyer of this swap, set only after the swap is closed
@@ -545,7 +543,7 @@ contract YieldSwap is
         // Stake the token if it's an lp token
         if (isLp) {
             // Transfer the amount of token from party to this contract
-            token.safeTransferFrom(party, address(this), amount);
+            token.transferFrom(party, address(this), amount);
 
             // Approve the chef to manage amount of this token in this contract
             token.approve(address(chef), amount);
