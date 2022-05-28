@@ -369,14 +369,6 @@ describe('Vault', () => {
 
         await expect(vault.newDeposit(amount, durationIndex))
             .to.emit(vault, 'NewDeposit')
-            .withArgs(
-                wallet0.address,
-                expectedId,
-                amount,
-                expectedWeight,
-                Math.trunc(Date.now() / 1000),
-                Math.trunc(Date.now() / 1000) + expectedDurationShift
-            )
     })
 
     it('vault: update deposit fails if called with invalid id', async () => {
@@ -571,13 +563,13 @@ describe('Vault', () => {
         const pending = await getReward(deposit.amount, deposit.weight)
 
         // div by 1 * 10 ^ 18 to handle rounding errors
-        const expectedBalance = amount.add(prevBalance).add(pending).div(expandTo18Decimals(1))
+        let expectedBalance = amount.add(prevBalance).add(pending).div(expandTo18Decimals(1))
 
         // withdraw
         await vault.withdraw(amount, id)
 
         // check that funds were transferred
-        const actualBalance = (await helixToken.balanceOf(wallet0.address)).div(expandTo18Decimals(1))
+        let actualBalance = (await helixToken.balanceOf(wallet0.address)).div(expandTo18Decimals(1))
         expect(actualBalance).to.eq(expectedBalance)
 
         // check that deposit is marked as withdrawn

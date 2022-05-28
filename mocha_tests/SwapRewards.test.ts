@@ -57,7 +57,7 @@ describe('SwapRewards', () => {
         await initPairs(tokenA, tokenB)
 
         // Add the user as the wallet's referrer
-        await refReg.addRef(user.address)
+        await refReg.addReferrer(user.address)
     })
 
     async function initPairs(token0: Contract, token1: Contract) {
@@ -144,7 +144,7 @@ describe('SwapRewards', () => {
     })
 
     it('swapRewards: referral register is initialized', async () => {
-        expect(await refReg.ref(wallet.address)).to.eq(user.address)
+        expect(await refReg.referrers(wallet.address)).to.eq(user.address)
         expect(await refReg.isRecorder(swapRewards.address)).to.be.true
     })
 
@@ -163,7 +163,7 @@ describe('SwapRewards', () => {
 
         // Store the previous values of interest before swap 
         const prevAccountHelix = await helixToken.balanceOf(account)
-        const prevReferrerHelix = await refReg.balance(referrer)
+        const prevReferrerHelix = await refReg.rewards(referrer)
 
         // Swap A for B and collect rewards
         await expect(swapRewards.swap(account, tokenB.address, 1000))
@@ -182,14 +182,14 @@ describe('SwapRewards', () => {
 
         // Store the previous values of interest before swap 
         const prevAccountHelix = await helixToken.balanceOf(account)
-        const prevReferrerHelix = await refReg.balance(referrer)
+        const prevReferrerHelix = await refReg.rewards(referrer)
 
         // Swap A for B and collect rewards
         await swapRewards.swap(account, tokenB.address, 1000)
 
         // Get the updated values after swap
         const newAccountHelix = await helixToken.balanceOf(account)
-        const newReferrerHelix = await refReg.balance(referrer)
+        const newReferrerHelix = await refReg.rewards(referrer)
 
         // We don't actually expect any rewards to accrue because a swap hasn't been triggered.
         expect(prevAccountHelix).to.be.at.most(newAccountHelix)
@@ -202,7 +202,7 @@ describe('SwapRewards', () => {
 
         // Store the previous values of interest before swap 
         const prevAccountHelix = await helixToken.balanceOf(account)
-        const prevReferrerHelix = await refReg.balance(referrer)
+        const prevReferrerHelix = await refReg.rewards(referrer)
 
         // Swap twice and earn rewards
         await router.swapExactTokensForTokens(
@@ -234,7 +234,7 @@ describe('SwapRewards', () => {
 
         // Get the updated values after swap
         const newAccountHelix = await helixToken.balanceOf(account)
-        const newReferrerHelix = await refReg.balance(referrer)
+        const newReferrerHelix = await refReg.rewards(referrer)
 
         expect(prevAccountHelix).to.be.at.most(newAccountHelix)
         expect(prevReferrerHelix).to.be.at.most(newReferrerHelix)

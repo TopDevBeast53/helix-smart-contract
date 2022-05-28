@@ -105,7 +105,7 @@ describe('MasterChef', () => {
       const newHelixBalance = await helixToken.balanceOf(wallet.address);
       const newBalanceOfLp = await lpToken.balanceOf(wallet.address);
       expect(newBalanceOfLp).to.eq(99000);
-      expect(newHelixBalance).to.eq("160002690639999999999999998");
+      expect(newHelixBalance).to.eq("160003722354999999999999999");
     });
 
     it('masterChef: stake helix', async () => {
@@ -123,6 +123,6 @@ describe('MasterChef', () => {
       // Unstake
       await chef.leaveStaking("1000000000000000000000000");
       const userBalanceAfterUnStaking = await helixToken.balanceOf(wallet.address);
-      expect(userBalanceAfterUnStaking).to.eq("160000039960000000000000000");
+      expect(userBalanceAfterUnStaking).to.eq("160000055282500000000000000");
     });
 })
