@@ -3,9 +3,9 @@
  *
  * command for deploy on bsc-testnet: 
  * 
- *      npx hardhat run scripts/8_deployHelixNftStaking.js --network testnetBSC
+ *      npx hardhat run scripts/5_deployHelixNftStaking.js --network testnetBSC
  * 
- *      npx hardhat run scripts/8_deployHelixNftStaking.js --network rinkeby
+ *      npx hardhat run scripts/5_deployHelixNftStaking.js --network rinkeby
  */
 
 const { ethers, network, upgrades } = require(`hardhat`)

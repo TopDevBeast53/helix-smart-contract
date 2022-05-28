@@ -23,6 +23,22 @@ module.exports = {
         1: '',
         4: '0xD60dFd1C4A2a7da89E678DD2F7Ac56C410628Bff',
     },
+    helixNFT: {
+        1: '',
+        4: '0x5421e465f24aD3efC17275056B7c8E66c7814dA0',
+    },
+    helixNFTImplementation: {
+        1: '',
+        4: '0xB8dF9dbf268E18026705757e91fAeEbb1B5b916E',
+    },
+    helixNFTChef: {
+        1: '',
+        4: '0x4e7Feef69F7707aDB0542D64359A03EC40e48c75',
+    },
+    helixNFTChefImpl: {
+        1: '',
+        4: '0x61B427041D3393b41d188507a94E91810B15f679',
+    },
     referralRegister: {
         1: '',
         4: '0x2D0bEd91Fa17bE81F80eEB7e1A59567954817F64',
@@ -38,22 +54,6 @@ module.exports = {
     smartChef: {
         1: '',
         4: '',
-    },
-    helixNFT: {
-        1: '',
-        4: '0xE4cA8AB07e713428660955972A6BBF281C1aeeAA',
-    },
-    helixNFTImpl: {
-        1: '',
-        4: '0xC28e6444b04EE09B16C2DAc8356629D8470a1B28',
-    },
-    helixNFTChef: {
-        1: '',
-        4: '0xfB33FF918d127018B837523456FC941E85AD106F',
-    },
-    helixNFTChefImpl: {
-        1: '',
-        4: '0x3CEac58Ab09ae2b9d790a2911abcE99dFdbD9f40',
     },
     helixNFTBridge: {
         1: '',
