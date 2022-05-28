@@ -8,12 +8,12 @@
  */
 
 const { ethers, upgrades } = require("hardhat")
-const env = require("./constants/env")
-const contracts = require("./constants/contracts")
 const addresses = require("./constants/addresses")
+const contracts = require("./constants/contracts")
+const env = require("./constants/env")
 
-const treasury = addresses.setterFeeOnPairSwaps[env.network]
-const nftChef = contracts.nftChef[env.network]
+const treasuryAddress = addresses.TREASURY[env.network]
+const nftChefAddress = contracts.helixChefNFT[env.network]
 
 async function main() {
     console.log(`Deploy FeeHandler Proxy and Implementation`)
@@ -21,15 +21,24 @@ async function main() {
     const [deployer] = await ethers.getSigners()
     console.log(`Deployer address: ${deployer.address}`)
     
-    const contractFactory = await ethers.getContractFactory("FeeHandler")
-    const proxy = await upgrades.deployProxy(contractFactory, [treasury, nftChef]) 
-    await proxy.deployTransaction.wait()
-    console.log(`FeeHandler Proxy address: ${proxy.address}`)
+    const FeeHandlerContractFactory = await ethers.getContractFactory("FeeHandler")
 
-    const implementationAddress = await upgrades.erc1967.getImplementationAddress(
-        proxy.address
+    // Deploy the fee handler proxy
+    const feeHandlerProxy = await upgrades.deployProxy(
+        FeeHandlerContractFactory, 
+        [
+            treasuryAddress, 
+            nftChefAddress
+        ]
+    ) 
+    await feeHandlerProxy.deployTransaction.wait()
+    console.log(`FeeHandler Proxy address: ${factoryProxy.address}`)
+
+    // Output the fee handler implementation address
+    const feeHandlerImplementationAddress = await upgrades.erc1967.getImplementationAddress(
+        feeHandlerProxy.address
     )
-    console.log(`FeeHandler Implementation address: ${implementationAddress}`)
+    console.log(`FeeHandler Implementation address: ${feeHandlerImplementationAddress}`)
 }
 
 main()
