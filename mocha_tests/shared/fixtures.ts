@@ -45,7 +45,7 @@ const chefHelixTokenRewardPerBlock = initials.MASTERCHEF_HELIX_TOKEN_REWARD_PER_
 const chefStakingPercent = initials.MASTERCHEF_STAKING_PERCENT[env.network];
 const chefDevPercent = initials.MASTERCHEF_DEV_PERCENT[env.network];
 
-const autoHelixTreasuryAddress = addresses.autoHelixTreasuryAddress[env.network];
+const autoHelixTreasuryAddress = addresses.TREASURY[env.network];
 
 const swapRewardsSplitRewardPercent = initials.SPLIT_REWARD_PERCENT[env.network]
 const swapRewardsHelixRewardPercent = initials.HELIX_REWARD_PERCENT[env.network]

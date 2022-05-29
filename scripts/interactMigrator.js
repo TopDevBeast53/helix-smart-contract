@@ -20,7 +20,7 @@ const Name = {
 }
 
 const Address = {
-    Owner: '0x59201fb8cb2D61118B280c8542127331DD141654',                // Contract deployer
+    Owner: '0xee936e648cD998e9df4531dF77EF2D2AECA5921b',                // Contract deployer
     User: '0x697419d2B31844ad7Fa4646499f8B81de79D2eB1',                 // Contract user
     TokenA: '0x360f6135472195caabEA67c7C6b83E3767F96762',               // token A
     TokenB: '0xd239560c0d8Ae7EB66c5f691F32a7D7857cEDc58',               // token B

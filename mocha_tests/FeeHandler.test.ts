@@ -9,10 +9,10 @@ import { expandTo18Decimals } from './shared/utilities'
 
 import FeeHandler from '../build/contracts/FeeHandler.json'
 
-const initials = require('../scripts/constants/initials')
+const addresses = require('../scripts/constants/addresses')
 const env = require('../scripts/constants/env')
 
-const treasuryAddress = initials.FEE_HANDLER_TREASURY_ADDRESS[env.network]
+const treasuryAddress = addresses.TREASURY[env.network]
 
 chai.use(solidity)
 

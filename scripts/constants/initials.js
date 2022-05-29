@@ -58,17 +58,6 @@ module.exports = {
         97: 325000, // -> 32.5% of all farm rewards will go to dev address
     },
     
-    // --------- Fee Handler ------------ //
-
-    FEE_HANDLER_TREASURY_ADDRESS : {
-        1: '',
-        4: '0x59201fb8cb2D61118B280c8542127331DD141654',
-        56: '0x59201fb8cb2D61118B280c8542127331DD141654',
-        97: '0x59201fb8cb2D61118B280c8542127331DD141654',
-    },
-    
-    // --------- Helix NFT & Chef --------- //
-
     // --------- Helix Vault --------- //
 
     HELIX_VAULT_REWARD_PER_BLOCK: {
@@ -123,8 +112,6 @@ module.exports = {
     VIP_PRESALE_TREASURY: {
         1: '',
         4: '',
-        56: '0x0C7AB1234357c1D46F00F653f703E354A5C2a714',
-        97: '0x59201fb8cb2D61118B280c8542127331DD141654',     // Deployer address for testing
     },
 
     // Length of time in seconds between purchase phases
@@ -174,8 +161,6 @@ module.exports = {
     PUBLIC_PRESALE_TREASURY: {
         1: '',
         4: '',
-        56: '',
-        97: '0x59201fb8cb2D61118B280c8542127331DD141654',     // Deployer address for testing
     },
 
     // BUSD per ticket
