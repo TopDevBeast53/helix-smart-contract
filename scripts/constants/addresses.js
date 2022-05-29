@@ -1,7 +1,7 @@
 module.exports = {
     TREASURY: {
-        1: '0x59201fb8cb2D61118B280c8542127331DD141654',
-        4: '0x59201fb8cb2D61118B280c8542127331DD141654',
+        1: '',
+        4: '0xee936e648cD998e9df4531dF77EF2D2AECA5921b',
         56: '0x59201fb8cb2D61118B280c8542127331DD141654',
         97: '0x59201fb8cb2D61118B280c8542127331DD141654',
     },
@@ -20,21 +20,21 @@ module.exports = {
     //ADDRESS_OF_WHO_CAN_SET_FEES_ON_PAIR_SWAPS
     setterFeeOnPairSwaps: {
         1: '',
-        4: '0x59201fb8cb2D61118B280c8542127331DD141654',
+        4: '0xee936e648cD998e9df4531dF77EF2D2AECA5921b',
         56: '',
         97: '0x59201fb8cb2D61118B280c8542127331DD141654',
     },
     //ADDRESS_OF_WHO_WILL_RECEIVE_TRADING_FEES
     poolReceiveTradeFee: {
         1: '',
-        4: '0x59201fb8cb2D61118B280c8542127331DD141654',
+        4: '0xee936e648cD998e9df4531dF77EF2D2AECA5921b',
         56: '',
         97: '0x7167a81a3a158Fc0383124Bd7e4d4e43f2b728b8',
     },
     //Address of withdraw dev and ref fee
     masterChefDeveloper: {
         1: '',
-        4: '0x59201fb8cb2D61118B280c8542127331DD141654',
+        4: '0xee936e648cD998e9df4531dF77EF2D2AECA5921b',
         56: '',
         97: '0x7167a81a3a158Fc0383124Bd7e4d4e43f2b728b8',
     },

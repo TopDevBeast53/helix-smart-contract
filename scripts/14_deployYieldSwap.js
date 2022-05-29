@@ -2,9 +2,9 @@
  * @dev Deployment script for Yield Swap contract.
  *
  * Run from project root using:
- *     npx hardhat run scripts/16_deployYieldSwap.js --network testnetBSC
+ *     npx hardhat run scripts/14_deployYieldSwap.js --network testnetBSC
  * 
- *     npx hardhat run scripts/16_deployYieldSwap.js --network rinkeby
+ *     npx hardhat run scripts/14_deployYieldSwap.js --network rinkeby
  */
 
 // Define script parameters
@@ -14,9 +14,9 @@ const contracts = require('./constants/contracts')
 const initials = require('./constants/initials')
 
 // Define contract constructor arguments
-const chef = contracts.masterChef[env.network]
-const rewardToken = contracts.helixToken[env.network]
-const treasury = initials.YIELD_SWAP_TREASURY[env.network]
+const chefAddress = contracts.masterChef[env.network]
+const rewardTokenAddress = contracts.helixToken[env.network]
+const feeHandlerAddress = contracts.feeHandler[env.network]
 const minLockDuration = initials.YIELD_SWAP_MIN_LOCK_DURATION[env.network]
 const maxLockDuration = initials.YIELD_SWAP_MAX_LOCK_DURATION[env.network]
 
@@ -29,9 +29,9 @@ async function main() {
     const contract = await upgrades.deployProxy(
         ContractFactory,
         [
-            chef,               // stakes and earns yield on lp tokens
-            rewardToken,
-            treasury,           // receives buyer and seller fees
+            chefAddress,               // stakes and earns yield on lp tokens
+            rewardTokenAddress,
+            feeHandlerAddress,
             minLockDuration,    // minimum duration for which lp tokens can be locked 
             maxLockDuration     // maximum duration for which lp tokens can be locked
         ]

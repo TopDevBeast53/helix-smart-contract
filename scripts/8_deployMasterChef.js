@@ -3,9 +3,9 @@
  *
  * command for deploy on bsc-testnet: 
  * 
- *      npx hardhat run scripts/6_deployMasterChef.js --network testnetBSC
+ *      npx hardhat run scripts/8_deployMasterChef.js --network testnetBSC
  * 
- *      npx hardhat run scripts/6_deployMasterChef.js --network rinkeby
+ *      npx hardhat run scripts/8_deployMasterChef.js --network rinkeby
  *       
  * Workflow:
  * 
@@ -19,7 +19,7 @@ const initials = require("./constants/initials")
 const env = require("./constants/env")
 
 const HelixTokenAddress = contracts.helixToken[env.network];
-const ReferralRegister = contracts.referralRegister[env.network];
+const referralRegisterAddress = contracts.referralRegister[env.network];
 const DeveloperAddress = addresses.masterChefDeveloper[env.network];
 const StartBlock = initials.MASTERCHEF_START_BLOCK[env.network];
 const HelixTokenRewardPerBlock = initials.MASTERCHEF_HELIX_TOKEN_REWARD_PER_BLOCK[env.network];
@@ -27,7 +27,6 @@ const StakingPercent = initials.MASTERCHEF_STAKING_PERCENT[env.network];
 const DevPercent = initials.MASTERCHEF_DEV_PERCENT[env.network];
 
 async function main() {
-
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${ deployer.address}`);
     
@@ -45,7 +44,7 @@ async function main() {
         /*start block=*/StartBlock,
         /*staking percent=*/StakingPercent,
         /*dev percent=*/DevPercent,
-        /*ref=*/ ReferralRegister
+        /*ref=*/ referralRegisterAddress
     ]);
 
     await chef.deployTransaction.wait();
@@ -61,6 +60,14 @@ async function main() {
     const helixToken = HelixToken.attach(HelixTokenAddress);
     let tx = await helixToken.addMinter(chef.address);
     await tx.wait();
+
+    // register the master chef as a referral register recorder
+    console.log(`------ Register master chef as referral register recorder ------`)
+    const ReferralRegister = await ethers.getContractFactory('ReferralRegister')
+    const referralRegister = ReferralRegister.attach(referralRegisterAddress)
+    tx = await referralRegister.addRecorder(chef.address)
+    await tx.wait()
+
     console.log(`Done!`)
 }
 

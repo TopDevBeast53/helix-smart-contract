@@ -28,14 +28,11 @@ const oracleFactoryAddress = contracts.oracleFactory[env.network]
 const refRegAddress = contracts.referralRegister[env.network]
 const masterChefAddress = contracts.masterChef[env.network]
 const autoHelixAddress = contracts.autoHelix[env.network]
-// const smartChefAddress = contracts.smartChef[env.network]
 const helixNFTAddress = contracts.helixNFT[env.network]
 const helixNFTChefAddress = contracts.helixNFTChef[env.network]
 const helixNFTBridgeAddress = contracts.helixNFTBridge[env.network]
-const helixLPAddress = contracts.hpToken[env.network]
 const swapRewardsAddress = contracts.swapRewards[env.network]
 const migratorAddress = contracts.helixMigrator[env.network]
-const tokenToolsAddress = contracts.tokenTools[env.network]
 const helixVaultAddress = contracts.helixVault[env.network]
 
 let wallet
@@ -50,10 +47,8 @@ let autoHelix
 let helixNFT
 let helixNFTChef
 let helixNFTBridge
-let helixLP
 let swapRewards
 let migrator
-let tokenTools
 let helixVault
 
 
@@ -134,10 +129,6 @@ async function loadContracts() {
     const IHelixNFTBridge = await ethers.getContractFactory('HelixNFTBridge')
     helixNFTBridge = await IHelixNFTBridge.attach(helixNFTBridgeAddress).connect(wallet)
 
-    print(`load helix LP: ${helixLPAddress}`)
-    const IHelixLP = await ethers.getContractFactory('HelixLP')
-    helixLP = await IHelixLP.attach(helixLPAddress).connect(wallet)
-
     print(`load swap rewards: ${swapRewardsAddress}`)
     const ISwapRewards = await ethers.getContractFactory('SwapRewards')
     swapRewards = await ISwapRewards.attach(swapRewardsAddress).connect(wallet)
@@ -145,10 +136,6 @@ async function loadContracts() {
     print(`load migrator: ${migratorAddress}`)
     const IMigrator = await ethers.getContractFactory('HelixMigrator')
     migrator = await IMigrator.attach(migratorAddress).connect(wallet)
-
-    print(`load token tools: ${tokenToolsAddress}`)
-    const ITokenTools = await ethers.getContractFactory('TokenTools')
-    tokenTools = await ITokenTools.attach(tokenToolsAddress).connect(wallet)
 
     print(`load helix vault: ${helixVaultAddress}`)
     const IHelixVault = await ethers.getContractFactory('HelixVault')

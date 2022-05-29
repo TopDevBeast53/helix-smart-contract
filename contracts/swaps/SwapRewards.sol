@@ -23,9 +23,6 @@ contract SwapRewards is ISwapRewards, Ownable, Pausable {
     /// The router contract which can call the swap
     address public router;
 
-    /// Percent earned on swaps in HELIX
-    uint256 public rewardPercent;
-
     // Emitted when a swap is performed
     event Swap(
         address user,
@@ -46,26 +43,21 @@ contract SwapRewards is ISwapRewards, Ownable, Pausable {
     // Emitted when the router is set
     event SetRouter(address indexed setter, address indexed router);
 
-    // Emitted when the rewardPercent is set
-    event SetRewardPercent(address indexed setter, uint256 indexed rewardPercent);
-
     modifier onlyValidAddress(address _address) {
         require(_address != address(0), "SwapFee: zero address");
         _;
     }
 
     constructor(
-        IHelixToken _helixToken,
-        IOracleFactory _oracleFactory,
-        IReferralRegister _refReg,
-        address _router, 
-        uint256 _rewardPercent
+        address _helixToken,
+        address _oracleFactory,
+        address _refReg,
+        address _router
     ) {
-        helixToken = _helixToken;
-        oracleFactory = _oracleFactory;
-        refReg = _refReg;
+        helixToken = IHelixToken(_helixToken);
+        oracleFactory = IOracleFactory(_oracleFactory);
+        refReg = IReferralRegister(_refReg);
         router = _router;
-        rewardPercent = _rewardPercent;
     }
 
     /// Accrue HELIX proportional to _amountIn of _tokenIn to the _user performing a swap
@@ -74,12 +66,9 @@ contract SwapRewards is ISwapRewards, Ownable, Pausable {
         whenNotPaused
     {
         require(msg.sender == router, "SwapFee: not router");
-
+    
         uint256 helixOut = oracleFactory.consult(_tokenIn, _amountIn, address(helixToken));
-        helixOut = Percent.getPercentage(helixOut, rewardPercent);
-
         if (helixOut > 0) {
-            // Accrue HELIX to the swap caller referrer
             refReg.rewardSwap(_user, helixOut);
         }
         
@@ -87,46 +76,39 @@ contract SwapRewards is ISwapRewards, Ownable, Pausable {
     }
 
     /// Called by the owner to set the _helixToken
-    function setHelixToken(IHelixToken _helixToken) 
+    function setHelixToken(address _helixToken) 
         external 
         onlyOwner 
-        onlyValidAddress(address(_helixToken)) 
+        onlyValidAddress(_helixToken)
     {
-        helixToken = _helixToken;
-        emit SetHelixToken(msg.sender, address(_helixToken));
+        helixToken = IHelixToken(_helixToken);
+        emit SetHelixToken(msg.sender, _helixToken);
     }
 
     /// Called by the owner to set the _oracleFactory
-    function setOracleFactory(IOracleFactory _oracleFactory) 
+    function setOracleFactory(address _oracleFactory) 
         external 
         onlyOwner 
-        onlyValidAddress(address(_oracleFactory)) 
+        onlyValidAddress(_oracleFactory) 
     {
-        oracleFactory = _oracleFactory;
-        emit SetOracleFactory(msg.sender, address(_oracleFactory));
+        oracleFactory = IOracleFactory(_oracleFactory);
+        emit SetOracleFactory(msg.sender, _oracleFactory);
     }
 
     /// Called by the owner to set the _refReg
-    function setRefReg(IReferralRegister _refReg) 
+    function setRefReg(address _refReg) 
         external 
         onlyOwner 
-        onlyValidAddress(address(_refReg)) 
+        onlyValidAddress(_refReg) 
     {
-        refReg = _refReg;
-        emit SetRefReg(msg.sender, address(_refReg));
+        refReg = IReferralRegister(_refReg);
+        emit SetRefReg(msg.sender, _refReg);
     }
 
     /// Called by the owner to set the _router
     function setRouter(address _router) external onlyOwner onlyValidAddress(_router) {
         router = _router;
-        emit SetRouter(msg.sender, address(_router));
-    }
-
-    /// Called by the owner to set the _rewardPercent
-    function setRewardPercent(uint256 _rewardPercent) external onlyOwner {
-        require(Percent.isValidPercent(_rewardPercent), "SwapFee: invalid percent");
-        rewardPercent = _rewardPercent;
-        emit SetRewardPercent(msg.sender, _rewardPercent);
+        emit SetRouter(msg.sender, _router);
     }
 
     /// Called by the owner to pause swaps

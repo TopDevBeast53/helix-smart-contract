@@ -3,9 +3,9 @@
  *
  * command for deploy on bsc-testnet: 
  * 
- *      npx hardhat run scripts/7_deployAutoHelix.js --network testnetBSC
+ *      npx hardhat run scripts/9_deployAutoHelix.js --network testnetBSC
  * 
- *      npx hardhat run scripts/7_deployAutoHelix.js --network rinkeby
+ *      npx hardhat run scripts/9_deployAutoHelix.js --network rinkeby
  */
 const { ethers, upgrades } = require(`hardhat`);
 const contracts = require("./constants/contracts")
@@ -14,7 +14,7 @@ const env = require("./constants/env")
 
 const HelixTokenAddress = contracts.helixToken[env.network];
 const MasterChefAddress = contracts.masterChef[env.network];
-const TreasuryAddress = addresses.autoHelixTreasuryAddress[env.network];
+const treasuryAddress = addresses.TREASURY[env.network];
 
 async function main() {
 
@@ -27,7 +27,7 @@ async function main() {
     const autoHelix = await upgrades.deployProxy(AutoHelix, [
         /*helix token address=*/HelixTokenAddress,
         /*master chef address=*/MasterChefAddress,
-        /*treasury address=*/TreasuryAddress]);
+        /*treasury address=*/treasuryAddress]);
 
     await autoHelix.deployTransaction.wait();
     console.log(`AutoHelix deployed to ${autoHelix.address}`);

@@ -4,7 +4,7 @@ pragma solidity >= 0.8.0;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * P2P swap for sellers to sell the liquidity tokens. Sellers open a swap and set 
@@ -18,8 +18,6 @@ contract LpSwap is
     PausableUpgradeable, 
     ReentrancyGuardUpgradeable 
 {
-    using SafeERC20 for IERC20;
-        
     struct Swap {
         IERC20 toBuyerToken;        // Token being sold in swap by seller to buyer
         IERC20 toSellerToken;       // Token being sold in swap by buyer to seller
@@ -353,10 +351,10 @@ contract LpSwap is
         _swap.cost = _toSellerAmount;
 
         // Seller pays the buyer
-        toBuyerToken.safeTransferFrom(_seller, _buyer, _swap.amount);
+        toBuyerToken.transferFrom(_seller, _buyer, _swap.amount);
 
         // Buyer pays the seller
-        toSellerToken.safeTransferFrom(_buyer, _seller, _toSellerAmount);
+        toSellerToken.transferFrom(_buyer, _seller, _toSellerAmount);
     }
 
     // Return the Bid associated with the _bidId

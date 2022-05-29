@@ -18,13 +18,13 @@ async function main() {
     console.log(`Deployer address: ${deployer.address}`)
 
     // 1. Deploy the Oracle Factory
-    console.log(`------ Start deploying Oracle -------`)
+    console.log(`------ Start deploying Oracle Factory -------`)
 
     const OracleFactory = await ethers.getContractFactory('OracleFactory')
     const oracleFactory = await upgrades.deployProxy(OracleFactory, [factoryAddress])
     await oracleFactory.deployTransaction.wait()
     
-    console.log(`Oracle deployed to ${oracleFactory.address}`)
+    console.log(`Oracle Factory proxy deployed to ${oracleFactory.address}`)
 
     const implementationAddress = await upgrades.erc1967.getImplementationAddress(
         oracleFactory.address

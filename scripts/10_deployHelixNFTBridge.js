@@ -1,12 +1,11 @@
 /**
  * @dev HelixNFT Bridge Deployment
  * 
- *
  * command for deploy on bsc-testnet: 
  * 
- *      npx hardhat run scripts/9_deployHelixNFTBridge.js --network testnetBSC
+ *      npx hardhat run scripts/10_deployHelixNFTBridge.js --network testnetBSC
  * 
- *      npx hardhat run scripts/9_deployHelixNFTBridge.js --network rinkeby
+ *      npx hardhat run scripts/10_deployHelixNFTBridge.js --network rinkeby
  *       
  * Workflow:
  * 
