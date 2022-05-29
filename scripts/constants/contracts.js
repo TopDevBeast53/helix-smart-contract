@@ -1,15 +1,15 @@
 module.exports = {
     factory: {
         1: '',
-        4: '0x1Ed71D2D4ac77A5C0a9f2b4121A73C720D5feC73',
+        4: '0x86DaA036Ed3e324238C67d1FaA01b707e05965f7',
     },
     factoryImplementation: {
         1: '',
-        4: '0xB8B179DC12915316b94eAB4fa4b219D6762D04Cd',
+        4: '0x4d6224Cb75DE6904f760c46c4e84E809E046cB41',
     },
     router: {
         1: '',
-        4: '0xDF192Dda9d8ffe0958E9a93Af9031bC7b148a33A',
+        4: '0x64fAaD1f48E4f78BdA455E6eDBbc43315D791B85',
     },
     helixToken: {
         1: '0x231CC03E6d8b7368eC2aBfAfb5f73D216c8af980', // launched 05/19
@@ -17,11 +17,11 @@ module.exports = {
     },
     oracleFactory: {
         1: '',
-        4: '0x5B746462211d3b5D0f04e31fE58b7021a34CA525',
+        4: '0xC5dC74188662DA19688a96e67a621eDD028F9550',
     },
     oracleFactoryImplementation: {
         1: '',
-        4: '0xD60dFd1C4A2a7da89E678DD2F7Ac56C410628Bff',
+        4: '0xFF344b8b048176f988F76cD4d1EA033473D0D157',
     },
     helixNFT: {
         1: '',
@@ -77,11 +77,11 @@ module.exports = {
     },
     swapRewards: {
         1: '',
-        4: '0x9b2E0a33E1c09e3C062c811d269C74B414007fc1',
+        4: '0xC7DBb90E75053d5624764c1dc3AaAD86Dd0033eE',
     },
     helixMigrator: {
         1: '',
-        4: '0xC5B43C8fdb3c487b6582E5321f43381AB83A8119',
+        4: '0x582B14BD30221Da1B16f86041c9155B6097c85D0',
     },
     helixVault: {
         1: '',
