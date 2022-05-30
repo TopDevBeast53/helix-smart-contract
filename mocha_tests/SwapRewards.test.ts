@@ -148,10 +148,6 @@ describe('SwapRewards', () => {
         expect(await refReg.isRecorder(swapRewards.address)).to.be.true
     })
 
-    it('swapRewards: helix token is initialized', async () => {
-        expect(await helixToken.isMinter(swapRewards.address)).to.be.true
-    })
-
     it('swapRewards: swap when paused fails', async () => {
         await swapRewards.pause();
 
