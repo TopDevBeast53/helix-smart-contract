@@ -16,7 +16,7 @@ const vaultAddress = contracts.helixVault[env.network]
 
 const referralRegisterCollectorPercent = initials.REFERRAL_REGISTER_COLLECTOR_PERCENT[env.network]
 const yieldSwapCollectorPercent = initials.YIELD_SWAP_COLLECTOR_PERCENT[env.network]
-const vaultCollectorPercent = initials.HELIX_VALUT_COLLECTOR_PERCENT[env.network]
+const vaultCollectorPercent = initials.HELIX_VAULT_COLLECTOR_PERCENT[env.network]
 
 async function main() {
     const [deployer] = await ethers.getSigners()
