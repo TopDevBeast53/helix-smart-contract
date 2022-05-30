@@ -26,18 +26,22 @@ module.exports = {
 
     HELIX_WETH: {
         1: '',
-        4: '0x953B4B21Bc06b88934dfeccC3156c9735983DcDd',
-    },
-    HELIX_DAI: {
-        1: '',
-        4: '0xE57d76A34d7933a9a38B94024aBC31dB653F38A2',
+        4: '0xfbfe53025c54b70b48070904f8765703D2aD749D',
     },
     HELIX_USDC: {
         1: '',
-        4: '0x0fA666E08978c842468D03Ed64d48bECEaa2156A',
+        4: '0x161962Aec8f3c61D865cd5d53A334780763364e6',
     },
     WETH_USDC: {
         1: '',
-        4: '0x76A9E4DC6D7C346c1D74B2bd53684b23dd1E37b5',
+        4: '0xf810902563e1a5e5C91C85a110B11dF6Db6cdda9',
+    },
+    DAI_USDC: {
+        1: '',
+        4: '0x867A1b846F16886F12f6Ff1a256BeCae3314B1A4',
+    },
+    USDC_USDT: {
+        1: '',
+        4: '0x89a218a09b668541c08675A9Cd4e4b2ab2063Aa4',
     },   
 }
