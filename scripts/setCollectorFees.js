@@ -23,7 +23,7 @@ async function main() {
     console.log(`Setter address: ${deployer.address}`)
     
     const referralRegisterName = "ReferralRegiser"
-    const referrralRegister = await getContract(referralRegisterName, referralRegisterAddress)
+    const referralRegister = await getContract(referralRegisterName, referralRegisterAddress)
     await setCollectorPercent(
         referralRegisterName, 
         referralRegister, 
@@ -31,7 +31,7 @@ async function main() {
     )
 
     const yieldSwapName = "YieldSwap"
-    const referrralRegister = await getContract(yieldSwapName, yieldSwapAddress)
+    const yieldSwap = await getContract(yieldSwapName, yieldSwapAddress)
     await setCollectorPercent(
         yieldSwapName, 
         yieldSwap, 
@@ -39,7 +39,7 @@ async function main() {
     )
 
     const vaultName = "HelixVault"
-    const referrralRegister = await getContract(vaultName, vaultAddress)
+    const vault = await getContract(vaultName, vaultAddress)
     await setCollectorPercent(
         vaultName, 
         vault, 
