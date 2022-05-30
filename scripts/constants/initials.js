@@ -28,6 +28,10 @@ module.exports = {
         1: 0,
         4: 0,
     },
+    REFERRAL_COLLECTOR_PERCENT: {
+        1: 0,
+        4: 10,
+    },
 
     // --------- MasterChef --------- //
 
@@ -79,6 +83,12 @@ module.exports = {
         56: 1000000000,
         97: 1000000000,
     },
+
+    HELIX_VAULT_COLLECTOR_PERCENT: {
+        1: 0,
+        4: 10,
+    },
+
 
     // --------- VIP Presale --------- //
 
@@ -231,14 +241,6 @@ module.exports = {
 
     // --------- Yield Swap --------- //
 
-    // contract name
-    YIELD_SWAP_TREASURY: {
-        1: '',
-        4: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57',
-        56: '',
-        97: '0xe57Dd7C21EB970DCDcc151D1fb6c1D5DDb743D35',
-    },
-
     YIELD_SWAP_MIN_LOCK_DURATION: {
         1: 0,
         4: 0,
@@ -252,6 +254,12 @@ module.exports = {
         56: 0,
         97: 31536000,       // 1 year in seconds: (86400 seconds per day) * (365 days)
     },
+
+    YIELD_SWAP_COLLECTOR_PERCENT: {
+        1: 0,
+        4: 10,
+    },
+
 
     // --------- LP Swap --------- //
 
