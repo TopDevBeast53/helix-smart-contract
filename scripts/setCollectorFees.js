@@ -13,10 +13,12 @@ const env = require("./constants/env")
 const referralRegisterAddress = contracts.referralRegister[env.network]
 const yieldSwapAddress = contracts.yieldSwap[env.network]
 const vaultAddress = contracts.helixVault[env.network]
+const feeHandlerAddress = contracts.feeHandler[env.network]
 
 const referralRegisterCollectorPercent = initials.REFERRAL_COLLECTOR_PERCENT[env.network]
 const yieldSwapCollectorPercent = initials.YIELD_SWAP_COLLECTOR_PERCENT[env.network]
 const vaultCollectorPercent = initials.HELIX_VAULT_COLLECTOR_PERCENT[env.network]
+const nftChefPercent = initials.FEEHANDLER_NFTCHEF_PERCENT[env.network]
 
 async function main() {
     const [deployer] = await ethers.getSigners()
@@ -48,6 +50,11 @@ async function main() {
         vault, 
         vaultCollectorPercent
     )
+
+    const feeHandlerName = "FeeHandler"
+    const feeHandler = await getContract(feeHandlerName, feeHandlerAddress, admin)
+    console.log(`Set FeeHandler nftChefPercent to ${nftChefPercent}`)
+    await feeHandler.setNftChefPercent(nftChefPercent)
 }    
 
 async function getContract(name, address, admin) {

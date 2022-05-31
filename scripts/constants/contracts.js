@@ -33,11 +33,11 @@ module.exports = {
     },
     helixChefNFT: {
         1: '',
-        4: '0x9D5aD9644CAE37f8A89D3fa6756A38E944bbfAb8',
+        4: '0x06Ed9e0b521c45BDa357698CFBb7cE6d957D5FB3',
     },
     helixChefNFTImpl: {
         1: '',
-        4: '0x61B427041D3393b41d188507a94E91810B15f679',
+        4: '0x58AFA21EFB74DBF152C9a04FdB6B2768f975642c',
     },
     feeHandler: {
         1: '',
@@ -49,11 +49,11 @@ module.exports = {
     },
     referralRegister: {
         1: '',
-        4: '0x79f06e19cE76eEd33FEf1fC27c2e9B1ACB0E9B57',
+        4: '0xaA30d978D1bD3BCD3C97Ad813B6e11Efce507eB5',
     },
     referralRegisterImplementation: {
         1: '',
-        4: '0x8e60A4e0c5b5E24bA5f2F72D039F04EC876FDf7A',
+        4: '0xf7Eb99aBBB3137b25D1EF95bF4E1569f0C251dd2',
     },
     masterChef: {
         1: '',

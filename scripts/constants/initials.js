@@ -3,6 +3,13 @@ module.exports = {
         1: '',
         4: '0x4bf92398ca4e6d769e05b577c12e3ca0a8125ef817cb0afec3df5708ba9fa0f8',
     },
+    
+    // --------- FeeHandler --------- //
+
+    FEEHANDLER_NFTCHEF_PERCENT:{
+        1: 0,
+        4: 50,
+    },
 
     // --------- Referral Register --------- //
 

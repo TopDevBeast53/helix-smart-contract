@@ -146,6 +146,8 @@ contract ReferralRegister is
     function withdraw() external whenNotPaused nonReentrant {
         uint256 reward = rewards[msg.sender];
         require(reward > 0, "ReferralRegister: nothing to withdraw");
+        
+        _update();
 
         uint256 contractBalance  = helixToken.balanceOf(address(this));
         require(contractBalance > 0, "ReferralRegister: no helix in contract");
@@ -211,7 +213,7 @@ contract ReferralRegister is
             return;
         }      
 
-        uint256 toMint = (block.number - lastMintBlock) * (toMintPerBlock / 100);
+        uint256 toMint = (block.number - lastMintBlock) * toMintPerBlock;
         lastMintBlock = block.number;
 
         helixToken.mint(address(this), toMint);
