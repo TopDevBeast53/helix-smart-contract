@@ -41,15 +41,15 @@ module.exports = {
     },
     feeHandler: {
         1: '',
-        4: '0x65FB68FF81c7CEB40B4888ea3ccd361dd97FFf8b',
+        4: '0xfeDE6859D046f620880BB8d5A35Ae853a3262eab',
     },
     feeHandlerImplementation: {
         1: '',
-        4: '0x8Fae8Fb22F008AC66293F5de21E571D078B552d3',
+        4: '0xbF053d3A2461A5F27f74b006D823b3672E71Bd25',
     },
     referralRegister: {
         1: '',
-        4: '0xaA30d978D1bD3BCD3C97Ad813B6e11Efce507eB5',
+        4: '0x0f493190F225dC6700aac67E4402748b433629c9',
     },
     referralRegisterImplementation: {
         1: '',
@@ -57,7 +57,7 @@ module.exports = {
     },
     masterChef: {
         1: '',
-        4: '0x5aF843e733F08BcAAD11F4AaD08F34be596Ac01f',
+        4: '0x15B400a434E0d94e0F1e1A0AA4a08E98A2d04128',
     },
     masterChefImplementation: {
         1: '',
@@ -65,7 +65,7 @@ module.exports = {
     },
     autoHelix: {
         1: '',
-        4: '0x8CFa0D2d55434aF19882eb2Ad9cd41a6119CDCa2',
+        4: '0x46B358dA1Ce72d92F37485c3f67eD4175422674f',
     },
     autoHelixImplementation: {
         1: '',
@@ -77,7 +77,7 @@ module.exports = {
     },
     swapRewards: {
         1: '',
-        4: '0xC7DBb90E75053d5624764c1dc3AaAD86Dd0033eE',
+        4: '0x0D08fc9C9bE9bF87ac3f40bb95fe90840bA0b6A4',
     },
     helixMigrator: {
         1: '',
@@ -85,11 +85,27 @@ module.exports = {
     },
     helixVault: {
         1: '',
-        4: '0xF9a8da398f852968203C975426653d4336Ea249B',
+        4: '0x7419d30D4d896c46b57373FcE37c1238D0a24512',
     },
     helixVaultImplementation: {
         1: '',
-        4: '0x2Bf1cbD28109b75F6E1914476E67BDc35c958084',
+        4: '0x57B5D8427093Bf4f0Ab68ecA750ecEb493a6206D',
+    },
+    yieldSwap: {
+        1: '',
+        4: '0x4Cdb8eB3Bc115C51761F74eB75C9d91B5480C996',
+    },
+    yieldSwapImplementation: {
+        1: '',
+        4: '0x9C0fFc2fAcc73fC45E748bF3bfCb3Ace4b9Df48F',
+    },
+    lpSwap: {
+        1: '',
+        4: '0xe9987A2fFCe10623680de0F4c5f66566b53E739E',
+    },
+    lpSwapImplementation: {
+        1: '',
+        4: '0xd0Ab9e57ED6a72c31F36DC82f94539b462455d84',
     },
     multicall2: {
         1: '',
