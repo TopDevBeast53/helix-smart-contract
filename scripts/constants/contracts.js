@@ -91,22 +91,6 @@ module.exports = {
         1: '',
         4: '0x2Bf1cbD28109b75F6E1914476E67BDc35c958084',
     },
-    yieldSwap: {
-        1: '',
-        4: '0x348DdAaE8D5095d31b9D1C7Dab7404Cf7967450d',
-    },
-    yieldSwapImplementation: {
-        1: '',
-        4: '0x9C0fFc2fAcc73fC45E748bF3bfCb3Ace4b9Df48F',
-    },
-    lpSwap: {
-        1: '',
-        4: '0xe9987A2fFCe10623680de0F4c5f66566b53E739E',
-    },
-    lpSwapImplementation: {
-        1: '',
-        4: '0xd0Ab9e57ED6a72c31F36DC82f94539b462455d84',
-    },
     multicall2: {
         1: '',
         4: '0x6CfcdedFed8122029d8457Aab73ee855D4B92fC5',

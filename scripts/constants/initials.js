@@ -238,36 +238,4 @@ module.exports = {
         56: 0,
         97: 7862400,     // 91 days, 86400 == 1 day
     },
-
-    // --------- Yield Swap --------- //
-
-    YIELD_SWAP_MIN_LOCK_DURATION: {
-        1: 0,
-        4: 0,
-        56: 0,
-        97: 0,         // No min lock duration
-    },
-
-    YIELD_SWAP_MAX_LOCK_DURATION: {
-        1: 0,
-        4: 31536000,
-        56: 0,
-        97: 31536000,       // 1 year in seconds: (86400 seconds per day) * (365 days)
-    },
-
-    YIELD_SWAP_COLLECTOR_PERCENT: {
-        1: 0,
-        4: 10,
-    },
-
-
-    // --------- LP Swap --------- //
-
-    // contract name
-    LP_SWAP_TREASURY: {
-        1: '',
-        4: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57',
-        56: '',
-        97: '0xe57Dd7C21EB970DCDcc151D1fb6c1D5DDb743D35',
-    },
 }

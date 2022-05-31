@@ -18,25 +18,21 @@ import HelixMigrator from '../../build/contracts/HelixMigrator.json'
 import SwapRewards from '../../build/contracts/SwapRewards.json'
 import OracleFactory from '../../build/contracts/OracleFactory.json'
 import HelixNFT from '../../build/contracts/HelixNFT.json'
-import TokenTools from '../../build/contracts/TokenTools.json'
 import AutoHelix from '../../build/contracts/AutoHelix.json'
 import HelixChefNFT from '../../build/contracts/HelixChefNFT.json'
-import HelixLP from '../../build/contracts/HelixLP.json'
 import HelixNFTBridge from '../../build/contracts/HelixNFTBridge.json'
 import HelixVault from '../../build/contracts/HelixVault.json'
 import VipPresale from '../../build/contracts/VipPresale.json'
 import PublicPresale from '../../build/contracts/PublicPresale.json'
 import AirDrop from '../../build/contracts/AirDrop.json'
-import YieldSwap from '../../build/contracts/YieldSwap.json'
-import LpSwap from '../../build/contracts/LpSwap.json'
 import FeeHandler from '../../build/contracts/FeeHandler.json'
 
 const addresses = require('../../scripts/constants/addresses')
 const initials = require('../../scripts/constants/initials')
 const env = require('../../scripts/constants/env')
 
-const refRegDefaultStakingRef = initials.REFERRAL_STAKING_FEE_PERCENT[env.network]
-const refRegDefaultSwapRef = initials.REFERRAL_SWAP_FEE_PERCENT[env.network]
+const refRegDefaultStakingRef = initials.REFERRAL_STAKE_REWARD_PERCENT[env.network]
+const refRegDefaultSwapRef = initials.REFERRAL_SWAP_REWARD_PERCENT[env.network]
 const refRegToMintPerBlock = initials.REFERRAL_TO_MINT_PER_BLOCK[env.network]
 
 const chefDeveloperAddress = addresses.masterChefDeveloper[env.network];
@@ -47,14 +43,9 @@ const chefDevPercent = initials.MASTERCHEF_DEV_PERCENT[env.network];
 
 const autoHelixTreasuryAddress = addresses.TREASURY[env.network];
 
-const swapRewardsSplitRewardPercent = initials.SPLIT_REWARD_PERCENT[env.network]
-const swapRewardsHelixRewardPercent = initials.HELIX_REWARD_PERCENT[env.network]
-const swapRewardsApRewardPercent = initials.HP_REWARD_PERCENT[env.network]
-
 const helixVaultRewardPerBlock = initials.HELIX_VAULT_REWARD_PER_BLOCK[env.network]
 const helixVaultStartBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
-const helixVaultBonusEndBlock = initials.HELIX_VAULT_BONUS_END_BLOCK[env.network]
-const helixVaultTreasuryAddress = initials.HELIX_VAULT_TREASURY_ADDRESS[env.network]
+const helixVaultBonusEndBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.network]
 
 const vipPresaleInputRate = initials.VIP_PRESALE_INPUT_RATE[env.network]
 const vipPresaleOutputRate = initials.VIP_PRESALE_OUTPUT_RATE[env.network]
@@ -66,10 +57,6 @@ const publicPresaleOutputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.network]
 const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHASE_DURATION[env.network]
 
 const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.network]
-
-const yieldSwapTreasury = initials.YIELD_SWAP_TREASURY[env.network]
-const yieldSwapMinLockDuration = initials.YIELD_SWAP_MIN_LOCK_DURATION[env.network]
-const yieldSwapMaxLockDuration = initials.YIELD_SWAP_MAX_LOCK_DURATION[env.network]
 
 const treasuryAddress = addresses.TREASURY[env.network]
 
@@ -98,20 +85,16 @@ interface FullExchangeFixture {
     helixNFT: Contract
     helixChefNFT: Contract
     helixNFTBridge: Contract
-    helixLP: Contract
-    helixLP2: Contract
     swapRewards: Contract
     externalFactory: Contract
     externalRouter: Contract
     migrator: Contract
-    tokenTools: Contract
     vault: Contract
     vipPresale: Contract
     publicPresale: Contract
     airDrop: Contract
-    yieldSwap: Contract
-    lpSwap: Contract
     feeHandler: Contract
+    helixLP: Contract
 }
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
@@ -277,23 +260,8 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // presale must be registered as helixToken minter to be able to burn tokens
     await helixToken.addMinter(airDrop.address)
 
-    // Used by yield swap
-    const helixLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
-    // used in YieldSwap tests with 2 helixLP tokens
-    const helixLP2 = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides);
-
-    // 17 deploy yield swap contract
-    const yieldSwap = await deployContract(wallet, YieldSwap, [], overrides)
-    await yieldSwap.initialize(
-            chef.address,                   // chef used for earning lpToken yield
-            helixToken.address,             // chef reward token for yield
-            feeHandler.address,             // treasury used for receiving buy/sell fees
-            yieldSwapMinLockDuration,       // minimum length of time (in seconds) a swap can be locked for
-            yieldSwapMaxLockDuration,       // maximum length of time (in seconds) a swap can be locked for
-    )
-
-    // 18 deploy lp swap contract with treasury address argument
-    const lpSwap = await deployContract(wallet, LpSwap, [], overrides)
+    // Deploy helix LP contract
+    const helixLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides)
 
     return {
         tokenA,
@@ -314,19 +282,15 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         helixNFT,
         helixChefNFT,
         helixNFTBridge,
-        helixLP,
-        helixLP2,
         swapRewards,
         externalFactory,
         externalRouter,
         migrator, 
-        tokenTools,
         vault,
         vipPresale,
         publicPresale,
         airDrop,
-        yieldSwap,
-        lpSwap,
         feeHandler,
+        helixLP
     }
 }
