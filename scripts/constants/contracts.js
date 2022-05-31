@@ -57,19 +57,19 @@ module.exports = {
     },
     masterChef: {
         1: '',
-        4: '0x9c344695a43E85774F8F886DaBF9AE5C11428bC2',
+        4: '0x5aF843e733F08BcAAD11F4AaD08F34be596Ac01f',
     },
     masterChefImplementation: {
         1: '',
-        4: '0x06cce55E6961fBA479E08bE6D12578ED148FEa90',
+        4: '0x6Fe7982b6FA8065356721003AE8919D0efc7E427',
     },
     autoHelix: {
         1: '',
-        4: '0x6C3f85c7F3979308751EBFba244F6eF5400aA911',
+        4: '0x8CFa0D2d55434aF19882eb2Ad9cd41a6119CDCa2',
     },
     autoHelixImplementation: {
         1: '',
-        4: '0x96ee8f93cD812BeCD7233bC6Ff0d515Ec25c0Ac2',
+        4: '0x9DF8528cD0FA8A0d1949b1D6a1725dDBc310D3CE',
     },
     helixNFTBridge: {
         1: '',
