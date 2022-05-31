@@ -42,6 +42,6 @@ module.exports = {
     },
     USDC_USDT: {
         1: '',
-        4: '0x89a218a09b668541c08675A9Cd4e4b2ab2063Aa4',
+        4: '0x7a2BaA95b255Ad2EE4Bf1802Cf2e283feCAf75A0',
     },   
 }
