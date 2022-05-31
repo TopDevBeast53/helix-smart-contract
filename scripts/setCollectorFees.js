@@ -14,7 +14,7 @@ const referralRegisterAddress = contracts.referralRegister[env.network]
 const yieldSwapAddress = contracts.yieldSwap[env.network]
 const vaultAddress = contracts.helixVault[env.network]
 
-const referralRegisterCollectorPercent = initials.REFERRAL_REGISTER_COLLECTOR_PERCENT[env.network]
+const referralRegisterCollectorPercent = initials.REFERRAL_COLLECTOR_PERCENT[env.network]
 const yieldSwapCollectorPercent = initials.YIELD_SWAP_COLLECTOR_PERCENT[env.network]
 const vaultCollectorPercent = initials.HELIX_VAULT_COLLECTOR_PERCENT[env.network]
 
@@ -22,8 +22,11 @@ async function main() {
     const [deployer] = await ethers.getSigners()
     console.log(`Setter address: ${deployer.address}`)
     
-    const referralRegisterName = "ReferralRegiser"
-    const referralRegister = await getContract(referralRegisterName, referralRegisterAddress)
+    const rpc =  new ethers.providers.JsonRpcProvider(env.rpcURL) ;
+    const admin = new ethers.Wallet( process.env.PRIVATE_KEY, rpc);
+
+    const referralRegisterName = "ReferralRegister"
+    const referralRegister = await getContract(referralRegisterName, referralRegisterAddress, admin)
     await setCollectorPercent(
         referralRegisterName, 
         referralRegister, 
@@ -31,7 +34,7 @@ async function main() {
     )
 
     const yieldSwapName = "YieldSwap"
-    const yieldSwap = await getContract(yieldSwapName, yieldSwapAddress)
+    const yieldSwap = await getContract(yieldSwapName, yieldSwapAddress, admin)
     await setCollectorPercent(
         yieldSwapName, 
         yieldSwap, 
@@ -39,7 +42,7 @@ async function main() {
     )
 
     const vaultName = "HelixVault"
-    const vault = await getContract(vaultName, vaultAddress)
+    const vault = await getContract(vaultName, vaultAddress, admin)
     await setCollectorPercent(
         vaultName, 
         vault, 
@@ -47,10 +50,10 @@ async function main() {
     )
 }    
 
-async function getContract(name, address) {
+async function getContract(name, address, admin) {
     console.log(`Get contract ${name} from address ${address}`)
     const contractFactory = await ethers.getContractFactory(name)
-    const contract = await contractFactory.attach(address)
+    const contract = contractFactory.attach(address).connect(admin);
     return contract
 }
 
