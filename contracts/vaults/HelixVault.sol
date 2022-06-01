@@ -102,6 +102,14 @@ contract HelixVault is
     // Emitted when the owner updates the last reward block
     event LastRewardBlockSet(uint256 lastRewardBlock);
 
+    // Emitted when a deposit is compounded
+    event Compound(
+        address indexed depositor, 
+        uint256 indexed id, 
+        uint256 amount, 
+        uint256 reward
+    );
+
     modifier onlyValidDepositId(uint256 _id) {
         require(depositId > 0, "Vault: no deposit made");
         require(_id < depositId, "Vault: invalid id");
@@ -238,6 +246,24 @@ contract HelixVault is
         token.transferFrom(msg.sender, address(this), _amount);
 
         emit UpdateDeposit(msg.sender, _id, _amount, deposit.amount);
+    }
+
+    /// Compound accrued rewards
+    function compound(uint256 _id) external {
+        updatePool();
+
+        Deposit storage deposit = _getDeposit(_id);
+
+        _requireIsDepositor(msg.sender, deposit.depositor);
+        _requireNotWithdrawn(deposit.withdrawn);
+    
+        // Add the pending reward to the deposit
+        deposit.amount += _getReward(deposit.amount, deposit.weight);
+
+        // And update the reward with the new amount
+        deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
+
+        emit Compound(msg.sender, _id, deposit.amount, deposit.rewardDebt);
     }
 
     /// Withdraw _amount of token from deposit _id
@@ -447,6 +473,7 @@ contract HelixVault is
         uint256 accToken = _amount * _accTokenPerShare / PRECISION_FACTOR;
         reward = Percent.getPercentage(accToken, _weight);
     }
+
     // Used to require that the _caller is the _depositor
     function _requireIsDepositor(address _caller, address _depositor) private pure {
         require(_caller == _depositor, "Vault: not depositor");
