@@ -168,23 +168,6 @@ contract HelixVault is
         PRECISION_FACTOR = uint(10 ** (uint(MAX_DECIMALS) - decimalsRewardToken));
     }
 
-    /// Called by the deposit _id holder to withdraw their accumulated reward
-    function claimReward(uint256 _id) external whenNotPaused nonReentrant {
-        Deposit storage deposit = _getDeposit(_id);
-
-        _requireIsDepositor(msg.sender, deposit.depositor);
-        _requireNotWithdrawn(deposit.withdrawn);
-
-        updatePool();
-
-        uint256 reward = _getReward(deposit.amount, deposit.weight) - deposit.rewardDebt;
-        deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
-
-        _distributeReward(reward);
-
-        emit RewardClaimed(msg.sender, _id, reward);
-    } 
-
     /// Used internally to create a new deposit and lock _amount of token for _index
     function newDeposit(uint256 _amount, uint256 _index) 
         external 
@@ -267,6 +250,23 @@ contract HelixVault is
         }
 
         emit Compound(msg.sender, _id, deposit.amount, deposit.rewardDebt);
+    }
+
+    /// Called by the deposit _id holder to withdraw their accumulated reward
+    function claimReward(uint256 _id) external whenNotPaused nonReentrant {
+        Deposit storage deposit = _getDeposit(_id);
+
+        _requireIsDepositor(msg.sender, deposit.depositor);
+        _requireNotWithdrawn(deposit.withdrawn);
+
+        updatePool();
+
+        uint256 reward = _getReward(deposit.amount, deposit.weight) - deposit.rewardDebt;
+        deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
+
+        _distributeReward(reward);
+
+        emit RewardClaimed(msg.sender, _id, reward);
     }
 
     /// Withdraw _amount of token from deposit _id
