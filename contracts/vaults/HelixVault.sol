@@ -237,10 +237,9 @@ contract HelixVault is
         _requireIsDepositor(msg.sender, deposit.depositor);
         _requireNotWithdrawn(deposit.withdrawn);
 
+        uint256 reward = _getReward(deposit.amount, deposit.weight) - deposit.rewardDebt;
         deposit.amount += _amount;
-
-        uint256 reward = _getReward(deposit.amount, deposit.weight);
-        deposit.rewardDebt = reward;
+        deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
 
         _distributeReward(reward);
         token.transferFrom(msg.sender, address(this), _amount);
@@ -278,7 +277,7 @@ contract HelixVault is
         // collect rewards
         updatePool();
         
-        uint256 reward = _getReward(deposit.amount, deposit.weight);
+        uint256 reward = _getReward(deposit.amount, deposit.weight) - deposit.rewardDebt;
 
         if (deposit.amount == _amount) {
             // Close the deposit if the amount deposited is being withdrawn
@@ -290,7 +289,7 @@ contract HelixVault is
 
         _distributeReward(reward);
 
-        // Send the original deposit to the depositor
+        // Return the original deposit to the depositor
         token.transfer(msg.sender, _amount);
 
         emit Withdraw(msg.sender, _amount);
