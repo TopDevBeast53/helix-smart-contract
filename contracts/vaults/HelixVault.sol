@@ -247,7 +247,7 @@ contract HelixVault is
         emit UpdateDeposit(msg.sender, _id, _amount, deposit.amount);
     }
 
-    /// Compound accrued rewards
+    /// Compound accrued rewards and withdraw collector fees
     function compound(uint256 _id) external {
         updatePool();
 
@@ -256,11 +256,15 @@ contract HelixVault is
         _requireIsDepositor(msg.sender, deposit.depositor);
         _requireNotWithdrawn(deposit.withdrawn);
     
-        // Add the pending reward to the deposit amount
-        deposit.amount += _getReward(deposit.amount, deposit.weight) - deposit.rewardDebt;
+        uint256 reward = _getReward(deposit.amount, deposit.weight) - deposit.rewardDebt;
+        (uint256 collectorFee, uint256 depositorAmount) = getCollectorFeeSplit(reward);
 
-        // And update the rewardDebt based on the updated amount
+        deposit.amount += depositorAmount;
         deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
+
+        if (collectorFee > 0) {
+            _delegateTransfer(token, address(this), collectorFee);
+        }
 
         emit Compound(msg.sender, _id, deposit.amount, deposit.rewardDebt);
     }
