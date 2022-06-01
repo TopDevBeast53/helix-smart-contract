@@ -65,11 +65,11 @@ module.exports = {
     },
     autoHelix: {
         1: '',
-        4: '0x46B358dA1Ce72d92F37485c3f67eD4175422674f',
+        4: '0xF34316463B29B0D7A387a8443b2E17B3629e99b2',
     },
     autoHelixImplementation: {
         1: '',
-        4: '0x9DF8528cD0FA8A0d1949b1D6a1725dDBc310D3CE',
+        4: '0xaD85c65850B292b8114bb433f0129bD443283fbB',
     },
     helixNFTBridge: {
         1: '',
