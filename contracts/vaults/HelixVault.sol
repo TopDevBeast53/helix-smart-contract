@@ -257,10 +257,10 @@ contract HelixVault is
         _requireIsDepositor(msg.sender, deposit.depositor);
         _requireNotWithdrawn(deposit.withdrawn);
     
-        // Add the pending reward to the deposit
-        deposit.amount += _getReward(deposit.amount, deposit.weight);
+        // Add the pending reward to the deposit amount
+        deposit.amount += _getReward(deposit.amount, deposit.weight) - deposit.rewardDebt;
 
-        // And update the reward with the new amount
+        // And update the rewardDebt based on the updated amount
         deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
 
         emit Compound(msg.sender, _id, deposit.amount, deposit.rewardDebt);
