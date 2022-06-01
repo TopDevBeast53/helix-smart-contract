@@ -277,8 +277,6 @@ contract ReferralRegister is
         private
         returns (uint256 reward)
     {
-        _update();
-
         reward = Percent.getPercentage(_amount, _rate);
         rewards[_referrer] += reward;
     }
