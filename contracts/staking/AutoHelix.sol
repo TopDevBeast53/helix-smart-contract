@@ -118,7 +118,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
 
         uint256 currentShares = _amount;
         if (totalShares > 0) {
-            currentShares *= totalShares / pool;
+            currentShares = (currentShares * totalShares) / pool;
         } 
         totalShares += currentShares;
 

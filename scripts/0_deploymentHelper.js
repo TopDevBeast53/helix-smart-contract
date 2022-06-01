@@ -17,8 +17,8 @@ require ('dotenv').config()
 const env = require('./constants/env')
 
 const initials = require('./constants/initials')
-const helixChefNFTStartBlock = initials.NFTCHEF_START_BLOCK[env.network];
-const helixChefNFTRewardPerBlock = initials.NFTCHEF_REWARD_PER_BLOCK[env.network];
+// const helixChefNFTStartBlock = initials.NFTCHEF_START_BLOCK[env.network];
+// const helixChefNFTRewardPerBlock = initials.NFTCHEF_REWARD_PER_BLOCK[env.network];
 
 const contracts = require('./constants/contracts')
 const factoryAddress = contracts.factory[env.network]
@@ -29,7 +29,7 @@ const refRegAddress = contracts.referralRegister[env.network]
 const masterChefAddress = contracts.masterChef[env.network]
 const autoHelixAddress = contracts.autoHelix[env.network]
 const helixNFTAddress = contracts.helixNFT[env.network]
-const helixNFTChefAddress = contracts.helixNFTChef[env.network]
+const helixNFTChefAddress = contracts.helixChefNFT[env.network]
 const helixNFTBridgeAddress = contracts.helixNFTBridge[env.network]
 const swapRewardsAddress = contracts.swapRewards[env.network]
 const migratorAddress = contracts.helixMigrator[env.network]
@@ -65,6 +65,8 @@ async function main() {
     await initFactory();
     await initRouter();
     await initHelixToken();
+    await resetReferralToMasterChef();
+    await resetReferralToSwapReward();
     await initRefReg();
     await initHelixNFT();
     await initHelixChefNFT();
@@ -75,10 +77,9 @@ async function main() {
 
 // load the provider and 
 async function initScript() {
-    const rpc = 'https://data-seed-prebsc-1-s1.binance.org:8545'
-    const provider = new ethers.providers.getDefaultProvider(rpc)
+    const rpc =  new ethers.providers.JsonRpcProvider(env.rpcURL) ;
+    wallet = new ethers.Wallet( process.env.PRIVATE_KEY, rpc);
 
-    wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider)
     print(`load wallet: ${wallet.address}\n`)
 }
 
@@ -187,6 +188,19 @@ async function initHelixToken() {
     print(`\n`)
 }
 
+async function resetReferralToMasterChef() {
+    print(`register referral Register to MasterChef`) 
+    await masterChef.setReferralRegister(refReg.address, overrides)
+    print(`done`)
+}
+
+async function resetReferralToSwapReward() {
+    print(`register referral Register to Swap Reward`) 
+    await swapRewards.setRefReg(refReg.address, overrides)
+    print(`done`)
+}
+
+
 async function initRefReg() {
     print(`init referral register`)
 
@@ -222,43 +236,43 @@ async function initHelixNFT() {
     await helixNFT.addMinter(helixNFTBridge.address, overrides)
     print(`done`)
 
-    print(`register swap rewards as helix NFT accruer`)
-    await helixNFT.addAccruer(swapRewards.address, overrides)
-    print(`done`)
+    // print(`register swap rewards as helix NFT accruer`)
+    // await helixNFT.addAccruer(swapRewards.address, overrides)
+    // print(`done`)
 
     print(`\n`)
 }
 
 async function initHelixChefNFT() {
-    print(`init helix chef NFT`)
+    // print(`init helix chef NFT`)
 
-    print(`register helix token as helix chef NFT reward token`)
-    try {
-        // fails if helixToken has already been registered
-        await helixNFTChef.addNewRewardToken(
-            helixToken, 
-            helixChefNFTStartBlock, 
-            helixChefNFTRewardPerBlock, 
-            overrides
-        )
-    } catch(error) {
-        console.error(error)
-    }
-    print(`done`)
+    // print(`register helix token as helix chef NFT reward token`)
+    // try {
+    //     // fails if helixToken has already been registered
+    //     await helixNFTChef.addNewRewardToken(
+    //         helixToken, 
+    //         helixChefNFTStartBlock, 
+    //         helixChefNFTRewardPerBlock, 
+    //         overrides
+    //     )
+    // } catch(error) {
+    //     console.error(error)
+    // }
+    // print(`done`)
 
-    print(`did you remember to fund helix chef NFT with reward tokens`)
+    // print(`did you remember to fund helix chef NFT with reward tokens`)
 
-    print(`\n`)
+    // print(`\n`)
 }
 
 async function initHelixNFTBridge() {
-    print(`init helix NFT bridge`)
+    // print(`init helix NFT bridge`)
 
-    print(`register wallet as helix NFT bridge bridger`)
-    await helixNFTBridge.addBridger(wallet.address, overrides)
-    print(`done`)
+    // print(`register wallet as helix NFT bridge bridger`)
+    // await helixNFTBridge.addBridger(wallet.address, overrides)
+    // print(`done`)
 
-    print(`\n`)
+    // print(`\n`)
 }
 
 function print(str) {

@@ -189,7 +189,7 @@ contract HelixChefNFT is
         if (totalStakedNfts == 0) {
             return 0;
         }
-        return usersStakedNfts[_user] / totalStakedNfts * _fee;
+        return usersStakedNfts[_user] * _fee / totalStakedNfts ;
     }
 
     /// Return true if the _address is a registered accruer and false otherwise
