@@ -85,11 +85,11 @@ module.exports = {
     },
     helixVault: {
         1: '',
-        4: '0x7419d30D4d896c46b57373FcE37c1238D0a24512',
+        4: '0x6a4AE7FC20a0eBab9bd3Bf1881272a869037BcD1',
     },
     helixVaultImplementation: {
         1: '',
-        4: '0x57B5D8427093Bf4f0Ab68ecA750ecEb493a6206D',
+        4: '0x223976e1CF684109a3bdC82Cb78C5116bA026c51',
     },
     yieldSwap: {
         1: '',
