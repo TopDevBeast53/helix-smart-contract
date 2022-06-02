@@ -69,7 +69,7 @@ contract HelixVault is
     // Emitted when a user makes a new deposit
     event NewDeposit(
         address indexed user, 
-        uint256 indexed id, 
+        uint256 indexed depositId, 
         uint256 amount, 
         uint256 weight, 
         uint256 depositTimestamp,
@@ -79,7 +79,7 @@ contract HelixVault is
     // Emitted when a user updates an existing deposit
     event UpdateDeposit(
         address indexed user, 
-        uint256 indexed id, 
+        uint256 indexed depositId, 
         uint256 amount,            // amount added to existing deposit
         uint256 balance            // total balance deposited
     );
@@ -91,7 +91,7 @@ contract HelixVault is
     event EmergencyWithdraw(address indexed user, uint256 amount);
     
     // Emitted when a user claims their accrued rewards
-    event RewardClaimed(address indexed user, uint256 indexed id, uint256 reward);
+    event RewardClaimed(address indexed user, uint256 indexed depositId, uint256 reward);
 
     // Emitted when any action updates the pool
     event PoolUpdated(uint256 updateTimestamp);
@@ -105,14 +105,14 @@ contract HelixVault is
     // Emitted when a deposit is compounded
     event Compound(
         address indexed depositor, 
-        uint256 indexed id, 
+        uint256 indexed depositId, 
         uint256 amount, 
         uint256 reward
     );
 
-    modifier onlyValidDepositId(uint256 _id) {
+    modifier onlyValidDepositId(uint256 _depositId) {
         require(depositId > 0, "Vault: no deposit made");
-        require(_id < depositId, "Vault: invalid id");
+        require(_depositId < depositId, "Vault: invalid depositId");
         _;
     }
 
@@ -168,7 +168,7 @@ contract HelixVault is
         PRECISION_FACTOR = uint(10 ** (uint(MAX_DECIMALS) - decimalsRewardToken));
     }
 
-    /// Used internally to create a new deposit and lock _amount of token for _index
+    /// Create a new deposit and lock _amount of token for duration _index
     function newDeposit(uint256 _amount, uint256 _index) 
         external 
         whenNotPaused
@@ -179,9 +179,9 @@ contract HelixVault is
         updatePool();
 
         // Get the new id of this deposit and create the deposit object
-        uint256 id = depositId++;
+        uint256 _depositId = depositId++;
 
-        Deposit storage deposit = deposits[id];
+        Deposit storage deposit = deposits[_depositId];
         deposit.depositor = msg.sender;
         deposit.amount = _amount;
         deposit.weight = durations[_index].weight;
@@ -191,13 +191,13 @@ contract HelixVault is
         deposit.withdrawn = false;
 
         // Relay the deposit id to the user's account
-        depositIds[msg.sender].push(id);
+        depositIds[msg.sender].push(_depositId);
 
         token.transferFrom(msg.sender, address(this), _amount);
 
         emit NewDeposit(
             msg.sender, 
-            id, 
+            _depositId, 
             _amount, 
             deposit.weight, 
             deposit.depositTimestamp, 
@@ -205,17 +205,17 @@ contract HelixVault is
         );
     }
 
-    /// Used internally to increase deposit _id by _amount of token
-    function updateDeposit(uint256 _amount, uint256 _id) 
+    /// Increase _depositId by _amount of token
+    function updateDeposit(uint256 _amount, uint256 _depositId) 
         external 
         whenNotPaused
         nonReentrant
         onlyValidAmount(_amount) 
-        onlyValidDepositId(_id)
+        onlyValidDepositId(_depositId)
     {
         updatePool();
 
-        Deposit storage deposit = _getDeposit(_id);
+        Deposit storage deposit = _getDeposit(_depositId);
     
         _requireIsDepositor(msg.sender, deposit.depositor);
         _requireNotWithdrawn(deposit.withdrawn);
@@ -227,14 +227,14 @@ contract HelixVault is
         _distributeReward(reward);
         token.transferFrom(msg.sender, address(this), _amount);
 
-        emit UpdateDeposit(msg.sender, _id, _amount, deposit.amount);
+        emit UpdateDeposit(msg.sender, _depositId, _amount, deposit.amount);
     }
 
-    /// Compound accrued rewards and withdraw collector fees
-    function compound(uint256 _id) external {
+    /// Compound accrued rewards on _depositId and pay collector fees
+    function compound(uint256 _depositId) external {
         updatePool();
 
-        Deposit storage deposit = _getDeposit(_id);
+        Deposit storage deposit = _getDeposit(_depositId);
 
         _requireIsDepositor(msg.sender, deposit.depositor);
         _requireNotWithdrawn(deposit.withdrawn);
@@ -249,12 +249,12 @@ contract HelixVault is
             _delegateTransfer(token, address(this), collectorFee);
         }
 
-        emit Compound(msg.sender, _id, deposit.amount, deposit.rewardDebt);
+        emit Compound(msg.sender, _depositId, deposit.amount, deposit.rewardDebt);
     }
 
-    /// Called by the deposit _id holder to withdraw their accumulated reward
-    function claimReward(uint256 _id) external whenNotPaused nonReentrant {
-        Deposit storage deposit = _getDeposit(_id);
+    /// Claim accrued rewards on _depositId
+    function claimReward(uint256 _depositId) external whenNotPaused nonReentrant {
+        Deposit storage deposit = _getDeposit(_depositId);
 
         _requireIsDepositor(msg.sender, deposit.depositor);
         _requireNotWithdrawn(deposit.withdrawn);
@@ -266,12 +266,12 @@ contract HelixVault is
 
         _distributeReward(reward);
 
-        emit RewardClaimed(msg.sender, _id, reward);
+        emit RewardClaimed(msg.sender, _depositId, reward);
     }
 
-    /// Withdraw _amount of token from deposit _id
-    function withdraw(uint256 _amount, uint256 _id) external whenNotPaused nonReentrant onlyValidAmount(_amount) {
-        Deposit storage deposit = _getDeposit(_id);
+    /// Withdraw _amount of token from _depositId
+    function withdraw(uint256 _amount, uint256 _depositId) external whenNotPaused nonReentrant onlyValidAmount(_amount) {
+        Deposit storage deposit = _getDeposit(_depositId);
     
         _requireIsDepositor(msg.sender, deposit.depositor); 
         _requireNotWithdrawn(deposit.withdrawn);
@@ -374,22 +374,21 @@ contract HelixVault is
         _setCollectorPercent(_collectorPercent);
     }
 
-    /// Called to get deposit with _id's pending reward
-    function pendingReward(uint256 _id) external view returns (uint) {
-        Deposit storage deposit = _getDeposit(_id);
+    /// Called to get _depositId's pending reward
+    function pendingReward(uint256 _depositId) external view returns (uint) {
+        Deposit storage deposit = _getDeposit(_depositId);
         
         _requireIsDepositor(msg.sender, deposit.depositor);
         _requireNotWithdrawn(deposit.withdrawn);
 
         uint256 _accTokenPerShare = accTokenPerShare;
-        uint256 lpSupply = token.balanceOf(address(this));
-        if (block.number > lastUpdateBlock && lpSupply != 0) {
+        uint256 balance = token.balanceOf(address(this));
+        if (block.number > lastUpdateBlock && balance != 0) {
             uint256 blocks = getBlocksDifference(lastUpdateBlock, block.number);
-            _accTokenPerShare += blocks * rewardPerBlock * PRECISION_FACTOR / lpSupply;
+            _accTokenPerShare += blocks * rewardPerBlock * PRECISION_FACTOR / balance;
         }
 
-        uint256 reward = _getReward(deposit.amount, deposit.weight, _accTokenPerShare);
-        return reward - deposit.rewardDebt;
+        return _getReward(deposit.amount, deposit.weight, _accTokenPerShare) - deposit.rewardDebt;
     }
 
     // Get the _user's deposit ids which are used for accessing their deposits
@@ -402,7 +401,7 @@ contract HelixVault is
         return durations;
     }
 
-    /// Return the Deposit associated with the _depositId
+    /// Return the Deposit associated with _depositId
     function getDeposit(uint256 _depositId) external view returns (Deposit memory) {
         return _getDeposit(_depositId);
     }
@@ -413,8 +412,8 @@ contract HelixVault is
             return;
         }
 
-        uint256 balance = token.balanceOf(address(this));
         uint256 reward;
+        uint256 balance = token.balanceOf(address(this));
         if (balance > 0) {
             uint256 blocks = getBlocksDifference(lastUpdateBlock, block.number);
             reward = blocks * rewardPerBlock;
@@ -451,7 +450,7 @@ contract HelixVault is
         }
     }
 
-    // Return the Deposit associated with the _depositId
+    // Return the Deposit associated with _depositId
     function _getDeposit(uint256 _depositId) private view onlyValidDepositId(_depositId) 
         returns (Deposit storage) 
     {
