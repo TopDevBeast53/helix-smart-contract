@@ -278,7 +278,6 @@ contract HelixVault is
         require(deposit.amount >= _amount, "Vault: invalid amount");
         require(block.timestamp >= deposit.withdrawTimestamp, "Vault: locked");
        
-        // collect rewards
         updatePool();
         
         uint256 reward = _getReward(deposit.amount, deposit.weight) - deposit.rewardDebt;
@@ -286,6 +285,8 @@ contract HelixVault is
         if (deposit.amount == _amount) {
             // Close the deposit if the amount deposited is being withdrawn
             deposit.withdrawn = true;
+            deposit.amount = 0;
+            deposit.rewardDebt = 0;
         } else {
             deposit.amount -= _amount;
             deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
