@@ -28,7 +28,7 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
     uint256 public price1CumulativeLast;
     uint256 public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
     
-    uint32 public swapFee;              // uses 0.2% default
+    uint32 public swapFee;              // uses 0.1% default
     uint32 public devFee;               // uses 0.5% default from swap fee
 
     event Mint(
@@ -66,14 +66,14 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
         _;
     }
 
-    function initialize(address _token0, address _token1) external initializer {
+    function initialize(address _token0, address _token1, uint256 _swapFee) external initializer {
         __ReentrancyGuard_init();
         factory = msg.sender;
 
         token0 = _token0;
         token1 = _token1;
 
-        swapFee = 2; // uses 0.2% default
+        swapFee = 1; // uses 0.1% default
         devFee  = 5; // uses 0.5% default from swap fee
     }
 
