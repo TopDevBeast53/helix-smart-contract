@@ -54,7 +54,7 @@ contract HelixFactory is Initializable {
     }
 
     function createPair(address tokenA, address tokenB) external returns (address) {
-        return createPair(tokenA, tokenB, defaultSwapFee);:w
+        return createPair(tokenA, tokenB, defaultSwapFee);
     }
 
     function createPair(address tokenA, address tokenB, uint32 swapFee) 
