@@ -74,7 +74,7 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
         token1 = _token1;
 
         swapFee = _swapFee; // uses 0.1% default
-        devFee  = 0; // Does not send fees to factory.feeTo
+        devFee  = 0; // Do not send fees to factory.feeTo
     }
 
     function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
