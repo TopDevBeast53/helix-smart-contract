@@ -66,14 +66,14 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
         _;
     }
 
-    function initialize(address _token0, address _token1, uint256 _swapFee) external initializer {
+    function initialize(address _token0, address _token1, uint32 _swapFee) external initializer {
         __ReentrancyGuard_init();
         factory = msg.sender;
 
         token0 = _token0;
         token1 = _token1;
 
-        swapFee = 1; // uses 0.1% default
+        swapFee = _swapFee; // uses 0.1% default
         devFee  = 5; // uses 0.5% default from swap fee
     }
 
