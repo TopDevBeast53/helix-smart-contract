@@ -8,10 +8,10 @@
 
 const { ethers, upgrades } = require(`hardhat`)
 
-const externalContracts = require('./constants/externalContracts')
+const contracts = require('./constants/contracts')
 const env = require('./constants/env')
 
-const factoryAddress = externalContracts.factory[env.network]
+const factoryAddress = contracts.factory[env.network]
 
 async function main() {
     const [deployer] = await ethers.getSigners()
