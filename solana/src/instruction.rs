@@ -12,13 +12,16 @@ pub enum EscrowInstruction {
     /// Accounts expected:
     ///
     /// 0. `[signer]` The account of the person initializing the escrow
-    /// 1. `[writable]` Temporary token account that should be created prior to this instruction and owned by the initializer
+    /// 2. `[]` The token program
     /// 2. `[]` The initializer's token account for the token they will receive should the trade go through
-    /// 3. `[writable]` The escrow account, it will hold all necessary info about the trade.
-    /// 4. `[]` The rent sysvar
-    /// 5. `[]` The token program
-    InitEscrow {
-        /// The amount party A expects to receive of token Y
+    /// 5. `[]` The receiver's token account
+    TransferIn {
+        /// The amount of NFTs for being wrapped
+        amount: u64
+    },
+
+    TransferOut {
+        /// The amout of NFTs being warpped
         amount: u64
     }
 }
@@ -29,7 +32,10 @@ impl EscrowInstruction {
         let (tag, rest) = input.split_first().ok_or(InvalidInstruction)?;
 
         Ok(match tag {
-            0 => Self::InitEscrow {
+            0 => Self::TransferIn {
+                amount: Self::unpack_amount(rest)?,
+            },
+            1 => Self:: TransferOut {
                 amount: Self::unpack_amount(rest)?,
             },
             _ => return Err(InvalidInstruction.into()),
