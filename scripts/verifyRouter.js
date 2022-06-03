@@ -13,7 +13,7 @@ const contracts = require('./constants/contracts')
 const externalContracts = require('./constants/externalContracts')
 
 const routerAddress = externalContracts.router[env.network]
-const factoryAddress = contracts.factory[env.network]
+const factoryAddress = externalContracts.factory[env.network]
 const wethAddress = addresses.WETH[env.network] 
 
 async function main() {

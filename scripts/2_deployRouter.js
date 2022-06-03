@@ -15,7 +15,7 @@ const contracts = require("./constants/contracts")
 const addresses = require("./constants/addresses")
 const externalContracts = require("./constants/externalContracts")
 
-const factoryAddress = contracts.factory[env.network]
+const factoryAddress = externalContracts.factory[env.network]
 const wethAddress = addresses.WETH[env.network]
 
 async function main() {
