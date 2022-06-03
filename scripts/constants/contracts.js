@@ -81,7 +81,7 @@ module.exports = {
     },
     helixMigrator: {
         1: '',
-        4: '0x582B14BD30221Da1B16f86041c9155B6097c85D0',
+        4: '0x6839c2A16318b3e386db87A5D0D8A6c9932B529f',
     },
     helixVault: {
         1: '',

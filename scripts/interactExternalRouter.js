@@ -17,7 +17,9 @@ const externalContracts = require('./constants/externalContracts')
 
 const routerAddress = externalContracts.router[env.network]
 const usdcAddress = externalContracts.usdcToken[env.network]
+const migratorAddress = contracts.helixMigrator[env.network]
 const helixAddress = contracts.helixToken[env.network]
+const pairAddress = '0x161962Aec8f3c61D865cd5d53A334780763364e6'
 
 const overrides = {
     gasLimit: 6721975
@@ -32,12 +34,15 @@ async function main() {
     const helixToken = await getContract(erc20, helixAddress, deployer)
     const usdcToken = await getContract(erc20, usdcAddress, deployer)
     const externalRouter = await getContract("HelixRouterV1", routerAddress, deployer)
+    const pair = await getContract(erc20, pairAddress, deployer)
 
     // Approve the tokens to be transferred by the router
-    await approve(deployer, helixToken, externalRouter.address)
-    await approve(deployer, usdcToken, externalRouter.address)
+    //await approve(deployer, helixToken, externalRouter.address)
+    //await approve(deployer, usdcToken, externalRouter.address)
+    await approve(deployer, pair, migratorAddress)
 
     // Add liquidity to the externalRouter
+    /*
     console.log('add liquidity')
     await externalRouter.addLiquidity(
         helixToken.address, 
@@ -50,6 +55,7 @@ async function main() {
         maxInt, 
         overrides
     )
+    */
 
     console.log('done')
 }

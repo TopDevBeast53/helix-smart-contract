@@ -18,5 +18,4 @@ module.exports = {
     oracleFactoryImplementation: {
         4: '0xb7B720c324A9E219ceaeacDD40d20ded8b8e511E',
     },
-
 }
