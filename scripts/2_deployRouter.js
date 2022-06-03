@@ -1,4 +1,4 @@
-/**
+/*
  * @dev Router Deployment script
  * 
  * command for deploy on bsc-testnet: 
@@ -7,31 +7,53 @@
  *      npx hardhat run scripts/2_deployRouter.js --network rinkeby
  */
 
-const { ethers } = require("hardhat");
-const contracts = require("./constants/contracts")
-const addresses = require("./constants/addresses")
+const hre  = require("hardhat")
+const { ethers } = require("hardhat")
 const env = require("./constants/env")
 
+const contracts = require("./constants/contracts")
+const addresses = require("./constants/addresses")
+const externalContracts = require("./constants/externalContracts")
+
 const factoryAddress = contracts.factory[env.network]
-const WETH = addresses.WETH[env.network]
+const wethAddress = addresses.WETH[env.network]
 
 async function main() {
-    const [deployer] = await ethers.getSigners();
-    console.log(`Deployer address: ${deployer.address}`);
+    const [deployer] = await ethers.getSigners()
+    console.log(`Deployer address: ${deployer.address}`)
 
-    console.log(`router factory address ${factoryAddress}`)
+    console.log(`factory address ${factoryAddress}`)
+    console.log(`weth address ${wethAddress}`)
 
-    console.log(`------ Start deploying HelixRouter contract ---------`);
-    const ContractRouter = await ethers.getContractFactory("HelixRouterV1");
-    const contract = await ContractRouter.deploy(factoryAddress, WETH);
-    await contract.deployTransaction.wait();
+    console.log(`------ Deploy Router contract ---------`)
+    const routerContractFactory = await ethers.getContractFactory("HelixRouterV1")
+    const router = await routerContractFactory.deploy(factoryAddress, wethAddress)
+    await router.deployTransaction.wait()
+    console.log(`Router deployed to ${router.address}`)
 
-    console.log(`HelixRouter deployed to ${contract.address}`);
+    // Wait for contract to be accessible
+    /*
+    setTimeout(async () => {
+        console.log(`------ Verify Router contract ---------`)
+        await hre.run(
+            "verify:verify", { 
+                address: router.address, 
+                constructorArguments: [
+                    factoryAddress,
+                    wethAddress
+                ]   
+            }   
+        )
+        console.log(`Router verified`)
+    }, 500);
+    */
+
+    console.log(`Done`)
 }
 
 main()
     .then(() => process.exit(0))
     .catch((error) => {
-        console.error(error);
-        process.exit(1);
-    });
+        console.error(error)
+        process.exit(1)
+    })
