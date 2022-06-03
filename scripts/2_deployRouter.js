@@ -13,7 +13,6 @@ const env = require("./constants/env")
 
 const contracts = require("./constants/contracts")
 const addresses = require("./constants/addresses")
-const contracts = require("./constants/contracts")
 
 const factoryAddress = contracts.factory[env.network]
 const wethAddress = addresses.WETH[env.network]
