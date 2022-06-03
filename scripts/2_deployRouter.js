@@ -1,4 +1,4 @@
-/*
+
  * @dev Router Deployment script
  * 
  * command for deploy on bsc-testnet: 
@@ -13,9 +13,9 @@ const env = require("./constants/env")
 
 const contracts = require("./constants/contracts")
 const addresses = require("./constants/addresses")
-const externalContracts = require("./constants/externalContracts")
+const contracts = require("./constants/contracts")
 
-const factoryAddress = externalContracts.factory[env.network]
+const factoryAddress = contracts.factory[env.network]
 const wethAddress = addresses.WETH[env.network]
 
 async function main() {
@@ -30,23 +30,6 @@ async function main() {
     const router = await routerContractFactory.deploy(factoryAddress, wethAddress)
     await router.deployTransaction.wait()
     console.log(`Router deployed to ${router.address}`)
-
-    // Wait for contract to be accessible
-    /*
-    setTimeout(async () => {
-        console.log(`------ Verify Router contract ---------`)
-        await hre.run(
-            "verify:verify", { 
-                address: router.address, 
-                constructorArguments: [
-                    factoryAddress,
-                    wethAddress
-                ]   
-            }   
-        )
-        console.log(`Router verified`)
-    }, 500);
-    */
 
     console.log(`Done`)
 }
