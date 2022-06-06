@@ -9,7 +9,7 @@ contract FeeMinter is Ownable {
     /// Overall rate at which to mint new tokens
     uint256 public totalToMintPerBlock;
 
-    // Owner approved minters with assigned toMintPercents
+    /// Owner approved minters with assigned toMintPercents
     address[] public minters;
 
     // Version of the toMintPercent mapping
