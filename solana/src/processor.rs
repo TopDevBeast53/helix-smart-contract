@@ -45,10 +45,10 @@ impl Processor {
 
     let token_program = next_account_info(account_info_iter)?;
 
-    for _ in 0..amount {
+    for i in 0..amount {
       let sender_associated_account = next_account_info(account_info_iter)?;
       let receiver_associated_account = next_account_info(account_info_iter)?;
-  
+      
       let transfer_sender_to_receiver_ix = spl_token::instruction::transfer(
         token_program.key,
         sender_associated_account.key,
@@ -57,7 +57,7 @@ impl Processor {
         &[&initializer.key],
         1,
       )?;
-  
+      
       invoke(
         &transfer_sender_to_receiver_ix,
         &[
@@ -65,8 +65,9 @@ impl Processor {
           receiver_associated_account.clone(),
           initializer.clone(),
           token_program.clone(),
-        ],
-      )?;
+          ],
+        )?;
+        msg!("{} case success!", i);
     }
 
     Ok(())

@@ -49,9 +49,10 @@ const setupMint = async (
 }
 
 const setup = async () => {
-  const connection = new Connection("http://localhost:8899", "confirmed");
   const WrapNFTs = 14;
-  // const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+
+  // const connection = new Connection("http://localhost:8899", "confirmed");
+  const connection = new Connection("https://api.devnet.solana.com", "confirmed");
   // const connection = new Connection("https://api.testnet.solana.com", "confirmed");
 
   const clientKeypair = getKeypair('id')
@@ -59,8 +60,8 @@ const setup = async () => {
   const sender = getPublicKey('sender')
 
   // airdrop some sols for test
-  await connection.requestAirdrop(sender, LAMPORTS_PER_SOL * 100)
-  await connection.requestAirdrop(clientKeypair.publicKey, LAMPORTS_PER_SOL * 100)
+  // await connection.requestAirdrop(sender, LAMPORTS_PER_SOL * 100)
+  // await connection.requestAirdrop(clientKeypair.publicKey, LAMPORTS_PER_SOL * 100)
 
   let keysInfo = []
 
