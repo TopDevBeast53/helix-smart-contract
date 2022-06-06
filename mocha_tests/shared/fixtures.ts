@@ -26,6 +26,7 @@ import VipPresale from '../../build/contracts/VipPresale.json'
 import PublicPresale from '../../build/contracts/PublicPresale.json'
 import AirDrop from '../../build/contracts/AirDrop.json'
 import FeeHandler from '../../build/contracts/FeeHandler.json'
+import FeeMinter from '../../build/contracts/FeeMinter.json'
 
 const addresses = require('../../scripts/constants/addresses')
 const initials = require('../../scripts/constants/initials')
@@ -57,6 +58,8 @@ const publicPresaleOutputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.network]
 const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHASE_DURATION[env.network]
 
 const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.network]
+
+const feeMinterTotalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
 
 const treasuryAddress = addresses.TREASURY[env.network]
 
@@ -95,6 +98,7 @@ interface FullExchangeFixture {
     airDrop: Contract
     feeHandler: Contract
     helixLP: Contract
+    feeMinter: Contract
 }
 
 export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<FullExchangeFixture> {
@@ -263,6 +267,9 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // Deploy helix LP contract
     const helixLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides)
 
+    // Deploy fee minter contract
+    const feeMinter = await deployContract(wallet, FeeMinter, [feeMinterTotalToMintPerBlock], overrides)
+
     return {
         tokenA,
         tokenB,
@@ -291,6 +298,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
         publicPresale,
         airDrop,
         feeHandler,
-        helixLP
+        helixLP,
+        feeMinter,
     }
 }

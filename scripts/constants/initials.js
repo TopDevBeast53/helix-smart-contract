@@ -245,4 +245,28 @@ module.exports = {
         56: 0,
         97: 7862400,     // 91 days, 86400 == 1 day
     },
+
+    // --------- Fee Minter --------- //
+    
+    // Represents the sum of desired to mint per block rates * 10^18
+    // To mint per block rates:
+    // Farming:     58.50
+    // Referrals:    4.68
+    // Dev Team:    23.40
+    // Vaults:      11.70
+    // Sum:         98.28
+    FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK: {
+        4: '98280000000000000000'
+    },
+
+    // Represents the percents of the to mint per block rate to delegate to each task
+    // Percents to each task
+    // Farming:     60%
+    // Referrals:    5%
+    // Dev Team:    23%
+    // Vaults:      12%
+    // Sum:        100%
+    FEE_MINTER_TO_MINT_PERCENTS: {
+        4: [60, 5, 23, 12]
+    }
 }
