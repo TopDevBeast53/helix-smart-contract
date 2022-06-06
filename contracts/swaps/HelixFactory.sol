@@ -11,6 +11,9 @@ contract HelixFactory is Initializable {
     address public oracleFactory; 
     bytes32 public INIT_CODE_HASH;
 
+    /// Default value used when creating a pair without a defined swapFee
+    uint32 public defaultSwapFee;
+
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
 
@@ -32,6 +35,9 @@ contract HelixFactory is Initializable {
     // Emitted when the owner sets the Oracle Factory contract
     event SetOracleFactory(address oracleFactory);
 
+    // Emitted when the defaultSwapFee is set
+    event SetDefaultSwapFee(address indexed setter, uint32 defaultSwapFee);
+
     modifier onlyFeeToSetter() {
         require(msg.sender == feeToSetter, "Factory: not feeToSetter");
         _;
@@ -40,24 +46,32 @@ contract HelixFactory is Initializable {
     function initialize(address _feeToSetter) external initializer {
         feeToSetter = _feeToSetter;
         INIT_CODE_HASH = keccak256(abi.encodePacked(type(HelixPair).creationCode));
+        defaultSwapFee = 1;
     }
 
     function allPairsLength() external view returns (uint) {
         return allPairs.length;
     }
 
-    function createPair(address tokenA, address tokenB) external returns (address pair) {
+    function createPair(address tokenA, address tokenB) external returns (address) {
+        return createPair(tokenA, tokenB, defaultSwapFee);
+    }
+
+    function createPair(address tokenA, address tokenB, uint32 swapFee) 
+        public 
+        returns (address pair) 
+    {
         require(tokenA != tokenB, "Factory: identical addresses");
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         require(token0 != address(0), "Factory: zero address");
         require(getPair[token0][token1] == address(0), "Factory: pair exists"); // single check is sufficient
 
         bytes memory bytecode = type(HelixPair).creationCode;
-        bytes32 salt = keccak256(abi.encodePacked(token0, token1));
+        bytes32 salt = keccak256(abi.encodePacked(token0, token1, swapFee));
         assembly {
             pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
-        HelixPair(pair).initialize(token0, token1);
+        HelixPair(pair).initialize(token0, token1, swapFee);
 
         getPair[token0][token1] = pair;
         getPair[token1][token0] = pair; // populate mapping in the reverse direction
@@ -96,5 +110,10 @@ contract HelixFactory is Initializable {
 
     function updateOracle(address token0, address token1) external {
         IOracleFactory(oracleFactory).update(token0, token1); 
+    }
+
+    function setDefaultSwapFee(uint32 _defaultSwapFee) external onlyFeeToSetter {
+        defaultSwapFee = _defaultSwapFee;
+        emit SetDefaultSwapFee(msg.sender, _defaultSwapFee);
     }
 }
