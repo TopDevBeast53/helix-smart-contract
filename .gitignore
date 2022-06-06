@@ -9,3 +9,5 @@ artifacts/
 cache/
 .openzeppelin/
 target/
+test-ledger/
+solana/package-lock.json

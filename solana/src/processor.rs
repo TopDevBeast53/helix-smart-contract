@@ -4,14 +4,14 @@ use solana_program::{
   account_info::{next_account_info, AccountInfo},
   entrypoint::ProgramResult,
   program_error::ProgramError,
-//   msg,
+  msg,
   pubkey::Pubkey,
 //   program_pack::{Pack, IsInitialized},
 //   sysvar::{rent::Rent, Sysvar},
   program::invoke
 };
 
-use crate::{instruction::EscrowInstruction, error::EscrowError, state::Escrow};
+use crate::{instruction::EscrowInstruction, error::EscrowError};
 
 pub struct Processor;
 impl Processor {
@@ -37,14 +37,23 @@ impl Processor {
     let account_info_iter = &mut accounts.iter();
     let initializer = next_account_info(account_info_iter)?;
 
+    msg!("initializer key: {}", initializer.key);
+
     if !initializer.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
     let token_program = next_account_info(account_info_iter)?;
+    msg!("token program: {}", token_program.key);
 
     let sender_associated_account = next_account_info(account_info_iter)?;
+
+    msg!("sender: {}", sender_associated_account.key);
+    
     let receiver_associated_account = next_account_info(account_info_iter)?;
+
+    msg!("receiver: {}", receiver_associated_account.key);
+
 
     let transfer_sender_to_receiver_ix = spl_token::instruction::transfer(
         token_program.key, 
@@ -54,6 +63,8 @@ impl Processor {
         &[&initializer.key], 
         1
     )?;
+
+    msg!("what is happening here");
 
     invoke(
         &transfer_sender_to_receiver_ix,
