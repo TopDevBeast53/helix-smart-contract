@@ -9,7 +9,7 @@ contract FeeMinter is Ownable {
     /// Overall rate at which to mint new tokens
     uint256 public totalToMintPerBlock;
 
-    // Owner approved minters with assigned toMintPercents
+    /// Owner approved minters with assigned toMintPercents
     address[] public minters;
 
     // Version of the toMintPercent mapping
@@ -44,7 +44,7 @@ contract FeeMinter is Ownable {
         external 
         onlyOwner 
     { 
-        require(_minters.length == _toMintPercents.length, "FeeEmittor: array length mismatch");
+        require(_minters.length == _toMintPercents.length, "FeeMinter: array length mismatch");
 
         // Increment the version and delete the previous mapping
         _version++;
@@ -62,7 +62,7 @@ contract FeeMinter is Ownable {
 
             _toMintPercent[_key(minter)] = toMintPercent;
         }
-        require(percentSum == 100, "FeeMinter: percents do not sum to 100");
+        require(percentSum == 100, "FeeMinter: percents do not total 100");
 
         minters = _minters;
 
