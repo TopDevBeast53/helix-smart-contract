@@ -1,33 +1,29 @@
 // instruction.rs (partially implemented)
 
-use std::convert::TryInto;
+use crate::error::WrapperError::InvalidInstruction;
 use solana_program::program_error::ProgramError;
-use crate::error::EscrowError::InvalidInstruction;
+use std::convert::TryInto;
 
-pub enum EscrowInstruction {
-
-    /// Starts the trade by creating and populating an escrow account and transferring ownership of the given temp token account to the PDA
-    ///
-    ///
+pub enum WrapperInstruction {
     /// Accounts expected:
     ///
-    /// 0. `[signer]` The account of the person initializing the escrow
+    /// 0. `[signer]` The account of the person to transfer NFTs 
     /// 2. `[]` The token program
     /// 2. `[]` The initializer's token account for the token they will receive should the trade go through
     /// 5. `[]` The receiver's token account
     TransferIn {
         /// The amount of NFTs for being wrapped
-        amount: u64
+        amount: u64,
     },
 
     TransferOut {
         /// The amout of NFTs being warpped
-        amount: u64
-    }
+        amount: u64,
+    },
 }
 
-impl EscrowInstruction {
-    /// Unpacks a byte buffer into a [EscrowInstruction](enum.EscrowInstruction.html).
+impl WrapperInstruction {
+    /// Unpacks a byte buffer into a [WrapperInstruction](enum.WrapperInstructionF.html).
     pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
         let (tag, rest) = input.split_first().ok_or(InvalidInstruction)?;
 
@@ -35,7 +31,7 @@ impl EscrowInstruction {
             0 => Self::TransferIn {
                 amount: Self::unpack_amount(rest)?,
             },
-            1 => Self:: TransferOut {
+            1 => Self::TransferOut {
                 amount: Self::unpack_amount(rest)?,
             },
             _ => return Err(InvalidInstruction.into()),

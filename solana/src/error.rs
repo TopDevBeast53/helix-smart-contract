@@ -4,7 +4,7 @@ use thiserror::Error;
 use solana_program::program_error::ProgramError;
 
 #[derive(Error, Debug, Copy, Clone)]
-pub enum EscrowError {
+pub enum WrapperError {
     /// Invalid instruction
     #[error("Invalid Instruction")]
     InvalidInstruction,
@@ -13,8 +13,8 @@ pub enum EscrowError {
     NotRentExempt,
 }
 
-impl From<EscrowError> for ProgramError {
-    fn from(e: EscrowError) -> Self {
+impl From<WrapperError> for ProgramError {
+    fn from(e: WrapperError) -> Self {
         ProgramError::Custom(e as u32)
     }
 }
