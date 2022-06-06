@@ -11,9 +11,9 @@ import "../interfaces/IExternalRouter.sol";
 contract HelixMigrator is Pausable, Ownable {
     IHelixV2Router02 public router;
 
-    constructor(IHelixV2Router02 _router) {
-        require(address(_router) != address(0), "Migrator: zero address");
-        router = _router;
+    constructor(address _router) {
+        require(_router != address(0), "Migrator: zero address");
+        router = IHelixV2Router02(_router);
     }
 
     event MigrateLiquidity(
@@ -41,17 +41,14 @@ contract HelixMigrator is Pausable, Ownable {
     {
         // Transfer the caller's external liquidity balance to this contract
         uint256 exLiquidity = IERC20(_lpToken).balanceOf(msg.sender);
-        require(exLiquidity > 0, "Migrator: caller has no lp balance");
+        require(exLiquidity > 0, "Migrator: no balance to migrate");
         require(
-            IERC20(_lpToken).transferFrom(msg.sender, address(this), exLiquidity), 
-            "Migrator: lp transfer from failed"
+            exLiquidity <= IERC20(_lpToken).allowance(msg.sender, address(this)),
+            "Migrator: insufficient allowance"
         );
 
-        // Approve external router to spend up to exLiquidity amount of the liquidity
-        require(
-            IERC20(_lpToken).approve(_externalRouter, exLiquidity), 
-            "Migrator: external lp approval failed"
-        );
+        IERC20(_lpToken).transferFrom(msg.sender, address(this), exLiquidity);
+        IERC20(_lpToken).approve(_externalRouter, exLiquidity);
 
         // Remove the token balances from the external exchange
         (uint256 exBalanceTokenA, uint256 exBalanceTokenB) = IExternalRouter(_externalRouter).removeLiquidity(
@@ -65,14 +62,8 @@ contract HelixMigrator is Pausable, Ownable {
         );
 
         // Approve this router to spend up to the external token balances
-        require(
-            IERC20(_tokenA).approve(address(router), exBalanceTokenA), 
-            "Migrator: token A router approval failed"
-        );
-        require(
-            IERC20(_tokenB).approve(address(router), exBalanceTokenB), 
-            "Migrator: token B router approval failed"
-        );
+        IERC20(_tokenA).approve(address(router), exBalanceTokenA);
+        IERC20(_tokenB).approve(address(router), exBalanceTokenB);
 
         // Move the external token balances to this exchange
         // Note: addLiquidity handles adding token pair to factory
@@ -103,9 +94,9 @@ contract HelixMigrator is Pausable, Ownable {
     }
 
     /// Called by the owner to set the router address
-    function setRouter(IHelixV2Router02 _router) external onlyOwner {
-        require(address(_router) != address(0), "Migrator: zero address");
-        router = _router;
+    function setRouter(address _router) external onlyOwner {
+        require(_router != address(0), "Migrator: zero address");
+        router = IHelixV2Router02(_router);
     }
 
     /// Called by the owner to pause the contract
