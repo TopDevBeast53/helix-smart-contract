@@ -10,7 +10,7 @@ contract FeeMinter is Ownable {
     uint256 public totalToMintPerBlock;
 
     /// Version of the toMintPercent mapping
-    uint32 public _version;
+    uint32 private _version;
 
     /// Map approved minter address to a percent of totalToMintPerBlock rate
     mapping(bytes32 => uint256) private _toMintPercent;
