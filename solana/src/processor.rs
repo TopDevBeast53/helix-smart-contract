@@ -33,7 +33,7 @@ impl Processor {
 
   fn process_wrapper_in(
     accounts: &[AccountInfo],
-    _amount: u64,
+    amount: u64,
     _program_id: &Pubkey,
   ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
@@ -44,27 +44,30 @@ impl Processor {
     }
 
     let token_program = next_account_info(account_info_iter)?;
-    let sender_associated_account = next_account_info(account_info_iter)?;
-    let receiver_associated_account = next_account_info(account_info_iter)?;
 
-    let transfer_sender_to_receiver_ix = spl_token::instruction::transfer(
-      token_program.key,
-      sender_associated_account.key,
-      receiver_associated_account.key,
-      initializer.key,
-      &[&initializer.key],
-      1,
-    )?;
-
-    invoke(
-      &transfer_sender_to_receiver_ix,
-      &[
-        sender_associated_account.clone(),
-        receiver_associated_account.clone(),
-        initializer.clone(),
-        token_program.clone(),
-      ],
-    )?;
+    for _ in 0..amount {
+      let sender_associated_account = next_account_info(account_info_iter)?;
+      let receiver_associated_account = next_account_info(account_info_iter)?;
+  
+      let transfer_sender_to_receiver_ix = spl_token::instruction::transfer(
+        token_program.key,
+        sender_associated_account.key,
+        receiver_associated_account.key,
+        initializer.key,
+        &[&initializer.key],
+        1,
+      )?;
+  
+      invoke(
+        &transfer_sender_to_receiver_ix,
+        &[
+          sender_associated_account.clone(),
+          receiver_associated_account.clone(),
+          initializer.clone(),
+          token_program.clone(),
+        ],
+      )?;
+    }
 
     Ok(())
   }
