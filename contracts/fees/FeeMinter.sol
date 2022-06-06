@@ -9,10 +9,13 @@ contract FeeMinter is Ownable {
     /// Overall rate at which to mint new tokens
     uint256 public totalToMintPerBlock;
 
-    /// Version of the toMintPercent mapping
+    // Owner approved minters with assigned toMintPercents
+    address[] public minters;
+
+    // Version of the toMintPercent mapping
     uint32 private _version;
 
-    /// Map approved minter address to a percent of totalToMintPerBlock rate
+    // Map approved minter address to a percent of totalToMintPerBlock rate
     mapping(bytes32 => uint256) private _toMintPercent;
 
     // Emitted when a new totalToMintPerBlock is set
@@ -61,6 +64,8 @@ contract FeeMinter is Ownable {
         }
         require(percentSum == 100, "FeeMinter: percents do not sum to 100");
 
+        minters = _minters;
+
         emit SetToMintPercents(
             msg.sender,
             _minters,
@@ -73,6 +78,11 @@ contract FeeMinter is Ownable {
     function getToMintPerBlock(address _minter) external view returns (uint256) {
         uint256 toMintPercent = getToMintPercent(_minter);
         return Percent.getPercentage(totalToMintPerBlock, toMintPercent);
+    }
+
+    /// Return the array of approved minter addresses
+    function getMinters() external view returns (address[] memory) {
+        return minters;
     }
 
     /// Return the toMintPercent for _minter
