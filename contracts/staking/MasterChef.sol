@@ -637,12 +637,9 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Safe HelixToken transfer function, just in case if rounding error causes pool to not have enough HelixTokens.
     function safeHelixTokenTransfer(address _to, uint256 _amount) internal {
-        uint256 HelixTokenBal = helixToken.balanceOf(address(this));
-        if (_amount > HelixTokenBal) {
-            helixToken.transfer(_to, HelixTokenBal);
-        } else {
-            helixToken.transfer(_to, _amount);
-        }
+        uint256 helixTokenBal = helixToken.balanceOf(address(this));
+        uint256 toTransfer = _amount > helixTokenBal ? helixTokenBal : _amount;
+        require(helixToken.transfer(_to, toTransfer), "MasterChef: transfer failed");
     }
 
     function setDevAddress(address _devaddr) external onlyOwner {

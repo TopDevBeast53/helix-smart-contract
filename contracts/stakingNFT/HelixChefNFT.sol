@@ -3,6 +3,7 @@ pragma solidity >= 0.8.0;
 
 import "../interfaces/IHelixNFT.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -16,6 +17,7 @@ contract HelixChefNFT is
     ReentrancyGuardUpgradeable,
     PausableUpgradeable
 {
+    using SafeERC20 for IERC20;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     // Info on each user who has NFTs staked in this contract
@@ -201,7 +203,7 @@ contract HelixChefNFT is
     function _withdrawRewardToken() private {
         uint256 _amount = users[msg.sender].pendingReward;
         users[msg.sender].pendingReward = 0;
-        rewardToken.transfer(address(msg.sender), _amount);
+        rewardToken.safeTransfer(address(msg.sender), _amount);
         emit WithdrawRewardToken(msg.sender, _amount);
     }
 

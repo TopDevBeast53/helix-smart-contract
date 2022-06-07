@@ -4,11 +4,14 @@ pragma solidity >=0.8.0;
 import "../interfaces/IHelixToken.sol";
 import "../fees/FeeCollector.sol";
 import "../libraries/Percent.sol";
+
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// Users (referrers) refer other users (referred) and referrers earn rewards when
 /// referred users perform stakes or swaps
@@ -19,6 +22,7 @@ contract ReferralRegister is
     PausableUpgradeable,
     ReentrancyGuardUpgradeable 
 {
+    using SafeERC20 for IERC20;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     /// Rate at which new tokens are minted as referrer rewards
@@ -26,7 +30,7 @@ contract ReferralRegister is
     uint256 public toMintPerBlock;
 
     /// Token distributed as referrer rewards
-    IHelixToken public helixToken;
+    address public helixToken;
 
     /// Reward percent for staker referrers
     uint256 public stakeRewardPercent;
@@ -113,7 +117,7 @@ contract ReferralRegister is
         __ReentrancyGuard_init();
         _setFeeHandler(_feeHandler);
 
-        helixToken = IHelixToken(_helixToken);
+        helixToken = _helixToken;
         stakeRewardPercent = _stakeRewardPercent;
         swapRewardPercent = _swapRewardPercent;
         toMintPerBlock = _toMintPerBlock;
@@ -149,7 +153,7 @@ contract ReferralRegister is
         
         _update();
 
-        uint256 contractBalance  = helixToken.balanceOf(address(this));
+        uint256 contractBalance = IERC20(helixToken).balanceOf(address(this));
         require(contractBalance > 0, "ReferralRegister: no helix in contract");
     
         // Prevent withdrawing more than the contract balance
@@ -161,10 +165,10 @@ contract ReferralRegister is
         // Split the reward and extract the collector fee
         (uint256 collectorFee, uint256 referrerReward) = getCollectorFeeSplit(reward);
         if (referrerReward > 0) {
-            helixToken.transfer(msg.sender, referrerReward);
+            IERC20(helixToken).safeTransfer(msg.sender, referrerReward);
         }
         if (collectorFee > 0) {
-            _delegateTransfer(IERC20(address(helixToken)), address(this), collectorFee);
+            _delegateTransfer(IERC20(helixToken), address(this), collectorFee);
         }
 
         emit Withdraw(msg.sender, referrerReward, collectorFee, rewards[msg.sender]);
@@ -216,7 +220,7 @@ contract ReferralRegister is
         uint256 toMint = (block.number - lastMintBlock) * toMintPerBlock;
         lastMintBlock = block.number;
 
-        helixToken.mint(address(this), toMint);
+        IHelixToken(helixToken).mint(address(this), toMint);
         emit Update(toMint);
     }
     
