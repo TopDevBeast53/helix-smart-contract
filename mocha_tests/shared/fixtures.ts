@@ -60,6 +60,7 @@ const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHAS
 const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.network]
 
 const feeMinterTotalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
+const feeMinterToMintPercents = initials.FEE_MINTER_TO_MINT_PERCENTS[env.network]
 
 const treasuryAddress = addresses.TREASURY[env.network]
 
@@ -143,6 +144,9 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     const feeHandler = await deployContract(wallet, FeeHandler, [], overrides)
     await feeHandler.initialize(treasuryAddress, helixChefNFT.address)
 
+    // 7 deploy the fee minter
+    const feeMinter = await deployContract(wallet, FeeMinter, [feeMinterTotalToMintPerBlock], overrides)
+
     // Mark the feeHandler as a helixChefNFT accruer
     await helixChefNFT.addAccruer(feeHandler.address)
 
@@ -151,9 +155,9 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await refReg.initialize(
         helixToken.address, 
         feeHandler.address, 
+        feeMinter.address,
         refRegDefaultStakingRef, 
         refRegDefaultSwapRef,
-        refRegToMintPerBlock,
         0      // TODO replace
     );
     await helixToken.addMinter(refReg.address)
@@ -163,7 +167,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await chef.initialize(
         helixToken.address,
         chefDeveloperAddress,
-        chefHelixTokenRewardPerBlock,
+        feeMinter.address,
         chefStartBlock,
         chefStakingPercent,
         chefDevPercent,
@@ -215,7 +219,7 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     await vault.initialize(
             helixToken.address,
             feeHandler.address,
-            helixVaultRewardPerBlock,
+            feeMinter.address,
             helixVaultStartBlock,
             helixVaultBonusEndBlock
     )
@@ -267,8 +271,11 @@ export async function fullExchangeFixture(provider: Web3Provider, [wallet]: Wall
     // Deploy helix LP contract
     const helixLP = await deployContract(wallet, ERC20LP, [expandTo18Decimals(10000)], overrides)
 
-    // Deploy fee minter contract
-    const feeMinter = await deployContract(wallet, FeeMinter, [feeMinterTotalToMintPerBlock], overrides)
+    // Set the fee minter rates
+    await feeMinter.setToMintPercents(
+        [chef.address, refReg.address, vault.address],
+        feeMinterToMintPercents
+    )
 
     return {
         tokenA,
