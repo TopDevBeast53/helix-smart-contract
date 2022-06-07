@@ -193,7 +193,7 @@ contract HelixVault is
         // Relay the deposit id to the user's account
         depositIds[msg.sender].push(_depositId);
 
-        token.transferFrom(msg.sender, address(this), _amount);
+        TransferHelper.safeTransferFrom(address(token), msg.sender, address(this), _amount);
 
         emit NewDeposit(
             msg.sender, 
@@ -225,7 +225,7 @@ contract HelixVault is
         deposit.rewardDebt = _getReward(deposit.amount, deposit.weight);
 
         _distributeReward(reward);
-        token.transferFrom(msg.sender, address(this), _amount);
+        TransferHelper.safeTransferFrom(address(token), msg.sender, address(this), _amount);
 
         emit UpdateDeposit(msg.sender, _depositId, _amount, deposit.amount);
     }
@@ -295,7 +295,7 @@ contract HelixVault is
         _distributeReward(reward);
 
         // Return the original deposit to the depositor
-        token.transfer(msg.sender, _amount);
+        TransferHelper.safeTransfer(address(token), msg.sender, _amount);
 
         emit Withdraw(msg.sender, _amount);
     }
@@ -444,7 +444,7 @@ contract HelixVault is
     function _distributeReward(uint256 _reward) private {
         (uint256 collectorFee, uint256 depositorAmount) = getCollectorFeeSplit(_reward);
         if (depositorAmount > 0) {
-            token.transfer(msg.sender, depositorAmount);
+            TransferHelper.safeTransfer(address(token), msg.sender, depositorAmount);
         }
         if (collectorFee > 0) {
             _delegateTransfer(token, address(this), collectorFee);

@@ -7,9 +7,12 @@ import "../interfaces/IHelixChefNFT.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// Handles routing received fees to internal contracts
 contract FeeHandler is Initializable, OwnableUpgradeable {
+    using SafeERC20 for IERC20;
+
     /// Owner defined fee recipient
     address public treasury;
 
@@ -70,12 +73,12 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
         (uint256 nftChefAmount, uint256 treasuryAmount) = _getSplit(_fee, nftChefPercent);
 
         if (nftChefAmount > 0) {
-            _token.transferFrom(_from, address(nftChef), nftChefAmount);
+            _token.safeTransferFrom(_from, address(nftChef), nftChefAmount);
             nftChef.accrueReward(_rewardAccruer, nftChefAmount);
         }
 
         if (treasuryAmount > 0) {
-            _token.transferFrom(_from, treasury, treasuryAmount);
+            _token.safeTransferFrom(_from, treasury, treasuryAmount);
         }
 
         emit TransferFee(

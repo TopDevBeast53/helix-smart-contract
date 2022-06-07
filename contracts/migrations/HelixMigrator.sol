@@ -2,13 +2,17 @@
 pragma solidity >=0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "../interfaces/IHelixMigrator.sol";
 import "../interfaces/IHelixV2Router02.sol";
 import "../interfaces/IExternalRouter.sol";
 
 contract HelixMigrator is Pausable, Ownable {
+    using SafeERC20 for IERC20;
+
     IHelixV2Router02 public router;
 
     constructor(address _router) {
@@ -39,16 +43,16 @@ contract HelixMigrator is Pausable, Ownable {
         external 
         whenNotPaused
     {
+        IERC20 lpToken = IERC20(_lpToken);
         // Transfer the caller's external liquidity balance to this contract
-        uint256 exLiquidity = IERC20(_lpToken).balanceOf(msg.sender);
+        uint256 exLiquidity = lpToken.balanceOf(msg.sender);
         require(exLiquidity > 0, "Migrator: no balance to migrate");
         require(
-            exLiquidity <= IERC20(_lpToken).allowance(msg.sender, address(this)),
+            exLiquidity <= lpToken.allowance(msg.sender, address(this)),
             "Migrator: insufficient allowance"
         );
-
-        IERC20(_lpToken).transferFrom(msg.sender, address(this), exLiquidity);
-        IERC20(_lpToken).approve(_externalRouter, exLiquidity);
+        lpToken.safeTransferFrom(msg.sender, address(this), exLiquidity);
+        lpToken.safeApprove(_externalRouter, exLiquidity);
 
         // Remove the token balances from the external exchange
         (uint256 exBalanceTokenA, uint256 exBalanceTokenB) = IExternalRouter(_externalRouter).removeLiquidity(
@@ -62,8 +66,8 @@ contract HelixMigrator is Pausable, Ownable {
         );
 
         // Approve this router to spend up to the external token balances
-        IERC20(_tokenA).approve(address(router), exBalanceTokenA);
-        IERC20(_tokenB).approve(address(router), exBalanceTokenB);
+        IERC20(_tokenA).safeApprove(address(router), exBalanceTokenA);
+        IERC20(_tokenB).safeApprove(address(router), exBalanceTokenB);
 
         // Move the external token balances to this exchange
         // Note: addLiquidity handles adding token pair to factory
