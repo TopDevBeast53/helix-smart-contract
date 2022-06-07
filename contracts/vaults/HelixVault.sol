@@ -386,8 +386,7 @@ contract HelixVault is
         uint256 balance = token.balanceOf(address(this));
         if (block.number > lastUpdateBlock && balance != 0) {
             uint256 blocks = getBlocksDifference(lastUpdateBlock, block.number);
-            uint256 rewardPerBlock = getRewardPerBlock();
-            _accTokenPerShare += blocks * rewardPerBlock * PRECISION_FACTOR / balance;
+            _accTokenPerShare += blocks * _getToMintPerBlock() * PRECISION_FACTOR / balance;
         }
 
         return _getReward(deposit.amount, deposit.weight, _accTokenPerShare) - deposit.rewardDebt;
@@ -408,24 +407,29 @@ contract HelixVault is
         return _getDeposit(_depositId);
     }
 
+    /// Return the rewardPerBlock assigned to this contract
+    function getToMintPerBlock() external view returns (uint256) {
+        return _getToMintPerBlock();
+    }
+
     /// Update reward variables of the given pool to be up-to-date.
     function updatePool() public {
         if (block.number <= lastUpdateBlock) {
             return;
         }
 
-        uint256 reward;
+        uint256 toMint;
         uint256 balance = token.balanceOf(address(this));
         if (balance > 0) {
             uint256 blocks = getBlocksDifference(lastUpdateBlock, block.number);
-            reward = blocks * getRewardPerBlock();
-            accTokenPerShare += reward * PRECISION_FACTOR / balance;
+            toMint = blocks * _getToMintPerBlock();
+            accTokenPerShare += toMint * PRECISION_FACTOR / balance;
         }
 
         lastUpdateBlock = block.number;
 
-        if (reward > 0) {
-            token.mint(address(this), reward);
+        if (toMint > 0) {
+            token.mint(address(this), toMint);
         }
 
         emit PoolUpdated(lastUpdateBlock);
@@ -438,12 +442,6 @@ contract HelixVault is
             return 0;
         }
         return Math.min(_to, lastRewardBlock) - _from;
-    }
-
-    /// Return the rewardPerBlock assigned to this contract
-    function getRewardPerBlock() public view returns (uint256) {
-        require(address(feeMinter) != address(0), "Vault: fee minter unassigned");
-        return feeMinter.getToMintPerBlock(address(this));
     }
 
     // Split the _reward into the amount received by the depositor and the amount
@@ -482,6 +480,12 @@ contract HelixVault is
     {   
         uint256 accToken = _amount * _accTokenPerShare / PRECISION_FACTOR;
         reward = Percent.getPercentage(accToken, _weight);
+    }
+
+    // Return the rewardPerBlock assigned to this contract
+    function _getToMintPerBlock() private view returns (uint256) {
+        require(address(feeMinter) != address(0), "Vault: fee minter unassigned");
+        return feeMinter.getToMintPerBlock(address(this));
     }
 
     // Used to require that the _caller is the _depositor
