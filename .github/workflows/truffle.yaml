@@ -23,8 +23,8 @@ jobs:
     - name: Show NodeJS version    
       run: node -v
       
-    - name: Show Npm version    
-      run: npm --version
+    - name: Show Yarn version    
+      run: yarn --version
     
 #    - name: Install Truffle
 #      run: npm install truffle -g
