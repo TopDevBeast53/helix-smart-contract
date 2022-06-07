@@ -23,14 +23,14 @@ jobs:
     - name: Show NodeJS version    
       run: node -v
       
-    - name: Show Npm version    
-      run: npm --version
+    - name: Show Yarn version    
+      run: yarn --version
     
-    - name: Install Truffle
-      run: npm install truffle -g
+#    - name: Install Truffle
+#      run: npm install truffle -g
     
-    - name: Install Truffle Dependencies
-      run: npm install      
+#    - name: Install Truffle Dependencies
+#      run: npm install      
    
 #     - name: Increase memory allocation
 #       run: export NODE_OPTIONS="--max-old-space-size=8192"
@@ -41,5 +41,5 @@ jobs:
 #     - name: Run Truffle Test
 #       run: truffle test --max-old-space-size=8192
     
-    - name: Run Test Coverage
-      run: truffle run coverage
+#    - name: Run Test Coverage
+#      run: truffle run coverage
