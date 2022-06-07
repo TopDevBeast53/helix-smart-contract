@@ -182,6 +182,11 @@ contract ReferralRegister is
         emit SetSwapRewardPercent(msg.sender, _swapRewardPercent);
     }
 
+    /// Return the assigned toMintPerBlock rate
+    function getToMintPerBlock() external view returns (uint256) {
+        return _getToMintPerBlock();
+    }
+
     /// Set the caller's (referred's) referrer
     function addReferrer(address _referrer) external {
         require(referrers[msg.sender] == address(0), "ReferralRegister: referrer already set");

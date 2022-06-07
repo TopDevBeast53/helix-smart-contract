@@ -642,6 +642,20 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         emit EmergencyWithdraw(msg.sender, _pid, _amount);
     }
 
+    /// Return the portion of toMintPerBlock assigned to staking and farms
+    function getStakeToMintPerBlock() external view returns (uint256) {
+        return _getStakeToMintPerBlock();
+    }
+
+    /// Return the portion of toMintPerBlock assigned to dev team
+    function getDevToMintPerBlock() external view returns (uint256) {
+        return _getDevToMintPerBlock();
+    }
+
+    /// Return the toMintPerBlock rate assigned to this contract by the feeMinter
+    function getToMintPerBlock() external view returns (uint256) {
+        return _getToMintPerBlock();
+    }
     // Safe HelixToken transfer function, just in case if rounding error causes pool to not have enough HelixTokens.
     function safeHelixTokenTransfer(address _to, uint256 _amount) internal {
         uint256 HelixTokenBal = helixToken.balanceOf(address(this));
