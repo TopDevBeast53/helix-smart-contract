@@ -10,6 +10,24 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
+/// Thrown when the caller is not an accruer
+error NotAnAccruer(address caller);
+
+/// Thrown when address(0) is encountered
+error ZeroAddress();
+
+/// Thrown when token is already staked
+error IsStaked(uint256 token);
+
+/// Thrown when token is not staked
+error NotStaked(uint256 token);
+
+/// Thrown when index is out of bounds
+error IndexOutOfBounds(uint256 index, uint256 length);
+
+/// Thrown when caller is not the token owner
+error CallerIsNotOwner(address caller, address owner);
+
 /// Enable users to stake NFTs and earn rewards
 contract HelixChefNFT is 
     Initializable, 
@@ -65,12 +83,12 @@ contract HelixChefNFT is
     // 
 
     modifier onlyAccruer {
-        require(isAccruer(msg.sender), "HelixChefNFT: not an accruer");
+        if (!isAccruer(msg.sender)) revert NotAnAccruer(msg.sender);
         _;
     }
 
     modifier onlyValidAddress(address _address) {
-        require(_address != address(0), "HelixChefNFT: zero address");
+        if (_address == address(0)) revert ZeroAddress();
         _;
     }
 
@@ -90,7 +108,7 @@ contract HelixChefNFT is
         for(uint256 i = 0; i < _tokenIds.length; i++){
             (address tokenOwner, bool isStaked) = helixNFT.getInfoForStaking(_tokenIds[i]);
             _requireIsTokenOwner(msg.sender, tokenOwner);
-            require(!isStaked, "HelixChefNFT: already staked");
+            if (isStaked) revert IsStaked(_tokenIds[i]);
 
             helixNFT.setIsStaked(_tokenIds[i], true);
             user.stakedNFTsId.push(_tokenIds[i]);
@@ -109,7 +127,7 @@ contract HelixChefNFT is
         for(uint256 i = 0; i < _tokenIds.length; i++){
             (address tokenOwner, bool isStaked) = helixNFT.getInfoForStaking(_tokenIds[i]);
             _requireIsTokenOwner(msg.sender, tokenOwner);
-            require(isStaked, "HelixChefNFT: already unstaked");
+            if (!isStaked) revert NotStaked(_tokenIds[i]);
 
             helixNFT.setIsStaked(_tokenIds[i], false);
             _removeTokenIdFromUser(msg.sender, _tokenIds[i]);
@@ -143,7 +161,7 @@ contract HelixChefNFT is
 
     /// Called by the owner to remove an accruer
     function removeAccruer(address _address) external onlyOwner {
-        require(isAccruer(_address), "HelixChefNFT: not an accruer");
+        if (!isAccruer(_address)) return;
         EnumerableSetUpgradeable.remove(_accruers, _address);
         emit RemoveAccruer(msg.sender, _address);
     }   
@@ -160,7 +178,8 @@ contract HelixChefNFT is
 
     /// Return the accruer at _index
     function getAccruer(uint256 _index) external view returns (address) {
-        require(_index <= getNumAccruers() - 1, "HelixChefNFT: index out of bounds");
+        uint256 numAccruers = getNumAccruers() - 1;
+        if (_index > numAccruers) revert IndexOutOfBounds(_index, numAccruers);
         return EnumerableSetUpgradeable.at(_accruers, _index);
     }
 
@@ -221,6 +240,6 @@ contract HelixChefNFT is
 
     // Require that _caller is _tokenOwner
     function _requireIsTokenOwner(address _caller, address _tokenOwner) private pure {
-            require(_caller == _tokenOwner, "HelixChefNFT: not token owner");
+        if (_caller != _tokenOwner) revert CallerIsNotOwner(_caller, _tokenOwner);
     }
 }

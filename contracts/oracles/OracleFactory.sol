@@ -8,6 +8,24 @@ import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol";
 import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 
+/// Thrown when encountering address(0)
+error ZeroAddress();
+
+/// Thrown when caller is invalid
+error InvalidCaller(address invalidCaller);
+
+/// Thrown when tokens are identical but shouldn't be
+error IdenticalTokens();
+
+/// Thrown when the oracle already exists
+error OracleExists(address token0, address token1);
+
+/// Thrown when a pair's reserves have a zero value
+error NoReserves(uint256 reserve0, uint256 reserve1);
+
+/// Thrown when the oracle doest not exist
+error OracleDoesNotExist(address token0, address token1);
+
 // Used for creating, updating, and consulting fixed window, token pair price oracles
 contract OracleFactory is Initializable, OwnableUpgradeable {
     using FixedPoint for FixedPoint.uq112x112;
@@ -62,7 +80,7 @@ contract OracleFactory is Initializable, OwnableUpgradeable {
     );
 
     modifier onlyValidAddress(address _address) {
-        require(_address != address(0), "OracleFactory: zero address");
+        if (_address == address(0)) revert ZeroAddress();
         _;
     }
 
@@ -78,12 +96,9 @@ contract OracleFactory is Initializable, OwnableUpgradeable {
         onlyValidAddress(_token0)
         onlyValidAddress(_token1)
     {
-        require(msg.sender == factory || msg.sender == owner(), "OracleFactory: invalid caller");
-        require(_token0 != _token1, "OracleFactory: identical addresses");
-        require(
-            !oracleExists(_token0, _token1), 
-            "OracleFactory: already created"
-        );
+        if (msg.sender != factory && msg.sender != owner()) revert InvalidCaller(msg.sender);
+        if (_token0 == _token1) revert IdenticalTokens();
+        if (oracleExists(_token0, _token1)) revert OracleExists(_token0, _token1);
 
         // Get the pair instance
         IUniswapV2Pair pair = IUniswapV2Pair(HelixLibrary.pairFor(factory, _token0, _token1));
@@ -115,7 +130,7 @@ contract OracleFactory is Initializable, OwnableUpgradeable {
         IUniswapV2Pair pair = IUniswapV2Pair(HelixLibrary.pairFor(factory, oracle.token0, oracle.token1));
 
         (uint112 reserve0, uint112 reserve1, ) = pair.getReserves();
-        require(reserve0 != 0 && reserve1 != 0, "OracleFactory: no reserves in pair");
+        if (reserve0 == 0 || reserve1 == 0) revert NoReserves(reserve0, reserve1);
  
         (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) =
             UniswapV2OracleLibrary.currentCumulativePrices(address(pair));
@@ -159,7 +174,6 @@ contract OracleFactory is Initializable, OwnableUpgradeable {
             if (_tokenIn == oracle.token0) {
                 amountOut = oracle.price0Average.mul(_amountIn).decode144();
             } else {
-                require(_tokenIn == oracle.token1, "Oracle: invalid token");
                 amountOut = oracle.price1Average.mul(_amountIn).decode144();
             }
         } else {
@@ -191,7 +205,7 @@ contract OracleFactory is Initializable, OwnableUpgradeable {
 
     // Return the Oracle struct
     function _getOracle(address _token0, address _token1) private view returns (Oracle storage) {
-        require(oracleExists(_token0, _token1), "OracleFactory: not created");
+        if (!oracleExists(_token0, _token1)) revert OracleDoesNotExist(_token0, _token1);
         return oracles[_token0][_token1];
     }
 

@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
+/// Thrown when a percent with its number of decimals are invalid
+error InvalidPercent(uint256 invalidPercent, uint256 decimals);
+
 library Percent {
     uint256 public constant MAX_PERCENT = 100;
 
     modifier onlyValidPercent(uint256 _percent, uint256 _decimals) {
-        require(_isValidPercent(_percent, _decimals), "Percent: invalid percent");
+        if (!_isValidPercent(_percent, _decimals)) revert InvalidPercent(_percent, _decimals);
         _;
     }
 

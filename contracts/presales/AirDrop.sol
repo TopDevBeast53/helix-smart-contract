@@ -8,6 +8,27 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
+/// Thrown when encountering an address that shouldn't be zero
+error ZeroAddress();
+
+/// Thrown when caller is not an owner but should be to make call
+error NotAnOwner(address caller);
+
+/// Thrown when two arrays should be equal length
+error ArrayLengthMismatch(uint256 lengthA, uint256 lengthB);
+
+/// Thrown when amount attempts to withdraw more than the balance of this contract
+error InsufficientBalance(uint256 amount, uint256 balance);
+
+/// Thrown when the owner already exists
+error AlreadyAnOwner(address owner);
+
+/// Thrown when the amount being withdrawn is zero
+error ZeroAmount();
+
+/// Thrown when the amount being withdrawn exceeds the callers allowed withdrawal amount
+error AmountExceedsMaxRemovable(uint256 amount, uint256 maxRemovable);
+
 /**
  * AirDrop user addresses a token balance
  * 
@@ -86,12 +107,12 @@ contract AirDrop is Pausable, ReentrancyGuard {
     event SetWithdrawPhase(WithdrawPhase withdrawPhase, uint256 startTimestamp, uint256 endTimestamp);
 
     modifier onlyValidAddress(address _address) {
-        require(_address != address(0), "AirDrop: zero address");
+        if (_address == address(0)) revert ZeroAddress();
         _;
     }
 
     modifier onlyOwner() {
-        require(isOwner[msg.sender], "AirDrop: not owner");
+        if (!isOwner[msg.sender]) revert NotAnOwner(msg.sender);
         _;
     }
 
@@ -150,10 +171,12 @@ contract AirDrop is Pausable, ReentrancyGuard {
     /// Called externally to airdrop multiple _users tokens
     /// each _users[i] receives amounts[i] many tokens for i in range _users.length
     function airdropAdd(address[] calldata _users, uint256[] calldata _amounts) external onlyOwner {
-        require(_users.length == _amounts.length, "AirDrop: users and amounts must be same length");
+        if (_users.length != _amounts.length) {
+            revert ArrayLengthMismatch(_users.length, _amounts.length);
+        }
         for (uint256 i = 0; i < _users.length; i++) {
             uint256 amount = _amounts[i];
-            require(amount <= tokenBalance(), "AirDrop: amount exceeds tokens available");
+            if (amount > tokenBalance()) revert InsufficientBalance(amount, tokenBalance());
 
             address user = _users[i];
             users[user].airdropped += amount;
@@ -213,7 +236,7 @@ contract AirDrop is Pausable, ReentrancyGuard {
 
     /// Add a new _owner to the contract, only callable by an existing owner
     function addOwner(address _owner) external onlyOwner onlyValidAddress(_owner) {
-        require(!isOwner[_owner], "AirDrop: already owner");
+        if (isOwner[_owner]) revert AlreadyAnOwner(_owner);
         isOwner[_owner] = true;
         owners.push(_owner);
         emit OwnerAdded(msg.sender, _owner);
@@ -221,7 +244,6 @@ contract AirDrop is Pausable, ReentrancyGuard {
 
     /// Remove an existing _owner from the contract, only callable by an owner
     function removeOwner(address _owner) external onlyOwner onlyValidAddress(_owner) {
-        require(isOwner[_owner], "VipPresale: not owner");
         delete isOwner[_owner];
 
         // array remove by swap
@@ -270,8 +292,9 @@ contract AirDrop is Pausable, ReentrancyGuard {
 
     // Require that _amount of tokens are removable by address _by
     function _requireValidRemoval(address _by, uint256 _amount) private view {
-        require(_amount > 0, "AirDrop: zero amount");
-        require(_amount <= tokenBalance(), "AirDrop: insufficient contract balance");
-        require(_amount <= maxRemovable(_by), "AirDrop: exceeds max amount");
+        if (_amount == 0) revert ZeroAmount();
+        if (_amount > tokenBalance()) revert InsufficientBalance(_amount, tokenBalance());
+        uint256 _maxRemovable = maxRemovable(_by);
+        if (_amount > _maxRemovable) revert AmountExceedsMaxRemovable(_amount, _maxRemovable);
     }
 } 

@@ -9,6 +9,12 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+/// Thrown when attempting to assign an invalid fee
+error InvalidFee(uint256 invalidFee);
+
+/// Thrown when attempting to assign an invalid address
+error InvalidAddress(address invalidAddress);
+
 /// Handles routing received fees to internal contracts
 contract FeeHandler is Initializable, OwnableUpgradeable {
     using SafeERC20 for IERC20;
@@ -44,17 +50,17 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     );
 
     modifier onlyValidFee(uint256 _fee) {
-        require(_fee > 0, "FeeHandler: zero fee");
+        if (_fee == 0) revert InvalidFee(_fee);
         _;
     }
 
     modifier onlyValidAddress(address _address) {
-        require(_address != address(0), "FeeHandler: zero address");
+        if (_address == address(0)) revert InvalidAddress(_address);
         _;
     }
 
     modifier onlyValidPercent(uint256 _percent) {
-        require(Percent.isValidPercent(_percent), "FeeHandler: percent exceeds max");
+        if (!Percent.isValidPercent(_percent)) revert InvalidPercent(_percent, 0);
         _;
     } 
 

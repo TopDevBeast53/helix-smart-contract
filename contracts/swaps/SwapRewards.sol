@@ -9,6 +9,12 @@ import "../libraries/Percent.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
+/// Thrown when address(0) is encountered
+error ZeroAddress();
+
+/// Thrown when the caller is not the router
+error NotRouter(address caller, address router);
+
 /// Distribute HELIX reward when users swap tokens
 contract SwapRewards is ISwapRewards, Ownable, Pausable {
     /// The HELIX reward token
@@ -44,7 +50,7 @@ contract SwapRewards is ISwapRewards, Ownable, Pausable {
     event SetRouter(address indexed setter, address indexed router);
 
     modifier onlyValidAddress(address _address) {
-        require(_address != address(0), "SwapFee: zero address");
+        if (_address == address(0)) revert ZeroAddress();
         _;
     }
 
@@ -65,7 +71,7 @@ contract SwapRewards is ISwapRewards, Ownable, Pausable {
         external 
         whenNotPaused
     {
-        require(msg.sender == router, "SwapFee: not router");
+        if (msg.sender != router) revert NotRouter(msg.sender, router);
     
         uint256 helixOut = oracleFactory.consult(_tokenIn, _amountIn, address(helixToken));
         if (helixOut > 0) {

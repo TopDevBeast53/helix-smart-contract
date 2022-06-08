@@ -10,13 +10,22 @@ import "../interfaces/IHelixMigrator.sol";
 import "../interfaces/IHelixV2Router02.sol";
 import "../interfaces/IExternalRouter.sol";
 
+/// Thrown when encountering an invalid address
+error InvalidAddress(address invalidAddress);
+
+/// Thrown when an account has no funds
+error NoBalance();
+
+/// Thrown when an amount being transferred is less than its allowance
+error InsufficientAllowance(uint256 amount, uint256 allowance);
+
 contract HelixMigrator is Pausable, Ownable {
     using SafeERC20 for IERC20;
 
     IHelixV2Router02 public router;
 
     constructor(address _router) {
-        require(_router != address(0), "Migrator: zero address");
+        if (_router == address(0)) revert InvalidAddress(_router);
         router = IHelixV2Router02(_router);
     }
 
@@ -46,11 +55,11 @@ contract HelixMigrator is Pausable, Ownable {
         IERC20 lpToken = IERC20(_lpToken);
         // Transfer the caller's external liquidity balance to this contract
         uint256 exLiquidity = lpToken.balanceOf(msg.sender);
-        require(exLiquidity > 0, "Migrator: no balance to migrate");
-        require(
-            exLiquidity <= lpToken.allowance(msg.sender, address(this)),
-            "Migrator: insufficient allowance"
-        );
+        if (exLiquidity == 0) revert NoBalance();
+
+        uint256 allowance = lpToken.allowance(msg.sender, address(this));
+        if (exLiquidity > allowance) revert InsufficientAllowance(exLiquidity, allowance);
+
         lpToken.safeTransferFrom(msg.sender, address(this), exLiquidity);
         lpToken.safeApprove(_externalRouter, exLiquidity);
 
@@ -99,7 +108,7 @@ contract HelixMigrator is Pausable, Ownable {
 
     /// Called by the owner to set the router address
     function setRouter(address _router) external onlyOwner {
-        require(_router != address(0), "Migrator: zero address");
+        if (_router == address(0)) revert InvalidAddress(_router);
         router = IHelixV2Router02(_router);
     }
 
