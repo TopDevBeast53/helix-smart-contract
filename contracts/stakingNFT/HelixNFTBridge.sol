@@ -90,7 +90,8 @@ contract HelixNFTBridge is Ownable, Pausable {
       returns(bool) 
     {
         if (_countAddBridge[_owner] == 0) revert NotBridger(_owner);
-        for (uint256 i = 0; i < _externalTokenIDs.length; i++) {
+        uint256 length = _externalTokenIDs.length;
+        for (uint256 i = 0; i < length; i++) {
             string memory externalID = _externalTokenIDs[i];
             if (_bridgedExternalTokenIDs[externalID]) revert AlreadyBridged(externalID);
             _bridgedExternalTokenIDs[externalID] = true;
@@ -140,7 +141,8 @@ contract HelixNFTBridge is Ownable, Pausable {
        whenNotPaused
     {
         string[] memory externalTokenIDs = helixNFT.getExternalTokenIDs(_tokenId);
-        for (uint256 i = 0; i < externalTokenIDs.length; i++) {
+        uint256 length = externalTokenIDs.length;
+        for (uint256 i = 0; i < length; i++) {
             string memory externalID = externalTokenIDs[i];
             if (!_bridgedExternalTokenIDs[externalID]) revert AlreadyBridged(externalID);
             if (_bridgedExternalTokenIDsPickUp[externalID] != msg.sender) revert NotBridger(msg.sender);

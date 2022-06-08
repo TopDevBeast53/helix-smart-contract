@@ -17,7 +17,8 @@ contract Multicall2 {
     function aggregate(Call[] memory calls) external returns (uint256 blockNumber, bytes[] memory returnData) {
         blockNumber = block.number;
         returnData = new bytes[](calls.length);
-        for(uint256 i = 0; i < calls.length; i++) {
+        uint256 length = calls.length;
+        for (uint256 i = 0; i < length; i++) {
             (bool success, bytes memory ret) = calls[i].target.call(calls[i].callData);
             if (!success) revert CallFailed();
             returnData[i] = ret;
@@ -52,7 +53,8 @@ contract Multicall2 {
     }
     function tryAggregate(bool requireSuccess, Call[] memory calls) public returns (Result[] memory returnData) {
         returnData = new Result[](calls.length);
-        for(uint256 i = 0; i < calls.length; i++) {
+        uint256 length = calls.length;
+        for (uint256 i = 0; i < length; i++) {
             (bool success, bytes memory ret) = calls[i].target.call(calls[i].callData);
 
             if (!requireSuccess) revert CallFailed();

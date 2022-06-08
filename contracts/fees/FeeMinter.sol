@@ -70,7 +70,8 @@ contract FeeMinter is Ownable {
         // Maintain a running tally of percents to enforce that they sum to 100
         uint256 percentSum;
 
-        for (uint256 i = 0; i < _minters.length; i++) {
+        uint256 length = _minters.length;
+        for (uint256 i = 0; i < length; i++) {
             address minter = _minters[i];
             if (minter == address(0)) revert InvalidAddress(minter);
 

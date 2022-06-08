@@ -171,10 +171,12 @@ contract AirDrop is Pausable, ReentrancyGuard {
     /// Called externally to airdrop multiple _users tokens
     /// each _users[i] receives amounts[i] many tokens for i in range _users.length
     function airdropAdd(address[] calldata _users, uint256[] calldata _amounts) external onlyOwner {
-        if (_users.length != _amounts.length) {
-            revert ArrayLengthMismatch(_users.length, _amounts.length);
+        uint256 length = _users.length;
+        if (length != _amounts.length) {
+            revert ArrayLengthMismatch(length, _amounts.length);
         }
-        for (uint256 i = 0; i < _users.length; i++) {
+        for (uint256 i = 0; i < length; i++) {
+
             uint256 amount = _amounts[i];
             if (amount > tokenBalance()) revert InsufficientBalance(amount, tokenBalance());
 
@@ -247,7 +249,8 @@ contract AirDrop is Pausable, ReentrancyGuard {
         delete isOwner[_owner];
 
         // array remove by swap
-        for (uint256 i = 0; i < owners.length; i++) {
+        uint256 length = owners.length;
+        for (uint256 i = 0; i < length; i++) {
             if (owners[i] == _owner) {
                 owners[i] = owners[owners.length - 1];
                 owners.pop();
