@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 import "../interfaces/IHelixToken.sol";
+import "../interfaces/IFeeMinter.sol";
 import "../fees/FeeCollector.sol";
 import "../libraries/Percent.sol";
 
@@ -12,6 +13,21 @@ import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeab
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+/// Thrown when address(0) is encountered
+error ZeroAddress();
+
+/// Thrown when caller is not a recorder
+error NotRecorder(address caller);
+
+/// Thrown when the caller has no reward balance
+error NoRewardBalance();
+
+/// Thrown when a user trys to add themselves as referrer
+error NoSelfReferral();
+
+/// Thrown when index exceeds array length
+error IndexOutOfBounds(uint256 index, uint256 length);
 
 /// Users (referrers) refer other users (referred) and referrers earn rewards when
 /// referred users perform stakes or swaps
@@ -25,9 +41,7 @@ contract ReferralRegister is
     using SafeERC20 for IERC20;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-    /// Rate at which new tokens are minted as referrer rewards
-    /// Divided by 100 to have 2 decimals of precision
-    uint256 public toMintPerBlock;
+    IFeeMinter public feeMinter;
 
     /// Token distributed as referrer rewards
     address public helixToken;
@@ -78,6 +92,9 @@ contract ReferralRegister is
     // Emitted when a referred removes their referrer
     event ReferrerRemoved(address referred);
 
+    // Emitted when a new feeMinter is set
+    event SetFeeMinter(address indexed setter, address indexed feeMinter);
+
     // Emitted when a referrer withdraws their earned referral rewards
     event Withdraw(
         address indexed referrer,
@@ -92,35 +109,32 @@ contract ReferralRegister is
     // Emitted when the lastMintBlock is manually set
     event SetLastRewardBlock(address indexed setter, uint256 lastMintBlock);
 
-    // Emitted when the toMintPerBlock rate is set
-    event SetToMintPerBlock(address indexed setter, uint256 _toMintPerBlock);
-
     modifier onlyValidAddress(address _address) {
-        require(_address != address(0), "ReferralRegister: zero address");
+        if (_address == address(0)) revert ZeroAddress();
         _;
     }
 
     modifier onlyRecorder() {
-        require(isRecorder(msg.sender), "ReferralRegister: not a recorder");
+        if (!isRecorder(msg.sender)) revert NotRecorder(msg.sender);
         _;
     }
 
     function initialize(
         address _helixToken, 
         address _feeHandler,
+        address _feeMinter,
         uint256 _stakeRewardPercent, 
         uint256 _swapRewardPercent,
-        uint256 _toMintPerBlock,
         uint256 _lastMintBlock
     ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
+        feeMinter = IFeeMinter(_feeMinter);
         _setFeeHandler(_feeHandler);
 
         helixToken = _helixToken;
         stakeRewardPercent = _stakeRewardPercent;
         swapRewardPercent = _swapRewardPercent;
-        toMintPerBlock = _toMintPerBlock;
         lastMintBlock = _lastMintBlock != 0 ? _lastMintBlock : block.number;
     }
 
@@ -147,15 +161,16 @@ contract ReferralRegister is
     }
 
     /// Called by a referrer to withdraw their accrued rewards
+    /// Withdraw all available if there is insufficient reward token balance in the contract
     function withdraw() external whenNotPaused nonReentrant {
         uint256 reward = rewards[msg.sender];
-        require(reward > 0, "ReferralRegister: nothing to withdraw");
+        if (reward == 0) revert NoRewardBalance();
         
         _update();
 
         uint256 contractBalance = IERC20(helixToken).balanceOf(address(this));
-        require(contractBalance > 0, "ReferralRegister: no helix in contract");
-    
+        if (contractBalance == 0) return;
+
         // Prevent withdrawing more than the contract balance
         reward = reward < contractBalance ? reward : contractBalance;
 
@@ -174,12 +189,6 @@ contract ReferralRegister is
         emit Withdraw(msg.sender, referrerReward, collectorFee, rewards[msg.sender]);
     }
 
-    /// Called by the owner to set the rate at which new tokens are minted per block
-    function setToMintPerBlock(uint256 _toMintPerBlock) external onlyOwner {
-        toMintPerBlock = _toMintPerBlock;
-        emit SetToMintPerBlock(msg.sender, _toMintPerBlock);
-    }
-
     /// Called by the owner to set the percent earned by referrers on stake transactions
     function setStakeRewardPercent(uint256 _stakeRewardPercent) external onlyOwner {
         stakeRewardPercent = _stakeRewardPercent;
@@ -192,10 +201,15 @@ contract ReferralRegister is
         emit SetSwapRewardPercent(msg.sender, _swapRewardPercent);
     }
 
+    /// Return the assigned toMintPerBlock rate
+    function getToMintPerBlock() external view returns (uint256) {
+        return _getToMintPerBlock();
+    }
+
     /// Set the caller's (referred's) referrer
     function addReferrer(address _referrer) external {
-        require(referrers[msg.sender] == address(0), "ReferralRegister: referrer already set");
-        require(msg.sender != _referrer, "ReferralRegister: no self referral");
+        if (referrers[msg.sender] != address(0)) return;
+        if (msg.sender == _referrer) revert NoSelfReferral();
         referrers[msg.sender] = _referrer;
         emit AddReferrer(msg.sender, _referrer);
     }
@@ -217,7 +231,7 @@ contract ReferralRegister is
             return;
         }      
 
-        uint256 toMint = (block.number - lastMintBlock) * toMintPerBlock;
+        uint256 toMint = (block.number - lastMintBlock) * _getToMintPerBlock();
         lastMintBlock = block.number;
 
         IHelixToken(helixToken).mint(address(this), toMint);
@@ -254,6 +268,12 @@ contract ReferralRegister is
     function setFeeHandler(address _feeHandler) external onlyOwner {
         _setFeeHandler(_feeHandler);
     }
+
+    /// Called by owner to set _feeMinter address
+    function setFeeMinter(address _feeMinter) external onlyOwner {
+        feeMinter = IFeeMinter(_feeMinter);
+        emit SetFeeMinter(msg.sender, _feeMinter);
+    }
    
     /// Called by the owner to set the percent charged on withdrawals
     function setCollectorPercent(uint256 _collectorPercent) external onlyOwner {
@@ -262,7 +282,8 @@ contract ReferralRegister is
 
     /// Return the address of the recorder at _index
     function getRecorder(uint256 _index) external view onlyOwner returns (address) {
-        require(_index <= getRecorderLength() - 1, "ReferralRegister: index out of bounds");
+        uint256 recorderLength = getRecorderLength() - 1;
+        if (_index > recorderLength) revert IndexOutOfBounds(_index, recorderLength);
         return EnumerableSetUpgradeable.at(_recorders, _index);
     }
 
@@ -274,6 +295,12 @@ contract ReferralRegister is
     /// Return true if _address is a recorder and false otherwise
     function isRecorder(address _address) public view returns (bool) {
         return EnumerableSetUpgradeable.contains(_recorders, _address);
+    }
+
+    // Return the toMintPerBlock rate of this contract
+    function _getToMintPerBlock() private view returns (uint256) {
+        require(address(feeMinter) != address(0), "ReferralRegister: fee minter is unassigned");
+        return feeMinter.getToMintPerBlock(address(this));
     }
 
     // Reward _referred's referrer based on transaction _amount and _rate

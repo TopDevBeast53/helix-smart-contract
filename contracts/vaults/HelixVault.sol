@@ -4,11 +4,55 @@ pragma solidity >=0.8.0;
 import "../tokens/HelixToken.sol";
 import "../libraries/Percent.sol";
 import "../fees/FeeCollector.sol";
+import "../interfaces/IFeeMinter.sol";
+
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
+
+/// Thrown when no deposit has been made
+error NoDepositMade();
+
+/// Thrown when depositId is invalid
+error InvalidDepositId(uint256 depositId);
+
+/// Thrown when index is out of bounds
+error IndexOutOfBounds(uint256 index, uint256 length);
+
+/// Thrown when duration is zero
+error ZeroDuration();
+
+/// Thrown when weight is zero
+error ZeroWeight();
+
+/// Thrown when amount is zero
+error ZeroAmount();
+
+/// Thrown when token decimals exceed the max valid decimals
+error DecimalsNotLessThanMax(uint256 decimals, uint256 max);
+
+/// Thrown when withdraw amount exceeds balance
+error AmountExceedsBalance(uint256 amount, uint256 balance);
+
+/// Thrown when withdraw is still locked until timestamp
+error WaitUntil(uint256 timestamp);
+
+/// Thrown when amount is greater than max allowed
+error AmountIsGreaterThanMax(uint256 amount, uint256 max);
+
+/// Thrown when amount is less than min allowed
+error AmountIsLessThanMin(uint256 amount, uint256 min);
+
+/// Thrown when the from block is greater than the to block
+error FromGreaterThanTo(uint256 from, uint256 to);
+
+/// Thrown when caller is not the depositor
+error CallerIsNotDepositor(address caller, address depositor);
+
+/// Thrown when deposit is already withdrawn
+error Withdrawn();
 
 contract HelixVault is 
     FeeCollector, 
@@ -41,6 +85,9 @@ contract HelixVault is
     /// Owner-curated list of valid deposit durations and associated reward weights
     Duration[] public durations;
 
+    /// Address of the fee minter used by this contract
+    IFeeMinter public feeMinter;
+
     /// Last block that update was called and token distribution occured
     uint256 public lastUpdateBlock;
 
@@ -54,9 +101,6 @@ contract HelixVault is
     /// and the token rewarded by the vault to user for locked token deposits
     HelixToken public token;
 
-    /// Rate at which `token`s are created per block.
-    uint256 public rewardPerBlock;
-    
     /// Last block after which new rewards will no longer be minted
     uint256 public lastRewardBlock;
    
@@ -96,11 +140,11 @@ contract HelixVault is
     // Emitted when any action updates the pool
     event PoolUpdated(uint256 updateTimestamp);
 
-    // Emitted when the reward per block is updated by the owner
-    event RewardPerBlockUpdated(uint256 rewardPerBlock);
-
     // Emitted when the owner updates the last reward block
     event LastRewardBlockSet(uint256 lastRewardBlock);
+
+    // Emitted when a new feeMinter is set
+    event SetFeeMinter(address indexed setter, address indexed feeMinter);
 
     // Emitted when a deposit is compounded
     event Compound(
@@ -109,37 +153,37 @@ contract HelixVault is
         uint256 amount, 
         uint256 reward
     );
-
+    
     modifier onlyValidDepositId(uint256 _depositId) {
-        require(depositId > 0, "Vault: no deposit made");
-        require(_depositId < depositId, "Vault: invalid depositId");
+        if (depositId == 0) revert NoDepositMade();
+        if (_depositId >= depositId) revert InvalidDepositId(_depositId);
         _;
     }
 
     modifier onlyValidIndex(uint256 _index) {
-        require(_index < durations.length, "Vault: invalid index");
+        if (_index >= durations.length) revert IndexOutOfBounds(_index, durations.length);
         _;
     }
 
     modifier onlyValidDuration(uint256 _duration) {
-        require(_duration > 0, "Vault: zero duration");
+        if (_duration == 0) revert ZeroDuration();
         _;
     }
 
     modifier onlyValidWeight(uint256 _weight) {
-        require(_weight > 0, "Vault: zero weight");
+        if (_weight == 0) revert ZeroWeight();
         _;
     }
 
     modifier onlyValidAmount(uint256 _amount) {
-        require(_amount > 0, "Vault: zero amount");
+        if (_amount == 0) revert ZeroAmount();
         _;
     }
 
     function initialize(
         HelixToken _token,
         address _feeHandler,
-        uint256 _rewardPerBlock,
+        address _feeMinter,
         uint256 _startBlock,
         uint256 _lastRewardBlock
     ) external initializer {
@@ -148,9 +192,9 @@ contract HelixVault is
         __ReentrancyGuard_init();
 
         _setFeeHandler(_feeHandler);
+        feeMinter = IFeeMinter(_feeMinter);
 
         token = _token;
-        rewardPerBlock = _rewardPerBlock;
 
         lastRewardBlock = _lastRewardBlock;
         lastUpdateBlock = block.number > _startBlock ? block.number : _startBlock;
@@ -163,7 +207,9 @@ contract HelixVault is
         durations.push(Duration(720 days, 100));
                                 
         uint256 decimalsRewardToken = uint(token.decimals());
-        require(decimalsRewardToken < MAX_DECIMALS, "Vault: token exceeds max decimals");
+        if (decimalsRewardToken >= MAX_DECIMALS) {
+            revert DecimalsNotLessThanMax(decimalsRewardToken, MAX_DECIMALS);
+        }
 
         PRECISION_FACTOR = uint(10 ** (uint(MAX_DECIMALS) - decimalsRewardToken));
     }
@@ -275,8 +321,8 @@ contract HelixVault is
     
         _requireIsDepositor(msg.sender, deposit.depositor); 
         _requireNotWithdrawn(deposit.withdrawn);
-        require(deposit.amount >= _amount, "Vault: invalid amount");
-        require(block.timestamp >= deposit.withdrawTimestamp, "Vault: locked");
+        if (_amount > deposit.amount) revert AmountExceedsBalance(_amount, deposit.amount);
+        if (block.timestamp < deposit.withdrawTimestamp) revert WaitUntil(deposit.withdrawTimestamp);
        
         updatePool();
         
@@ -298,14 +344,6 @@ contract HelixVault is
         TransferHelper.safeTransfer(address(token), msg.sender, _amount);
 
         emit Withdraw(msg.sender, _amount);
-    }
-
-    /// Called by the owner to update the earned _rewardPerBlock
-    function updateRewardPerBlock(uint256 _rewardPerBlock) external onlyOwner {
-        require(_rewardPerBlock <= 40 * 1e18, "Vault: max 40 per block");
-        require(_rewardPerBlock >= 1e17, "Vault: min 0.1 per block");
-        rewardPerBlock = _rewardPerBlock;
-        emit RewardPerBlockUpdated(_rewardPerBlock);
     }
 
     /// Withdraw all the tokens in this contract. Emergency ONLY
@@ -371,6 +409,12 @@ contract HelixVault is
         _setFeeHandler(_feeHandler);
     }
 
+    /// Called by the owner to set the _feeMinter
+    function setFeeMinter(address _feeMinter) external onlyOwner {
+        feeMinter = IFeeMinter(_feeMinter);
+        emit SetFeeMinter(msg.sender, _feeMinter);
+    }
+
     /// Called by the owner to set the _collectorPercent
     function setCollectorPercent(uint256 _collectorPercent) external onlyOwner {
         _setCollectorPercent(_collectorPercent);
@@ -387,7 +431,7 @@ contract HelixVault is
         uint256 balance = token.balanceOf(address(this));
         if (block.number > lastUpdateBlock && balance != 0) {
             uint256 blocks = getBlocksDifference(lastUpdateBlock, block.number);
-            _accTokenPerShare += blocks * rewardPerBlock * PRECISION_FACTOR / balance;
+            _accTokenPerShare += blocks * _getToMintPerBlock() * PRECISION_FACTOR / balance;
         }
 
         return _getReward(deposit.amount, deposit.weight, _accTokenPerShare) - deposit.rewardDebt;
@@ -408,24 +452,29 @@ contract HelixVault is
         return _getDeposit(_depositId);
     }
 
+    /// Return the rewardPerBlock assigned to this contract
+    function getToMintPerBlock() external view returns (uint256) {
+        return _getToMintPerBlock();
+    }
+
     /// Update reward variables of the given pool to be up-to-date.
     function updatePool() public {
         if (block.number <= lastUpdateBlock) {
             return;
         }
 
-        uint256 reward;
+        uint256 toMint;
         uint256 balance = token.balanceOf(address(this));
         if (balance > 0) {
             uint256 blocks = getBlocksDifference(lastUpdateBlock, block.number);
-            reward = blocks * rewardPerBlock;
-            accTokenPerShare += reward * PRECISION_FACTOR / balance;
+            toMint = blocks * _getToMintPerBlock();
+            accTokenPerShare += toMint * PRECISION_FACTOR / balance;
         }
 
         lastUpdateBlock = block.number;
 
-        if (reward > 0) {
-            token.mint(address(this), reward);
+        if (toMint > 0) {
+            token.mint(address(this), toMint);
         }
 
         emit PoolUpdated(lastUpdateBlock);
@@ -433,7 +482,7 @@ contract HelixVault is
 
     /// Return the number of blocks between _to and _from blocks
     function getBlocksDifference(uint256 _from, uint256 _to) public view returns (uint) {
-        require(_from <= _to, "Vault: invalid block values");
+        if (_from > _to) revert FromGreaterThanTo(_from, _to);
         if (_from > lastRewardBlock) {
             return 0;
         }
@@ -478,13 +527,19 @@ contract HelixVault is
         reward = Percent.getPercentage(accToken, _weight);
     }
 
+    // Return the rewardPerBlock assigned to this contract
+    function _getToMintPerBlock() private view returns (uint256) {
+        require(address(feeMinter) != address(0), "Vault: fee minter unassigned");
+        return feeMinter.getToMintPerBlock(address(this));
+    }
+
     // Used to require that the _caller is the _depositor
     function _requireIsDepositor(address _caller, address _depositor) private pure {
-        require(_caller == _depositor, "Vault: not depositor");
+        if (_caller != _depositor) revert CallerIsNotDepositor(_caller, _depositor);
     }
     
     // Used to require that the deposit is not _withdrawn
     function _requireNotWithdrawn(bool _withdrawn) private pure {
-        require(!_withdrawn, "Vault: withdrawn");
+        if (_withdrawn) revert Withdrawn();
     }
 }

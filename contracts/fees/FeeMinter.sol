@@ -5,6 +5,15 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../libraries/Percent.sol";
 
+/// Thrown when a should equal b but doesn't
+error NotEqual(uint256 a, uint256 b);
+
+/// Thrown when attempting to assign an invalid address
+error InvalidAddress(address invalidAddress);
+
+/// Thrown when a should be less than or equal to b but isn't
+error NotLessThanOrEqualTo(uint256 a, uint256 b);
+
 contract FeeMinter is Ownable {
     /// Overall rate at which to mint new tokens
     uint256 public totalToMintPerBlock;
@@ -12,14 +21,20 @@ contract FeeMinter is Ownable {
     /// Owner approved minters with assigned toMintPercents
     address[] public minters;
 
+    /// Decimal points of precision to use with percents
+    uint256 public decimals;
+
     // Version of the toMintPercent mapping
     uint32 private _version;
-
+    
     // Map approved minter address to a percent of totalToMintPerBlock rate
     mapping(bytes32 => uint256) private _toMintPercent;
 
     // Emitted when a new totalToMintPerBlock is set
     event SetTotalToMintPerBlock(address indexed setter, uint256 indexed totalToMintPerBlock);
+
+    // Emitted whan decimals is set
+    event SetDecimals(address indexed sender, uint256 indexed decimals);
 
     // Emitted when new minters are assigned toMintPercents
     event SetToMintPercents(
@@ -31,6 +46,7 @@ contract FeeMinter is Ownable {
 
     constructor(uint256 _totalToMintPerBlock) {
         totalToMintPerBlock = _totalToMintPerBlock;
+        decimals = 2;   // default to 2 decimals of precision, i.e. 100.00%
     }
 
     /// Set the _totalToMintPerBlock rate
@@ -44,7 +60,9 @@ contract FeeMinter is Ownable {
         external 
         onlyOwner 
     { 
-        require(_minters.length == _toMintPercents.length, "FeeMinter: array length mismatch");
+        if (_minters.length != _toMintPercents.length) {
+            revert NotEqual(_minters.length, _toMintPercents.length);
+        }
 
         // Increment the version and delete the previous mapping
         _version++;
@@ -55,15 +73,16 @@ contract FeeMinter is Ownable {
         uint256 length = _minters.length;
         for (uint256 i = 0; i < length; i++) {
             address minter = _minters[i];
-            require(minter != address(0), "FeeMinter: zero address");
+            if (minter == address(0)) revert InvalidAddress(minter);
 
             uint256 toMintPercent = _toMintPercents[i];
             percentSum += toMintPercent;
-            require(percentSum <= 100, "FeeMinter: percent sum exceeds 100");
+            
+            if (percentSum > _percent()) revert NotLessThanOrEqualTo(percentSum, _percent());
 
             _toMintPercent[_key(minter)] = toMintPercent;
         }
-        require(percentSum == 100, "FeeMinter: percents do not total 100");
+        if (percentSum != _percent()) revert NotEqual(percentSum, _percent());
 
         minters = _minters;
 
@@ -74,11 +93,17 @@ contract FeeMinter is Ownable {
             _version
         );
     }
+
+    // Set the number of _decimal points of precision used by percents
+    function setDecimals(uint256 _decimals) external onlyOwner {
+        decimals = _decimals;
+        emit SetDecimals(msg.sender, _decimals);
+    }
     
     /// Return the toMintBlock rate for _minter
     function getToMintPerBlock(address _minter) external view returns (uint256) {
         uint256 toMintPercent = getToMintPercent(_minter);
-        return Percent.getPercentage(totalToMintPerBlock, toMintPercent);
+        return Percent.getPercentage(totalToMintPerBlock, toMintPercent, decimals);
     }
 
     /// Return the array of approved minter addresses
@@ -94,5 +119,10 @@ contract FeeMinter is Ownable {
     // Return a key to the toMintPercent mapping based on _version and _minter
     function _key(address _minter) private view returns (bytes32) {
         return keccak256(abi.encodePacked(_version, _minter));
+    }
+
+    // Return the expected percent based on decimals being used
+    function _percent() private view returns (uint256) {
+        return 100 * (10 ** decimals);
     }
 }

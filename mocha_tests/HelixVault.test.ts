@@ -13,7 +13,7 @@ const addresses = require('../scripts/constants/addresses')
 const initials = require('../scripts/constants/initials')
 const env = require('../scripts/constants/env')
 
-const rewardPerBlock = initials.HELIX_VAULT_REWARD_PER_BLOCK[env.network]
+const rewardPerBlock = '11705148000000000000'
 const startBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
 const lastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.network]
 const treasuryAddress = addresses.TREASURY[env.network]
@@ -41,6 +41,7 @@ describe('Vault', () => {
     let vault: Contract
     let helixToken: Contract
     let feeHandler: Contract
+    let feeMinter: Contract
 
     // Vault owned by wallet1 (not the owner), used for checking isOwner privileges
     let _vault: Contract
@@ -50,6 +51,7 @@ describe('Vault', () => {
         vault = fullExchange.vault
         helixToken = fullExchange.helixToken
         feeHandler = fullExchange.feeHandler
+        feeMinter = fullExchange.feeMinter
 
         // Fund vault with reward tokens
         await helixToken.transfer(vault.address, expandTo18Decimals(10000))
@@ -64,7 +66,7 @@ describe('Vault', () => {
 
     it('vault: initialized with expected values', async () => {
         expect(await vault.token()).to.eq(helixToken.address)
-        expect(await vault.rewardPerBlock()).to.eq(rewardPerBlock)
+        expect(await vault.getToMintPerBlock()).to.eq(rewardPerBlock)
         expect(await vault.lastRewardBlock()).to.eq(lastRewardBlock)
         expect(await helixToken.balanceOf(vault.address)).to.eq(expandTo18Decimals(10000))
     })
@@ -190,42 +192,6 @@ describe('Vault', () => {
         await expect(_vault.removeDuration(0)).to.be.revertedWith('Ownable: caller is not the owner')
     })
 
-    it('vault: update reward per block', async () => {
-        const rewardPerBlock = expandTo18Decimals(10)
-        await vault.updateRewardPerBlock(rewardPerBlock)
-        expect(await vault.rewardPerBlock()).to.eq(rewardPerBlock)
-    })
-
-    it('vault: update reward per block as non-owner fails to update', async () => {
-        const rewardPerBlock = expandTo18Decimals(10)
-        await expect(_vault.updateRewardPerBlock(rewardPerBlock))
-            .to.be.revertedWith('Ownable: caller is not the owner')
-    })
-
-    it('vault: update reward per block with too large reward fails to update', async () => {
-        // max valid reward is 40 * 10 ^ 18, update should succeed
-        const rewardPerBlock = expandTo18Decimals(40)           // 40 * 10 ^ 18
-        await vault.updateRewardPerBlock(rewardPerBlock)
-        expect(await vault.rewardPerBlock()).to.eq(rewardPerBlock)
-
-        // while this update should fail
-        const invalidRewardPerBlock = expandTo18Decimals(41)    // 41 * 10 ^ 18
-        await expect(vault.updateRewardPerBlock(invalidRewardPerBlock))
-            .to.be.revertedWith('Vault: max 40 per block')
-    })
-
-    it('vault: update reward per block with too small reward fails to update', async () => {
-        // min valid reward is 1 * 10 ^ 17, update should succeed
-        const rewardPerBlock = expandTo18Decimals(1).div(10)            // 1 * 10 ^ 17
-        await vault.updateRewardPerBlock(rewardPerBlock)
-        expect(await vault.rewardPerBlock()).to.eq(rewardPerBlock)
-
-        // while this update should fail
-        const invalidRewardPerBlock = expandTo18Decimals(9).div(100)    // 9 * 10 ^ 16
-        await expect(vault.updateRewardPerBlock(invalidRewardPerBlock))
-            .to.be.revertedWith('Vault: min 0.1 per block')
-    })
-
     it('vault: get blocks difference', async () => {
         const lastRewardBlock = await vault.lastRewardBlock() 
 
@@ -262,8 +228,8 @@ describe('Vault', () => {
         const _vault = await deployContract(wallet0, HelixVault, [], overrides)
         await _vault.initialize(
                 helixToken.address,
-                treasuryAddress,
-                rewardPerBlock,
+                feeHandler.address,
+                feeMinter.address,
                 startBlock,
                 lastRewardBlock
         )
@@ -661,7 +627,7 @@ describe('Vault', () => {
         // inside the "if" condition
         const blocks = await vault.getBlocksDifference(lastUpdateBlock, blockNumber)
         print(`mult ${blocks}`)
-        const reward = blocks * (await vault.rewardPerBlock())
+        const reward = blocks * (await vault.getToMintPerBlock())
         print(`reward ${reward}`)
         const precisionFactor = await vault.PRECISION_FACTOR()
         print(`accTok before ${_accTokenPerShare}`)
@@ -823,7 +789,7 @@ describe('Vault', () => {
 
     async function getAccTokenPerShare(blockNumber: number) {
         const blocks = await vault.getBlocksDifference(await vault.lastUpdateBlock(), blockNumber)
-        const _rewardPerBlock = await vault.rewardPerBlock() // preface with _ avoid name conflict with global rewardPerBlock
+        const _rewardPerBlock = await vault.getToMintPerBlock() // preface with _ avoid name conflict with global rewardPerBlock
         const reward = blocks.mul(_rewardPerBlock)
 
         const accTokenPerShare = await vault.accTokenPerShare()

@@ -4,11 +4,34 @@ pragma solidity >=0.8.0;
 import "../tokens/HelixToken.sol";
 import "../interfaces/IMigratorChef.sol";
 import "../interfaces/IReferralRegister.sol";
+import "../interfaces/IFeeMinter.sol";
+
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
+
+/// Thrown when trying to access in invalid poolId
+error InvalidPoolId();
+
+/// Thrown when address(0) is encountered
+error ZeroAddress();
+
+/// Thrown when the token has not been added to a pool
+error TokenNotAdded(address token);
+
+/// Thrown when insufficient time has elapsed
+error WaitUntilAfter(uint256 time);
+
+/// Thrown when amount exceeds balance
+error AmountExceedsBalance(uint256 amount, uint256 balance);
+
+/// Thrown when amount exceeds allowance 
+error AmountExceedsAllowance(uint256 amount, uint256 allowance);
+
+/// Thrown when a transfer fails
+error TransferFailed();
 
 contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     // Info of each user.
@@ -48,6 +71,9 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     // The HelixToken TOKEN!
     HelixToken public helixToken;
 
+    // Called to get helix token to mint per block rates
+    IFeeMinter public feeMinter;
+
     //Pools, Farms, Dev, Refs percent decimals
     uint256 public percentDec;
 
@@ -62,9 +88,6 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Last block then develeper withdraw dev and ref fee
     uint256 public lastBlockDevWithdraw;
-
-    // HelixToken tokens created per block.
-    uint256 public HelixTokenPerBlock;
 
     // Bonus muliplier for early HelixToken makers.
     uint256 public BONUS_MULTIPLIER;
@@ -140,6 +163,9 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Emitted when the owner updates the helix per block rate
     event HelixPerBlockUpdated(uint256 rate);
+
+    // Emitted when the feeMinter is set
+    event SetFeeMinter(address indexed setter, address indexed feeMinter);
     
     // Emitted when a depositor deposits amount of lpToken into bucketId and stakes to poolId
     event BucketDeposit(
@@ -179,19 +205,19 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     );
 
     modifier isNotHelixPoolId(uint256 poolId) {
-        require(poolId != 0, "MasterChef: invalid pool id");
+        if (poolId == 0) revert InvalidPoolId();
         _;
     }
 
     modifier isNotZeroAddress(address _address) {
-        require(_address != address(0), "MasterChef: zero address");
+        if (_address == address(0)) revert ZeroAddress();
         _;
     }
 
     function initialize(
         HelixToken _HelixToken,
         address _devaddr,
-        uint256 _HelixTokenPerBlock,
+        address _feeMinter,
         uint256 _startBlock,
         uint256 _stakingPercent,
         uint256 _devPercent,
@@ -200,7 +226,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         __Ownable_init();
         helixToken = _HelixToken;
         devaddr = _devaddr;
-        HelixTokenPerBlock = _HelixTokenPerBlock;
+        feeMinter = IFeeMinter(_feeMinter);
         startBlock = _startBlock;
         stakingPercent = _stakingPercent;
         devPercent = _devPercent;
@@ -237,18 +263,18 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     // Return the poolId associated with the lpToken address
     function getPoolId(address _lpToken) external view returns (uint256) {
         uint256 poolId = poolIds[_lpToken];
-        if (poolId == 0) {
-            require(_lpToken == address(helixToken), "MasterChef: token not added");
+        if (poolId == 0 && _lpToken != address(helixToken)) {
+            revert TokenNotAdded(_lpToken);
         }
         return poolId;
     }
 
     function withdrawDevAndRefFee() external {
-        require(lastBlockDevWithdraw < block.number, "MasterChef: wait for new block");
-        uint256 multiplier = getMultiplier(lastBlockDevWithdraw, block.number);
-        uint256 HelixTokenReward = multiplier * HelixTokenPerBlock;
+        if (lastBlockDevWithdraw >= block.number) revert WaitUntilAfter(lastBlockDevWithdraw);
+        uint256 blockDelta = getMultiplier(lastBlockDevWithdraw, block.number);
+        uint256 helixTokenReward = blockDelta * _getDevToMintPerBlock();
         lastBlockDevWithdraw = block.number;
-        helixToken.mint(devaddr, (HelixTokenReward * devPercent) / (percentDec));
+        helixToken.mint(devaddr, helixTokenReward);
     }
 
     // Add a new lp to the pool. Can only be called by the owner.
@@ -301,20 +327,6 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         _unpause();
     }
 
-    // Migrate lp token to another lp contract. Can be called by anyone. We trust that migrator contract is good.
-    function migrate(uint256 _pid) external {
-        require(address(migrator) != address(0), "MasterChef: no migrator");
-        PoolInfo storage pool = poolInfo[_pid];
-        IERC20 lpToken = pool.lpToken;
-        uint256 bal = lpToken.balanceOf(address(this));
-        // lpToken.safeApprove(address(migrator), bal);
-        IERC20 newLpToken = migrator.migrate(lpToken);
-        require(bal == newLpToken.balanceOf(address(this)), "MasterChef: migrate failed");
-        pool.lpToken = newLpToken;
-
-        emit LiquidityMigrated(_pid, address(newLpToken));
-    }
-
     // Return reward multiplier over the given _from to _to block.
     function getMultiplier(uint256 _from, uint256 _to) public view returns (uint256) {
          return (_to - _from) * (BONUS_MULTIPLIER);
@@ -328,8 +340,8 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // View function to see pending HelixTokens on frontend.
     function pendingHelixToken(uint256 _pid, address _user) external view returns (uint256){
-        PoolInfo storage pool = poolInfo[_pid];
-        UserInfo storage user = userInfo[_pid][_user];
+        PoolInfo memory pool = poolInfo[_pid];
+        UserInfo memory user = userInfo[_pid][_user];
         uint256 accHelixTokenPerShare = pool.accHelixTokenPerShare;
         uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         if (_pid == 0){
@@ -337,9 +349,10 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         }
 
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
-            uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-            uint256 HelixTokenReward = multiplier * (HelixTokenPerBlock) * (pool.allocPoint) / (totalAllocPoint) * (stakingPercent) / (percentDec);
-            accHelixTokenPerShare = accHelixTokenPerShare + (HelixTokenReward * (1e12) / (lpSupply));
+            uint256 blockDelta = getMultiplier(pool.lastRewardBlock, block.number);
+            uint256 toMintPerBlock = _getStakeToMintPerBlock();
+            uint256 helixTokenReward = blockDelta * toMintPerBlock * (pool.allocPoint) / (totalAllocPoint);
+            accHelixTokenPerShare = accHelixTokenPerShare + (helixTokenReward * (1e12) / (lpSupply));
         }
 
         uint256 pending = user.amount * (accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
@@ -368,18 +381,19 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
             pool.lastRewardBlock = block.number;
             return;
         }
-        uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-        uint256 HelixTokenReward = multiplier * (HelixTokenPerBlock) * (pool.allocPoint) / (totalAllocPoint) * (stakingPercent) / (percentDec);
-        pool.accHelixTokenPerShare = pool.accHelixTokenPerShare + (HelixTokenReward * (1e12) / (lpSupply));
+        uint256 blockDelta = getMultiplier(pool.lastRewardBlock, block.number);
+        uint256 toMintPerBlock = _getStakeToMintPerBlock();
+        uint256 helixTokenReward = blockDelta * toMintPerBlock * pool.allocPoint / (totalAllocPoint);
+        pool.accHelixTokenPerShare = pool.accHelixTokenPerShare + (helixTokenReward * (1e12) / (lpSupply));
         pool.lastRewardBlock = block.number;
-        helixToken.mint(address(this), HelixTokenReward);
+        helixToken.mint(address(this), helixTokenReward);
 
         emit PoolUpdated(_pid);
     }
 
     // Deposit LP tokens to MasterChef for HelixToken allocation.
     function deposit(uint256 _pid, uint256 _amount) external whenNotPaused isNotHelixPoolId(_pid) {
-        PoolInfo storage pool = poolInfo[_pid];
+        PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
         updatePool(_pid);
@@ -400,10 +414,10 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Withdraw LP tokens from MasterChef.
     function withdraw(uint256 _pid, uint256 _amount) external whenNotPaused isNotHelixPoolId(_pid) {
-        PoolInfo storage pool = poolInfo[_pid];
+        PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
-        require(user.amount >= _amount, "MasterChef: insufficient balance");
+        if (_amount > user.amount) revert AmountExceedsBalance(_amount, user.amount);
 
         updatePool(_pid);
 
@@ -432,7 +446,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         whenNotPaused
         isNotHelixPoolId(_poolId)
     {
-        PoolInfo storage pool = poolInfo[_poolId];
+        PoolInfo memory pool = poolInfo[_poolId];
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
 
         updatePool(_poolId);
@@ -448,10 +462,8 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         bucket.rewardDebt = bucket.amount * (pool.accHelixTokenPerShare) / (1e12);
 
         // Transfer amount of lpToken from caller to chef
-        require(
-            _amount <= pool.lpToken.allowance(msg.sender, address(this)), 
-            "MasterChef: insufficient allowance"
-        );
+        uint256 allowance = pool.lpToken.allowance(msg.sender, address(this));
+        if (_amount > allowance) revert AmountExceedsAllowance(_amount, allowance);
         TransferHelper.safeTransferFrom(address(pool.lpToken), msg.sender, address(this), _amount);
 
         emit BucketDeposit(msg.sender, _bucketId, _poolId, _amount);
@@ -459,10 +471,10 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Withdraw _amount of lpToken and all accrued yield from _bucketId and _poolId
     function bucketWithdraw(uint256 _bucketId, uint256 _poolId, uint256 _amount) external whenNotPaused isNotHelixPoolId(_poolId) {
-        PoolInfo storage pool = poolInfo[_poolId];
+        PoolInfo memory pool = poolInfo[_poolId];
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
 
-        require(_amount <= bucket.amount, "MasterChef: insufficient balance");
+        if (_amount > bucket.amount) revert AmountExceedsBalance(_amount, bucket.amount);
 
         updatePool(_poolId);
     
@@ -495,13 +507,10 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         isNotZeroAddress(_recipient)
         isNotHelixPoolId(_poolId)
     {
-        PoolInfo storage pool = poolInfo[_poolId];
+        PoolInfo memory pool = poolInfo[_poolId];
 
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
-        require(
-            _amount <= bucket.amount, 
-            "MasterChef: insufficient balance"
-        );
+        if (_amount > bucket.amount) revert AmountExceedsBalance(_amount, bucket.amount);
 
         updatePool(_poolId);
 
@@ -530,17 +539,14 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     {
         updatePool(_poolId);
 
-        PoolInfo storage pool = poolInfo[_poolId];
+        PoolInfo memory pool = poolInfo[_poolId];
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
 
         // Total yield is any pending yield plus any previously calculated yield
         uint256 pending = bucket.amount * (pool.accHelixTokenPerShare) / (1e12) - (bucket.rewardDebt);
         uint256 yield = bucket.yield + pending;
 
-        require(
-            _yield <= yield,
-            "MasterChef: insufficient balance"
-        );
+        if (_yield > yield) revert AmountExceedsBalance(_yield, yield);
 
         // Update bucket state
         bucket.rewardDebt = bucket.amount * (pool.accHelixTokenPerShare) / (1e12);
@@ -555,7 +561,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     function updateBucket(uint256 _bucketId, uint256 _poolId) external isNotHelixPoolId(_poolId) {
         updatePool(_poolId);
 
-        PoolInfo storage pool = poolInfo[_poolId];
+        PoolInfo memory pool = poolInfo[_poolId];
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
 
         bucket.yield += bucket.amount * (pool.accHelixTokenPerShare) / (1e12) - (bucket.rewardDebt);
@@ -570,7 +576,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         isNotHelixPoolId(_poolId)
         returns (uint256 yield) 
     {
-        BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
+        BucketInfo memory bucket = bucketInfo[_poolId][msg.sender][_bucketId];
         yield = bucket.yield;
     }
 
@@ -579,7 +585,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         updatePool(0);
         depositedHelix += _amount;
 
-        PoolInfo storage pool = poolInfo[0];
+        PoolInfo memory pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
 
         uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
@@ -601,10 +607,10 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         updatePool(0);
         depositedHelix -= _amount;
         
-        PoolInfo storage pool = poolInfo[0];
+        PoolInfo memory pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
 
-        require(user.amount >= _amount, "MasterChef: insufficient balance");
+        if (_amount > user.amount) revert AmountExceedsBalance(_amount, user.amount);
 
         uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
         user.amount -= _amount;
@@ -623,7 +629,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function emergencyWithdraw(uint256 _pid) external {
-        PoolInfo storage pool = poolInfo[_pid];
+        PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
         uint256 _amount = user.amount;
@@ -635,11 +641,26 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         emit EmergencyWithdraw(msg.sender, _pid, _amount);
     }
 
+    /// Return the portion of toMintPerBlock assigned to staking and farms
+    function getStakeToMintPerBlock() external view returns (uint256) {
+        return _getStakeToMintPerBlock();
+    }
+
+    /// Return the portion of toMintPerBlock assigned to dev team
+    function getDevToMintPerBlock() external view returns (uint256) {
+        return _getDevToMintPerBlock();
+    }
+
+    /// Return the toMintPerBlock rate assigned to this contract by the feeMinter
+    function getToMintPerBlock() external view returns (uint256) {
+        return _getToMintPerBlock();
+    }
     // Safe HelixToken transfer function, just in case if rounding error causes pool to not have enough HelixTokens.
     function safeHelixTokenTransfer(address _to, uint256 _amount) internal {
         uint256 helixTokenBal = helixToken.balanceOf(address(this));
         uint256 toTransfer = _amount > helixTokenBal ? helixTokenBal : _amount;
-        require(helixToken.transfer(_to, toTransfer), "MasterChef: transfer failed");
+        bool transferSucceeded = helixToken.transfer(_to, toTransfer);
+        if (!transferSucceeded) revert TransferFailed();
     }
 
     function setDevAddress(address _devaddr) external onlyOwner {
@@ -647,10 +668,24 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         emit DevAddressSet(_devaddr);
     }
 
-    function updateHelixPerBlock(uint256 newAmount) external onlyOwner {
-        require(newAmount <= 40 * 1e18, "MasterChef: max 40 per block");
-        require(newAmount >= 1e17, "MasterChef: min 0.1 per block");
-        HelixTokenPerBlock = newAmount;
-        emit HelixPerBlockUpdated(newAmount);
+    function setFeeMinter(address _feeMinter) external onlyOwner {
+        feeMinter = IFeeMinter(_feeMinter);
+        emit SetFeeMinter(msg.sender, _feeMinter);
+    }
+
+    // Return the portion of toMintPerBlock assigned to staking and farms
+    function _getStakeToMintPerBlock() private view returns (uint256) {
+        return _getToMintPerBlock() * stakingPercent / percentDec;
+    }
+
+    // Return the portion of toMintPerBlock assigned to dev team
+    function _getDevToMintPerBlock() private view returns (uint256) {
+        return _getToMintPerBlock() * devPercent / percentDec;
+    }
+
+    // Return the toMintPerBlock rate assigned to this contract by the feeMinter
+    function _getToMintPerBlock() private view returns (uint256) {
+        require(address(feeMinter) != address(0), "MasterChef: fee minter unassigned");
+        return feeMinter.getToMintPerBlock(address(this));
     }
 }
