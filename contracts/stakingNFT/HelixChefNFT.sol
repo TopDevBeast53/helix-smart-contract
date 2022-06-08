@@ -86,8 +86,9 @@ contract HelixChefNFT is
         _withdrawRewardToken();
         
         UserInfo storage user = users[msg.sender];
-
-        for(uint256 i = 0; i < _tokenIds.length; i++){
+    
+        uint256 length = _tokenIds.length; 
+        for (uint256 i = 0; i < length; i++){
             (address tokenOwner, bool isStaked) = helixNFT.getInfoForStaking(_tokenIds[i]);
             _requireIsTokenOwner(msg.sender, tokenOwner);
             require(!isStaked, "HelixChefNFT: already staked");
@@ -106,7 +107,8 @@ contract HelixChefNFT is
     function unstake(uint256[] memory _tokenIds) external whenNotPaused nonReentrant {
         _withdrawRewardToken();
 
-        for(uint256 i = 0; i < _tokenIds.length; i++){
+        uint256 length = _tokenIds.length; 
+        for (uint256 i = 0; i < length; i++){
             (address tokenOwner, bool isStaked) = helixNFT.getInfoForStaking(_tokenIds[i]);
             _requireIsTokenOwner(msg.sender, tokenOwner);
             require(isStaked, "HelixChefNFT: already unstaked");
@@ -210,7 +212,8 @@ contract HelixChefNFT is
     // Remove _tokenId from _user's account
     function _removeTokenIdFromUser(address _user, uint256 _tokenId) private {
         uint256[] storage tokenIds = users[_user].stakedNFTsId;
-        for (uint256 i = 0; i < tokenIds.length; i++) {
+        uint256 length = tokenIds.length;
+        for (uint256 i = 0; i < length; i++) {
             if (_tokenId == tokenIds[i]) {
                 tokenIds[i] = tokenIds[tokenIds.length - 1];
                 tokenIds.pop();

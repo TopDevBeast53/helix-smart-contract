@@ -343,7 +343,8 @@ contract HelixVault is
         onlyValidIndex(_index)
     {
         // remove by array shift to preserve order
-        for (uint256 i = _index; i < durations.length - 1; i++) {
+        uint256 length = durations.length - 1;
+        for (uint256 i = _index; i < length; i++) {
             durations[i] = durations[i + 1];
         }
         durations.pop();

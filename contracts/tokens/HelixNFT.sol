@@ -171,7 +171,8 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         uint256 tokenId = _lastTokenId;
         _tokens[tokenId].createTimestamp = block.timestamp;
         _tokens[tokenId].tokenURI = uri;
-        for (uint256 i = 0; i < externalTokenIDs.length; i++) {
+        uint256 length = externalTokenIDs.length;
+        for (uint256 i = 0; i < length; i++) {
             string memory externalID = externalTokenIDs[i];
             _tokens[tokenId].externalTokenIDs.push(externalID);
         }

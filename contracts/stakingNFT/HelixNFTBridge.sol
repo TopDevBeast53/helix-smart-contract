@@ -78,7 +78,8 @@ contract HelixNFTBridge is Ownable, Pausable {
       returns(bool) 
     {
         require(_countAddBridge[_owner] > 0, "HelixNFTBridge: You are not a Bridger");
-        for (uint256 i = 0; i < _externalTokenIDs.length; i++) {
+        uint256 length = _externalTokenIDs.length;
+        for (uint256 i = 0; i < length; i++) {
             string memory externalID = _externalTokenIDs[i];
             require(!_bridgedExternalTokenIDs[externalID], "HelixNFTBridge: already bridged or duplicate");
             _bridgedExternalTokenIDs[externalID] = true;
@@ -128,7 +129,8 @@ contract HelixNFTBridge is Ownable, Pausable {
        whenNotPaused
     {
         string[] memory externalTokenIDs = helixNFT.getExternalTokenIDs(_tokenId);
-        for (uint256 i = 0; i < externalTokenIDs.length; i++) {
+        uint256 length = externalTokenIDs.length;
+        for (uint256 i = 0; i < length; i++) {
             string memory externalID = externalTokenIDs[i];
             require(_bridgedExternalTokenIDs[externalID], "HelixNFTBridge: already bridged to Solana");
             require(_bridgedExternalTokenIDsPickUp[externalID] == msg.sender, "HelixNFTBridge: Not owner");

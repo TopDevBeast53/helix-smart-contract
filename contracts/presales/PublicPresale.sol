@@ -223,7 +223,8 @@ contract PublicPresale is Pausable, ReentrancyGuard {
 
     /// Called externally to grant multiple _users permission to purchase tickets during WithdrawOnly phase
     function whitelistAdd(address[] calldata _users) external onlyOwner {
-        for (uint256 i = 0; i < _users.length; i++) {
+        uint256 length = _users.length;
+        for (uint256 i = 0; i < length; i++) {
             address user = _users[i]; 
             whitelist[user] = true;
         }

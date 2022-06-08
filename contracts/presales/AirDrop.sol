@@ -151,7 +151,8 @@ contract AirDrop is Pausable, ReentrancyGuard {
     /// each _users[i] receives amounts[i] many tokens for i in range _users.length
     function airdropAdd(address[] calldata _users, uint256[] calldata _amounts) external onlyOwner {
         require(_users.length == _amounts.length, "AirDrop: users and amounts must be same length");
-        for (uint256 i = 0; i < _users.length; i++) {
+        uint256 length = _users.length;
+        for (uint256 i = 0; i < length; i++) {
             uint256 amount = _amounts[i];
             require(amount <= tokenBalance(), "AirDrop: amount exceeds tokens available");
 
@@ -225,7 +226,8 @@ contract AirDrop is Pausable, ReentrancyGuard {
         delete isOwner[_owner];
 
         // array remove by swap
-        for (uint256 i = 0; i < owners.length; i++) {
+        uint256 length = owners.length;
+        for (uint256 i = 0; i < length; i++) {
             if (owners[i] == _owner) {
                 owners[i] = owners[owners.length - 1];
                 owners.pop();

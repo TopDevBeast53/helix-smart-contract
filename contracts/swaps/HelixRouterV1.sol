@@ -353,7 +353,8 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
         virtual 
         whenNotPaused
     {
-        for (uint256 i; i < path.length - 1; i++) {
+        uint256 length = path.length - 1;
+        for (uint256 i; i < length; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0,) = HelixLibrary.sortTokens(input, output);
             uint256 amountOut = amounts[i + 1];
@@ -524,7 +525,8 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
         address[] memory path, 
         address _to
     ) internal virtual whenNotPaused {
-        for (uint256 i; i < path.length - 1; i++) {
+        uint256 length = path.length - 1;
+        for (uint256 i; i < length; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0,) = HelixLibrary.sortTokens(input, output);
             HelixPair pair = HelixPair(HelixLibrary.pairFor(_factory, input, output));
