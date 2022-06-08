@@ -9,8 +9,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 /// Thrown when a required variable is unassigned
 error Unassigned();
 
-/// Thrown when attempting to assign an invalid address
-error InvalidAddress(address invalidAddress);
+/// Thrown when performing a transaction requiring a feeHandler but non is set
+error FeeHandlerNotSet();
 
 abstract contract FeeCollector {
     using SafeERC20 for IERC20;
@@ -49,7 +49,7 @@ abstract contract FeeCollector {
 
     // Delegate feeHandler to transfer _fee amount of _token from _from
     function _delegateTransfer(IERC20 _token, address _from, uint256 _fee) internal virtual {
-        if (address(feeHandler) == address(0)) revert InvalidAddress(address(feeHandler));
+        if (address(feeHandler) == address(0)) revert FeeHandlerNotSet();
         if (_fee > 0) {
             _token.safeApprove(address(feeHandler), _fee);
             feeHandler.transferFee(_token, _from, msg.sender, _fee);
