@@ -328,8 +328,8 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // View function to see pending HelixTokens on frontend.
     function pendingHelixToken(uint256 _pid, address _user) external view returns (uint256){
-        PoolInfo storage pool = poolInfo[_pid];
-        UserInfo storage user = userInfo[_pid][_user];
+        PoolInfo memory pool = poolInfo[_pid];
+        UserInfo memory user = userInfo[_pid][_user];
         uint256 accHelixTokenPerShare = pool.accHelixTokenPerShare;
         uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         if (_pid == 0){
@@ -379,7 +379,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Deposit LP tokens to MasterChef for HelixToken allocation.
     function deposit(uint256 _pid, uint256 _amount) external whenNotPaused isNotHelixPoolId(_pid) {
-        PoolInfo storage pool = poolInfo[_pid];
+        PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
         updatePool(_pid);
@@ -400,7 +400,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Withdraw LP tokens from MasterChef.
     function withdraw(uint256 _pid, uint256 _amount) external whenNotPaused isNotHelixPoolId(_pid) {
-        PoolInfo storage pool = poolInfo[_pid];
+        PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
         require(user.amount >= _amount, "MasterChef: insufficient balance");
@@ -432,7 +432,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         whenNotPaused
         isNotHelixPoolId(_poolId)
     {
-        PoolInfo storage pool = poolInfo[_poolId];
+        PoolInfo memory pool = poolInfo[_poolId];
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
 
         updatePool(_poolId);
@@ -459,7 +459,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Withdraw _amount of lpToken and all accrued yield from _bucketId and _poolId
     function bucketWithdraw(uint256 _bucketId, uint256 _poolId, uint256 _amount) external whenNotPaused isNotHelixPoolId(_poolId) {
-        PoolInfo storage pool = poolInfo[_poolId];
+        PoolInfo memory pool = poolInfo[_poolId];
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
 
         require(_amount <= bucket.amount, "MasterChef: insufficient balance");
@@ -495,7 +495,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         isNotZeroAddress(_recipient)
         isNotHelixPoolId(_poolId)
     {
-        PoolInfo storage pool = poolInfo[_poolId];
+        PoolInfo memory pool = poolInfo[_poolId];
 
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
         require(
@@ -530,7 +530,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     {
         updatePool(_poolId);
 
-        PoolInfo storage pool = poolInfo[_poolId];
+        PoolInfo memory pool = poolInfo[_poolId];
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
 
         // Total yield is any pending yield plus any previously calculated yield
@@ -555,7 +555,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     function updateBucket(uint256 _bucketId, uint256 _poolId) external isNotHelixPoolId(_poolId) {
         updatePool(_poolId);
 
-        PoolInfo storage pool = poolInfo[_poolId];
+        PoolInfo memory pool = poolInfo[_poolId];
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
 
         bucket.yield += bucket.amount * (pool.accHelixTokenPerShare) / (1e12) - (bucket.rewardDebt);
@@ -570,7 +570,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         isNotHelixPoolId(_poolId)
         returns (uint256 yield) 
     {
-        BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
+        BucketInfo memory bucket = bucketInfo[_poolId][msg.sender][_bucketId];
         yield = bucket.yield;
     }
 
@@ -579,7 +579,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         updatePool(0);
         depositedHelix += _amount;
 
-        PoolInfo storage pool = poolInfo[0];
+        PoolInfo memory pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
 
         uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
@@ -601,7 +601,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         updatePool(0);
         depositedHelix -= _amount;
         
-        PoolInfo storage pool = poolInfo[0];
+        PoolInfo memory pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
 
         require(user.amount >= _amount, "MasterChef: insufficient balance");
@@ -623,7 +623,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function emergencyWithdraw(uint256 _pid) external {
-        PoolInfo storage pool = poolInfo[_pid];
+        PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
         uint256 _amount = user.amount;
