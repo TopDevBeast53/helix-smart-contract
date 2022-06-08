@@ -87,14 +87,14 @@ describe("Fee Minter", () => {
 
     it("feeMinter: set to mint percents with invalid to mint percent fails", async () => {
         const minters = [wallet0.address]
-        const toMintPercents = [101]
+        const toMintPercents = [10100]  // 101.00%
         await expect(feeMinter.setToMintPercents(minters, toMintPercents))
-            .to.be.revertedWith("FeeMinter: percent sum exceeds 100") 
+            .to.be.revertedWith("FeeMinter: sum exceeds 100%") 
     })
 
     it("feeMinter: set to mint percents with percents not totaling 100 fails", async () => {
         let minters = [wallet0.address]
-        let toMintPercents = [99]
+        let toMintPercents = [99]   // 99.00%
         await expect(feeMinter.setToMintPercents(minters, toMintPercents))
             .to.be.revertedWith("FeeMinter: percents do not total 100") 
 
@@ -106,7 +106,7 @@ describe("Fee Minter", () => {
 
     it("feeMinter: set to mint percents", async () => {
         const minters = [wallet0.address, wallet1.address, wallet2.address, wallet3.address]
-        const toMintPercents = [60, 5, 23, 12]
+        const toMintPercents = [6000, 500, 2300, 1200]
         await feeMinter.setToMintPercents(minters, toMintPercents)
 
         // expect the minters array to have been set
@@ -121,7 +121,7 @@ describe("Fee Minter", () => {
 
     it("feeMinter: set to mint percents deletes previous percents", async () => {
         let minters = [wallet0.address, wallet1.address, wallet2.address, wallet3.address]
-        let toMintPercents = [60, 5, 23, 12]
+        let toMintPercents = [6000, 500, 2300, 1200]
         await feeMinter.setToMintPercents(minters, toMintPercents)
 
         // expect the minters array to have been set
@@ -134,7 +134,7 @@ describe("Fee Minter", () => {
         expect(await feeMinter.getToMintPercent(minters[3])).to.eq(toMintPercents[3])
 
         minters = [wallet0.address, wallet1.address, wallet2.address]
-        toMintPercents = [5, 23, 72]
+        toMintPercents = [500, 2300, 7200]
         await feeMinter.setToMintPercents(minters, toMintPercents)
 
         // expect the minters array to have been set
@@ -151,7 +151,7 @@ describe("Fee Minter", () => {
 
     it("feeMinter: set to mint percents emits SetToMintPercents event", async () => {
         const minters = [wallet0.address, wallet1.address, wallet2.address, wallet3.address]
-        const toMintPercents = [60, 5, 23, 12]
+        const toMintPercents = [6000, 500, 2300, 1200]
         const version = 1;
         await expect(feeMinter.setToMintPercents(minters, toMintPercents))
             .to.emit(feeMinter, "SetToMintPercents")
@@ -159,13 +159,14 @@ describe("Fee Minter", () => {
 
     it("feeMinter: get to mint per block", async () => {
         const minters = [wallet0.address, wallet1.address, wallet2.address, wallet3.address]
-        const toMintPercents = [60, 5, 23, 12]
+        const toMintPercents = [6000, 500, 2300, 1200]
         await feeMinter.setToMintPercents(minters, toMintPercents)
-
-        const expectedToMintPerBlock0 = totalToMintPerBlock * toMintPercents[0] / 100
-        const expectedToMintPerBlock1 = totalToMintPerBlock * toMintPercents[1] / 100
-        const expectedToMintPerBlock2 = totalToMintPerBlock * toMintPercents[2] / 100
-        const expectedToMintPerBlock3 = totalToMintPerBlock * toMintPercents[3] / 100
+    
+        // Using 2 decimals of precision, hence div by 10000 == 100.00%
+        const expectedToMintPerBlock0 = totalToMintPerBlock * toMintPercents[0] / 10000
+        const expectedToMintPerBlock1 = totalToMintPerBlock * toMintPercents[1] / 10000
+        const expectedToMintPerBlock2 = totalToMintPerBlock * toMintPercents[2] / 10000
+        const expectedToMintPerBlock3 = totalToMintPerBlock * toMintPercents[3] / 10000
 
         expect((await feeMinter.getToMintPerBlock(minters[0])).toString())
             .to.eq(expectedToMintPerBlock0.toString())

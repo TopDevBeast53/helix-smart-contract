@@ -4,6 +4,7 @@ pragma solidity >=0.8.0;
 import "../tokens/HelixToken.sol";
 import "../libraries/Percent.sol";
 import "../fees/FeeCollector.sol";
+import "../interfaces/IFeeMinter.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -84,6 +85,9 @@ contract HelixVault is
     /// Owner-curated list of valid deposit durations and associated reward weights
     Duration[] public durations;
 
+    /// Address of the fee minter used by this contract
+    IFeeMinter public feeMinter;
+
     /// Last block that update was called and token distribution occured
     uint256 public lastUpdateBlock;
 
@@ -97,9 +101,6 @@ contract HelixVault is
     /// and the token rewarded by the vault to user for locked token deposits
     HelixToken public token;
 
-    /// Rate at which `token`s are created per block.
-    uint256 public rewardPerBlock;
-    
     /// Last block after which new rewards will no longer be minted
     uint256 public lastRewardBlock;
    
@@ -139,11 +140,11 @@ contract HelixVault is
     // Emitted when any action updates the pool
     event PoolUpdated(uint256 updateTimestamp);
 
-    // Emitted when the reward per block is updated by the owner
-    event RewardPerBlockUpdated(uint256 rewardPerBlock);
-
     // Emitted when the owner updates the last reward block
     event LastRewardBlockSet(uint256 lastRewardBlock);
+
+    // Emitted when a new feeMinter is set
+    event SetFeeMinter(address indexed setter, address indexed feeMinter);
 
     // Emitted when a deposit is compounded
     event Compound(
@@ -152,7 +153,7 @@ contract HelixVault is
         uint256 amount, 
         uint256 reward
     );
-
+    
     modifier onlyValidDepositId(uint256 _depositId) {
         if (depositId == 0) revert NoDepositMade();
         if (_depositId >= depositId) revert InvalidDepositId(_depositId);
@@ -182,7 +183,7 @@ contract HelixVault is
     function initialize(
         HelixToken _token,
         address _feeHandler,
-        uint256 _rewardPerBlock,
+        address _feeMinter,
         uint256 _startBlock,
         uint256 _lastRewardBlock
     ) external initializer {
@@ -191,9 +192,9 @@ contract HelixVault is
         __ReentrancyGuard_init();
 
         _setFeeHandler(_feeHandler);
+        feeMinter = IFeeMinter(_feeMinter);
 
         token = _token;
-        rewardPerBlock = _rewardPerBlock;
 
         lastRewardBlock = _lastRewardBlock;
         lastUpdateBlock = block.number > _startBlock ? block.number : _startBlock;
@@ -345,14 +346,6 @@ contract HelixVault is
         emit Withdraw(msg.sender, _amount);
     }
 
-    /// Called by the owner to update the earned _rewardPerBlock
-    function updateRewardPerBlock(uint256 _rewardPerBlock) external onlyOwner {
-        if (_rewardPerBlock > 40 * 1e18) revert AmountIsGreaterThanMax(_rewardPerBlock, 40 * 1e18);
-        if (_rewardPerBlock < 1e17) revert AmountIsLessThanMin(_rewardPerBlock, 1e17);
-        rewardPerBlock = _rewardPerBlock;
-        emit RewardPerBlockUpdated(_rewardPerBlock);
-    }
-
     /// Withdraw all the tokens in this contract. Emergency ONLY
     function emergencyWithdraw() external onlyOwner {
         TransferHelper.safeTransfer(address(token), msg.sender, token.balanceOf(address(this)));
@@ -415,6 +408,12 @@ contract HelixVault is
         _setFeeHandler(_feeHandler);
     }
 
+    /// Called by the owner to set the _feeMinter
+    function setFeeMinter(address _feeMinter) external onlyOwner {
+        feeMinter = IFeeMinter(_feeMinter);
+        emit SetFeeMinter(msg.sender, _feeMinter);
+    }
+
     /// Called by the owner to set the _collectorPercent
     function setCollectorPercent(uint256 _collectorPercent) external onlyOwner {
         _setCollectorPercent(_collectorPercent);
@@ -431,7 +430,7 @@ contract HelixVault is
         uint256 balance = token.balanceOf(address(this));
         if (block.number > lastUpdateBlock && balance != 0) {
             uint256 blocks = getBlocksDifference(lastUpdateBlock, block.number);
-            _accTokenPerShare += blocks * rewardPerBlock * PRECISION_FACTOR / balance;
+            _accTokenPerShare += blocks * _getToMintPerBlock() * PRECISION_FACTOR / balance;
         }
 
         return _getReward(deposit.amount, deposit.weight, _accTokenPerShare) - deposit.rewardDebt;
@@ -452,24 +451,29 @@ contract HelixVault is
         return _getDeposit(_depositId);
     }
 
+    /// Return the rewardPerBlock assigned to this contract
+    function getToMintPerBlock() external view returns (uint256) {
+        return _getToMintPerBlock();
+    }
+
     /// Update reward variables of the given pool to be up-to-date.
     function updatePool() public {
         if (block.number <= lastUpdateBlock) {
             return;
         }
 
-        uint256 reward;
+        uint256 toMint;
         uint256 balance = token.balanceOf(address(this));
         if (balance > 0) {
             uint256 blocks = getBlocksDifference(lastUpdateBlock, block.number);
-            reward = blocks * rewardPerBlock;
-            accTokenPerShare += reward * PRECISION_FACTOR / balance;
+            toMint = blocks * _getToMintPerBlock();
+            accTokenPerShare += toMint * PRECISION_FACTOR / balance;
         }
 
         lastUpdateBlock = block.number;
 
-        if (reward > 0) {
-            token.mint(address(this), reward);
+        if (toMint > 0) {
+            token.mint(address(this), toMint);
         }
 
         emit PoolUpdated(lastUpdateBlock);
@@ -520,6 +524,12 @@ contract HelixVault is
     {   
         uint256 accToken = _amount * _accTokenPerShare / PRECISION_FACTOR;
         reward = Percent.getPercentage(accToken, _weight);
+    }
+
+    // Return the rewardPerBlock assigned to this contract
+    function _getToMintPerBlock() private view returns (uint256) {
+        require(address(feeMinter) != address(0), "Vault: fee minter unassigned");
+        return feeMinter.getToMintPerBlock(address(this));
     }
 
     // Used to require that the _caller is the _depositor

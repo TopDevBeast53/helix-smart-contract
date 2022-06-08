@@ -4,6 +4,8 @@ pragma solidity >=0.8.0;
 import "../tokens/HelixToken.sol";
 import "../interfaces/IMigratorChef.sol";
 import "../interfaces/IReferralRegister.sol";
+import "../interfaces/IFeeMinter.sol";
+
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -69,6 +71,9 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     // The HelixToken TOKEN!
     HelixToken public helixToken;
 
+    // Called to get helix token to mint per block rates
+    IFeeMinter public feeMinter;
+
     //Pools, Farms, Dev, Refs percent decimals
     uint256 public percentDec;
 
@@ -83,9 +88,6 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Last block then develeper withdraw dev and ref fee
     uint256 public lastBlockDevWithdraw;
-
-    // HelixToken tokens created per block.
-    uint256 public HelixTokenPerBlock;
 
     // Bonus muliplier for early HelixToken makers.
     uint256 public BONUS_MULTIPLIER;
@@ -161,6 +163,9 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Emitted when the owner updates the helix per block rate
     event HelixPerBlockUpdated(uint256 rate);
+
+    // Emitted when the feeMinter is set
+    event SetFeeMinter(address indexed setter, address indexed feeMinter);
     
     // Emitted when a depositor deposits amount of lpToken into bucketId and stakes to poolId
     event BucketDeposit(
@@ -212,7 +217,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     function initialize(
         HelixToken _HelixToken,
         address _devaddr,
-        uint256 _HelixTokenPerBlock,
+        address _feeMinter,
         uint256 _startBlock,
         uint256 _stakingPercent,
         uint256 _devPercent,
@@ -221,7 +226,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         __Ownable_init();
         helixToken = _HelixToken;
         devaddr = _devaddr;
-        HelixTokenPerBlock = _HelixTokenPerBlock;
+        feeMinter = IFeeMinter(_feeMinter);
         startBlock = _startBlock;
         stakingPercent = _stakingPercent;
         devPercent = _devPercent;
@@ -266,10 +271,10 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     function withdrawDevAndRefFee() external {
         if (lastBlockDevWithdraw >= block.number) revert WaitUntilAfter(lastBlockDevWithdraw);
-        uint256 multiplier = getMultiplier(lastBlockDevWithdraw, block.number);
-        uint256 HelixTokenReward = multiplier * HelixTokenPerBlock;
+        uint256 blockDelta = getMultiplier(lastBlockDevWithdraw, block.number);
+        uint256 helixTokenReward = blockDelta * _getDevToMintPerBlock();
         lastBlockDevWithdraw = block.number;
-        helixToken.mint(devaddr, (HelixTokenReward * devPercent) / (percentDec));
+        helixToken.mint(devaddr, helixTokenReward);
     }
 
     // Add a new lp to the pool. Can only be called by the owner.
@@ -344,9 +349,10 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         }
 
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
-            uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-            uint256 HelixTokenReward = multiplier * (HelixTokenPerBlock) * (pool.allocPoint) / (totalAllocPoint) * (stakingPercent) / (percentDec);
-            accHelixTokenPerShare = accHelixTokenPerShare + (HelixTokenReward * (1e12) / (lpSupply));
+            uint256 blockDelta = getMultiplier(pool.lastRewardBlock, block.number);
+            uint256 toMintPerBlock = _getStakeToMintPerBlock();
+            uint256 helixTokenReward = blockDelta * toMintPerBlock * (pool.allocPoint) / (totalAllocPoint);
+            accHelixTokenPerShare = accHelixTokenPerShare + (helixTokenReward * (1e12) / (lpSupply));
         }
 
         uint256 pending = user.amount * (accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
@@ -375,11 +381,12 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
             pool.lastRewardBlock = block.number;
             return;
         }
-        uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-        uint256 HelixTokenReward = multiplier * (HelixTokenPerBlock) * (pool.allocPoint) / (totalAllocPoint) * (stakingPercent) / (percentDec);
-        pool.accHelixTokenPerShare = pool.accHelixTokenPerShare + (HelixTokenReward * (1e12) / (lpSupply));
+        uint256 blockDelta = getMultiplier(pool.lastRewardBlock, block.number);
+        uint256 toMintPerBlock = _getStakeToMintPerBlock();
+        uint256 helixTokenReward = blockDelta * toMintPerBlock * pool.allocPoint / (totalAllocPoint);
+        pool.accHelixTokenPerShare = pool.accHelixTokenPerShare + (helixTokenReward * (1e12) / (lpSupply));
         pool.lastRewardBlock = block.number;
-        helixToken.mint(address(this), HelixTokenReward);
+        helixToken.mint(address(this), helixTokenReward);
 
         emit PoolUpdated(_pid);
     }
@@ -634,6 +641,20 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         emit EmergencyWithdraw(msg.sender, _pid, _amount);
     }
 
+    /// Return the portion of toMintPerBlock assigned to staking and farms
+    function getStakeToMintPerBlock() external view returns (uint256) {
+        return _getStakeToMintPerBlock();
+    }
+
+    /// Return the portion of toMintPerBlock assigned to dev team
+    function getDevToMintPerBlock() external view returns (uint256) {
+        return _getDevToMintPerBlock();
+    }
+
+    /// Return the toMintPerBlock rate assigned to this contract by the feeMinter
+    function getToMintPerBlock() external view returns (uint256) {
+        return _getToMintPerBlock();
+    }
     // Safe HelixToken transfer function, just in case if rounding error causes pool to not have enough HelixTokens.
     function safeHelixTokenTransfer(address _to, uint256 _amount) internal {
         uint256 helixTokenBal = helixToken.balanceOf(address(this));
@@ -647,10 +668,24 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         emit DevAddressSet(_devaddr);
     }
 
-    function updateHelixPerBlock(uint256 newAmount) external onlyOwner {
-        require(newAmount <= 40 * 1e18, "MasterChef: max 40 per block");
-        require(newAmount >= 1e17, "MasterChef: min 0.1 per block");
-        HelixTokenPerBlock = newAmount;
-        emit HelixPerBlockUpdated(newAmount);
+    function setFeeMinter(address _feeMinter) external onlyOwner {
+        feeMinter = IFeeMinter(_feeMinter);
+        emit SetFeeMinter(msg.sender, _feeMinter);
+    }
+
+    // Return the portion of toMintPerBlock assigned to staking and farms
+    function _getStakeToMintPerBlock() private view returns (uint256) {
+        return _getToMintPerBlock() * stakingPercent / percentDec;
+    }
+
+    // Return the portion of toMintPerBlock assigned to dev team
+    function _getDevToMintPerBlock() private view returns (uint256) {
+        return _getToMintPerBlock() * devPercent / percentDec;
+    }
+
+    // Return the toMintPerBlock rate assigned to this contract by the feeMinter
+    function _getToMintPerBlock() private view returns (uint256) {
+        require(address(feeMinter) != address(0), "MasterChef: fee minter unassigned");
+        return feeMinter.getToMintPerBlock(address(this));
     }
 }
