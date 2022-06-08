@@ -60,7 +60,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     }
 
     modifier onlyValidPercent(uint256 _percent) {
-        if (Percent.isValidPercent(_percent)) revert InvalidPercent(_percent, 0);
+        if (!Percent.isValidPercent(_percent)) revert InvalidPercent(_percent, 0);
         _;
     } 
 

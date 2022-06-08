@@ -397,7 +397,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         returns (address)
     {
         uint256 length = getMinterLength() - 1; 
-        if (_index <= length) revert IndexOutOfBounds(_index, length);
+        if (_index > length) revert IndexOutOfBounds(_index, length);
         return EnumerableSet.at(_minters, _index);
     }
 

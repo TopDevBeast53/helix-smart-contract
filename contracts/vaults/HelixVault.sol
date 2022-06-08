@@ -160,7 +160,7 @@ contract HelixVault is
     }
 
     modifier onlyValidIndex(uint256 _index) {
-        if (_index > durations.length) revert IndexOutOfBounds(_index, durations.length);
+        if (_index >= durations.length) revert IndexOutOfBounds(_index, durations.length);
         _;
     }
 
@@ -321,7 +321,7 @@ contract HelixVault is
         _requireIsDepositor(msg.sender, deposit.depositor); 
         _requireNotWithdrawn(deposit.withdrawn);
         if (_amount > deposit.amount) revert AmountExceedsBalance(_amount, deposit.amount);
-        if (block.timestamp >= deposit.withdrawTimestamp) revert WaitUntil(deposit.withdrawTimestamp);
+        if (block.timestamp < deposit.withdrawTimestamp) revert WaitUntil(deposit.withdrawTimestamp);
        
         updatePool();
         
@@ -347,8 +347,8 @@ contract HelixVault is
 
     /// Called by the owner to update the earned _rewardPerBlock
     function updateRewardPerBlock(uint256 _rewardPerBlock) external onlyOwner {
-        if (_rewardPerBlock <= 40 * 1e18) revert AmountIsGreaterThanMax(_rewardPerBlock, 40 * 1e18);
-        if (_rewardPerBlock >= 1e17) revert AmountIsLessThanMin(_rewardPerBlock, 1e17);
+        if (_rewardPerBlock > 40 * 1e18) revert AmountIsGreaterThanMax(_rewardPerBlock, 40 * 1e18);
+        if (_rewardPerBlock < 1e17) revert AmountIsLessThanMin(_rewardPerBlock, 1e17);
         rewardPerBlock = _rewardPerBlock;
         emit RewardPerBlockUpdated(_rewardPerBlock);
     }

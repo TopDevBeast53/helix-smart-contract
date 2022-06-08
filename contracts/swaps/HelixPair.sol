@@ -241,7 +241,7 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
             uint256 _swapFee = swapFee;
             uint256 balance0Adjusted = balance0 * (1000) - (amount0In * _swapFee);
             uint256 balance1Adjusted = balance1 * (1000) - (amount1In * _swapFee);
-            if (balance0Adjusted * balance1Adjusted >= uint(_reserve0) * (_reserve1) * (1000**2)) {
+            if (balance0Adjusted * balance1Adjusted < uint(_reserve0) * (_reserve1) * (1000**2)) {
                 revert InsufficientReserves(_reserve0, _reserve1);
             }
         }
