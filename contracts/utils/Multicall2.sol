@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
+/// Thrown when a call fails
+error CallFailed();
+
 contract Multicall2 {
     struct Call {
         address target;
@@ -16,7 +19,7 @@ contract Multicall2 {
         returnData = new bytes[](calls.length);
         for(uint256 i = 0; i < calls.length; i++) {
             (bool success, bytes memory ret) = calls[i].target.call(calls[i].callData);
-            require(success, "Multicall: call failed");
+            if (!success) revert CallFailed();
             returnData[i] = ret;
         }
     }
@@ -52,9 +55,7 @@ contract Multicall2 {
         for(uint256 i = 0; i < calls.length; i++) {
             (bool success, bytes memory ret) = calls[i].target.call(calls[i].callData);
 
-            if (requireSuccess) {
-                require(success, "Multicall: call failed");
-            }
+            if (!requireSuccess) revert CallFailed();
 
             returnData[i] = Result(success, ret);
         }

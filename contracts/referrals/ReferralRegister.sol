@@ -13,6 +13,21 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+/// Thrown when address(0) is encountered
+error ZeroAddress();
+
+/// Thrown when caller is not a recorder
+error NotRecorder(address caller);
+
+/// Thrown when the caller has no reward balance
+error NoRewardBalance();
+
+/// Thrown when a user trys to add themselves as referrer
+error NoSelfReferral();
+
+/// Thrown when index exceeds array length
+error IndexOutOfBounds(uint256 index, uint256 length);
+
 /// Users (referrers) refer other users (referred) and referrers earn rewards when
 /// referred users perform stakes or swaps
 contract ReferralRegister is 
@@ -96,12 +111,12 @@ contract ReferralRegister is
     event SetToMintPerBlock(address indexed setter, uint256 _toMintPerBlock);
 
     modifier onlyValidAddress(address _address) {
-        require(_address != address(0), "ReferralRegister: zero address");
+        if (_address == address(0)) revert ZeroAddress();
         _;
     }
 
     modifier onlyRecorder() {
-        require(isRecorder(msg.sender), "ReferralRegister: not a recorder");
+        if (!isRecorder(msg.sender)) revert NotRecorder(msg.sender);
         _;
     }
 
@@ -147,15 +162,16 @@ contract ReferralRegister is
     }
 
     /// Called by a referrer to withdraw their accrued rewards
+    /// Withdraw all available if there is insufficient reward token balance in the contract
     function withdraw() external whenNotPaused nonReentrant {
         uint256 reward = rewards[msg.sender];
-        require(reward > 0, "ReferralRegister: nothing to withdraw");
+        if (reward == 0) revert NoRewardBalance();
         
         _update();
 
         uint256 contractBalance = IERC20(helixToken).balanceOf(address(this));
-        require(contractBalance > 0, "ReferralRegister: no helix in contract");
-    
+        if (contractBalance == 0) return;
+
         // Prevent withdrawing more than the contract balance
         reward = reward < contractBalance ? reward : contractBalance;
 
@@ -194,8 +210,8 @@ contract ReferralRegister is
 
     /// Set the caller's (referred's) referrer
     function addReferrer(address _referrer) external {
-        require(referrers[msg.sender] == address(0), "ReferralRegister: referrer already set");
-        require(msg.sender != _referrer, "ReferralRegister: no self referral");
+        if (referrers[msg.sender] != address(0)) return;
+        if (msg.sender == _referrer) revert NoSelfReferral();
         referrers[msg.sender] = _referrer;
         emit AddReferrer(msg.sender, _referrer);
     }
@@ -262,7 +278,8 @@ contract ReferralRegister is
 
     /// Return the address of the recorder at _index
     function getRecorder(uint256 _index) external view onlyOwner returns (address) {
-        require(_index <= getRecorderLength() - 1, "ReferralRegister: index out of bounds");
+        uint256 recorderLength = getRecorderLength() - 1;
+        if (_index > recorderLength) revert IndexOutOfBounds(_index, recorderLength);
         return EnumerableSetUpgradeable.at(_recorders, _index);
     }
 

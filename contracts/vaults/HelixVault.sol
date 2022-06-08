@@ -4,11 +4,54 @@ pragma solidity >=0.8.0;
 import "../tokens/HelixToken.sol";
 import "../libraries/Percent.sol";
 import "../fees/FeeCollector.sol";
+
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
+
+/// Thrown when no deposit has been made
+error NoDepositMade();
+
+/// Thrown when depositId is invalid
+error InvalidDepositId(uint256 depositId);
+
+/// Thrown when index is out of bounds
+error IndexOutOfBounds(uint256 index, uint256 length);
+
+/// Thrown when duration is zero
+error ZeroDuration();
+
+/// Thrown when weight is zero
+error ZeroWeight();
+
+/// Thrown when amount is zero
+error ZeroAmount();
+
+/// Thrown when token decimals exceed the max valid decimals
+error DecimalsNotLessThanMax(uint256 decimals, uint256 max);
+
+/// Thrown when withdraw amount exceeds balance
+error AmountExceedsBalance(uint256 amount, uint256 balance);
+
+/// Thrown when withdraw is still locked until timestamp
+error WaitUntil(uint256 timestamp);
+
+/// Thrown when amount is greater than max allowed
+error AmountIsGreaterThanMax(uint256 amount, uint256 max);
+
+/// Thrown when amount is less than min allowed
+error AmountIsLessThanMin(uint256 amount, uint256 min);
+
+/// Thrown when the from block is greater than the to block
+error FromGreaterThanTo(uint256 from, uint256 to);
+
+/// Thrown when caller is not the depositor
+error CallerIsNotDepositor(address caller, address depositor);
+
+/// Thrown when deposit is already withdrawn
+error Withdrawn();
 
 contract HelixVault is 
     FeeCollector, 
@@ -111,28 +154,28 @@ contract HelixVault is
     );
 
     modifier onlyValidDepositId(uint256 _depositId) {
-        require(depositId > 0, "Vault: no deposit made");
-        require(_depositId < depositId, "Vault: invalid depositId");
+        if (depositId == 0) revert NoDepositMade();
+        if (_depositId >= depositId) revert InvalidDepositId(_depositId);
         _;
     }
 
     modifier onlyValidIndex(uint256 _index) {
-        require(_index < durations.length, "Vault: invalid index");
+        if (_index > durations.length) revert IndexOutOfBounds(_index, durations.length);
         _;
     }
 
     modifier onlyValidDuration(uint256 _duration) {
-        require(_duration > 0, "Vault: zero duration");
+        if (_duration == 0) revert ZeroDuration();
         _;
     }
 
     modifier onlyValidWeight(uint256 _weight) {
-        require(_weight > 0, "Vault: zero weight");
+        if (_weight == 0) revert ZeroWeight();
         _;
     }
 
     modifier onlyValidAmount(uint256 _amount) {
-        require(_amount > 0, "Vault: zero amount");
+        if (_amount == 0) revert ZeroAmount();
         _;
     }
 
@@ -163,7 +206,9 @@ contract HelixVault is
         durations.push(Duration(720 days, 100));
                                 
         uint256 decimalsRewardToken = uint(token.decimals());
-        require(decimalsRewardToken < MAX_DECIMALS, "Vault: token exceeds max decimals");
+        if (decimalsRewardToken >= MAX_DECIMALS) {
+            revert DecimalsNotLessThanMax(decimalsRewardToken, MAX_DECIMALS);
+        }
 
         PRECISION_FACTOR = uint(10 ** (uint(MAX_DECIMALS) - decimalsRewardToken));
     }
@@ -275,8 +320,8 @@ contract HelixVault is
     
         _requireIsDepositor(msg.sender, deposit.depositor); 
         _requireNotWithdrawn(deposit.withdrawn);
-        require(deposit.amount >= _amount, "Vault: invalid amount");
-        require(block.timestamp >= deposit.withdrawTimestamp, "Vault: locked");
+        if (_amount > deposit.amount) revert AmountExceedsBalance(_amount, deposit.amount);
+        if (block.timestamp >= deposit.withdrawTimestamp) revert WaitUntil(deposit.withdrawTimestamp);
        
         updatePool();
         
@@ -302,8 +347,8 @@ contract HelixVault is
 
     /// Called by the owner to update the earned _rewardPerBlock
     function updateRewardPerBlock(uint256 _rewardPerBlock) external onlyOwner {
-        require(_rewardPerBlock <= 40 * 1e18, "Vault: max 40 per block");
-        require(_rewardPerBlock >= 1e17, "Vault: min 0.1 per block");
+        if (_rewardPerBlock <= 40 * 1e18) revert AmountIsGreaterThanMax(_rewardPerBlock, 40 * 1e18);
+        if (_rewardPerBlock >= 1e17) revert AmountIsLessThanMin(_rewardPerBlock, 1e17);
         rewardPerBlock = _rewardPerBlock;
         emit RewardPerBlockUpdated(_rewardPerBlock);
     }
@@ -432,7 +477,7 @@ contract HelixVault is
 
     /// Return the number of blocks between _to and _from blocks
     function getBlocksDifference(uint256 _from, uint256 _to) public view returns (uint) {
-        require(_from <= _to, "Vault: invalid block values");
+        if (_from > _to) revert FromGreaterThanTo(_from, _to);
         if (_from > lastRewardBlock) {
             return 0;
         }
@@ -479,11 +524,11 @@ contract HelixVault is
 
     // Used to require that the _caller is the _depositor
     function _requireIsDepositor(address _caller, address _depositor) private pure {
-        require(_caller == _depositor, "Vault: not depositor");
+        if (_caller != _depositor) revert CallerIsNotDepositor(_caller, _depositor);
     }
     
     // Used to require that the deposit is not _withdrawn
     function _requireNotWithdrawn(bool _withdrawn) private pure {
-        require(!_withdrawn, "Vault: withdrawn");
+        if (_withdrawn) revert Withdrawn();
     }
 }

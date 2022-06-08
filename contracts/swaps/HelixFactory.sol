@@ -38,8 +38,20 @@ contract HelixFactory is Initializable {
     // Emitted when the defaultSwapFee is set
     event SetDefaultSwapFee(address indexed setter, uint32 defaultSwapFee);
 
+    /// Thrown when caller is not fee to sender
+    error NotFeeToSetter(address caller);
+
+    /// Thrown when trying to create a pair with identical token addresses
+    error IdenticalTokens();
+
+    /// Thrown when address(0) is encountered
+    error ZeroAddress();
+
+    /// Thrown when pair (token0, token1) has already been created
+    error PairAlreadyExists(address token0, address token1);
+
     modifier onlyFeeToSetter() {
-        require(msg.sender == feeToSetter, "Factory: not feeToSetter");
+        if (msg.sender != feeToSetter) revert NotFeeToSetter(msg.sender);
         _;
     }
 
@@ -61,10 +73,10 @@ contract HelixFactory is Initializable {
         public 
         returns (address pair) 
     {
-        require(tokenA != tokenB, "Factory: identical addresses");
+        if (tokenA == tokenB) revert IdenticalTokens();
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        require(token0 != address(0), "Factory: zero address");
-        require(getPair[token0][token1] == address(0), "Factory: pair exists"); // single check is sufficient
+        if (token0 == address(0)) revert ZeroAddress();
+        if (getPair[token0][token1] != address(0)) revert PairAlreadyExists(token0, token1);
 
         bytes memory bytecode = type(HelixPair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(token0, token1, swapFee));
@@ -93,7 +105,6 @@ contract HelixFactory is Initializable {
     }
 
     function setDevFee(address _pair, uint8 _devFee) external onlyFeeToSetter {
-        require(_devFee > 0, "Factory: invalid fee");
         HelixPair(_pair).setDevFee(_devFee);
         emit SetDevFee(_pair, _devFee);
     }

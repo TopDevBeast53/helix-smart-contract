@@ -11,6 +11,18 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IWETH.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 
+/// Thrown when deadline is before the current block number
+error InvalidDeadline(uint256 deadline);
+
+/// Thrown when address in not WETH address
+error NotWeth(address _address);
+
+/// Thrown when amount is less than min
+error AmountIsLessThanMin(uint256 amount, uint256 min);
+
+/// Thrown when amount is greater than max
+error AmountIsGreaterThanMax(uint256 amount, uint256 max);
+
 contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
     address public immutable _factory;
     address public immutable _WETH;
@@ -49,7 +61,7 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
     event SwapSupportingFeeOnTransferTokens(address[] indexed path, address indexed to);
 
     modifier onlyValidDeadline(uint256 deadline) {
-        require(deadline >= block.timestamp, "Router: invalid deadline");
+        if (deadline < block.timestamp) revert InvalidDeadline(deadline);
         _;
     }
 
@@ -59,7 +71,7 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
     }
 
     receive() external payable {
-        require(msg.sender == _WETH, "Router: caller not weth");
+        if (msg.sender != _WETH) revert NotWeth(msg.sender);
     }
 
     function factory() external view override returns (address) {
@@ -716,14 +728,14 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
 
     // require amount to be greater than or equal to min
     function _requireGEQ(uint256 amount, uint256 min) private pure {
-        require(amount >= min, "Router: insufficient amount");
+        if (amount < min) revert AmountIsLessThanMin(amount, min);
     }
 
     function _requireLEQ(uint256 amount, uint256 max) private pure {
-        require(amount <= max, "Router: excessive amount");
+        if (amount > max) revert AmountIsGreaterThanMax(amount, max);
     }
 
     function _requireValidPath(address path) private view {
-        require(path == _WETH, "Router: invalid path");
+        if (path != _WETH) revert NotWeth(path);
     }
 }

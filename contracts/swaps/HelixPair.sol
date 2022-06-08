@@ -12,6 +12,33 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
+/// Thrown when caller is not the factory
+error NotFactory(address caller);
+
+/// Thrown when an amount is 0 but shouldn't be
+error IsZero();
+
+/// Thrown when a fee exceeds max
+error FeeExceedsMax(uint256 fee, uint256 max);
+
+/// Thrown when there's an integer overflow
+error Overflow();
+
+/// Thrown when there's no liquidy
+error ZeroLiquidity();
+
+/// Thrown when an amount is zero
+error InsufficientAmounts(uint256 amount0, uint256 amount1);
+
+/// Thrown when an amount exceeds its reserves
+error AmountsExceedReserves(uint256 amount0, uint256 reserve0, uint256 amount1, uint256 reserve1);
+
+/// Thrown when to does not equal either token
+error ToDoesNotEqualToken(address to, address token0, address token1);
+
+/// Thrown when there are insufficient reserves
+error InsufficientReserves(uint256 reserve0, uint256 reserve1);
+
 contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
     using UQ112x112 for uint224;
     
@@ -57,12 +84,12 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
     event Update(uint112 reserve0, uint112 reserve1);
 
     modifier onlyFactory() {
-        require(msg.sender == factory, "Pair: not factory"); 
+        if (msg.sender != factory) revert NotFactory(msg.sender);
         _;
     }
 
     modifier onlyAboveZero(uint256 number) {
-        require(number > 0, "Pair: not above zero");
+        if (number == 0) revert IsZero();
         _;
     }
 
@@ -83,18 +110,18 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
         _blockTimestampLast = blockTimestampLast;
     }
     function setSwapFee(uint32 _swapFee) external onlyFactory onlyAboveZero(_swapFee) {
-        require(_swapFee <= 1000, "Pair: invalid fee");
+        if (_swapFee > 1000) revert FeeExceedsMax(_swapFee, 1000);
         swapFee = _swapFee;
     }
     
     function setDevFee(uint32 _devFee) external onlyFactory onlyAboveZero(_devFee) {
-        require(_devFee <= 500, "Pair: invalid fee");
+        if (_devFee > 500) revert FeeExceedsMax(_devFee, 500);
         devFee = _devFee;
     }
 
     // update reserves and, on the first call per block, price accumulators
     function _update(uint256 balance0, uint256 balance1, uint112 _reserve0, uint112 _reserve1) private {
-        require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, "Pair: overflow");
+        if (balance0 > type(uint112).max || balance1 > type(uint112).max) revert Overflow();
         uint32 blockTimestamp = uint32(block.timestamp % 2**32);
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
         if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {
@@ -145,7 +172,7 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
         } else {
             liquidity = MathUpgradeable.min(amount0 * _totalSupply / _reserve0, amount1 * _totalSupply / _reserve1);
         }
-        require(liquidity > 0, "Pair: insufficient minted");
+        if (liquidity == 0) revert ZeroLiquidity();
         _mint(to, liquidity);
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -169,7 +196,7 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
         amount0 = liquidity * balance0 / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity * balance1 / _totalSupply; // using balances ensures pro-rata distribution
 
-        require(amount0 > 0 && amount1 > 0, "Pair: insufficient burned");
+        if (amount0 == 0 || amount1 == 0) revert InsufficientAmounts(amount0, amount1);
 
         // Set the expected balance by subtracting amountX before _burn and safeTransfer calls
         // to perform all state changes before external calls and protect against reentrancy
@@ -189,16 +216,18 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
 
     // this low-level function should be called from a contract which performs important safety checks
     function swap(uint256 amount0Out, uint256 amount1Out, address to) external nonReentrant {
-        require(amount0Out > 0 || amount1Out > 0, "Pair: insufficient amount out");
+        if (amount0Out == 0 && amount1Out == 0) revert InsufficientAmounts(amount0Out, amount1Out);
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        require(amount0Out < _reserve0 && amount1Out < _reserve1, "Pair: insufficient liquidity");
+        if (amount0Out > _reserve0 || amount1Out > _reserve1) {
+            revert AmountsExceedReserves(amount0Out, _reserve0, amount1Out, _reserve1);
+        }
 
         uint256 balance0;
         uint256 balance1;
         { // scope for _token{0,1}, avoids stack too deep errors
             address _token0 = token0;
             address _token1 = token1;
-            require(to != _token0 && to != _token1, "Pair: invalid to");
+            if (to == _token0 || to == _token1) revert ToDoesNotEqualToken(to, _token0, _token1);
             if (amount0Out > 0) TransferHelper.safeTransfer(_token0, to, amount0Out);
             if (amount1Out > 0) TransferHelper.safeTransfer(_token1, to, amount1Out);
             balance0 = IERC20(_token0).balanceOf(address(this));
@@ -207,15 +236,14 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
 
         uint256 amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
         uint256 amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
-        require(amount0In > 0 || amount1In > 0, "Pair: insufficient amount in");
+        if (amount0In == 0 && amount1In == 0) revert InsufficientAmounts(amount0In, amount1In);
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
             uint256 _swapFee = swapFee;
             uint256 balance0Adjusted = balance0 * (1000) - (amount0In * _swapFee);
             uint256 balance1Adjusted = balance1 * (1000) - (amount1In * _swapFee);
-            require(
-                balance0Adjusted * balance1Adjusted >= uint(_reserve0) * (_reserve1) * (1000**2), 
-                "Pair: insufficient reserves"
-            );
+            if (balance0Adjusted * balance1Adjusted >= uint(_reserve0) * (_reserve1) * (1000**2)) {
+                revert InsufficientReserves(_reserve0, _reserve1);
+            }
         }
 
         _update(balance0, balance1, _reserve0, _reserve1);
