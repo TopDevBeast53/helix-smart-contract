@@ -1,14 +1,13 @@
-/**
+/*
  * deploy Swap Rewards
- *
- * run from root:
- *      npx hardhat run scripts/12_deploySwapRewards.js --network rinkeby
+ * 
+ * run from root: 
+ *      npx hardhat run scripts/deploy/12_deploySwapRewards.js --network rinkeby
  */
 
-// Define script parameters
-const { ethers } = require(`hardhat`)
-const contracts = require('./constants/contracts')
-const env = require('./constants/env')
+const {ethers} = require('hardhat')
+const contracts = require("../constants/contracts")
+const env = require("../constants/env")
 
 const helixTokenAddress = contracts.helixToken[env.network]
 const oracleFactoryAddress = contracts.oracleFactory[env.network]
@@ -17,19 +16,19 @@ const routerAddress = contracts.router[env.network]
 
 async function main() {
     const [deployer] = await ethers.getSigners()
-    (`Deployer address: ${deployer.address}\n`)
+    console.log(`Deployer address: ${deployer.address}`)
 
-    // Deploy the SwapRewards contract
-    const SwapRewards = await ethers.getContractFactory('SwapRewards')
-    const swapRewards = await SwapRewards.deploy(
+    console.log('Deploy SwapRewards')
+    const contractFactory = await ethers.getContractFactory('SwapRewards')
+    const contract = await contractFactory.deploy(
         helixTokenAddress,
         oracleFactoryAddress,
         refRegAddress,
         routerAddress
     )
-    await swapRewards.deployTransaction.wait()
-    console.log(`swapRewards deployed to ${swapRewards.address}`)
+    await contract.deployTransaction.wait()
 
+    console.log(`swapRewards deployed to ${contract.address}`)
     console.log('done')
 }
 

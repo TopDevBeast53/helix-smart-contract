@@ -2,14 +2,14 @@
  * deploy Helix Vault
  *
  * run from root: 
- *     npx hardhat run scripts/7_deployHelixVault.js --network rinkeby
+ *     npx hardhat run scripts/deploy/7_deployHelixVault.js --network rinkeby
  */
 
 // Define script parameters
 const { ethers } = require(`hardhat`)
-const env = require('./constants/env')
-const contracts = require('./constants/contracts')
-const initials = require('./constants/initials')
+const env = require('../constants/env')
+const contracts = require('../constants/contracts')
+const initials = require('../constants/initials')
 
 // Define contract constructor arguments
 const helixTokenAddress = contracts.helixToken[env.network]

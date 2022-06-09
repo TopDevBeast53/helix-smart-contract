@@ -2,15 +2,14 @@
  * deploy Router
  * 
  * run from root:
- *      npx hardhat run scripts/10_deployRouter.js --network rinkeby
+ *      npx hardhat run scripts/deploy/10_deployRouter.js --network rinkeby
  */
 
 const hre  = require("hardhat")
 const { ethers } = require("hardhat")
-const env = require("./constants/env")
-
-const contracts = require("./constants/contracts")
-const addresses = require("./constants/addresses")
+const env = require("../constants/env")
+const contracts = require("../constants/contracts")
+const addresses = require("../constants/addresses")
 
 const factoryAddress = contracts.factory[env.network]
 const wethAddress = addresses.WETH[env.network]

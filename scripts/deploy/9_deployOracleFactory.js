@@ -2,13 +2,12 @@
  * deploy Oracle Factory
  *
  * run from root:
- *     npx hardhat run scripts/9_deployOracleFactory.js --network rinkeby
+ *     npx hardhat run scripts/deploy/9_deployOracleFactory.js --network rinkeby
  */
 
 const { ethers, upgrades } = require(`hardhat`)
-
-const contracts = require('./constants/contracts')
-const env = require('./constants/env')
+const contracts = require('../constants/contracts')
+const env = require('../constants/env')
 
 const factoryAddress = contracts.factory[env.network]
 

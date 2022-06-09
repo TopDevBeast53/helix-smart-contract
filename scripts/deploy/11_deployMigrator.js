@@ -2,12 +2,12 @@
  * deploy Helix Migrator
  * 
  * run from root: 
- *      npx hardhat run scripts/11_deployMigrator.js --network rinkeby
+ *      npx hardhat run scripts/deploy/11_deployMigrator.js --network rinkeby
  */
 
 const {ethers} = require('hardhat');
-const contracts = require("./constants/contracts")
-const env = require("./constants/env")
+const contracts = require("../constants/contracts")
+const env = require("../constants/env")
 
 const routerAddress = contracts.router[env.network];
 

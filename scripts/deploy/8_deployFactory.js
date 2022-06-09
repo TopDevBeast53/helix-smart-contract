@@ -2,12 +2,12 @@
  * deploy Helix Factory
  *
  * run from root:
- *      npx hardhat run scripts/8_deployFactory.js --network rinkeby
+ *      npx hardhat run scripts/deploy/8_deployFactory.js --network rinkeby
  */
 
 const { ethers, upgrades } = require("hardhat")
-const addresses = require("./constants/addresses")
-const env = require("./constants/env")
+const addresses = require("../constants/addresses")
+const env = require("../constants/env")
 
 const setterFeeOnPairSwaps = addresses.setterFeeOnPairSwaps[env.network]
 const poolReceiveTradeFee = addresses.poolReceiveTradeFee[env.network]
@@ -29,8 +29,8 @@ async function main() {
     console.log(`HelixFactory Implmentation address: ${factoryImplementationAddress}`)
 
     let INIT_CODE_HASH = await factoryProxy.INIT_CODE_HASH.call()
-    console.log(`INIT_CODE_HASH: ${INIT_CODE_HASH}`)
-    console.log("Don't forget to set INIT_CODE_HASH in HelixLibrary.sol and re-compile before continuing!")
+    console.log(`\nINIT_CODE_HASH: ${INIT_CODE_HASH}`)
+    console.log("Don't forget to set INIT_CODE_HASH in HelixLibrary.sol and re-compile before continuing!\n")
     console.log('done')
 }
 

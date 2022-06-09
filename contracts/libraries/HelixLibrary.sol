@@ -41,7 +41,7 @@ library HelixLibrary {
                 hex"ff",
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex"4bf92398ca4e6d769e05b577c12e3ca0a8125ef817cb0afec3df5708ba9fa0f8" // rinkeby
+                hex"20e408b54367f3b29202c0fe9ebd7ba396e678dd5bdfa927cd16c2d6fbc43066" // rinkeby
             )))));
     }
 
@@ -110,7 +110,8 @@ library HelixLibrary {
     {
         amounts = new uint[](path.length);
         amounts[0] = amountIn;
-        for (uint256 i; i < path.length - 1; i++) {
+        uint256 length = path.length - 1;
+        for (uint256 i; i < length; i++) {
             (uint256 reserveIn, uint256 reserveOut) = getReserves(factory, path[i], path[i + 1]);
             amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut, getSwapFee(factory, path[i], path[i + 1]));
         }
@@ -125,7 +126,8 @@ library HelixLibrary {
     {
         amounts = new uint[](path.length);
         amounts[amounts.length - 1] = amountOut;
-        for (uint256 i = path.length - 1; i > 0; i--) {
+        uint256 length = path.length - 1;
+        for (uint256 i = length; i > 0; i--) {
             (uint256 reserveIn, uint256 reserveOut) = getReserves(factory, path[i - 1], path[i]);
             amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut, getSwapFee(factory, path[i - 1], path[i]));
         }

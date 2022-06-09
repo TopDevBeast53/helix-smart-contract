@@ -8,8 +8,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 /// Thrown when caller is a contract
@@ -37,7 +37,7 @@ error ZeroWithdraw();
 error InsufficientBalance(uint256 amount, uint256 balance);
 
 contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
-    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     struct UserInfo {
         uint256 shares; // number of shares for a user
@@ -46,7 +46,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
         uint256 lastUserActionTime; // keeps track of the last user action time
     }
 
-    IERC20 public token; // Helix token
+    IERC20Upgradeable public token; // Helix token
 
     IMasterChef public masterchef;
 
@@ -121,12 +121,12 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
     ) external initializer {
         __Ownable_init();
         __Pausable_init();
-        token = IERC20(_token);
+        token = IERC20Upgradeable(_token);
         masterchef = _masterchef;
         treasury = _treasury;
 
         // Infinite approve
-        IERC20(_token).safeApprove(address(_masterchef), type(uint256).max);
+        IERC20Upgradeable(_token).safeApprove(address(_masterchef), type(uint256).max);
 
         performanceFee = 299; // 2.99%
         callFee = 25; // 0.25%
@@ -269,7 +269,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
             revert TokenNotStuck(_token);
         }
 
-        uint256 amount = IERC20(_token).balanceOf(address(this));
+        uint256 amount = IERC20Upgradeable(_token).balanceOf(address(this));
         TransferHelper.safeTransfer(address(_token), msg.sender, amount);
     }
 

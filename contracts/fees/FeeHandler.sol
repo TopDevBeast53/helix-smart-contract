@@ -6,8 +6,8 @@ import "../libraries/Percent.sol";
 import "../interfaces/IHelixChefNFT.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 /// Thrown when attempting to assign an invalid fee
 error InvalidFee(uint256 invalidFee);
@@ -17,7 +17,7 @@ error InvalidAddress(address invalidAddress);
 
 /// Handles routing received fees to internal contracts
 contract FeeHandler is Initializable, OwnableUpgradeable {
-    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /// Owner defined fee recipient
     address public treasury;
@@ -72,7 +72,12 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     
     /// Called by a FeeCollector to send _amount of _token to this FeeHandler
     /// handles sending fees to treasury and staking with nftChef
-    function transferFee(IERC20 _token, address _from, address _rewardAccruer, uint256 _fee) 
+    function transferFee(
+        IERC20Upgradeable _token, 
+        address _from, 
+        address _rewardAccruer, 
+        uint256 _fee
+    ) 
         external 
         onlyValidFee(_fee) 
     {

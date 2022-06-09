@@ -2,17 +2,18 @@
  * deploy Master Chef
  *
  * run from root:
- *      npx hardhat run scripts/13_deployMasterChef.js --network rinkeby
+ *      npx hardhat run scripts/deploy/13_deployMasterChef.js --network rinkeby
  */
 
 const { ethers, upgrades } = require(`hardhat`);
-const contracts = require("./constants/contracts")
-const addresses = require("./constants/addresses")
-const initials = require("./constants/initials")
-const env = require("./constants/env")
+const contracts = require("../constants/contracts")
+const addresses = require("../constants/addresses")
+const initials = require("../constants/initials")
+const env = require("../constants/env")
 
 const HelixTokenAddress = contracts.helixToken[env.network];
 const referralRegisterAddress = contracts.referralRegister[env.network];
+const feeMinterAddress = contracts.feeMinter[env.network];
 const DeveloperAddress = addresses.masterChefDeveloper[env.network];
 const StartBlock = initials.MASTERCHEF_START_BLOCK[env.network];
 const HelixTokenRewardPerBlock = initials.MASTERCHEF_HELIX_TOKEN_REWARD_PER_BLOCK[env.network];
@@ -31,13 +32,13 @@ async function main() {
     console.log(`------ Start deploying Master Chef contract ---------`);
     const MasterChef = await ethers.getContractFactory(`MasterChef`);
     const chef = await upgrades.deployProxy(MasterChef, [
-        /*helix token address=*/HelixTokenAddress,
-        /*dev address=*/DeveloperAddress,
-        /*helix token per block=*/HelixTokenRewardPerBlock,
-        /*start block=*/StartBlock,
-        /*staking percent=*/StakingPercent,
-        /*dev percent=*/DevPercent,
-        /*ref=*/ referralRegisterAddress
+        HelixTokenAddress,
+        DeveloperAddress,
+        feeMinterAddress,
+        StartBlock,
+        StakingPercent,
+        DevPercent,
+        referralRegisterAddress
     ]);
 
     await chef.deployTransaction.wait();

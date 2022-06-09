@@ -2,13 +2,13 @@
  * deploy FeeHandler
  * 
  * run from root:
- *      npx hardhat run scripts/5_deployFeeHandler.js --network rinkeby
+ *      npx hardhat run scripts/deploy/5_deployFeeHandler.js --network rinkeby
  */
 
 const { ethers, upgrades } = require("hardhat")
-const addresses = require("./constants/addresses")
-const contracts = require("./constants/contracts")
-const env = require("./constants/env")
+const addresses = require("../constants/addresses")
+const contracts = require("../constants/contracts")
+const env = require("../constants/env")
 
 const treasuryAddress = addresses.TREASURY[env.network]
 const nftChefAddress = contracts.helixChefNFT[env.network]

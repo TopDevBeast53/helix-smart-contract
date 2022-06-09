@@ -2,8 +2,8 @@
 pragma solidity >= 0.8.0;
 
 import "../interfaces/IHelixNFT.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -35,7 +35,7 @@ contract HelixChefNFT is
     ReentrancyGuardUpgradeable,
     PausableUpgradeable
 {
-    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     // Info on each user who has NFTs staked in this contract
@@ -51,7 +51,7 @@ contract HelixChefNFT is
     IHelixNFT public helixNFT;
 
     /// Token that reward are earned in (HELIX)
-    IERC20 public rewardToken;
+    IERC20Upgradeable public rewardToken;
 
     /// Total number of NFTs staked in this contract
     uint256 public totalStakedNfts;
@@ -92,7 +92,7 @@ contract HelixChefNFT is
         _;
     }
 
-    function initialize(IHelixNFT _helixNFT, IERC20 _rewardToken) external initializer {
+    function initialize(IHelixNFT _helixNFT, IERC20Upgradeable _rewardToken) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
         helixNFT = _helixNFT;
