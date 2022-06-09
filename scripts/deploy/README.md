@@ -7,7 +7,7 @@ contract is correctly configured.
 For convenience, listed below are the commands to deploy each contract to the rinkeby network:  
 Take care to update each contract's deployed address(es) in ../constants/contracts.js.
 
-npx hardhat run scripts/1__deployHelixNFT.js --network rinkeby  
+npx hardhat run scripts/1_deployHelixNFT.js --network rinkeby  
 npx hardhat run scripts/2_deployFeeMinter.js --network rinkeby  
 npx hardhat run scripts/3_deployHelixNFTBridge.js --network rinkeby  
 npx hardhat run scripts/4_deployHelixChefNFT.js --network rinkeby  
