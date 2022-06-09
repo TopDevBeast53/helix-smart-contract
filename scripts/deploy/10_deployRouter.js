@@ -1,10 +1,8 @@
 /*
  * @dev Router Deployment script
  * 
- * command for deploy on bsc-testnet: 
- *      npx hardhat run scripts/2_deployRouter.js --network testnetBSC
  * command for deploy on rinkeby: 
- *      npx hardhat run scripts/2_deployRouter.js --network rinkeby
+ *      npx hardhat run scripts/10_deployRouter.js --network rinkeby
  */
 
 const hre  = require("hardhat")

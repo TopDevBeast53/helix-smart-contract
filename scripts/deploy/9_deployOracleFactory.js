@@ -2,8 +2,7 @@
  * @dev Deployment script for Oracle Factory contract.
  *
  * Run from project root using:
- *     npx hardhat run scripts/4_deployOracleFactory.js --network testnetBSC
- *     npx hardhat run scripts/4_deployOracleFactory.js --network rinkeby
+ *     npx hardhat run scripts/9_deployOracleFactory.js --network rinkeby
  */
 
 const { ethers, upgrades } = require(`hardhat`)

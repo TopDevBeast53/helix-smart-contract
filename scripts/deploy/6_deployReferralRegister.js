@@ -3,9 +3,7 @@
  *
  * command for deploy on bsc-testnet: 
  * 
- *      npx hardhat run scripts/7_deployReferralRegister.js --network testnetBSC
- * 
- *      npx hardhat run scripts/7_deployReferralRegister.js --network rinkeby
+ *      npx hardhat run scripts/6_deployReferralRegister.js --network rinkeby
  * 
  */
 const { ethers, upgrades } = require(`hardhat`)

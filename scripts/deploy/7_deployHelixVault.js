@@ -2,9 +2,7 @@
  * @dev Deployment script for Helix Vault contract.
  *
  * Run from project root using:
- *     npx hardhat run scripts/13_deployHelixVault.js --network testnetBSC
- * 
- *     npx hardhat run scripts/13_deployHelixVault.js --network rinkeby
+ *     npx hardhat run scripts/7_deployHelixVault.js --network rinkeby
  */
 
 

@@ -3,9 +3,7 @@
  * 
  * command to deploy on bsc-testnet, run the following from the project root:
  * 
- *      npx hardhat run scripts/12_deployMigrator.js --network testnetBSC
- * 
- *      npx hardhat run scripts/12_deployMigrator.js --network rinkeby
+ *      npx hardhat run scripts/11_deployMigrator.js --network rinkeby
  */
 
 const {ethers} = require('hardhat');

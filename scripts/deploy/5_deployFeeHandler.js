@@ -1,10 +1,8 @@
 /**
  * @dev FeeHandler deployment script
  * 
- * command for deploy on bsc-testnet: 
- *      npx hardhat run scripts/6_deployFeeHandler.js --network testnetBSC
  * command for deploy on rinkeby: 
- *      npx hardhat run scripts/6_deployFeeHandler.js --network rinkeby
+ *      npx hardhat run scripts/5_deployFeeHandler.js --network rinkeby
  */
 
 const { ethers, upgrades } = require("hardhat")

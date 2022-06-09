@@ -2,7 +2,7 @@
  * @dev FeeHandler deployment script
  * 
  * command for deploy on rinkeby: 
- *      npx hardhat run scripts/6_deployFeeMinter.js --network rinkeby
+ *      npx hardhat run scripts/2_deployFeeMinter.js --network rinkeby
  */
 
 const { ethers, upgrades } = require("hardhat")

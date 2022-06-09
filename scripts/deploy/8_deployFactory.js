@@ -1,10 +1,8 @@
 /**
  * @dev HelixFactory deployment script
- * 
- * command for deploy on bsc-testnet: 
- *      npx hardhat run scripts/1_deployFactory.js --network testnetBSC
+ *
  * command for deploy on rinkeby: 
- *      npx hardhat run scripts/1_deployFactory.js --network rinkeby
+ *      npx hardhat run scripts/8_deployFactory.js --network rinkeby
  */
 
 const { ethers, upgrades } = require("hardhat")

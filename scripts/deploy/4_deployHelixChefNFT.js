@@ -3,7 +3,7 @@
  *
  * command for deploy on bsc-testnet: 
  * 
- *      npx hardhat run scripts/5_deployHelixChefNFT.js --network rinkeby
+ *      npx hardhat run scripts/4_deployHelixChefNFT.js --network rinkeby
  */
 
  const { ethers, network, upgrades } = require(`hardhat`)
