@@ -41,26 +41,26 @@ async function main() {
 
 async function setHelixToken(address) {
     print(`register ${address} as SwapRewards helixToken`)
-    // let tx = await contract.setHelixToken(address)
-    // await tx.wait()
+    let tx = await contract.setHelixToken(address)
+    await tx.wait()
 }
 
 async function setOracleFactory(address) {
     print(`register ${address} as SwapRewards oracleFactory`)
-    // let tx = await contract.setOracleFactory(address)
-    // await tx.wait()
+    let tx = await contract.setOracleFactory(address)
+    await tx.wait()
 }
 
 async function setReferralRegister(address) {
     print(`register ${address} as SwapRewards referralRegister`)
-    // let tx = await contract.setRefReg(address)
-    // await tx.wait()
+    let tx = await contract.setRefReg(address)
+    await tx.wait()
 }
 
 async function setRouter(address) {
     print(`register ${address} as SwapRewards router`)
-    // let tx = await contract.setRouter(address)
-    // await tx.wait()
+    let tx = await contract.setRouter(address)
+    await tx.wait()
 }
 
 /// Load the contracts that will be used in this script

@@ -36,8 +36,8 @@ async function setToMintPercents(minters, toMintPercents) {
     for (let i = 0; i < minters.length; i++) {
         print(`\t${minters[i]}:\t${toMintPercents[i]}`)
     }
-    // let tx = await contract.setToMintPercents(minters, toMintPercents, overrides)
-    // wait tx.wait()
+    let tx = await contract.setToMintPercents(minters, toMintPercents, overrides)
+    wait tx.wait()
 }
 
 /// Load the contracts that will be used in this script
