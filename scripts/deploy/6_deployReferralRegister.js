@@ -2,19 +2,19 @@
  * deploy Referral Register
  *
  * run from root: 
- *      npx hardhat run scripts/6_deployReferralRegister.js --network rinkeby
+ *      npx hardhat run scripts/deploy/6_deployReferralRegister.js --network rinkeby
  */
 
 const { ethers, upgrades } = require(`hardhat`)
-const contracts = require("./constants/contracts")
-const initials = require("./constants/initials")
-const env = require("./constants/env")
+const contracts = require("../constants/contracts")
+const initials = require("../constants/initials")
+const env = require("../constants/env")
 
 const helixTokenAddress = contracts.helixToken[env.network]
 const feeHandlerAddress = contracts.feeHandler[env.network]
+const feeMinterAddress = contracts.feeMinter[env.network]
 const stakeRewardPercent = initials.REFERRAL_STAKE_REWARD_PERCENT[env.network]
 const swapRewardPercent = initials.REFERRAL_SWAP_REWARD_PERCENT[env.network]
-const toMintPerBlock = initials.REFERRAL_TO_MINT_PER_BLOCK[env.network]
 const lastMintBlock = initials.REFERRAL_LAST_MINT_BLOCK[env.network]
 
 async function main() {
@@ -28,9 +28,9 @@ async function main() {
         [
             helixTokenAddress, 
             feeHandlerAddress,
+            feeMinterAddress,
             stakeRewardPercent, 
             swapRewardPercent,
-            toMintPerBlock,
             lastMintBlock
         ]
     )

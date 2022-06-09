@@ -11,8 +11,9 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// Thrown when address(0) is encountered
 error ZeroAddress();
@@ -38,7 +39,7 @@ contract ReferralRegister is
     PausableUpgradeable,
     ReentrancyGuardUpgradeable 
 {
-    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     IFeeMinter public feeMinter;
@@ -168,7 +169,7 @@ contract ReferralRegister is
         
         _update();
 
-        uint256 contractBalance = IERC20(helixToken).balanceOf(address(this));
+        uint256 contractBalance = IERC20Upgradeable(helixToken).balanceOf(address(this));
         if (contractBalance == 0) return;
 
         // Prevent withdrawing more than the contract balance
@@ -180,7 +181,7 @@ contract ReferralRegister is
         // Split the reward and extract the collector fee
         (uint256 collectorFee, uint256 referrerReward) = getCollectorFeeSplit(reward);
         if (referrerReward > 0) {
-            IERC20(helixToken).safeTransfer(msg.sender, referrerReward);
+            IERC20Upgradeable(helixToken).safeTransfer(msg.sender, referrerReward);
         }
         if (collectorFee > 0) {
             _delegateTransfer(IERC20(helixToken), address(this), collectorFee);

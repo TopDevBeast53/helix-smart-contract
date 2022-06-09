@@ -2,12 +2,12 @@
  * deploy FeeHandler
  * 
  * run from root: 
- *      npx hardhat run scripts/2_deployFeeMinter.js --network rinkeby
+ *      npx hardhat run scripts/deploy/2_deployFeeMinter.js --network rinkeby
  */
 
 const { ethers, upgrades } = require("hardhat")
-const initials = require("./constants/initials")
-const env = require("./constants/env")
+const initials = require("../constants/initials")
+const env = require("../constants/env")
 
 const totalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
 

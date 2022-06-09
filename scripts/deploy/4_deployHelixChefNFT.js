@@ -2,12 +2,12 @@
  * deply Helix NFT
  *
  * run from root: 
- *      npx hardhat run scripts/4_deployHelixChefNFT.js --network rinkeby
+ *      npx hardhat run scripts/deploy/4_deployHelixChefNFT.js --network rinkeby
  */
 
  const { ethers, network, upgrades } = require(`hardhat`)
- const contracts = require("./constants/contracts")
- const env = require("./constants/env")
+ const contracts = require("../constants/contracts")
+ const env = require("../constants/env")
  
  const rewardToken = contracts.helixToken[env.network];
  const helixNFTAddress = contracts.helixNFT[env.network];
