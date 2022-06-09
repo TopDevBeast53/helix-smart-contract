@@ -1,8 +1,8 @@
 /* 
- * @dev Used to (re)build all required references for Referral Register
+ * @dev Used to (re)build all required references for Master Chef
  * 
  * Run from project root using:
- *     npx hardhat run scripts/initialize/initReferralRegister.js --network rinkeby
+ *     npx hardhat run scripts/initialize/initMasterChef.js --network rinkeby
  */
 
 const verbose = true
@@ -21,23 +21,21 @@ let wallet
 /// The contract whose setters are being called by this script
 let contract 
 
-const referralRegisterAddress = contracts.referralRegister[env.network]
-const swapRewardsAddress = contracts.swapRewards[env.network]
 const masterChefAddress = contracts.masterChef[env.network]
+const referralRegisterAddress = contracts.referralRegister[env.network]
 
 /// (Re)build any connections by calling this script's contract's setters
 async function main() {
     await load() 
 
-    await addRecorder(swapRewardsAddress)
-    await addRecorder(masterChefAddress)
+    await setReferralRegister(referralRegisterAddress)
 
     print('done')
 }
 
-async function addRecorder(address) {
-    print(`add ${address} as recorder`)
-    let tx = await contract.addRecorder(address, overrides)
+async function setReferralRegister(address) {
+    print(`set ${address} as referral register`)
+    let tx = await contract.setReferralRegister(address, overrides)
     wait tx.wait()
 }
 
@@ -47,9 +45,9 @@ async function load() {
     [wallet] = await ethers.getSigners()
     print(`load wallet: ${wallet.address}`)
 
-    print(`load referral register: ${referralRegisterAddress}`)
-    const contractFactory = await ethers.getContractFactory('ReferralRegister')
-    contract = await contractFactory.attach(referralRegisterAddress).connect(wallet)
+    print(`load master chef: ${masterChefAddress}`)
+    const contractFactory = await ethers.getContractFactory('MasterChef')
+    contract = await contractFactory.attach(masterChefAddress).connect(wallet)
 }
 
 /// Console.log str if verbose is true and false otherwise
