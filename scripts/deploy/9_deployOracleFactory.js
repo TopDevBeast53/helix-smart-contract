@@ -1,7 +1,7 @@
 /*
- * @dev Deployment script for Oracle Factory contract.
+ * deploy Oracle Factory
  *
- * Run from project root using:
+ * run from root:
  *     npx hardhat run scripts/9_deployOracleFactory.js --network rinkeby
  */
 
@@ -29,16 +29,6 @@ async function main() {
         oracleFactory.address
     )
     console.log(`Implementation address: ${implementationAddress}`)
-
-    // 2. Register the Oracle Factory with Factory
-    //    Calls to createPair fail if Oracle Factory not registered
-    console.log(`------ Register Oracle Factory with Factory ---------`)
-
-    const Factory = await ethers.getContractFactory(`HelixFactory`)
-    const factory = Factory.attach(factoryAddress)
-    await factory.setOracleFactory(oracleFactory.address)
-
-    console.log('Oracle Factory is registered with Factory')
 }
 
 main()

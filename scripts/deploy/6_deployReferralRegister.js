@@ -1,11 +1,10 @@
 /**
- * @dev Referral Register Deployment
+ * deploy Referral Register
  *
- * command for deploy on bsc-testnet: 
- * 
+ * run from root: 
  *      npx hardhat run scripts/6_deployReferralRegister.js --network rinkeby
- * 
  */
+
 const { ethers, upgrades } = require(`hardhat`)
 const contracts = require("./constants/contracts")
 const initials = require("./constants/initials")
@@ -19,7 +18,6 @@ const toMintPerBlock = initials.REFERRAL_TO_MINT_PER_BLOCK[env.network]
 const lastMintBlock = initials.REFERRAL_LAST_MINT_BLOCK[env.network]
 
 async function main() {
-
     const [deployer] = await ethers.getSigners()
     console.log(`Deployer address: ${ deployer.address}`)
 
@@ -44,13 +42,7 @@ async function main() {
     )
     console.log(`Implementation address: ${implementationAddress}`)
 
-    console.log(`------ Add Referral Register as Minter to HelixToken ---------`)
-    const HelixToken = await ethers.getContractFactory(`HelixToken`)
-    const helixToken = HelixToken.attach(helixTokenAddress)
-
-    let tx = await helixToken.addMinter(ref.address)
-    await tx.wait()
-    console.log(`Success to add Minter to HelixToken`)
+    console.log('done')
 }
 
  main()

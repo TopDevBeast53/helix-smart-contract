@@ -1,7 +1,7 @@
 /**
- * @dev FeeHandler deployment script
+ * deploy FeeHandler
  * 
- * command for deploy on rinkeby: 
+ * run from root:
  *      npx hardhat run scripts/5_deployFeeHandler.js --network rinkeby
  */
 
@@ -37,12 +37,7 @@ async function main() {
         feeHandlerProxy.address
     )
     console.log(`FeeHandler Implementation address: ${feeHandlerImplementationAddress}`)
-
-    console.log(`Register fee handler as nft chef accruer`)
-    const NftChef = await ethers.getContractFactory("HelixChefNFT")
-    const nftChef = await NftChef.attach(nftChefAddress)
-    let tx = await nftChef.addAccruer(feeHandlerProxy.address)
-    await tx.wait()
+    console.log('done')
 }
 
 main()

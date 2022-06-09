@@ -1,7 +1,7 @@
 /**
- * @dev FeeHandler deployment script
+ * deploy FeeHandler
  * 
- * command for deploy on rinkeby: 
+ * run from root: 
  *      npx hardhat run scripts/2_deployFeeMinter.js --network rinkeby
  */
 
@@ -16,12 +16,13 @@ async function main() {
     console.log(`Deployer address: ${deployer.address}`);
 
     console.log(`------ Start deploying FeeMinter ---------`);
-    console.log(`FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK: ${totalToMintPerBlock}`)
+    console.log(`total to mint per block: ${totalToMintPerBlock}`)
 
     const ContractFactory = await ethers.getContractFactory('FeeMinter');
     const contract = await ContractFactory.deploy(totalToMintPerBlock);
     await contract.deployTransaction.wait();
     console.log(`FeeMinter deployed to ${contract.address}`);
+    console.log('done')
 }
 
 main()

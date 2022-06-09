@@ -1,7 +1,7 @@
 /**
- * @dev HelixFactory deployment script
+ * deploy Helix Factory
  *
- * command for deploy on rinkeby: 
+ * run from root:
  *      npx hardhat run scripts/8_deployFactory.js --network rinkeby
  */
 
@@ -30,10 +30,8 @@ async function main() {
 
     let INIT_CODE_HASH = await factoryProxy.INIT_CODE_HASH.call()
     console.log(`INIT_CODE_HASH: ${INIT_CODE_HASH}`)
-
-    await factoryProxy.setFeeTo(poolReceiveTradeFee)
-    let feeTo = await factoryProxy.feeTo()
-    console.log(`feeTo: ${feeTo}`)
+    console.log("Don't forget to set INIT_CODE_HASH in HelixLibrary.sol and re-compile before continuing!")
+    console.log('done')
 }
 
 main()
