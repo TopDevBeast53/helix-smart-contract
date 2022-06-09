@@ -17,18 +17,18 @@ require ('dotenv').config()
 const env = require('./constants/env')
 
 const initials = require('./constants/initials')
-// const helixChefNFTStartBlock = initials.NFTCHEF_START_BLOCK[env.network];
-// const helixChefNFTRewardPerBlock = initials.NFTCHEF_REWARD_PER_BLOCK[env.network];
-
 const contracts = require('./constants/contracts')
+
+const helixTokenAddress = contracts.helixToken[env.network]
+const helixNFTAddress = contracts.helixNFT[env.network]
+const feeMinterAddress = contracts.feeMinter[env.network]
+
 const factoryAddress = contracts.factory[env.network]
 const routerAddress = contracts.router[env.network]
-const helixTokenAddress = contracts.helixToken[env.network]
 const oracleFactoryAddress = contracts.oracleFactory[env.network]
 const refRegAddress = contracts.referralRegister[env.network]
 const masterChefAddress = contracts.masterChef[env.network]
 const autoHelixAddress = contracts.autoHelix[env.network]
-const helixNFTAddress = contracts.helixNFT[env.network]
 const helixNFTChefAddress = contracts.helixChefNFT[env.network]
 const helixNFTBridgeAddress = contracts.helixNFTBridge[env.network]
 const swapRewardsAddress = contracts.swapRewards[env.network]
