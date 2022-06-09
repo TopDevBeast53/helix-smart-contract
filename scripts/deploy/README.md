@@ -4,7 +4,7 @@ The scripts in this directory deploy their respective contracts.
 These scripts should be run in conjunction with those in ../initialize to ensure that each
 contract is correctly configured.
 
-For convenience, listed below are the commands to deploy each contract to the rinkeby network:
+For convenience, listed below are the commands to deploy each contract to the rinkeby network:  
 Take care to update each contract's deployed address(es) in ../constants/contracts.js.
 
 npx hardhat run scripts/1__deployHelixNFT.js --network rinkeby  
