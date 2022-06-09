@@ -1,17 +1,10 @@
 /**
- * @dev Master Chef Deployment
+ * deploy Master Chef
  *
- * command for deploy on bsc-testnet: 
- * 
- *      npx hardhat run scripts/8_deployMasterChef.js --network testnetBSC
- * 
- *      npx hardhat run scripts/8_deployMasterChef.js --network rinkeby
- *       
- * Workflow:
- * 
- *      1. Deploy `MasterChef` contract.
- *      2. Add `MasterChef` as minter to `HelixToken`
+ * run from root:
+ *      npx hardhat run scripts/13_deployMasterChef.js --network rinkeby
  */
+
 const { ethers, upgrades } = require(`hardhat`);
 const contracts = require("./constants/contracts")
 const addresses = require("./constants/addresses")
@@ -55,20 +48,7 @@ async function main() {
     )
     console.log(`Implementation address: ${implementationAddress}`)
 
-    console.log(`------ Add MasterChef as Minter to HelixToken ---------`);
-    const HelixToken = await ethers.getContractFactory(`HelixToken`);
-    const helixToken = HelixToken.attach(HelixTokenAddress);
-    let tx = await helixToken.addMinter(chef.address);
-    await tx.wait();
-
-    // register the master chef as a referral register recorder
-    console.log(`------ Register master chef as referral register recorder ------`)
-    const ReferralRegister = await ethers.getContractFactory('ReferralRegister')
-    const referralRegister = ReferralRegister.attach(referralRegisterAddress)
-    tx = await referralRegister.addRecorder(chef.address)
-    await tx.wait()
-
-    console.log(`Done!`)
+    console.log(`done`)
 }
 
 main()

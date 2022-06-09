@@ -1,9 +1,8 @@
 /**
- * @dev Helix NFT Deployment 
+ * deploy Helix NFT
  *
- * command for deploy on bsc-testnet: 
- * 
- *      npx hardhat run scripts/5__deployHelixNFT.js --network rinkeby
+ * run from root: 
+ *      npx hardhat run scripts/1__deployHelixNFT.js --network rinkeby
  */
 
 const { ethers, network, upgrades } = require(`hardhat`)
@@ -27,6 +26,7 @@ async function main() {
         helixNftProxy.address
     )
     console.log(`Helix NFT Implementation address: ${helixNftImplementationAddress}`)   
+    console.log('done')
 }
 
 main()

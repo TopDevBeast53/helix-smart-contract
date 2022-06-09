@@ -1,12 +1,10 @@
 /**
- * @dev AutoHelix Deployment
+ * deploy Auto Helix
  *
- * command for deploy on bsc-testnet: 
- * 
- *      npx hardhat run scripts/9_deployAutoHelix.js --network testnetBSC
- * 
- *      npx hardhat run scripts/9_deployAutoHelix.js --network rinkeby
+ * run from root:
+ *      npx hardhat run scripts/14_deployAutoHelix.js --network rinkeby
  */
+
 const { ethers, upgrades } = require(`hardhat`);
 const contracts = require("./constants/contracts")
 const addresses = require("./constants/addresses")
@@ -17,7 +15,6 @@ const MasterChefAddress = contracts.masterChef[env.network];
 const treasuryAddress = addresses.TREASURY[env.network];
 
 async function main() {
-
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${ deployer.address}`);
     

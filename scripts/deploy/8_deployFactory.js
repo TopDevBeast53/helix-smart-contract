@@ -1,10 +1,8 @@
 /**
- * @dev HelixFactory deployment script
- * 
- * command for deploy on bsc-testnet: 
- *      npx hardhat run scripts/1_deployFactory.js --network testnetBSC
- * command for deploy on rinkeby: 
- *      npx hardhat run scripts/1_deployFactory.js --network rinkeby
+ * deploy Helix Factory
+ *
+ * run from root:
+ *      npx hardhat run scripts/8_deployFactory.js --network rinkeby
  */
 
 const { ethers, upgrades } = require("hardhat")
@@ -32,10 +30,8 @@ async function main() {
 
     let INIT_CODE_HASH = await factoryProxy.INIT_CODE_HASH.call()
     console.log(`INIT_CODE_HASH: ${INIT_CODE_HASH}`)
-
-    await factoryProxy.setFeeTo(poolReceiveTradeFee)
-    let feeTo = await factoryProxy.feeTo()
-    console.log(`feeTo: ${feeTo}`)
+    console.log("Don't forget to set INIT_CODE_HASH in HelixLibrary.sol and re-compile before continuing!")
+    console.log('done')
 }
 
 main()

@@ -266,5 +266,10 @@ module.exports = {
     // Sum:        100.00%
     FEE_MINTER_TO_MINT_PERCENTS: {
         4: [8333, 476, 1191]
-    }
+    },
+
+    /// [MasterChef, ReferralRegister, HelixVault]
+    FEE_MINTER_MINTERS: {
+        4: ['0x15B400a434E0d94e0F1e1A0AA4a08E98A2d04128', '0x0f493190F225dC6700aac67E4402748b433629c9', '0x370650b477D550E4611CCe63eE8b7eCa64F207C0']
+    },
 }

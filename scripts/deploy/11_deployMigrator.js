@@ -1,11 +1,8 @@
 /*
- * @dev Deploy the HelixMigrator contract with the provided HelixRouter address.
+ * deploy Helix Migrator
  * 
- * command to deploy on bsc-testnet, run the following from the project root:
- * 
- *      npx hardhat run scripts/12_deployMigrator.js --network testnetBSC
- * 
- *      npx hardhat run scripts/12_deployMigrator.js --network rinkeby
+ * run from root: 
+ *      npx hardhat run scripts/11_deployMigrator.js --network rinkeby
  */
 
 const {ethers} = require('hardhat');

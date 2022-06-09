@@ -1,9 +1,8 @@
 /**
- * @dev Helix NFT Deployment 
+ * deply Helix NFT
  *
- * command for deploy on bsc-testnet: 
- * 
- *      npx hardhat run scripts/5_deployHelixChefNFT.js --network rinkeby
+ * run from root: 
+ *      npx hardhat run scripts/4_deployHelixChefNFT.js --network rinkeby
  */
 
  const { ethers, network, upgrades } = require(`hardhat`)
@@ -36,18 +35,7 @@
          helixChefNftProxy.address
      )
      console.log(`Helix Chef NFT Implementation address: ${helixChefNftImplementationAddress}`)   
- 
-     console.log(`Add helix chef nft as staker to helix nft`)
-     const rpc =  new ethers.providers.JsonRpcProvider(env.rpcURL) ;
-     const admin = new ethers.Wallet( process.env.PRIVATE_KEY, rpc);
-
-     const IHelixNFT = await ethers.getContractFactory("HelixNFT");
-     const helixNFT = IHelixNFT.attach(helixNFTAddress).connect(admin);
-
-     let tx = await helixNFT.addStaker(helixChefNftProxy.address)
-     await tx.wait()
-     console.log(`done!`)
-   
+     console.log('done')
  }
  
  main()

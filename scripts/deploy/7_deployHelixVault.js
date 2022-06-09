@@ -1,12 +1,9 @@
 /*
- * @dev Deployment script for Helix Vault contract.
+ * deploy Helix Vault
  *
- * Run from project root using:
- *     npx hardhat run scripts/13_deployHelixVault.js --network testnetBSC
- * 
- *     npx hardhat run scripts/13_deployHelixVault.js --network rinkeby
+ * run from root: 
+ *     npx hardhat run scripts/7_deployHelixVault.js --network rinkeby
  */
-
 
 // Define script parameters
 const { ethers } = require(`hardhat`)
@@ -45,14 +42,8 @@ async function main() {
         vaultProxy.address
     )
     console.log(`Implementation address: ${implementationAddress}`)
-    
-    console.log(`------ Add Vault as HelixToken minter ---------`);
-    const HelixToken = await ethers.getContractFactory(`HelixToken`);
-    const helixToken = HelixToken.attach(helixTokenAddress);
-    let tx = await helixToken.addMinter(vaultProxy.address, {gasLimit: 3000000});
-    await tx.wait();
 
-    console.log(`Done!`)
+    console.log(`done`)
 }
 
 main()

@@ -1,10 +1,8 @@
 /*
- * @dev Router Deployment script
+ * deploy Router
  * 
- * command for deploy on bsc-testnet: 
- *      npx hardhat run scripts/2_deployRouter.js --network testnetBSC
- * command for deploy on rinkeby: 
- *      npx hardhat run scripts/2_deployRouter.js --network rinkeby
+ * run from root:
+ *      npx hardhat run scripts/10_deployRouter.js --network rinkeby
  */
 
 const hre  = require("hardhat")
@@ -30,7 +28,7 @@ async function main() {
     await router.deployTransaction.wait()
     console.log(`Router deployed to ${router.address}`)
 
-    console.log(`Done`)
+    console.log(`done`)
 }
 
 main()
