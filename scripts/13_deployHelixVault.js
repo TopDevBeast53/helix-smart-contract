@@ -17,7 +17,7 @@ const initials = require('./constants/initials')
 // Define contract constructor arguments
 const helixTokenAddress = contracts.helixToken[env.network]
 const feeHandlerAddress = contracts.feeHandler[env.network]
-const rewardPerBlock = initials.HELIX_VAULT_REWARD_PER_BLOCK[env.network]
+const feeMinterAddress = contracts.feeMinter[env.network]
 const startBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
 const lastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.network]
 
@@ -32,7 +32,7 @@ async function main() {
         [
             helixTokenAddress,
             feeHandlerAddress,
-            rewardPerBlock,
+            feeMinterAddress,
             startBlock,
             lastRewardBlock
         ]

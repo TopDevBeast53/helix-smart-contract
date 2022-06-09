@@ -452,6 +452,18 @@ contract HelixVault is
         return _getDeposit(_depositId);
     }
 
+    /// Return the Deposit associated with _depositId
+    function getDepositAmount(address _user) external view returns (uint256) {
+        uint[] memory ids = depositIds[_user];
+        uint256 length = ids.length;
+        uint256 totalAmount = 0;
+        for (uint256 i = 0; i < length; i++) {
+            uint256 _id = ids[i];
+            totalAmount += deposits[_id].amount;
+        }
+        return totalAmount;
+    }
+
     /// Return the rewardPerBlock assigned to this contract
     function getToMintPerBlock() external view returns (uint256) {
         return _getToMintPerBlock();

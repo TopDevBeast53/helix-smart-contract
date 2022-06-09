@@ -13,8 +13,6 @@ error Unassigned();
 error FeeHandlerNotSet();
 
 abstract contract FeeCollector {
-    using SafeERC20 for IERC20;
-
     /// Handler that this collector transfers fees to
     IFeeHandler public feeHandler;
 
@@ -51,7 +49,7 @@ abstract contract FeeCollector {
     function _delegateTransfer(IERC20 _token, address _from, uint256 _fee) internal virtual {
         if (address(feeHandler) == address(0)) revert FeeHandlerNotSet();
         if (_fee > 0) {
-            _token.safeApprove(address(feeHandler), _fee);
+            _token.approve(address(feeHandler), _fee);
             feeHandler.transferFee(_token, _from, msg.sender, _fee);
         }
     }
