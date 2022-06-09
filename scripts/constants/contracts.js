@@ -47,6 +47,10 @@ module.exports = {
         1: '',
         4: '0xbF053d3A2461A5F27f74b006D823b3672E71Bd25',
     },
+    feeMinter: {
+        1: '',
+        4: '0xfcEe61c5a9Dd4E4Af82E79633fAa955a42Af4cB0',
+    },
     referralRegister: {
         1: '',
         4: '0x0f493190F225dC6700aac67E4402748b433629c9',
@@ -85,11 +89,11 @@ module.exports = {
     },
     helixVault: {
         1: '',
-        4: '0x6a4AE7FC20a0eBab9bd3Bf1881272a869037BcD1',
+        4: '0x370650b477D550E4611CCe63eE8b7eCa64F207C0',
     },
     helixVaultImplementation: {
         1: '',
-        4: '0x223976e1CF684109a3bdC82Cb78C5116bA026c51',
+        4: '0x18f5Bd30916A85EbE67657c19fF3258fcF8CB672',
     },
     yieldSwap: {
         1: '',
