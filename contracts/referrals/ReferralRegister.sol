@@ -15,9 +15,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-/// Thrown when address(0) is encountered
-error ZeroAddress();
-
 /// Thrown when caller is not a recorder
 error NotRecorder(address caller);
 
