@@ -8,6 +8,9 @@ const treasuryAddress = addresses.TREASURY[env.network]
 
 const feeMinterTotalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
 
+const refRegStakeRewardPercent = initials.REFERRAL_STAKE_REWARD_PERCENT[env.network]
+const refRegSwapRewardPercent = initials.REFERRAL_SWAP_REWARD_PERCENT[env.network]
+
 const billion = 1000000000
 
 module.exports.fullExchangeFixture = async () => {
@@ -45,6 +48,18 @@ module.exports.fullExchangeFixture = async () => {
     const feeHandler = await feeHandlerContractFactory.deploy()
     await feeHandler.initialize(treasuryAddress, helixChefNft.address)
 
+    // 6. deploy referral register
+    const referralRegisterContractFactory = await ethers.getContractFactory("ReferralRegister")
+    const referralRegister = await referralRegisterContractFactory.deploy()
+    await referralRegister.initialize(
+        helixToken.address,
+        feeHandler.address,
+        feeMinter.address,
+        refRegStakeRewardPercent,
+        refRegSwapRewardPercent,
+        0
+    )
+
     // 
     // Deploy misc contracts
     //
@@ -59,6 +74,9 @@ module.exports.fullExchangeFixture = async () => {
     // Initialize DEX contracts
     //
     
+    // init helixToken
+    await helixToken.addMinter(referralRegister.address)
+
     // init helixChefNFT
     await helixChefNft.addAccruer(feeHandler.address)
 
@@ -69,6 +87,7 @@ module.exports.fullExchangeFixture = async () => {
         helixNftBridge,
         helixChefNft,
         feeHandler,
+        referralRegister,
         tokenA
     }
 }
