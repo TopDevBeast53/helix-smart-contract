@@ -85,6 +85,13 @@ module.exports.fullExchangeFixture = async () => {
     const oracleFactory = await oracleFactoryContractFactory.deploy()
     await oracleFactory.initialize(factory.address)
 
+    // 10. deploy router
+    const wethContractFactory = await ethers.getContractFactory("WETH9")
+    const weth = await wethContractFactory.deploy()
+
+    const routerContractFactory = await ethers.getContractFactory("HelixRouterV1")
+    const router = await routerContractFactory.deploy(factory.address, weth.address)
+
     // 
     // Deploy misc contracts
     //
@@ -135,6 +142,7 @@ module.exports.fullExchangeFixture = async () => {
         vault,
         factory,
         oracleFactory,
+        router,
         tokenA,
         tokenB,
         tokenC
