@@ -9,11 +9,11 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
-/// Thrown when attempting to assign an invalid fee
-error InvalidFee(uint256 invalidFee);
+/// Thrown when attempting to transfer a fee of 0
+error ZeroFee();
 
-/// Thrown when attempting to assign an invalid address
-error InvalidAddress(address invalidAddress);
+/// Thrown when address(0) is encountered
+error ZeroAddress();
 
 /// Handles routing received fees to internal contracts
 contract FeeHandler is Initializable, OwnableUpgradeable {
@@ -50,12 +50,12 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     );
 
     modifier onlyValidFee(uint256 _fee) {
-        if (_fee == 0) revert InvalidFee(_fee);
+        if (_fee == 0) revert ZeroFee();
         _;
     }
 
     modifier onlyValidAddress(address _address) {
-        if (_address == address(0)) revert InvalidAddress(_address);
+        if (_address == address(0)) revert ZeroAddress();
         _;
     }
 
