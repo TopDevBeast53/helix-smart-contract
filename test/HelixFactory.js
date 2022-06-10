@@ -46,29 +46,29 @@ describe("HelixFactory", () => {
     it("factory: create pair when pair exists fails", async () => {
         await factory.createPair(tokenA.address, tokenB.address)
         await expect(factory.createPair(tokenA.address, tokenB.address))
-            .to.be.revertedWith(`PairAlreadyExists(\"${tokenA.address}\", \"${tokenB.address}\")`)
+            .to.be.revertedWith(`PairAlreadyExists(\"${tokenB.address}\", \"${tokenA.address}\")`)
     })
 
     it("factory: create pair", async () => {
         await factory.createPair(tokenA.address, tokenB.address)
 
-        const expectedPairAddress = '0xD0765e1eb2336803BD1E371934d626be439fA4A9'
-        const pairAddress = await factory.getPair(tokenA.address, tokenB.address)
+        const expectedPairAddress = '0x2cddF41845323cC0F8B0EC0ac9BcD4608e1698bf'
+        const pairAddress = await factory.getPair(tokenB.address, tokenA.address)
         expect(pairAddress).to.eq(expectedPairAddress)
         
         const pair = await getContract("HelixPair", pairAddress)
         expect(await pair.factory()).to.eq(factory.address)
-        expect(await pair.token0()).to.eq(tokenA.address)
-        expect(await pair.token1()).to.eq(tokenB.address)
+        expect(await pair.token0()).to.eq(tokenB.address)
+        expect(await pair.token1()).to.eq(tokenA.address)
     })
 
     it("factory: create pair emits CreatePair event", async () => {
-        const pairAddress = '0xD0765e1eb2336803BD1E371934d626be439fA4A9'
+        const pairAddress = '0x2cddF41845323cC0F8B0EC0ac9BcD4608e1698bf'
         await expect(factory.createPair(tokenA.address, tokenB.address))
             .to.emit(factory, "CreatePair")
             .withArgs(
-                tokenA.address,
                 tokenB.address,
+                tokenA.address,
                 pairAddress,
                 bigNumberify(1)
             )
