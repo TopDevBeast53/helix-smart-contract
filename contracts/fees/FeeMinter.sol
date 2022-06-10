@@ -8,8 +8,8 @@ import "../libraries/Percent.sol";
 /// Thrown when a should equal b but doesn't
 error NotEqual(uint256 a, uint256 b);
 
-/// Thrown when attempting to assign an invalid address
-error InvalidAddress(address invalidAddress);
+/// Thrown when address(0) is encountered
+error ZeroAddress();
 
 /// Thrown when a should be less than or equal to b but isn't
 error NotLessThanOrEqualTo(uint256 a, uint256 b);
@@ -73,7 +73,7 @@ contract FeeMinter is Ownable {
         uint256 length = _minters.length;
         for (uint256 i = 0; i < length; i++) {
             address minter = _minters[i];
-            if (minter == address(0)) revert InvalidAddress(minter);
+            if (minter == address(0)) revert ZeroAddress();
 
             uint256 toMintPercent = _toMintPercents[i];
             percentSum += toMintPercent;
