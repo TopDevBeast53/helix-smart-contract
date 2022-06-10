@@ -25,12 +25,6 @@ module.exports = {
         56: 5, // 5%
         97: 5, // 5%
     },
-    REFERRAL_TO_MINT_PER_BLOCK : {
-        1: '4760000000000000000',
-        4: '4760000000000000000',     // 4.76 * 10e18 -> 4.76 helix tokens per block
-        56: '4760000000000000000',    // 4.76
-        97: '4760000000000000000',    // 4.76
-    },
     REFERRAL_LAST_MINT_BLOCK: {
         1: 0,
         4: 0,
@@ -48,34 +42,16 @@ module.exports = {
         56: 0,
         97: 0,
     },
-    MASTERCHEF_HELIX_TOKEN_REWARD_PER_BLOCK : {
-        1: '81900000000000000000',
-        4: '81900000000000000000',   
-        56: '81900000000000000000', // 81.9 * 10e18 -> 81.9 helix tokens per block 
-        97: '81900000000000000000', // 81.9 * 10e18 -> 81.9 helix tokens per block 
-    },
     MASTERCHEF_STAKING_PERCENT : {
-        1: 675000,
-        4: 675000,
-        56: 675000, // -> 67.5% of all farm rewards will go the users
-        97: 675000, // -> 67.5% of all farm rewards will go the users
+        1: 714000,
+        4: 714000,
     },
     MASTERCHEF_DEV_PERCENT : {
-        1: 325000,
-        4: 325000,
-        56: 325000, // -> 32.5% of all farm rewards will go to dev address
-        97: 325000, // -> 32.5% of all farm rewards will go to dev address
+        1: 286000,
+        4: 286000,
     },
     
     // --------- Helix Vault --------- //
-
-    HELIX_VAULT_REWARD_PER_BLOCK: {
-        1: '',
-        4: '11700000000000000000',
-        56: '11700000000000000000', 
-        97: '11700000000000000000', // 11.7 * 10^18 -> helix tokens per block
-    },
-
     HELIX_VAULT_START_BLOCK : {
         1: 0,
         4: 0,
@@ -266,10 +242,5 @@ module.exports = {
     // Sum:        100.00%
     FEE_MINTER_TO_MINT_PERCENTS: {
         4: [8333, 476, 1191]
-    },
-
-    /// [MasterChef, ReferralRegister, HelixVault]
-    FEE_MINTER_MINTERS: {
-        4: ['0x15B400a434E0d94e0F1e1A0AA4a08E98A2d04128', '0x0f493190F225dC6700aac67E4402748b433629c9', '0x370650b477D550E4611CCe63eE8b7eCa64F207C0']
     },
 }

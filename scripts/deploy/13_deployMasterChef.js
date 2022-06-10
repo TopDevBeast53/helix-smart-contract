@@ -16,7 +16,6 @@ const referralRegisterAddress = contracts.referralRegister[env.network];
 const feeMinterAddress = contracts.feeMinter[env.network];
 const DeveloperAddress = addresses.masterChefDeveloper[env.network];
 const StartBlock = initials.MASTERCHEF_START_BLOCK[env.network];
-const HelixTokenRewardPerBlock = initials.MASTERCHEF_HELIX_TOKEN_REWARD_PER_BLOCK[env.network];
 const StakingPercent = initials.MASTERCHEF_STAKING_PERCENT[env.network];
 const DevPercent = initials.MASTERCHEF_DEV_PERCENT[env.network];
 
