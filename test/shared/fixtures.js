@@ -95,6 +95,14 @@ module.exports.fullExchangeFixture = async () => {
         "Token A", "TTA", expandTo18Decimals(1 * billion)
     )
 
+    const tokenB = await testTokenContractFactory.deploy(
+        "Token B", "TTB", expandTo18Decimals(1 * billion)
+    )
+
+    const tokenC = await testTokenContractFactory.deploy(
+        "Token C", "TTC", expandTo18Decimals(1 * billion)
+    )
+
     // 
     // Initialize DEX contracts
     //
@@ -127,6 +135,8 @@ module.exports.fullExchangeFixture = async () => {
         vault,
         factory,
         oracleFactory,
-        tokenA
+        tokenA,
+        tokenB,
+        tokenC
     }
 }
