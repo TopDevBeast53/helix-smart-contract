@@ -101,7 +101,7 @@ function getWallets(provider) {
 async function getContract(name, address, wallet) {
     if (verbose) { console.log(`get ${name} from ${short(address)}`); }
     const ContractFactory = await ethers.getContractFactory(name);
-    return await ContractFactory.attach(address).connect(wallet);
+    return contractFactory.attach(address).connect(wallet);
 }
 
 async function approve(token, address, amount=maxInt) {

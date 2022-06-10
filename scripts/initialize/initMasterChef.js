@@ -11,7 +11,7 @@ const overrides = {
     gasLimit: 9999999
 }
 
-const { ethers, network } = require(`hardhat`);
+const { ethers } = require(`hardhat`);
 const env = require('./../constants/env')
 const contracts = require('./../constants/contracts')
 
@@ -36,7 +36,7 @@ async function main() {
 async function setReferralRegister(address) {
     print(`set ${address} as referral register`)
     let tx = await contract.setReferralRegister(address, overrides)
-    wait tx.wait()
+    await tx.wait()
 }
 
 /// Load the contract that will be used in this script
@@ -47,7 +47,7 @@ async function load() {
 
     print(`load master chef: ${masterChefAddress}`)
     const contractFactory = await ethers.getContractFactory('MasterChef')
-    contract = await contractFactory.attach(masterChefAddress).connect(wallet)
+    contract = contractFactory.attach(masterChefAddress).connect(wallet)
 }
 
 /// Console.log str if verbose is true and false otherwise

@@ -34,17 +34,14 @@ const env = require('../../scripts/constants/env')
 
 const refRegDefaultStakingRef = initials.REFERRAL_STAKE_REWARD_PERCENT[env.network]
 const refRegDefaultSwapRef = initials.REFERRAL_SWAP_REWARD_PERCENT[env.network]
-const refRegToMintPerBlock = initials.REFERRAL_TO_MINT_PER_BLOCK[env.network]
 
 const chefDeveloperAddress = addresses.masterChefDeveloper[env.network];
 const chefStartBlock = initials.MASTERCHEF_START_BLOCK[env.network];
-const chefHelixTokenRewardPerBlock = initials.MASTERCHEF_HELIX_TOKEN_REWARD_PER_BLOCK[env.network];
 const chefStakingPercent = initials.MASTERCHEF_STAKING_PERCENT[env.network];
 const chefDevPercent = initials.MASTERCHEF_DEV_PERCENT[env.network];
 
 const autoHelixTreasuryAddress = addresses.TREASURY[env.network];
 
-const helixVaultRewardPerBlock = initials.HELIX_VAULT_REWARD_PER_BLOCK[env.network]
 const helixVaultStartBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
 const helixVaultBonusEndBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.network]
 
