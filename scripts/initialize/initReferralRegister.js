@@ -11,7 +11,7 @@ const overrides = {
     gasLimit: 9999999
 }
 
-const { ethers, network } = require(`hardhat`);
+const { ethers } = require(`hardhat`);
 const env = require('./../constants/env')
 const contracts = require('./../constants/contracts')
 
@@ -38,7 +38,7 @@ async function main() {
 async function addRecorder(address) {
     print(`add ${address} as recorder`)
     let tx = await contract.addRecorder(address, overrides)
-    wait tx.wait()
+    await tx.wait()
 }
 
 /// Load the contract that will be used in this script
@@ -49,7 +49,7 @@ async function load() {
 
     print(`load referral register: ${referralRegisterAddress}`)
     const contractFactory = await ethers.getContractFactory('ReferralRegister')
-    contract = await contractFactory.attach(referralRegisterAddress).connect(wallet)
+    contract = contractFactory.attach(referralRegisterAddress).connect(wallet)
 }
 
 /// Console.log str if verbose is true and false otherwise

@@ -11,10 +11,9 @@ const overrides = {
     gasLimit: 9999999
 }
 
-const { ethers, network } = require(`hardhat`);
+const { ethers } = require(`hardhat`);
 const env = require('./../constants/env')
 
-const initials = require('./../constants/initials')
 const contracts = require('./../constants/contracts')
 
 /// Wallet making the transactions in this script
@@ -55,7 +54,7 @@ async function load() {
     [wallet] = await ethers.getSigners()
     print(`load wallet: ${wallet.address}`)
     const contractFactory = await ethers.getContractFactory('HelixNFT')
-    contract = await contractFactory.attach(helixNftAddress).connect(wallet)
+    contract = contractFactory.attach(helixNftAddress).connect(wallet)
 }
 
 /// Console.log str if verbose is true and false otherwise

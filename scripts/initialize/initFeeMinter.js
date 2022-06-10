@@ -7,7 +7,7 @@
 
 const verbose = true
 
-const { ethers, network } = require(`hardhat`);
+const { ethers } = require(`hardhat`);
 const env = require('./../constants/env')
 const contracts = require('./../constants/contracts')
 const initials = require('./../constants/initials')
