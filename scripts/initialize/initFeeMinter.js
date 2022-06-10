@@ -7,7 +7,7 @@
 
 const verbose = true
 
-const { ethers, network } = require(`hardhat`);
+const { ethers } = require(`hardhat`);
 const env = require('./../constants/env')
 const contracts = require('./../constants/contracts')
 const initials = require('./../constants/initials')
@@ -18,14 +18,17 @@ let wallet
 /// The contract whose setters are being called by this script
 let contract 
 
-const feeMinterAddress = contracts.referralRegister[env.network]
-const minters = initials.FEE_MINTER_MINTERS[env.network]
+const feeMinterAddress = contracts.feeMinter[env.network]
+const masterChefAddress = contracts.masterChef[env.network]
+const referralRegisterAddress = contracts.referralRegister[env.network]
+const helixVaultAddress = contracts.helixVault[env.network]
 const toMintPercents = initials.FEE_MINTER_TO_MINT_PERCENTS[env.network]
 
 /// (Re)build any connections by calling this script's contract's setters
 async function main() {
     await load() 
 
+    let minters = [masterChefAddress, referralRegisterAddress, helixVaultAddress]
     await setToMintPercents(minters, toMintPercents)
 
     print('done')
@@ -36,8 +39,8 @@ async function setToMintPercents(minters, toMintPercents) {
     for (let i = 0; i < minters.length; i++) {
         print(`\t${minters[i]}:\t${toMintPercents[i]}`)
     }
-    let tx = await contract.setToMintPercents(minters, toMintPercents, overrides)
-    wait tx.wait()
+    const tx = await contract.setToMintPercents(minters, toMintPercents)
+    await tx.wait()
 }
 
 /// Load the contracts that will be used in this script
@@ -48,7 +51,7 @@ async function load() {
 
     print(`load fee minter: ${feeMinterAddress}`)
     const contractFactory = await ethers.getContractFactory('FeeMinter')
-    contract = await contractFactory.attach(feeMinterAddress).connect(wallet)
+    contract = contractFactory.attach(feeMinterAddress).connect(wallet)
 }
 
 /// Console.log str if verbose is true and false otherwise

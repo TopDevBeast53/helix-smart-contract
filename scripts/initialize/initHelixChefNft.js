@@ -7,11 +7,7 @@
 
 const verbose = true
 
-const overrides = {
-    gasLimit: 9999999
-}
-
-const { ethers, network } = require(`hardhat`);
+const { ethers } = require(`hardhat`);
 const env = require('./../constants/env')
 const contracts = require('./../constants/contracts')
 
@@ -35,7 +31,7 @@ async function main() {
 
 async function addAccruer(accruerAddress) {
     print(`register ${accruerAddress} as HelixChefNft accruer`)
-    let tx = await contract.addAccruer(accruerAddress, overrides)
+    let tx = await contract.addAccruer(accruerAddress)
     await tx.wait()
 }
 
@@ -47,7 +43,7 @@ async function load() {
 
     print(`load Helix Chef Nft: ${helixChefNftAddress}`)
     const contractFactory = await ethers.getContractFactory('HelixChefNFT')
-    contract = await contractFactory.attach(helixChefNftAddress).connect(wallet)
+    contract = contractFactory.attach(helixChefNftAddress).connect(wallet)
 }
 
 /// Console.log str if verbose is true and false otherwise

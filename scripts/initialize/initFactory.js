@@ -11,7 +11,7 @@ const overrides = {
     gasLimit: 9999999
 }
 
-const { ethers, network } = require(`hardhat`);
+const { ethers } = require(`hardhat`);
 const env = require('./../constants/env')
 const contracts = require('./../constants/contracts')
 
@@ -47,7 +47,7 @@ async function load() {
 
     print(`load factory: ${factoryAddress}`)
     const contractFactory = await ethers.getContractFactory('HelixFactory')
-    contract = await contractFactory.attach(factoryAddress).connect(wallet)
+    contract = contractFactory.attach(factoryAddress).connect(wallet)
 }
 
 /// Console.log str if verbose is true and false otherwise

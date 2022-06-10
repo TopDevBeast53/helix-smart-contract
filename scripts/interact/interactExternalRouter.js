@@ -64,7 +64,7 @@ async function main() {
 async function getContract(name, address, wallet) {
     console.log(`get ${name} from ${short(address)}`)
     const ContractFactory = await ethers.getContractFactory(name)
-    return await ContractFactory.attach(address).connect(wallet)
+    return contractFactory.attach(address).connect(wallet)
 }
 
 // Approve the address to spend amount of token
