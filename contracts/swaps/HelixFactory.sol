@@ -39,7 +39,7 @@ contract HelixFactory is Initializable {
     event SetDefaultSwapFee(address indexed setter, uint32 defaultSwapFee);
 
     /// Thrown when caller is not fee to sender
-    error NotFeeToSetter(address caller);
+    error NotFeeToSetter(address caller, address feeToSetter);
 
     /// Thrown when trying to create a pair with identical token addresses
     error IdenticalTokens();
@@ -51,13 +51,13 @@ contract HelixFactory is Initializable {
     error PairAlreadyExists(address token0, address token1);
 
     modifier onlyFeeToSetter() {
-        if (msg.sender != feeToSetter) revert NotFeeToSetter(msg.sender);
+        if (msg.sender != feeToSetter) revert NotFeeToSetter(msg.sender, feeToSetter);
         _;
     }
 
-    function initialize(address _feeToSetter) external initializer {
-        feeToSetter = _feeToSetter;
+    function initialize() external initializer {
         INIT_CODE_HASH = keccak256(abi.encodePacked(type(HelixPair).creationCode));
+        feeToSetter = msg.sender;
         defaultSwapFee = 1;
     }
 

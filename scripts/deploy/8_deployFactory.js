@@ -19,7 +19,7 @@ async function main() {
     console.log(`Deployer address: ${deployer.address}`)
     
     const Factory = await ethers.getContractFactory("HelixFactory")
-    const factoryProxy = await upgrades.deployProxy(Factory, [setterFeeOnPairSwaps]) 
+    const factoryProxy = await upgrades.deployProxy(Factory, []) 
     await factoryProxy.deployTransaction.wait()
     console.log(`HelixFactory Proxy address: ${factoryProxy.address}`)
 

@@ -75,6 +75,16 @@ module.exports.fullExchangeFixture = async () => {
         vaultLastRewardBlock
     )
 
+    // 8. deploy factory
+    const factoryContractFactory = await ethers.getContractFactory("HelixFactory")
+    const factory = await factoryContractFactory.deploy()
+    await factory.initialize()
+
+    // 9. deploy oracle factory
+    const oracleFactoryContractFactory = await ethers.getContractFactory("OracleFactory")
+    const oracleFactory = await oracleFactoryContractFactory.deploy()
+    await oracleFactory.initialize(factory.address)
+
     // 
     // Deploy misc contracts
     //
@@ -103,6 +113,9 @@ module.exports.fullExchangeFixture = async () => {
         feeMinterToMintPercents
     )
 
+    // init factory
+    await factory.setOracleFactory(oracleFactory.address)
+
     return { 
         helixToken,
         helixNft,
@@ -112,6 +125,8 @@ module.exports.fullExchangeFixture = async () => {
         feeHandler,
         referralRegister,
         vault,
+        factory,
+        oracleFactory,
         tokenA
     }
 }

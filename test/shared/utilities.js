@@ -1,7 +1,19 @@
-const { bigNumberify } = require("legacy-ethers/utils")
+const { bigNumberify, solidityPack } = require("legacy-ethers/utils")
 
 module.exports.expandTo18Decimals = (n) => {
   return bigNumberify(n).mul(bigNumberify(10).pow(18))
+}
+
+module.exports.getCreate2Address = (factoryAddress, [tokenA, tokenB], bytecode) => {
+    const [token0, token1] = tokenA < tokenB ? [tokenA, tokenB] : [tokenB, tokenA]
+    const create2Inputs = [
+        '0xff',
+        factoryAddress,
+        keccak256(solidityPack(['address', 'address'], [token0, token1])),
+        keccak256(bytecode)
+    ]
+    const sanitizedInputs = `0x${create2Inputs.map(i => i.slice(2)).join('')}`
+    return getAddress(`0x${keccak256(sanitizedInputs).slice(-40)}`)
 }
 
 /*
