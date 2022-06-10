@@ -1,10 +1,20 @@
+const { expandTo18Decimals } = require("./utilities")
+
 const env = require("../../scripts/constants/env")
 const addresses = require("../../scripts/constants/addresses")
 const initials = require("../../scripts/constants/initials")
 
+const treasuryAddress = addresses.TREASURY[env.network]
+
 const feeMinterTotalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
 
+const billion = 1000000000
+
 module.exports.fullExchangeFixture = async () => {
+    // 
+    // Deploy DEX contracts
+    //
+
     // 0. deploy helix token
     const helixTokenContractFactory = await ethers.getContractFactory("HelixToken")
     const helixToken = await helixTokenContractFactory.deploy()  
@@ -19,10 +29,47 @@ module.exports.fullExchangeFixture = async () => {
         feeMinterTotalToMintPerBlock
     )
 
+    // 3. deploy helix nft bridge
+    const helixNftBridgeContractFactory = await ethers.getContractFactory("HelixNFTBridge")
+    const helixNftBridge = await helixNftBridgeContractFactory.deploy(
+        helixNft.address
+    )
+
+    // 4. deploy helix chef nft
+    const helixChefNftContractFactory = await ethers.getContractFactory("HelixChefNFT")
+    const helixChefNft = await helixChefNftContractFactory.deploy()
+    await helixChefNft.initialize(helixNft.address, helixToken.address)
+
+    // 5. deploy fee handler
+    const feeHandlerContractFactory = await ethers.getContractFactory("FeeHandler")
+    const feeHandler = await feeHandlerContractFactory.deploy()
+    await feeHandler.initialize(treasuryAddress, helixChefNft.address)
+
+    // 
+    // Deploy misc contracts
+    //
+
+    // deploy test tokens
+    const testTokenContractFactory = await ethers.getContractFactory("TestToken")
+    const tokenA = await testTokenContractFactory.deploy(
+        "Token A", "TTA", expandTo18Decimals(1 * billion)
+    )
+
+    // 
+    // Initialize DEX contracts
+    //
+    
+    // init helixChefNFT
+    await helixChefNft.addAccruer(feeHandler.address)
+
     return { 
         helixToken,
         helixNft,
-        feeMinter
+        feeMinter,
+        helixNftBridge,
+        helixChefNft,
+        feeHandler,
+        tokenA
     }
 }
 
