@@ -218,7 +218,7 @@ contract HelixPair is Initializable, HelixLP, ReentrancyGuardUpgradeable {
     function swap(uint256 amount0Out, uint256 amount1Out, address to) external nonReentrant {
         if (amount0Out == 0 && amount1Out == 0) revert InsufficientAmounts(amount0Out, amount1Out);
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        if (amount0Out > _reserve0 || amount1Out > _reserve1) {
+        if (amount0Out >= _reserve0 || amount1Out >= _reserve1) {
             revert AmountsExceedReserves(amount0Out, _reserve0, amount1Out, _reserve1);
         }
 
