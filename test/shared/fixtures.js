@@ -36,6 +36,7 @@ module.exports.fullExchangeFixture = async () => {
     const wethContractFactory = await ethers.getContractFactory("WETH9")
     const routerContractFactory = await ethers.getContractFactory("HelixRouterV1")
     const migratorContractFactory = await ethers.getContractFactory("HelixMigrator")
+    const swapRewardsContractFactory = await ethers.getContractFactory("SwapRewards")
 
     // 
     // Deploy misc contracts
@@ -56,21 +57,22 @@ module.exports.fullExchangeFixture = async () => {
 
     const weth = await wethContractFactory.deploy()
 
-    // deploy external factory for migrator
+    //
+    // Deploy external DEX contracts
+    // 
+
     const externalFactory = await factoryContractFactory.deploy()
     await externalFactory.initialize()
 
-    // deploy external oracleFactory for migrator
     const externalOracleFactory = await oracleFactoryContractFactory.deploy()
     await externalOracleFactory.initialize(externalFactory.address)
 
-    // deploy external router for external migrator
     const externalRouter = await routerContractFactory.deploy(
         externalFactory.address, weth.address
     )
 
     // 
-    // Deploy main DEX contracts
+    // Deploy DEX contracts
     //
 
     // 0. deploy helix token
@@ -133,8 +135,16 @@ module.exports.fullExchangeFixture = async () => {
     // 11. deploy migrator
     const migrator = await migratorContractFactory.deploy(router.address)
 
+    // 12. deploy swap rewards
+    const swapRewards = await swapRewardsContractFactory.deploy(
+        helixToken.address,
+        oracleFactory.address,
+        referralRegister.address,
+        router.address
+    )
+
     // 
-    // Initialize misc contracts
+    // Initialize external DEX contracts
 
     // init external factory
     await externalFactory.setOracleFactory(externalOracleFactory.address)
@@ -160,14 +170,23 @@ module.exports.fullExchangeFixture = async () => {
     // init factory
     await factory.setOracleFactory(oracleFactory.address)
 
+    // init router
+    await router.setSwapRewards(swapRewards.address)
+
+    // init referralRegister
+    await referralRegister.addRecorder(swapRewards.address)
+
     return { 
+        // Misc contracts
         tokenA,
         tokenB,
         tokenC,
         weth,
+        // External contracts
         externalFactory,
         externalOracleFactory,
         externalRouter,
+        // DEX contracts
         helixToken,
         helixNft,
         feeMinter,
@@ -181,5 +200,6 @@ module.exports.fullExchangeFixture = async () => {
         weth,
         router,
         migrator,
+        swapRewards,
     }
 }
