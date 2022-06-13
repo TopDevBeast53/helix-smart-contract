@@ -98,16 +98,20 @@ describe('OracleFactory', () => {
 
         // check the oracle state is set
         const oracle = await oracleFactory.getOracle(tokenA.address, tokenB.address)
-        expect(oracle.token0).to.eq(tokenB.address)     // 0 == C because C < B
-        expect(oracle.token1).to.eq(tokenA.address)     // 1 == B because B > C
+
+        const loTokenAddress = tokenA.address <= tokenB.address ? tokenA.address : tokenB.address
+        const hiTokenAddress = loTokenAddress == tokenA.address ? tokenB.address : tokenA.address
+
+        expect(oracle.token0).to.eq(loTokenAddress)     // 0 == C because C < B
+        expect(oracle.token1).to.eq(hiTokenAddress)     // 1 == B because B > C
         expect(oracle.price0CumulativeLast).to.eq(0)    // because only set by update and update not called
         expect(oracle.price1CumulativeLast).to.eq(0)    // because only set by update and update not called
 
         // check the mapping is populated in both directions
         const oracle0 = await oracleFactory.getOracle(tokenA.address, tokenB.address)
         const oracle1 = await oracleFactory.getOracle(tokenB.address, tokenA.address)
-        expect(oracle0.token0).to.eq(oracle1.token0)
-        expect(oracle0.token1).to.eq(oracle1.token1)
+        expect(oracle0.token0).to.eq(loTokenAddress)
+        expect(oracle0.token1).to.eq(hiTokenAddress)
     })
 
     it('oracleFactory: create oracle emits Create event', async () => {
@@ -133,8 +137,11 @@ describe('OracleFactory', () => {
         // get the oracle to check it's state before and after update is called
         const prevOracle = await oracleFactory.getOracle(tokenA.address, tokenB.address)
 
-        expect(prevOracle.token0).to.eq(tokenB.address)
-        expect(prevOracle.token1).to.eq(tokenA.address)
+        const loTokenAddress = tokenA.address <= tokenB.address ? tokenA.address : tokenB.address
+        const hiTokenAddress = loTokenAddress == tokenA.address ? tokenB.address : tokenA.address
+
+        expect(prevOracle.token0).to.eq(loTokenAddress)
+        expect(prevOracle.token1).to.eq(hiTokenAddress)
         // expect all the following to eq 0 since update hasn't been called
         expect(prevOracle.price0CumulativeLast).to.eq(0)
         expect(prevOracle.price1CumulativeLast).to.eq(0)
@@ -155,8 +162,8 @@ describe('OracleFactory', () => {
         // get the updated oracle
         const oracle = await oracleFactory.getOracle(tokenA.address, tokenB.address)
 
-        expect(oracle.token0).to.eq(tokenB.address)
-        expect(oracle.token1).to.eq(tokenA.address)
+        expect(oracle.token0).to.eq(loTokenAddress)
+        expect(oracle.token1).to.eq(hiTokenAddress)
         // expect all the following to eq 0 since update hasn't been called
         expect(oracle.price0CumulativeLast).to.eq("56155562830926394653497785986352713")
         expect(oracle.price1CumulativeLast).to.eq("4320845661094996273461366439858029")

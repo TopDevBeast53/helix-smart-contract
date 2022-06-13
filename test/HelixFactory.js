@@ -45,33 +45,28 @@ describe("HelixFactory", () => {
 
     it("factory: create pair when pair exists fails", async () => {
         await factory.createPair(tokenA.address, tokenB.address)
+        const loTokenAddress = tokenA.address <= tokenB.address ? tokenA.address : tokenB.address
+        const hiTokenAddress = loTokenAddress == tokenA.address ? tokenB.address : tokenA.address
         await expect(factory.createPair(tokenA.address, tokenB.address))
-            .to.be.revertedWith(`PairAlreadyExists(\"${tokenB.address}\", \"${tokenA.address}\")`)
+            .to.be.revertedWith(`PairAlreadyExists(\"${loTokenAddress}\", \"${hiTokenAddress}\")`)
     })
 
     it("factory: create pair", async () => {
         await factory.createPair(tokenA.address, tokenB.address)
-
-        const expectedPairAddress = '0x2cddF41845323cC0F8B0EC0ac9BcD4608e1698bf'
         const pairAddress = await factory.getPair(tokenB.address, tokenA.address)
-        expect(pairAddress).to.eq(expectedPairAddress)
+
+        const loTokenAddress = tokenA.address <= tokenB.address ? tokenA.address : tokenB.address
+        const hiTokenAddress = loTokenAddress == tokenA.address ? tokenB.address : tokenA.address
         
         const pair = await getContract("HelixPair", pairAddress)
         expect(await pair.factory()).to.eq(factory.address)
-        expect(await pair.token0()).to.eq(tokenB.address)
-        expect(await pair.token1()).to.eq(tokenA.address)
+        expect(await pair.token0()).to.eq(loTokenAddress)
+        expect(await pair.token1()).to.eq(hiTokenAddress)
     })
 
     it("factory: create pair emits CreatePair event", async () => {
-        const pairAddress = '0x2cddF41845323cC0F8B0EC0ac9BcD4608e1698bf'
         await expect(factory.createPair(tokenA.address, tokenB.address))
             .to.emit(factory, "CreatePair")
-            .withArgs(
-                tokenB.address,
-                tokenA.address,
-                pairAddress,
-                bigNumberify(1)
-            )
     })
 
     it("factory: setFeeTo", async () => {
