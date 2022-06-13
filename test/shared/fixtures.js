@@ -142,6 +142,7 @@ module.exports.fullExchangeFixture = async () => {
         vault,
         factory,
         oracleFactory,
+        weth,
         router,
         tokenA,
         tokenB,
