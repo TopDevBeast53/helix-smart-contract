@@ -22,26 +22,4 @@ module.exports = {
         1: '',
         4: '0xee936e648cD998e9df4531dF77EF2D2AECA5921b',
     },
-    //---------------- LP token address to Add into MasterChef on Ethereum ------------------//
-
-    HELIX_WETH: {
-        1: '',
-        4: '0xfbfe53025c54b70b48070904f8765703D2aD749D',
-    },
-    HELIX_USDC: {
-        1: '',
-        4: '0x161962Aec8f3c61D865cd5d53A334780763364e6',
-    },
-    WETH_USDC: {
-        1: '',
-        4: '0xf810902563e1a5e5C91C85a110B11dF6Db6cdda9',
-    },
-    DAI_USDC: {
-        1: '',
-        4: '0x867A1b846F16886F12f6Ff1a256BeCae3314B1A4',
-    },
-    USDC_USDT: {
-        1: '',
-        4: '0x7a2BaA95b255Ad2EE4Bf1802Cf2e283feCAf75A0',
-    },   
 }

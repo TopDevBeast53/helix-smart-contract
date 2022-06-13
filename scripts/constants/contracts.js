@@ -53,46 +53,46 @@ module.exports = {
     },
     factory: {
         1: '',
-        4: '0x227499e1cCf6250B5669D96AC04845DA0486698a',
+        4: '0x968Ff589F8cd372907f3e1B9efF9b059b39FbAf3',
     },
     factoryImplementation: {
         1: '',
-        4: '0x6F103a3d08dFfEafB1d546d250221789A187DC53',
+        4: '0x154b7Ce289060E6D8d53A39Db758a9e8970cf2f9',
     },
     oracleFactory: {
         1: '',
-        4: '0xB494246bac3a22690d61020B30E421621979C231',
+        4: '0x6DB607B979e4161871c4Ee00B309054a2C5f6189',
     },
     oracleFactoryImplementation: {
         1: '',
-        4: '0x14d49f479D347919D6D9Fdff3F390357f13532A1',
+        4: '0x643fe9ADA52AD1d8FD952f91c831be104c0f7C00',
     },
     router: {
         1: '',
-        4: '0xfE29f74ba80b3Ca3263A22a6aDf6DEB365dC32eB',
+        4: '0x543E2039E95c38E1742534680f681349118c0d0a',
     },
     helixMigrator: {
         1: '',
-        4: '0x62a1A86F5b86E2A6274F1deCb7B6722f3BE657cc',
+        4: '0x623135046ed867f454DA0e3B4d6d9B3F617130b0',
     },
     swapRewards: {
         1: '',
-        4: '0xb642074D55080989bd868C9835664d535eB1563b',
+        4: '0x3eF1c28Cbd1cc3b71c5FA4517Bf9463BdD7F43C9',
     },
     masterChef: {
         1: '',
-        4: '0x83F730b35EE3a571c59B229e935A00Ef0A841f90',
+        4: '0xEa0DDa9B02EAfc1a4863008a74f7C2320795bF6c',
     },
     masterChefImplementation: {
         1: '',
-        4: '0x326e24F846c5e0a50f59697b007E9f1DfC6e843c',
+        4: '0xa528C05b9d1EEDB8020b849EA9c037017aA4871A',
     },
     autoHelix: {
         1: '',
-        4: '0x79205Dae1c4f8Ee574DecE44288AdA9d202CA2d9',
+        4: '0x9bE078ce4379c260d16fF58349d48fB09B014Faa',
     },
     autoHelixImplementation: {
         1: '',
-        4: '0x35c61F99D9E466138C9871a94d3734f84141636F',
+        4: '0xAd99Fd1A9Abe867d53C90fCFC47aADb144264b61',
     },
 }

@@ -1,7 +1,7 @@
 module.exports = {
     FACTORY_INIT_CODE_HASH: {
         1: '',
-        4: '0x4bf92398ca4e6d769e05b577c12e3ca0a8125ef817cb0afec3df5708ba9fa0f8',
+        4: '0xc28107fd87760cfb4e1668f5cb7a07b1049eaedf62697db36fb894567a372da6',
     },
     
     // --------- FeeHandler --------- //
@@ -50,7 +50,19 @@ module.exports = {
         1: 286000,
         4: 286000,
     },
-    
+    MASTERCHEF_LPTOKEN_ADDRESSES: {
+        //HELIX-WETH, DAI-USDC, USDC-WETH, DAI-WETH, USDT-USDC
+        4: ['0x50687BB28cf31E574F15E5d33Cde669a2cE07a52',
+            '0x308C01C493196178214Ec8067CFFaf12c9A511Cc',
+            '0x10B7B59d8b26fE3D0C30193F107F937fe48A4c47',
+            '0x75b9427E98E773dF3D88bc0AFa1b3C2cb440eAB1',
+            '0xCB238327b804f59Ea6b915Cc116B54AB4C9F993d']
+    },
+    MASTERCHEF_ALLOC_POINTS:{
+        //HELIX-WETH, DAI-USDC, USDC-WETH, DAI-WETH, USDT-USDC
+        4: [3500, 1500, 1500, 1500, 1500]
+    },
+
     // --------- Helix Vault --------- //
     HELIX_VAULT_START_BLOCK : {
         1: 0,

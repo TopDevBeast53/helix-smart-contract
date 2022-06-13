@@ -15,3 +15,5 @@ npx hardhat run scripts/initialize/initFeeMinter.js --network rinkeby
 npx hardhat run scripts/initialize/initHelixNft.js --network rinkeby
 npx hardhat run scripts/initialize/initHelixNftBridge.js --network rinkeby
 npx hardhat run scripts/initialize/initReferralRegister.js --network rinkeby
+npx hardhat run scripts/initialize/initFeeHandler.js --network rinkeby
+npx hardhat run scripts/initialize/AddLPTokentoMasterChefPools.js --network rinkeby
