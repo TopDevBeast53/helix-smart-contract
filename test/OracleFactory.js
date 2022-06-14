@@ -1,53 +1,47 @@
-import chai, { expect, use } from 'chai'
-import { Contract, constants } from 'legacy-ethers'
-import { solidity, loadFixture, MockProvider, createFixtureLoader } from 'legacy-ethereum-waffle'
-import { BigNumber } from 'legacy-ethers/utils'
-import { MaxUint256 } from 'legacy-ethers/constants'
-import { expandTo18Decimals } from './shared/utilities'
+const { expect } = require("chai")
 
-import HelixPair from '../build/contracts/HelixPair.json'
-import OracleFactory from '../build/contracts/OracleFactory.json'
-import SwapRewards from '../build/contracts/SwapRewards.json'
-import { fullExchangeFixture } from './shared/fixtures'
+const { waffle } = require("hardhat")
+const { loadFixture } = waffle
 
-use(solidity)
+const { bigNumberify } = require("legacy-ethers/utils")
+const { expandTo18Decimals } = require("./shared/utilities")
+const { fullExchangeFixture } = require("./shared/fixtures")
+
+const { constants } = require("@openzeppelin/test-helpers")
 
 const verbose = true
-const overrides = {
-    gasLimit: 9999999
-}
 
 describe('OracleFactory', () => {
-    let swapRewards: Contract
-    let factory: Contract
-    let router: Contract
-    let oracleFactory: Contract
-    let refReg: Contract
-    let helixToken: Contract
-    let helixNFT: Contract
-    let helixLP: Contract
+    let provider 
 
-    let tokenA: Contract
-    let tokenB: Contract
-    let tokenC: Contract
-    let tokenD: Contract
+    let swapRewards
+    let factory
+    let router
+    let oracleFactory
+    let refReg
+    let helixToken
+    let helixNFT
+    let helixLP
 
-    const provider = new MockProvider({
-        hardfork: 'istanbul',
-        mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-        gasLimit: 99999999999
-    })
-    const [wallet0, wallet1] = provider.getWallets()
-    const loadFixture = createFixtureLoader(provider, [wallet0])
+    let tokenA
+    let tokenB
+    let tokenC
+    let tokenD
+
+    let wallet0, wallet1
+
+    let oracleFactory1
 
     beforeEach(async () => {
+        [wallet0, wallet1] = await ethers.getSigners()
+
         // Load all the contracts used in creating swapRewards contract.
         const fixture = await loadFixture(fullExchangeFixture)
-        swapRewards = fixture.swapRewards
 
         factory = fixture.factory
         router = fixture.router
         oracleFactory = fixture.oracleFactory
+        swapRewards = fixture.swapRewards
         refReg = fixture.refReg
 
         helixToken = fixture.helixToken
@@ -58,6 +52,8 @@ describe('OracleFactory', () => {
         tokenB = fixture.tokenB
         tokenC = fixture.tokenC
         tokenD = fixture.tokenD
+
+        oracleFactory1 = await oracleFactory.connect(wallet1)
     })
 
     it('oracleFactory: initialized with expected values', async () => {
@@ -68,106 +64,110 @@ describe('OracleFactory', () => {
     })
 
     it('oracleFactory: create oracle with invalid token address fails', async () => {
-        const invalidToken0Address = constants.AddressZero
-        const invalidToken1Address = constants.AddressZero
+        const invalidToken0Address = constants.ZERO_ADDRESS
+        const invalidToken1Address = constants.ZERO_ADDRESS
 
         await expect(oracleFactory.create(invalidToken0Address, tokenB.address))
-            .to.be.revertedWith('OracleFactory: zero address')
+            .to.be.revertedWith("ZeroAddress()")
 
         await expect(oracleFactory.create(invalidToken0Address, tokenB.address))
-            .to.be.revertedWith('OracleFactory: zero address')
+            .to.be.revertedWith("ZeroAddress()")
     })
 
     it('oracleFactory: create oracle as non-owner/non-factory fails', async () => {
         // expect call to fail since msg.sender == wallet1.address
-        const _oracleFactory = new Contract(oracleFactory.address, JSON.stringify(OracleFactory.abi), provider)
-            .connect(wallet1) 
-        await expect(_oracleFactory.create(tokenB.address, tokenC.address))
-            .to.be.revertedWith('OracleFactory: invalid caller')
+        await expect(oracleFactory1.create(tokenA.address, tokenB.address))
+            .to.be.revertedWith(`InvalidCaller(\"${wallet1.address}\")`)
     })
 
     it('oracleFactory: create oracle with identical token addresses fails', async () => {
         await expect(oracleFactory.create(tokenA.address, tokenA.address))
-            .to.be.revertedWith('OracleFactory: identical addresses')
+            .to.be.revertedWith("IdenticalTokens()")
     })
-    
+
     it('oracleFactory: create oracle when oracle already exists fails', async () => {
         // Call as factory first since pair has to be created in factory to avoid revert
         await factory.createPair(tokenA.address, tokenB.address)
         await expect(oracleFactory.create(tokenA.address, tokenB.address))
-            .to.be.revertedWith('OracleFactory: already created')
+            .to.be.revertedWith(`OracleExists(\"${tokenA.address}\", \"${tokenB.address}\")`)
     })
-    
+
     it('oracleFactory: create oracle', async () => {
         // create the oracle
-        await factory.createPair(tokenB.address, tokenC.address)
-    
+        await factory.createPair(tokenA.address, tokenB.address)
+
         // check the oracle state is set
-        const oracle = await oracleFactory.getOracle(tokenB.address, tokenC.address)
-        expect(oracle.token0).to.eq(tokenC.address)     // 0 == C because C < B
-        expect(oracle.token1).to.eq(tokenB.address)     // 1 == B because B > C
+        const oracle = await oracleFactory.getOracle(tokenA.address, tokenB.address)
+
+        const loTokenAddress = tokenA.address <= tokenB.address ? tokenA.address : tokenB.address
+        const hiTokenAddress = loTokenAddress == tokenA.address ? tokenB.address : tokenA.address
+
+        expect(oracle.token0).to.eq(loTokenAddress)     // 0 == C because C < B
+        expect(oracle.token1).to.eq(hiTokenAddress)     // 1 == B because B > C
         expect(oracle.price0CumulativeLast).to.eq(0)    // because only set by update and update not called
         expect(oracle.price1CumulativeLast).to.eq(0)    // because only set by update and update not called
 
         // check the mapping is populated in both directions
-        const oracle0 = await oracleFactory.getOracle(tokenB.address, tokenC.address)
-        const oracle1 = await oracleFactory.getOracle(tokenC.address, tokenB.address)
-        expect(oracle0.token0).to.eq(oracle1.token0)
-        expect(oracle0.token1).to.eq(oracle1.token1)
+        const oracle0 = await oracleFactory.getOracle(tokenA.address, tokenB.address)
+        const oracle1 = await oracleFactory.getOracle(tokenB.address, tokenA.address)
+        expect(oracle0.token0).to.eq(loTokenAddress)
+        expect(oracle0.token1).to.eq(hiTokenAddress)
     })
 
     it('oracleFactory: create oracle emits Create event', async () => {
-        await expect(factory.createPair(tokenC.address, tokenD.address))
+        await expect(factory.createPair(tokenA.address, tokenB.address))
             .to.emit(oracleFactory, "Create")
     })
 
     it('oracleFactory: update when oracle not created fails', async () => {
-        await expect(oracleFactory.update(tokenB.address, tokenC.address))
-            .to.be.revertedWith('OracleFactory: not created')
+        await expect(oracleFactory.update(tokenA.address, tokenB.address))
+            .to.be.revertedWith(`OracleDoesNotExist(\"${tokenA.address}\", \"${tokenB.address}\")`)
     })
 
     it('oracleFactory: update with no reserves fails', async () => {
-        await factory.createPair(tokenB.address, tokenC.address)
-        await expect(oracleFactory.update(tokenB.address, tokenC.address))
-            .to.be.revertedWith('OracleFactory: no reserves in pair')
+        await factory.createPair(tokenA.address, tokenB.address)
+        await expect(oracleFactory.update(tokenA.address, tokenB.address))
+            .to.be.revertedWith("NoReserves(0, 0)")
     })
 
     it('oracleFactory: update updates oracle state', async () => {
         // create the pair/oracle
-        await factory.createPair(tokenB.address, tokenC.address)
+        await factory.createPair(tokenA.address, tokenB.address)
 
         // get the oracle to check it's state before and after update is called
-        const prevOracle = await oracleFactory.getOracle(tokenB.address, tokenC.address)
+        const prevOracle = await oracleFactory.getOracle(tokenA.address, tokenB.address)
 
-        expect(prevOracle.token0).to.eq(tokenC.address)
-        expect(prevOracle.token1).to.eq(tokenB.address)
+        const loTokenAddress = tokenA.address <= tokenB.address ? tokenA.address : tokenB.address
+        const hiTokenAddress = loTokenAddress == tokenA.address ? tokenB.address : tokenA.address
+
+        expect(prevOracle.token0).to.eq(loTokenAddress)
+        expect(prevOracle.token1).to.eq(hiTokenAddress)
         // expect all the following to eq 0 since update hasn't been called
         expect(prevOracle.price0CumulativeLast).to.eq(0)
         expect(prevOracle.price1CumulativeLast).to.eq(0)
-        expect(prevOracle.blockTimestampLast).to.eq(0) 
+        expect(prevOracle.blockTimestampLast).to.eq(0)
         expect(prevOracle.price0Average[0]).to.eq(0)
         expect(prevOracle.price1Average[0]).to.eq(0)
 
         // approve the router to transfer tokens, add liquidity to the pair, and swap
-        await prepareForSwap(tokenB, 1000, tokenC, 300)
-        await swap(tokenB, tokenC, 40)
-        
+        await prepareForSwap(tokenA, 1000, tokenB, 300)
+        await swap(tokenA, tokenB, 40)
         // wait until the block timestamp has advanced
         const waitDuration = 2  // seconds
         await waitUntil(await now() + waitDuration)
 
         // update the oracle
-        await oracleFactory.update(tokenB.address, tokenC.address)
+        await oracleFactory.update(tokenA.address, tokenB.address)
 
         // get the updated oracle
-        const oracle = await oracleFactory.getOracle(tokenB.address, tokenC.address)
+        const oracle = await oracleFactory.getOracle(tokenA.address, tokenB.address)
 
-        expect(oracle.token0).to.eq(tokenC.address)
-        expect(oracle.token1).to.eq(tokenB.address)
+        expect(oracle.token0).to.eq(loTokenAddress)
+        expect(oracle.token1).to.eq(hiTokenAddress)
         // expect all the following to eq 0 since update hasn't been called
         expect(oracle.price0CumulativeLast).to.eq("56155562830926394653497785986352713")
         expect(oracle.price1CumulativeLast).to.eq("4320845661094996273461366439858029")
-        expect(oracle.blockTimestampLast).to.be.eq(await now()) 
+        expect(oracle.blockTimestampLast).to.be.eq(await now())
     })
 
     it('oracleFactory: update only changes the state once per period', async () => {
@@ -177,7 +177,7 @@ describe('OracleFactory', () => {
         // approve the router to transfer tokens, add liquidity to the pair, and swap
         await prepareForSwap(tokenB, 1000, tokenC, 300)
         await swap(tokenB, tokenC, 40)
-        
+
         // wait until the block timestamp has advanced
         const waitDuration = 2  // seconds
         await waitUntil(await now() + waitDuration)
@@ -193,7 +193,7 @@ describe('OracleFactory', () => {
         expect(prevOracle.price0CumulativeLast).to.eq("56155562830926394653497785986352713")
         expect(prevOracle.price1CumulativeLast).to.eq("4320845661094996273461366439858029")
         const expectedTimestamp = await now()
-        expect(prevOracle.blockTimestampLast).to.be.eq(expectedTimestamp) 
+        expect(prevOracle.blockTimestampLast).to.be.eq(expectedTimestamp)
 
         // try to update again
         // wait until the block timestamp has advanced
@@ -209,7 +209,7 @@ describe('OracleFactory', () => {
         // expect all the following to eq 0 since update hasn't been called
         expect(oracle.price0CumulativeLast).to.eq("56155562830926394653497785986352713")
         expect(oracle.price1CumulativeLast).to.eq("4320845661094996273461366439858029")
-        expect(oracle.blockTimestampLast).to.be.eq(expectedTimestamp) 
+        expect(oracle.blockTimestampLast).to.be.eq(expectedTimestamp)
     })
 
     it('oracleFactory: update emits Update event', async () => {
@@ -219,7 +219,7 @@ describe('OracleFactory', () => {
         // approve the router to transfer tokens, add liquidity to the pair, and swap
         await prepareForSwap(tokenB, 1000, tokenC, 300)
         await swap(tokenB, tokenC, 40)
-        
+
         // wait until the block timestamp has advanced
         const waitDuration = 2  // seconds
         await waitUntil(await now() + waitDuration)
@@ -228,7 +228,7 @@ describe('OracleFactory', () => {
         const expectedPrice1 = "4320845661094996273461366439858029"
         const expectedReserve0 = '288483729517655204247'
         const expectedReserve1 = '1040000000000000000000'
-        
+
         // update the oracle
         await expect(oracleFactory.update(tokenB.address, tokenC.address))
             .to.emit(oracleFactory, 'Update')
@@ -237,7 +237,7 @@ describe('OracleFactory', () => {
     it('oracleFactory: consult returns amount in if oracle doesn\'t exist', async () => {
         expect(await oracleFactory.consult(tokenB.address, 0, tokenC.address)).to.eq(0)
         expect(await oracleFactory.consult(tokenB.address, 10000, tokenC.address)).to.eq(10000)
-        expect(await oracleFactory.consult(tokenB.address, MaxUint256, tokenC.address)).to.eq(MaxUint256)
+        expect(await oracleFactory.consult(tokenB.address, expandTo18Decimals(10000), tokenC.address)).to.eq(expandTo18Decimals(10000))
     })
 
     it('oracleFactory: consult returns prices if oracle exists', async () => {
@@ -248,28 +248,28 @@ describe('OracleFactory', () => {
 
     it('oracleFactory: get oracle for token pair (A, B)', async () => {
         await factory.createPair(tokenA.address, tokenB.address)
-        expect((await oracleFactory.getOracle(tokenA.address, tokenB.address)).token0).to.not.eq(constants.AddressZero)
+        expect((await oracleFactory.getOracle(tokenA.address, tokenB.address)).token0).to.not.eq(constants.ZERO_ADDRESS)
     })
-    
+
     it('oracleFactory: get oracle argument order doesn\'t matter', async () => {
         await factory.createPair(tokenA.address, tokenB.address)
-        expect((await oracleFactory.getOracle(tokenB.address, tokenA.address)).token0).to.not.eq(constants.AddressZero)
+        expect((await oracleFactory.getOracle(tokenB.address, tokenA.address)).token0).to.not.eq(constants.ZERO_ADDRESS)
     })
 
     it('oracleFactory: get oracle that hasn\'t been created fails', async () => {
         await expect(oracleFactory.getOracle(tokenA.address, tokenA.address))
-            .to.be.revertedWith("OracleFactory: not created")
+            .to.be.revertedWith("OracleDoesNotExist")
     })
 
-    function print(str: string) {
+    function print(str) {
         if (verbose) console.log(str)
     }
 
     // prepare the tokens and the pool to swap
-    async function prepareForSwap(token0: Contract, amount0: number, token1: Contract, amount1: number) {
+    async function prepareForSwap(token0, amount0, token1, amount1) {
         // must approve tokens before they can be added as liquidity
-        await token0.approve(router.address, MaxUint256)
-        await token1.approve(router.address, MaxUint256)
+        await token0.approve(router.address, expandTo18Decimals(10000))
+        await token1.approve(router.address, expandTo18Decimals(10000))
 
         // must add liquidity so that there are reserves of each token in pair
         await router.addLiquidity(
@@ -280,20 +280,18 @@ describe('OracleFactory', () => {
             0,
             0,
             wallet0.address,
-            MaxUint256,
-            overrides 
+            expandTo18Decimals(10000)
         )
     }
-    
-    async function swap(token0: Contract, token1: Contract, amount: number) {
+
+    async function swap(token0, token1, amount) {
         // swap the tokens so that oracle.update is called
         await router.swapExactTokensForTokens(
-            expandTo18Decimals(amount), 
-            0, 
-            [token0.address, token1.address], 
-            wallet0.address, 
-            MaxUint256,
-            overrides
+            expandTo18Decimals(amount),
+            0,
+            [token0.address, token1.address],
+            wallet0.address,
+            expandTo18Decimals(10000)
         )
     }
 
@@ -303,7 +301,7 @@ describe('OracleFactory', () => {
     }
 
     // perform dummy writes to the contract until the desired timestamp is reached
-    async function waitUntil(timestamp: number) {
+    async function waitUntil(timestamp) {
         // wait until timestamp is passed
         while (await now() <= timestamp) {
             await oracleFactory.setPeriod(86000)

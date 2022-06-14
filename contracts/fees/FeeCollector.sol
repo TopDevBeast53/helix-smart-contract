@@ -6,10 +6,10 @@ import "../interfaces/IFeeHandler.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-/// Thrown when a required variable is unassigned
-error Unassigned();
+/// Thrown when address(0) is encountered
+error ZeroAddress();
 
-/// Thrown when performing a transaction requiring a feeHandler but non is set
+/// Thrown when performing a transaction requiring a feeHandler but none is set
 error FeeHandlerNotSet();
 
 abstract contract FeeCollector {
@@ -56,7 +56,7 @@ abstract contract FeeCollector {
 
     /// Called by the owner to set a new _feeHandler address
     function _setFeeHandler(address _feeHandler) internal virtual { 
-        if (_feeHandler == address(0)) revert Unassigned();
+        if (_feeHandler == address(0)) revert ZeroAddress();
         feeHandler = IFeeHandler(_feeHandler);
         emit SetFeeHandler(msg.sender, address(_feeHandler));
     }

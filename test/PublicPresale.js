@@ -1,55 +1,43 @@
-import chai, { expect } from 'chai'
-import { solidity, MockProvider, createFixtureLoader, deployContract } from 'legacy-ethereum-waffle'
-import { Contract, constants } from 'legacy-ethers'
-import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
-import { MaxUint256 } from 'legacy-ethers/constants'
+const { expect } = require("chai")                                                                   
+                                                                                                   
+const { waffle } = require("hardhat")                                                              
+const { loadFixture } = waffle                                                                     
+                                                                                                   
+const { bigNumberify } = require("legacy-ethers/utils")                                
+const { expandTo18Decimals } = require("./shared/utilities")                                       
+const { fullExchangeFixture } = require("./shared/fixtures")                                       
+const { constants } = require("@openzeppelin/test-helpers")                                        
+                                                                                                   
+const verbose = true  
 
-import { fullExchangeFixture } from './shared/fixtures'
-import { expandTo18Decimals } from './shared/utilities'
-
-import PublicPresale from '../build/contracts/PublicPresale.json'
-import TestToken from '../build/contracts/TestToken.json'
-import HelixToken from '../build/contracts/HelixToken.json'
-
+const addresses = require('../scripts/constants/addresses')
 const initials = require('../scripts/constants/initials')
 const env = require('../scripts/constants/env')
 
+const treasuryAddress = addresses.TREASURY[env.network]
 const inputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.network]
 const outputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.network]
 const initialBalance = initials.PUBLIC_PRESALE_INITIAL_BALANCE[env.network]
 
-chai.use(solidity)
-
-const overrides = {
-    gasLimit: 99999999999
-}
-
 const SECONDS_PER_DAY = 86400
 const wallet1InitialBalance = 10000
 
-const verbose = true
-
 describe('Public Presale', () => {
-    const provider = new MockProvider({
-        hardfork: 'istanbul',
-        mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-        gasLimit: 99999999999
-    })
+    let wallet0, wallet1, wallet2
 
-    const [wallet0, wallet1, wallet2] = provider.getWallets()
-    const loadFixture = createFixtureLoader(provider, [wallet0])
-
-    let publicPresale: Contract
-    let tokenA: Contract        // input token: a stand-in for BUSD 
-    let tokenB: Contract        // used for miscellaneous token checks
-    let helixToken: Contract    // output token
+    let publicPresale
+    let tokenA        // input token: a stand-in for BUSD 
+    let tokenB        // used for miscellaneous token checks
+    let helixToken    // output token
 
     // contracts owned by wallet 1, used when wallet 1 should be msg.sender 
-    let publicPresale1: Contract
-    let tokenA1: Contract
-    let helixToken1: Contract
+    let publicPresale1
+    let tokenA1
+    let helixToken1
 
     beforeEach(async () => {
+        [wallet0, wallet1, wallet2] = await ethers.getSigners()
+
         const fullExchange = await loadFixture(fullExchangeFixture)
         publicPresale = fullExchange.publicPresale
         tokenA = fullExchange.tokenA
@@ -64,18 +52,24 @@ describe('Public Presale', () => {
         await tokenA.transfer(wallet1.address, expandTo18Decimals(wallet1InitialBalance))
 
         // Pre-approve the presale to spend caller's funds
-        await helixToken.approve(publicPresale.address, MaxUint256)
+        await helixToken.approve(publicPresale.address, expandTo18Decimals(1000000))
 
         // create the wallet 1 owned contracts
-        publicPresale1 = new Contract(publicPresale.address, JSON.stringify(PublicPresale.abi), provider).connect(wallet1)   
-        tokenA1 = new Contract(tokenA.address, JSON.stringify(TestToken.abi), provider).connect(wallet1)   
-        helixToken1 = new Contract(helixToken.address, JSON.stringify(HelixToken.abi), provider).connect(wallet1)   
+        const publicPresaleContractFactory = await ethers.getContractFactory("PublicPresale") 
+        publicPresale1 = publicPresaleContractFactory.attach(publicPresale.address)
+            .connect(wallet1)
+
+        const testTokenContractFactory = await ethers.getContractFactory("TestToken")
+        tokenA1 = testTokenContractFactory.attach(tokenA.address).connect(wallet1)
+
+        const helixTokenContractFactory = await ethers.getContractFactory("HelixToken")
+        helixToken1 = helixTokenContractFactory.attach(helixToken.address).connect(wallet1)
     })
 
     it('publicPresale: initialized with expected values', async () => {
         expect(await publicPresale.inputToken()).to.eq(tokenA.address)
         expect(await publicPresale.outputToken()).to.eq(helixToken.address)
-        expect(await publicPresale.treasury()).to.eq(wallet0.address)
+        expect(await publicPresale.treasury()).to.eq(treasuryAddress)
         expect(await publicPresale.INPUT_RATE()).to.eq(inputRate)
         expect(await publicPresale.OUTPUT_RATE()).to.eq(outputRate)
         expect(await helixToken.balanceOf(publicPresale.address))
@@ -100,21 +94,15 @@ describe('Public Presale', () => {
 
     it('publicPresale: add owner as non-owner fails', async () => {
         await expect(publicPresale1.addOwner(wallet2.address))
-            .to.be.revertedWith('PublicPresale: not owner')
+            .to.be.revertedWith('NotAnOwner')
     })
 
     it('publicPresale: add owner with invalid address fails', async () => {
-        const invalidAddress = constants.AddressZero
+        const invalidAddress = constants.ZERO_ADDRESS
         await expect(publicPresale.addOwner(invalidAddress))
-            .to.be.revertedWith('PublicPresale: zero address')
+            .to.be.revertedWith('ZeroAddress')
     })
 
-    it('publicPresale: add owner duplicate fails', async () => {
-        await publicPresale.addOwner(wallet1.address)
-        await expect(publicPresale.addOwner(wallet1.address))
-            .to.be.revertedWith('PublicPresale: already owner')
-    })
- 
     it('publicPresale: whitelist add', async () => {
         const users = [wallet1.address, wallet2.address]
         
@@ -128,7 +116,7 @@ describe('Public Presale', () => {
     it('publicPresale: whitelist add as non-owner fails', async () => {
         const users = [wallet1.address, wallet2.address]
         await expect(publicPresale1.whitelistAdd(users))
-            .to.be.revertedWith('PublicPresale: not owner')
+            .to.be.revertedWith('NotAnOwner')
     })
 
     it('publicPresale: whitelist remove', async () => {
@@ -154,7 +142,7 @@ describe('Public Presale', () => {
         await publicPresale.whitelistAdd(users)
 
         await expect(publicPresale1.whitelistRemove(wallet1.address))
-            .to.be.revertedWith('PublicPresale: not owner')
+            .to.be.revertedWith('NotAnOwner')
     })
 
     it('publicPresale: get amount out', async () => {  
@@ -204,7 +192,7 @@ describe('Public Presale', () => {
         const phase = 0
         // wallet 1 is not an owner
         await expect(publicPresale1.setPurchasePhase(phase))
-            .to.be.revertedWith('PublicPresale: not owner')
+            .to.be.revertedWith("NotAnOwner")
     })
 
     it('publicPresale: set purchase phase with invalid phase fails', async () => {
@@ -218,11 +206,6 @@ describe('Public Presale', () => {
         const phaseDuration = (await publicPresale.PURCHASE_PHASE_DURATION()).toNumber()
         await expect(publicPresale.setPurchasePhase(phase))
             .to.emit(publicPresale, 'SetPurchasePhase')
-            .withArgs(
-                phase,
-                Math.trunc(Date.now() / 1000),
-                Math.trunc(Date.now() / 1000) + phaseDuration  
-            )
     }) 
 
     it('publicPresale: purchase in phase 1', async () => {
@@ -337,17 +320,17 @@ describe('Public Presale', () => {
         await publicPresale.setPurchasePhase(unpaused)
 
         await expect(publicPresale.burn(ticketsAvailable))
-            .to.be.revertedWith("PublicPresale: invalid phase")
+            .to.be.revertedWith("RemovalProhibited")
     })
 
     it('publicPresale: burn more tickets than available fails', async () => {
-        const ticketsAvailable = MaxUint256
+        const ticketsAvailable = expandTo18Decimals(1000000)
 
         const paused = 0
         await publicPresale.setPurchasePhase(paused)
 
         await expect(publicPresale.burn(ticketsAvailable))
-            .to.be.revertedWith("PublicPresale: insufficient tickets available")
+            .to.be.revertedWith("AmountExceedsTicketsAvailable")
     })
 
     it('publicPresale: withdraw all tickets while paused as owner', async () => {
@@ -380,20 +363,20 @@ describe('Public Presale', () => {
         await publicPresale.setPurchasePhase(unpaused)
 
         await expect(publicPresale.withdraw(ticketsAvailable))
-            .to.be.revertedWith("PublicPresale: invalid phase")
+            .to.be.revertedWith("RemovalProhibited")
     })
 
     it('publicPresale: withdraw more tickets than available fails', async () => {
-        const ticketsAvailable = MaxUint256
+        const ticketsAvailable = expandTo18Decimals(1000000)
 
         const paused = 0
         await publicPresale.setPurchasePhase(paused)
 
         await expect(publicPresale.withdraw(ticketsAvailable))
-            .to.be.revertedWith("PublicPresale: insufficient tickets available")
+            .to.be.revertedWith("AmountExceedsTicketsAvailable")
     })
 
-    function print(str: string) {
+    function print(str) {
         if (verbose) console.log(str)
     }
 })

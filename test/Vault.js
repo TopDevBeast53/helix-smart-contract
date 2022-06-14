@@ -1,52 +1,42 @@
-import chai, { expect } from 'chai'
-import { solidity, MockProvider, createFixtureLoader, deployContract } from 'legacy-ethereum-waffle'
-import { Contract, constants } from 'legacy-ethers'
-import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
-import { MaxUint256 } from 'legacy-ethers/constants'
+const { expect } = require("chai")
 
-import { fullExchangeFixture } from './shared/fixtures'
-import { expandTo18Decimals } from './shared/utilities'
+const { waffle } = require("hardhat")
+const { loadFixture } = waffle
 
-import HelixVault from '../build/contracts/HelixVault.json'
+const { constants } = require( "legacy-ethers")
+const { MaxUint256 } = require("legacy-ethers/constants")
 
-const addresses = require('../scripts/constants/addresses')
-const initials = require('../scripts/constants/initials')
-const env = require('../scripts/constants/env')
+const { expandTo18Decimals } = require("./shared/utilities")
+const { fullExchangeFixture } = require("./shared/fixtures")
 
-const rewardPerBlock = '11705148000000000000'
+const env = require("../scripts/constants/env")
+const initials = require("../scripts/constants/initials")
+const addresses = require("../scripts/constants/addresses")
+
 const startBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
 const lastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.network]
 const treasuryAddress = addresses.TREASURY[env.network]
 
-chai.use(solidity)
-
-const overrides = {
-    gasLimit: 99999999999
-}
-
 const SECONDS_PER_DAY = 86400
+const rewardPerBlock = '11705148000000000000'
 
 const verbose = true
 
 describe('Vault', () => {
-    const provider = new MockProvider({
-        hardfork: 'istanbul',
-        mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-        gasLimit: 99999999999
-    })
+    let provider
+    let wallet0, wallet1
 
-    const [wallet0, wallet1] = provider.getWallets()
-    const loadFixture = createFixtureLoader(provider, [wallet0])
-
-    let vault: Contract
-    let helixToken: Contract
-    let feeHandler: Contract
-    let feeMinter: Contract
+    let vault
+    let helixToken
+    let feeHandler
+    let feeMinter
 
     // Vault owned by wallet1 (not the owner), used for checking isOwner privileges
-    let _vault: Contract
+    let vault1
 
     beforeEach(async () => {
+        [wallet0, wallet1] = await ethers.getSigners()
+
         const fullExchange = await loadFixture(fullExchangeFixture)
         vault = fullExchange.vault
         helixToken = fullExchange.helixToken
@@ -60,8 +50,7 @@ describe('Vault', () => {
         await helixToken.approve(vault.address, MaxUint256)
 
         // Create the wallet1 owned vault
-        _vault = new Contract(vault.address, JSON.stringify(HelixVault.abi), provider)
-            .connect(wallet1)   
+        vault1 = await vault.connect(wallet1)
     })
 
     it('vault: initialized with expected values', async () => {
@@ -73,7 +62,7 @@ describe('Vault', () => {
 
     it('vault: get durations initialized by constructor', async () => {
         const durations = await vault.getDurations()
-   
+
         expect(durations[0].duration).to.eq(90 * SECONDS_PER_DAY)     // duration (n days * seconds per day)
         expect(durations[0].weight).to.eq(5)                          // weight
 
@@ -107,20 +96,20 @@ describe('Vault', () => {
         const invalidDuration = 0;
         const weight = 100;
         await expect(vault.addDuration(invalidDuration, weight))
-            .to.be.revertedWith('Vault: zero duration')
+            .to.be.revertedWith("ZeroDuration()")
     })
 
     it('vault: add duration with invalid weight fails to add', async () => {
         const duration = 1;
         const invalidWeight = 0;
         await expect(vault.addDuration(duration, invalidWeight))
-            .to.be.revertedWith('Vault: zero weight')
+            .to.be.revertedWith("ZeroWeight()")
     })
 
     it('vault: add duration as non-owner fails to add', async () => {
         const duration = 1;
         const weight = 100;
-        await expect(_vault.addDuration(duration, weight))
+        await expect(vault1.addDuration(duration, weight))
             .to.be.revertedWith('Ownable: caller is not the owner')
     })
 
@@ -158,7 +147,7 @@ describe('Vault', () => {
 
         expect(durations[2].duration).to.eq(720 * SECONDS_PER_DAY)
         expect(durations[2].weight).to.eq(100)
- 
+
         // remove the last duration
         await vault.removeDuration(2)
 
@@ -170,7 +159,7 @@ describe('Vault', () => {
 
         expect(durations[1].duration).to.eq(540 * SECONDS_PER_DAY)
         expect(durations[1].weight).to.eq(50)
- 
+
         // remove the two remaining durations
         await vault.removeDuration(0)
         await vault.removeDuration(0)
@@ -181,19 +170,19 @@ describe('Vault', () => {
 
         // try to remove from empty array and expect error
         await expect(vault.removeDuration(0))
-            .to.be.revertedWith('Vault: invalid index')
+            .to.be.revertedWith("IndexOutOfBounds(0, 0)")
     })
 
     it('vault: remove duration with invalid duration index fails to remove', async () => {
-        await expect(vault.removeDuration(5)).to.be.revertedWith('Vault: invalid index')
+        await expect(vault.removeDuration(5)).to.be.revertedWith("IndexOutOfBounds(5, 5)")
     })
 
     it('vault: remove duration as non-owner fails to remove', async () => {
-        await expect(_vault.removeDuration(0)).to.be.revertedWith('Ownable: caller is not the owner')
+        await expect(vault1.removeDuration(0)).to.be.revertedWith('Ownable: caller is not the owner')
     })
 
     it('vault: get blocks difference', async () => {
-        const lastRewardBlock = await vault.lastRewardBlock() 
+        const lastRewardBlock = await vault.lastRewardBlock()
 
         // Expect to enter the "if" condition
         let to = lastRewardBlock - 1
@@ -209,49 +198,50 @@ describe('Vault', () => {
         to = lastRewardBlock + 1
         from = lastRewardBlock - 1
         expect(await vault.getBlocksDifference(from, to)).to.eq(lastRewardBlock - from)
-    }) 
+    })
 
     it('vault: get blocks difference fails if "to" preceeds "from" block', async () => {
         const to = 998
         const from = 999
         // require "to" to be less than "from" for following test to fail as expected
-        expect(to).to.be.below(from) 
+        expect(to).to.be.below(from)
         await expect(vault.getBlocksDifference(from, to))
-            .to.be.revertedWith('Vault: invalid block values')
+            .to.be.revertedWith("FromGreaterThanTo(999, 998)")
     })
 
     it('vault: update pool', async () => {
         // Skip testing block.number <= lastUpdateBlock condition
 
         // First test the case where the vault contract balance is 0
-        // overwrite _vault with a fresh deployment so that the contract's token balance == 0
-        const _vault = await deployContract(wallet0, HelixVault, [], overrides)
-        await _vault.initialize(
-                helixToken.address,
-                feeHandler.address,
-                feeMinter.address,
-                startBlock,
-                lastRewardBlock
+        // overwrite vault2 with a fresh deployment so that the contract's token balance == 0
+        const vaultContractFactory = await ethers.getContractFactory("HelixVault")                                                      
+        const vault2 = await vaultContractFactory.deploy()                                              
+        await vault2.initialize(                                                                        
+            helixToken.address,                                                                        
+            feeHandler.address,                                                                        
+            feeMinter.address,                                                                         
+            0,                                                                           
+            0 
         )
-        expect(await helixToken.balanceOf(_vault.address)).to.eq(0)
+        expect(await helixToken.balanceOf(vault2.address)).to.eq(0)
 
-        // and now after update expect lastUpdateBlock to be increased 
+        // and now after update expect lastUpdateBlock to be increased
         // but expect accTokenPerShare to stay the same
 
-        let prevAccTokenPerShare = await _vault.accTokenPerShare()
+        let prevAccTokenPerShare = await vault2.accTokenPerShare()
         expect(prevAccTokenPerShare).to.eq(0)
 
         // +1 since update pool occurs on block after reading the block number
-        let prevLastRewardBlock = await _vault.lastUpdateBlock()
+        let prevLastRewardBlock = await vault2.lastUpdateBlock()
         let expectedBlockNumber = (await provider.getBlockNumber()) + 1
 
-        await _vault.updatePool()
+        await vault2.updatePool()
 
-        expect(await _vault.accTokenPerShare()).to.eq(prevAccTokenPerShare)
-        expect(await _vault.lastUpdateBlock()).to.eq(expectedBlockNumber)
+        expect(await vault2.accTokenPerShare()).to.eq(prevAccTokenPerShare)
+        expect(await vault2.lastUpdateBlock()).to.eq(expectedBlockNumber)
 
         // Now test the case where the contract balance is not zero
-        // Note that we're now using "vault" and not "_vault"
+        // Note that we're now using "vault" and not "vault2"
         prevAccTokenPerShare = await vault.accTokenPerShare()
         prevLastRewardBlock = await vault.lastUpdateBlock()
 
@@ -267,9 +257,9 @@ describe('Vault', () => {
     it('vault: new deposit fails if invalid amount is passed', async () => {
         const invalidAmount = 0
         const durationIndex = 0
-    
+
         await expect(vault.newDeposit(invalidAmount, durationIndex))
-            .to.be.revertedWith('Vault: zero amount')
+            .to.be.revertedWith("ZeroAmount()")
     })
 
     it('vault: new deposit triggers update pool', async () => {
@@ -279,7 +269,7 @@ describe('Vault', () => {
 
         const amount = expandTo18Decimals(100)
         const durationIndex = 0
-        await vault.newDeposit(amount, durationIndex); 
+        await vault.newDeposit(amount, durationIndex);
 
         expect(await vault.accTokenPerShare()).to.eq(expectedAccTokenPerShare)
         expect(await vault.lastUpdateBlock()).to.eq(expectedBlockNumber)
@@ -290,18 +280,18 @@ describe('Vault', () => {
         const invalidDurationIndex = (await vault.getDurations()).length
 
         await expect(vault.newDeposit(amount, invalidDurationIndex))
-            .to.be.revertedWith('Vault: invalid index')
+            .to.be.revertedWith("IndexOutOfBounds(5, 5)")
     })
 
     it('vault: new deposit', async () => {
         const amount = expandTo18Decimals(100)
         const durationIndex = 0
-    
+
         // track the change in vault balance after deposit
         const prevVaultBalance = await helixToken.balanceOf(vault.address)
 
         // create the new deposit
-        await vault.newDeposit(amount, durationIndex); 
+        await vault.newDeposit(amount, durationIndex);
 
         // check that it was created
         const depositIds = await vault.getDepositIds(wallet0.address)
@@ -319,7 +309,7 @@ describe('Vault', () => {
         expect(deposit.withdrawn).to.be.false
 
         // check that funds were transfered to the vault
-        // note: using above and not eq since the balance will be slightly 
+        // note: using above and not eq since the balance will be slightly
         // higher due to the minted reward
         expect(await helixToken.balanceOf(vault.address))
             .to.above(amount.add(prevVaultBalance))
@@ -344,19 +334,19 @@ describe('Vault', () => {
         let invalidId = 1
 
         await expect(vault.updateDeposit(amount, invalidId))
-            .to.be.revertedWith('Vault: no deposit made')
+            .to.be.revertedWith("NoDepositMade()")
     })
 
     it('vault: update deposit fails if caller is not depositor', async () => {
         // first deposit to vault as wallet0 resulting in depositId == 1
         let amount = expandTo18Decimals(100)
         let index = 0
-        await vault.newDeposit(amount, index); 
+        await vault.newDeposit(amount, index);
 
         // then make deposit to depositId == 1 as wallet1
         let id = 0
-        await expect(_vault.updateDeposit(amount, id))
-            .to.be.revertedWith('Vault: not depositor')
+        await expect(vault1.updateDeposit(amount, id))
+            .to.be.revertedWith(`CallerIsNotDepositor(\"${wallet1.address}\", \"${wallet0.address}\")`)
     })
 
     it('vault: update deposit', async () => {
@@ -365,7 +355,7 @@ describe('Vault', () => {
         let durationIndex = 0
 
         // create the new deposit
-        await vault.newDeposit(amount, durationIndex); 
+        await vault.newDeposit(amount, durationIndex);
 
         // check that it was correctly created
         let depositIds = await vault.getDepositIds(wallet0.address)
@@ -380,10 +370,10 @@ describe('Vault', () => {
         // Don't check timestamps
         expect(deposit.rewardDebt).to.eq(await getReward(amount, expectedWeight))
         expect(deposit.withdrawn).to.be.false
-        
+
         // Then update the deposit and test the change
         let id = 0
-        await vault.updateDeposit(amount, id); 
+        await vault.updateDeposit(amount, id);
 
         // get the deposit ids for this users
         depositIds = await vault.getDepositIds(wallet0.address)
@@ -408,7 +398,7 @@ describe('Vault', () => {
         // Make initial deposit
         let amount = expandTo18Decimals(100)
         let durationIndex = 0
-        await vault.newDeposit(amount, durationIndex); 
+        await vault.newDeposit(amount, durationIndex);
 
         // Now update the deposit
         const expectedId = 0
@@ -430,7 +420,8 @@ describe('Vault', () => {
         await vault.newDeposit(amount, durationIndex)
 
         let id = 0
-        await expect(_vault.withdraw(amount, id)).to.be.revertedWith('Vault: not depositor')
+        await expect(vault1.withdraw(amount, id))
+            .to.be.revertedWith(`CallerIsNotDepositor(\"${wallet1.address}\", \"${wallet0.address}\")`)
     })
 
     it('vault: withdraw fails if deposit is already withdrawn', async () => {
@@ -443,9 +434,9 @@ describe('Vault', () => {
         let amount = expandTo18Decimals(100)
         let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
         await vault.newDeposit(amount, durationIndex)
-        
+
         let id = (await vault.depositId()).sub(1)
-   
+
         // and use that to get the withdraw timestamp
         const deposit = await vault.deposits(id)
         const expectedWithdrawTimestamp = deposit.withdrawTimestamp
@@ -471,10 +462,10 @@ describe('Vault', () => {
         let amount = expandTo18Decimals(100)
         let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
         await vault.newDeposit(amount, durationIndex)
-        
+
         // get the most recent deposit id
         let id = await vault.depositId()
-   
+
         // and use that to get the withdraw timestamp
         const deposit = await vault.deposits(id)
         const expectedWithdrawTimestamp = deposit.withdrawTimestamp
@@ -486,7 +477,7 @@ describe('Vault', () => {
         const invalidAmount = amount.add(1)
         id = (await vault.depositId()).sub(1)
         await expect(vault.withdraw(invalidAmount, id))
-            .to.be.revertedWith('Vault: invalid amount')
+            .to.be.reverted()
     })
 
     it('vault: withdraw fails if tokens are locked', async () => {
@@ -494,12 +485,15 @@ describe('Vault', () => {
         let amount = expandTo18Decimals(100)
         let durationIndex = 0
         await vault.newDeposit(amount, durationIndex)
-        
+
         // we don't wait
 
         // expect withdrawal to fail because we haven't waited 90 days before withdrawing
         let id = (await vault.depositId()).sub(1)
-        await expect(vault.withdraw(amount, id)).to.be.revertedWith('Vault: locked')
+        // get locked until timestamp
+        const lockedUntilTimestamp = (await vault.getDeposit(id)).withdrawTimestamp
+        await expect(vault.withdraw(amount, id))
+            .to.be.revertedWith(`LockedUntil(${lockedUntilTimestamp})`)
     })
 
     it('vault: withdraw', async () => {
@@ -512,10 +506,10 @@ describe('Vault', () => {
         let amount = expandTo18Decimals(100)
         let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
         await vault.newDeposit(amount, durationIndex)
-        
+
         // get the most recent deposit id
         let id = (await vault.depositId()).sub(1)
-   
+
         // and use that to get the withdraw timestamp
         let deposit = await vault.deposits(id)
         const expectedWithdrawTimestamp = deposit.withdrawTimestamp
@@ -547,18 +541,20 @@ describe('Vault', () => {
     it('vault: pending reward fails if called with invalid id', async () => {
         // invalid because no deposits have been made
         const invalidId = 1
-        await expect(vault.pendingReward(invalidId)).to.be.revertedWith('Vault: no deposit made')
+        await expect(vault.pendingReward(invalidId))
+            .to.be.revertedWith("NoDepositMade()")
     })
 
     it('vault: pending reward fails if caller is not depositor', async () => {
         // first deposit to vault as wallet0 resulting in depositId == 1
         let amount = expandTo18Decimals(100)
         let durationIndex = 0
-        await vault.newDeposit(amount, durationIndex); 
+        await vault.newDeposit(amount, durationIndex);
 
         // get the most recent depositId
         let id = (await vault.depositId()).sub(1)
-        await expect(_vault.pendingReward(id)).to.be.revertedWith('Vault: not depositor')
+        await expect(vault1.pendingReward(id))
+            .to.be.revertedWith(`CallerIsNotDepositor(\"${wallet1.address}\", \"${wallet0.address}\")`)
     })
 
     it('vault: pending reward fails if deposit is already withdrawn', async () => {
@@ -570,7 +566,7 @@ describe('Vault', () => {
         // first deposit to vault as wallet0 resulting in depositId == 1
         let amount = expandTo18Decimals(100)
         let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
-        await vault.newDeposit(amount, durationIndex); 
+        await vault.newDeposit(amount, durationIndex);
 
         // get the most recent depositId
         let id = (await vault.depositId()).sub(1)
@@ -601,7 +597,7 @@ describe('Vault', () => {
         // first deposit to vault as wallet0 resulting in depositId == 1
         let amount = expandTo18Decimals(100)
         let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
-        await vault.newDeposit(amount, durationIndex); 
+        await vault.newDeposit(amount, durationIndex);
 
         // get the most recent depositId
         let id = (await vault.depositId()).sub(1)
@@ -634,7 +630,7 @@ describe('Vault', () => {
         _accTokenPerShare += reward * precisionFactor / lpSupply
         print(`accTok after  ${_accTokenPerShare}`)
 
-        // _getReward 
+        // _getReward
         const weightPercent = await vault.WEIGHT_PERCENT()
         print(`weight % ${weightPercent}`)
         const getRewardResult = amount.div(expandTo18Decimals(1)).mul(weight).mul(_accTokenPerShare).div(precisionFactor).div(weightPercent)
@@ -651,18 +647,20 @@ describe('Vault', () => {
     it('vault: claim reward fails if called with invalid id', async () => {
         // invalid because no deposits have been made
         const invalidId = 1
-        await expect(vault.claimReward(invalidId)).to.be.revertedWith('Vault: no deposit made')
+        await expect(vault.claimReward(invalidId))
+            .to.be.revertedWith("NoDepositMade()")
     })
 
     it('vault: claim reward fails if caller is not depositor', async () => {
         // first deposit to vault as wallet0 resulting in depositId == 1
         let amount = expandTo18Decimals(100)
         let durationIndex = 0
-        await vault.newDeposit(amount, durationIndex); 
+        await vault.newDeposit(amount, durationIndex);
 
         // get the most recent depositId
         let id = (await vault.depositId()).sub(1)
-        await expect(_vault.claimReward(id)).to.be.revertedWith('Vault: not depositor')
+        await expect(vault1.claimReward(id))
+            .to.be.revertedWith(`CallerIsNotDepositor(\"${wallet1.address}\", \"${wallet0.address}\")`)
     })
 
     it('vault: claim reward fails if deposit is already withdrawn', async () => {
@@ -674,7 +672,7 @@ describe('Vault', () => {
         // first deposit to vault as wallet0 resulting in depositId == 1
         let amount = expandTo18Decimals(100)
         let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
-        await vault.newDeposit(amount, durationIndex); 
+        await vault.newDeposit(amount, durationIndex);
 
         // get the most recent depositId
         let id = (await vault.depositId()).sub(1)
@@ -703,7 +701,7 @@ describe('Vault', () => {
         // first deposit to vault as wallet0 resulting in depositId == 1
         let amount = expandTo18Decimals(100)
         let durationIndex = (await vault.getDurations()).length - 1     // use the most recently created duration
-        await vault.newDeposit(amount, durationIndex); 
+        await vault.newDeposit(amount, durationIndex);
 
         // get the most recent depositId
         let id = (await vault.depositId()).sub(1)
@@ -720,7 +718,7 @@ describe('Vault', () => {
     })
 
     it('vault: set last reward block as non-owner fails', async () => {
-        await expect(_vault.setLastRewardBlock(1))
+        await expect(vault1.setLastRewardBlock(1))
             .to.be.revertedWith("Ownable: caller is not the owner")
     })
 
@@ -739,14 +737,14 @@ describe('Vault', () => {
 
     it('vault: set treasury as non-owner fails', async () => {
         const treasury = wallet1.address
-        await expect(_vault.setFeeHandler(treasury))
+        await expect(vault1.setFeeHandler(treasury))
             .to.be.revertedWith("Ownable: caller is not the owner")
     })
 
     it('vault: set treasury with invalid address fails', async () => {
         const invalidTreasury = constants.AddressZero       // invalid because 0x000..00 can not receive funds
         await expect(vault.setFeeHandler(invalidTreasury))
-            .to.be.revertedWith("FeeCollector: zero address")
+            .to.be.revertedWith("ZeroAddress()")
     })
 
     it('vault: set treasury', async () => {
@@ -764,14 +762,14 @@ describe('Vault', () => {
 
     it('vault: set fee as non-owner fails', async () => {
         const fee = 0
-        await expect(_vault.setCollectorPercent(fee))
+        await expect(vault1.setCollectorPercent(fee))
             .to.be.revertedWith("Ownable: caller is not the owner")
     })
 
     it('vault: set fee with invalid percent fails', async () => {
         const invalidFee = 101      // invalid because max percent == 100
         await expect(vault.setCollectorPercent(invalidFee))
-            .to.be.revertedWith("FeeCollector: percent exceeds max")
+            .to.be.revertedWith("InvalidPercent(101, 0)")
     })
 
     it('vault: set fee', async () => {
@@ -787,7 +785,7 @@ describe('Vault', () => {
             .withArgs(wallet0.address, fee)
     })
 
-    async function getAccTokenPerShare(blockNumber: number) {
+    async function getAccTokenPerShare(blockNumber) {
         const blocks = await vault.getBlocksDifference(await vault.lastUpdateBlock(), blockNumber)
         const _rewardPerBlock = await vault.getToMintPerBlock() // preface with _ avoid name conflict with global rewardPerBlock
         const reward = blocks.mul(_rewardPerBlock)
@@ -799,23 +797,23 @@ describe('Vault', () => {
         return accTokenPerShare.add(reward).mul(precisionFactor).div(balance)
     }
 
-    function print(str: string) {
+    function print(str) {
         if (verbose) console.log(str)
     }
 
     // return the current timestamp
     async function now() {
-        return (await provider.getBlock(provider.getBlockNumber())).timestamp 
+        return (await provider.getBlock(provider.getBlockNumber())).timestamp
     }
 
     // used to wait until withdraw can be called
     // perform dummy writes to the contract until the desired timestamp is reached
-    async function waitUntil(timestamp: number) {
+    async function waitUntil(timestamp) {
         // add a new duration
         const duration = 1
         const weight = 1000
         await vault.addDuration(duration, weight)
-    
+
         // get the index of the newly added duration
         let index = (await vault.getDurations()).length - 1
 
@@ -828,10 +826,10 @@ describe('Vault', () => {
         await vault.removeDuration(index)
     }
 
-    async function getReward(amount: BigNumber, weight: number) {
+    async function getReward(amount, weight) {
         const accTokenPerShare = await vault.accTokenPerShare()
         const precisionFactor = await vault.PRECISION_FACTOR()
-        const weightPercent = 100 
+        const weightPercent = 100
         return amount.mul(weight).mul(accTokenPerShare).div(precisionFactor).div(weightPercent)
     }
 })

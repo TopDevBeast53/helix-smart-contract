@@ -37,7 +37,7 @@ error DecimalsNotLessThanMax(uint256 decimals, uint256 max);
 error AmountExceedsBalance(uint256 amount, uint256 balance);
 
 /// Thrown when withdraw is still locked until timestamp
-error WaitUntil(uint256 timestamp);
+error LockedUntil(uint256 timestamp);
 
 /// Thrown when amount is greater than max allowed
 error AmountIsGreaterThanMax(uint256 amount, uint256 max);
@@ -322,7 +322,7 @@ contract HelixVault is
         _requireIsDepositor(msg.sender, deposit.depositor); 
         _requireNotWithdrawn(deposit.withdrawn);
         if (_amount > deposit.amount) revert AmountExceedsBalance(_amount, deposit.amount);
-        if (block.timestamp < deposit.withdrawTimestamp) revert WaitUntil(deposit.withdrawTimestamp);
+        if (block.timestamp < deposit.withdrawTimestamp) revert LockedUntil(deposit.withdrawTimestamp);
        
         updatePool();
         

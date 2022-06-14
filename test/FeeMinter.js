@@ -1,49 +1,35 @@
-import chai, { expect } from "chai"
-import { solidity, MockProvider, createFixtureLoader, deployContract } from "legacy-ethereum-waffle"
-import { Contract, constants } from "legacy-ethers"
-import { BigNumber, bigNumberify } from "legacy-ethers/utils"
-import { MaxUint256 } from "legacy-ethers/constants"
+const { expect } = require("chai")
 
-import { fullExchangeFixture } from "./shared/fixtures"
-import { expandTo18Decimals } from "./shared/utilities"
+const { waffle } = require("hardhat")
+const { loadFixture } = waffle
 
-import FeeMinter from "../build/contracts/FeeMinter.json"
+const { constants } = require( "legacy-ethers")
+const { MaxUint256 } = require("legacy-ethers/constants")
 
-const initials = require("../scripts/constants/initials")
+const { expandTo18Decimals } = require("./shared/utilities")
+const { fullExchangeFixture } = require("./shared/fixtures")
+
 const env = require("../scripts/constants/env")
-
+const initials = require("../scripts/constants/initials")
 const totalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
-
-chai.use(solidity)
-
-const overrides = {
-    gasLimit: 99999999999
-}
 
 const verbose = true
 
 describe("Fee Minter", () => {
-    const provider = new MockProvider({
-        hardfork: "istanbul",
-        mnemonic: "horn horn horn horn horn horn horn horn horn horn horn horn",
-        gasLimit: 99999999999
-    })
-
-    const [wallet0, wallet1, wallet2, wallet3] = provider.getWallets()
-    const loadFixture = createFixtureLoader(provider, [wallet0])
+    let wallet0, wallet1, wallet2, wallet3
 
     // Contracts owned by wallet0
-    let feeMinter: Contract
+    let feeMinter
 
     // Contracts owned by wallet1
-    let feeMinter1: Contract
+    let feeMinter1
 
     beforeEach(async () => {
+        [wallet0, wallet1, wallet2, wallet3] = await ethers.getSigners()
+
         const fullExchange = await loadFixture(fullExchangeFixture)
         feeMinter = fullExchange.feeMinter
-
-        feeMinter1 = new Contract(feeMinter.address, JSON.stringify(FeeMinter.abi), provider)
-            .connect(wallet1)
+        feeMinter1 = await feeMinter.connect(wallet1)
     })
 
     it("feeMinter: initialized with expected values", async () => {
@@ -75,33 +61,33 @@ describe("Fee Minter", () => {
 
     it("feeMinter: set to mint percents with array length mismatch fails", async () => {
         await expect(feeMinter.setToMintPercents([], [1]))
-            .to.be.revertedWith("FeeMinter: array length mismatch")
+            .to.be.revertedWith("NotEqual(0, 1)")
     })
 
     it("feeMinter: set to mint percents with zero address fails", async () => {
         const minters = [constants.AddressZero]
         const toMintPercents = [100]
         await expect(feeMinter.setToMintPercents(minters, toMintPercents))
-            .to.be.revertedWith("FeeMinter: zero address")
+            .to.be.revertedWith("ZeroAddress()")
     })
 
     it("feeMinter: set to mint percents with invalid to mint percent fails", async () => {
         const minters = [wallet0.address]
         const toMintPercents = [10100]  // 101.00%
         await expect(feeMinter.setToMintPercents(minters, toMintPercents))
-            .to.be.revertedWith("FeeMinter: sum exceeds 100%") 
+            .to.be.revertedWith("NotLessThanOrEqualTo(10100, 10000)") 
     })
 
     it("feeMinter: set to mint percents with percents not totaling 100 fails", async () => {
         let minters = [wallet0.address]
         let toMintPercents = [99]   // 99.00%
         await expect(feeMinter.setToMintPercents(minters, toMintPercents))
-            .to.be.revertedWith("FeeMinter: percents do not total 100") 
+            .to.be.revertedWith("NotEqual(99, 10000)") 
 
         minters = [wallet0.address, wallet1.address]
         toMintPercents = [97, 2]
         await expect(feeMinter.setToMintPercents(minters, toMintPercents))
-            .to.be.revertedWith("FeeMinter: percents do not total 100") 
+            .to.be.revertedWith("NotEqual(99, 10000)") 
     })
 
     it("feeMinter: set to mint percents", async () => {
@@ -181,7 +167,7 @@ describe("Fee Minter", () => {
             .to.eq(expectedToMintPerBlock3.toString())
     })
 
-    function print(str: string) {
+    function print(str) {
         if (verbose) console.log(str)
     }
 })
