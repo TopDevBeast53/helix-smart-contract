@@ -64,7 +64,7 @@ contract PublicPresale is Pausable, ReentrancyGuard {
     }
 
     /// Maximum number of tickets available for purchase at the start of the sale
-    uint256 public constant TICKET_MAX = 21000;
+    uint256 public constant TICKET_MAX = 2000;
 
     /// Minimum number of tickets that can be purchased at a time
     uint256 public constant MINIMUM_TICKET_PURCHASE = 1;
@@ -87,7 +87,7 @@ contract PublicPresale is Pausable, ReentrancyGuard {
     uint256 public OUTPUT_RATE;
 
     /// Number of decimals on the `inputToken` used for calculating ticket exchange rates
-    uint256 public constant INPUT_TOKEN_DECIMALS = 1e18;
+    uint256 public constant INPUT_TOKEN_DECIMALS = 1e6;
 
     /// Number of decimals on the `outputToken` used for calculating ticket exchange rates
     uint256 public constant OUTPUT_TOKEN_DECIMALS = 1e18;
@@ -197,13 +197,14 @@ contract PublicPresale is Pausable, ReentrancyGuard {
         uint256 inputTokenAmount = getAmountOut(_amount, inputToken); 
 
         // Pay for the `amount` of tickets
-        uint256 balance = inputToken.balanceOf(msg.sender);
-        if (inputTokenAmount > balance) revert InsufficientBalance(inputTokenAmount, balance);
-    
-        uint256 allowance = inputToken.allowance(msg.sender, address(this));
-        if (inputTokenAmount > allowance) {
-            revert InsufficientAllowance(inputTokenAmount, allowance);
-        }
+        require(
+            inputTokenAmount <= inputToken.balanceOf(msg.sender), 
+            "PublicPresale: insufficient balance"
+        );
+        require(
+            inputTokenAmount <= inputToken.allowance(msg.sender, address(this)), 
+            "PublicPresale: insufficient allowance"
+        );
 
         // Pay for the tickets by withdrawing inputTokenAmount from caller
         inputToken.safeTransferFrom(msg.sender, treasury, inputTokenAmount);
@@ -323,14 +324,10 @@ contract PublicPresale is Pausable, ReentrancyGuard {
         view 
         onlyValidAddress(_user)
     {
-        if (purchasePhase == PurchasePhase.NoPurchase) {
-            revert PurchaseProhibited(uint(purchasePhase));
-        }
-        if (_amount < MINIMUM_TICKET_PURCHASE) {
-            revert InsufficientAmount(_amount, MINIMUM_TICKET_PURCHASE);
-        }
+        require(purchasePhase != PurchasePhase.NoPurchase, "PublicPresale: purchase prohibited");
+        require(_amount >= MINIMUM_TICKET_PURCHASE, "PublicPresale: below minimum purchase");
         if (purchasePhase == PurchasePhase.WhitelistOnly) { 
-            if (!whitelist[_user]) revert NotWhitelisted(_user);
+            require(whitelist[_user], "PublicPresale: not whitelisted");
         }
     }
 

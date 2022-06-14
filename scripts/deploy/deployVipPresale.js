@@ -8,9 +8,9 @@
 // Define script parameters
 const hre = require('hardhat')
 const { ethers } = require(`hardhat`)
-const env = require('./constants/env')
-const contracts = require('./constants/contracts')
-const initials = require('./constants/initials')
+const env = require('../constants/env')
+const contracts = require('../constants/contracts')
+const initials = require('../constants/initials')
 
 // Define contract constructor arguments                                    // main  / test
 const inputTokenAddress = initials.VIP_PRESALE_INPUT_TOKEN[env.network]     // BUSD  / TestTokenA

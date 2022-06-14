@@ -3,17 +3,19 @@
  *
  * Run from project root using:
  *     npx hardhat run scripts/17_deployPublicPresale.js --network testnetBSC
+ * 
+ *     npx hardhat run scripts/deploy/deployPublicPresale.js --network rinkeby
  */
 
 
 // Define script parameters
 const { ethers } = require(`hardhat`)
-const env = require('./constants/env')
-const contracts = require('./constants/contracts')
-const initials = require('./constants/initials')
+const env = require('../constants/env')
+const contracts = require('../constants/contracts')
+const initials = require('../constants/initials')
 
-// Define contract constructor arguments                                    // main  / test
-const inputTokenAddress = initials.PUBLIC_PRESALE_INPUT_TOKEN[env.network]     // BUSD  / TestTokenA
+// Define contract constructor arguments                                    
+const inputTokenAddress = initials.PUBLIC_PRESALE_INPUT_TOKEN[env.network]     // USDC  / TestTokenA
 const outputTokenAddress = initials.PUBLIC_PRESALE_OUTPUT_TOKEN[env.network]   // HELIX / TestTokenB
 const treasuryAddress = initials.PUBLIC_PRESALE_TREASURY[env.network]
 const inputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.network]
@@ -42,12 +44,12 @@ async function main() {
     console.log(`Public Presale deployed to ${contract.address}`)
 
     // Send funds of outputToken to the contract
-    const IOutputToken = await ethers.getContractFactory('TestToken')
-    outputToken = await IOutputToken.attach(outputTokenAddress).connect(deployer) 
+    // const IOutputToken = await ethers.getContractFactory('TestToken')
+    // const outputToken = IOutputToken.attach(outputTokenAddress).connect(deployer) 
 
-    console.log(`Send ${initialBalance} tokens to presale`)
-    // Add zeros since token has 18 decimals
-    await outputToken.transfer(contract.address, initialBalance.toString() + '000000000000000000')
+    // console.log(`Send ${initialBalance} tokens to presale`)
+    // // Add zeros since token has 18 decimals
+    // await outputToken.transfer(contract.address, initialBalance.toString() + '000000000000000000')
     console.log('Done')
 }
 

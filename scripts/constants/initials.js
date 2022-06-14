@@ -147,47 +147,37 @@ module.exports = {
     // Input token address
     PUBLIC_PRESALE_INPUT_TOKEN: {
         1: '',
-        4: '',
-        56: '', // Expect BUSD for mainnet
-        97: '0xBe5D153b1A9e82E35d1e5f4Da8805E088c344482',   // Test Token A for testing
+        4: '0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b', // USDC on Rinkeby
     },
 
     // Output token address
     PUBLIC_PRESALE_OUTPUT_TOKEN: {
         1: '',
-        4: '',
-        56: '', // Expect HELIX for mainnet
-        97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
+        4: '0x79DD2dad8D04F9279F94580DBEd2306A0aE118Bd', // rinkeby HELIX
     },
 
     // Treasury address
     PUBLIC_PRESALE_TREASURY: {
         1: '',
-        4: '',
+        4: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57',
     },
 
     // BUSD per ticket
     PUBLIC_PRESALE_INPUT_RATE : {
-        1: 100,
-        4: 100,
-        56: 100,
-        97: 100,
+        1: 25,
+        4: 25,
     },
 
     // HELIX per ticket
     PUBLIC_PRESALE_OUTPUT_RATE : {
-        1: 5000,
-        4: 5000,
-        56: 5000,
-        97: 5000,
+        1: 1000,
+        4: 1000,
     },
 
     // Length of time between purchase phases
     PUBLIC_PRESALE_PURCHASE_PHASE_DURATION: {
-        1: 0,
-        4: 1800,
-        56: 0,
-        97: 1800,     // 30 minutes, 86400 == 1 day
+        1: 1800,
+        4: 300,
     },
 
     // Amount of HELIX to fund Public Presale contract with
