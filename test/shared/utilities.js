@@ -73,6 +73,12 @@ module.exports.getDomainSeparator = (name, tokenAddress) => {
   )
 }
 
+module.exports.mineBlocks = async (blocks, provider) => {
+    for (let i = 0; i < blocks; i++) {
+        await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1);
+    }
+}
+
 const PERMIT_TYPEHASH = keccak256(
   toUtf8Bytes('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)')
 )
@@ -138,11 +144,6 @@ export async function mineBlock(provider: Web3Provider, timestamp: number): Prom
   })
 }
 
-export async function mineBlocks(blocks: number, provider: Web3Provider): Promise<void> {
-    for (let i = 0; i < blocks; i++) {
-        await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1);
-    }
-}
 
 export function encodePrice(reserve0: BigNumber, reserve1: BigNumber) {
   return [reserve1.mul(bigNumberify(2).pow(112)).div(reserve0), reserve0.mul(bigNumberify(2).pow(112)).div(reserve1)]

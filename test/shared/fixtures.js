@@ -15,8 +15,20 @@ const refRegSwapRewardPercent = initials.REFERRAL_SWAP_REWARD_PERCENT[env.networ
 const vaultStartBlock = initials.HELIX_VAULT_START_BLOCK[env.network]                         
 const vaultLastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.network]
 
+const chefStartBlock = initials.MASTERCHEF_START_BLOCK[env.network]
+const chefStakingPercent = initials.MASTERCHEF_STAKING_PERCENT[env.network]
+const chefDevPercent = initials.MASTERCHEF_DEV_PERCENT[env.network]
+
 const billion = 1000000000
 
+// 
+// 1. Define contract factories
+// 2. Deploy misc. contracts
+// 3. Deploy external DEX contracts
+// 4. Deploy DEX contracts
+// 5. Initialize external DEX contracts
+// 6. Initialize DEX contracts
+//
 module.exports.fullExchangeFixture = async () => {
 
     //
@@ -37,6 +49,7 @@ module.exports.fullExchangeFixture = async () => {
     const routerContractFactory = await ethers.getContractFactory("HelixRouterV1")
     const migratorContractFactory = await ethers.getContractFactory("HelixMigrator")
     const swapRewardsContractFactory = await ethers.getContractFactory("SwapRewards")
+    const masterChefContractFactory = await ethers.getContractFactory("MasterChef")
 
     // 
     // Deploy misc contracts
@@ -143,8 +156,21 @@ module.exports.fullExchangeFixture = async () => {
         router.address
     )
 
+    // 13. deploy master chef
+    const masterChef = await masterChefContractFactory.deploy()
+    await masterChef.initialize(
+        helixToken.address,
+        treasuryAddress,
+        feeMinter.address,
+        chefStartBlock,
+        chefStakingPercent,
+        chefDevPercent,
+        referralRegister.address
+    )
+
     // 
     // Initialize external DEX contracts
+    //
 
     // init external factory
     await externalFactory.setOracleFactory(externalOracleFactory.address)
@@ -156,14 +182,14 @@ module.exports.fullExchangeFixture = async () => {
     // init helixToken
     await helixToken.addMinter(referralRegister.address)
     await helixToken.addMinter(vault.address)
+    await helixToken.addMinter(masterChef.address)
 
     // init helixChefNFT
     await helixChefNft.addAccruer(feeHandler.address)
 
     // init feeMinter
-    // TODO replace helixToken with masterChef when masterChef is deployed
     await feeMinter.setToMintPercents(
-        [helixToken.address, referralRegister.address, vault.address],  
+        [masterChef.address, referralRegister.address, vault.address],  
         feeMinterToMintPercents
     )
 
@@ -173,8 +199,12 @@ module.exports.fullExchangeFixture = async () => {
     // init router
     await router.setSwapRewards(swapRewards.address)
 
-    // init referralRegister
+    // init referral register
     await referralRegister.addRecorder(swapRewards.address)
+    await referralRegister.addRecorder(masterChef.address)
+
+    // init master chef
+    await masterChef.setReferralRegister(referralRegister.address)
 
     return { 
         // Misc contracts
@@ -201,5 +231,6 @@ module.exports.fullExchangeFixture = async () => {
         router,
         migrator,
         swapRewards,
+        masterChef
     }
 }
