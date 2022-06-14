@@ -103,6 +103,7 @@ module.exports.fullExchangeFixture = async () => {
 
     // 1. deploy helix nft
     const helixNft = await helixNftContractFactory.deploy()
+    await helixNft.initialize('BASEURI') // TODO replace
 
     // 2. deploy fee minter
     const feeMinterContractFactory = await ethers.getContractFactory("FeeMinter")
