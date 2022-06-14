@@ -19,15 +19,22 @@ const chefStartBlock = initials.MASTERCHEF_START_BLOCK[env.network]
 const chefStakingPercent = initials.MASTERCHEF_STAKING_PERCENT[env.network]
 const chefDevPercent = initials.MASTERCHEF_DEV_PERCENT[env.network]
 
+const publicPresaleInputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.network]                       
+const publicPresaleOutputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.network]                     
+const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHASE_DURATION[env.network]
+
+const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.network]
+
 const billion = 1000000000
 
 // 
-// 1. Define contract factories
-// 2. Deploy misc. contracts
-// 3. Deploy external DEX contracts
-// 4. Deploy DEX contracts
-// 5. Initialize external DEX contracts
-// 6. Initialize DEX contracts
+// Define contract factories
+// Deploy misc token contracts
+// Deploy external DEX contracts
+// Deploy DEX contracts
+// Deploy presale contracts 
+// Initialize external DEX contracts
+// Initialize DEX contracts
 //
 module.exports.fullExchangeFixture = async () => {
 
@@ -50,9 +57,10 @@ module.exports.fullExchangeFixture = async () => {
     const migratorContractFactory = await ethers.getContractFactory("HelixMigrator")
     const swapRewardsContractFactory = await ethers.getContractFactory("SwapRewards")
     const masterChefContractFactory = await ethers.getContractFactory("MasterChef")
+    const publicPresaleContractFactory = await ethers.getContractFactory("PublicPresale")
 
     // 
-    // Deploy misc contracts
+    // Deploy misc token contracts
     //
 
     // deploy test tokens
@@ -70,6 +78,7 @@ module.exports.fullExchangeFixture = async () => {
 
     const weth = await wethContractFactory.deploy()
 
+
     //
     // Deploy external DEX contracts
     // 
@@ -85,7 +94,7 @@ module.exports.fullExchangeFixture = async () => {
     )
 
     // 
-    // Deploy DEX contracts
+    // Deploy core DEX contracts
     //
 
     // 0. deploy helix token
@@ -168,6 +177,22 @@ module.exports.fullExchangeFixture = async () => {
         referralRegister.address
     )
 
+    // 14. deploy auto chef
+    // TODO
+
+    //
+    // Deploy presale contracts
+    // 
+
+    const publicPresale = await publicPresaleContractFactory.deploy(
+        tokenA.address,
+        helixToken.address,
+        treasuryAddress,
+        publicPresaleInputRate,
+        publicPresaleOutputRate,
+        publicPresalePurchasePhaseDuration
+    )
+
     // 
     // Initialize external DEX contracts
     //
@@ -183,6 +208,7 @@ module.exports.fullExchangeFixture = async () => {
     await helixToken.addMinter(referralRegister.address)
     await helixToken.addMinter(vault.address)
     await helixToken.addMinter(masterChef.address)
+    await helixToken.addMinter(publicPresale.address) // approve to burn helix
 
     // init helixChefNFT
     await helixChefNft.addAccruer(feeHandler.address)
@@ -231,6 +257,7 @@ module.exports.fullExchangeFixture = async () => {
         router,
         migrator,
         swapRewards,
-        masterChef
+        masterChef,
+        publicPresale
     }
 }
