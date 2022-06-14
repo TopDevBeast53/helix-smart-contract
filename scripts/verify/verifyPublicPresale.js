@@ -3,21 +3,21 @@
  *
  * command for verify on bsc-testnet: 
  * 
- *      npx hardhat run scripts/verifyPublicPresale.js --network testnetBSC
+ *      npx hardhat run scripts/verify/verifyPublicPresale.js --network rinkeby
  */
 
 const hre = require('hardhat');
-const env = require('./constants/env')
+const env = require('../constants/env')
 
-const contracts = require('./constants/contracts')
-const initials = require('./constants/initials')
+const contracts = require('../constants/contracts')
+const initials = require('../constants/initials')
 
 // deployed contract address
-const publicPresale = contracts.publicPresale[env.network]
+const publicPresale = contracts.publicSale[env.network]
 
 // contract constructor arguments                                           // main  / test
 const inputTokenAddress = initials.PUBLIC_PRESALE_INPUT_TOKEN[env.network]     // BUSD  / TestTokenA
-const outputTokenAddress = initials.PUBLIC_PRESALE_OUTPUT_TOKEN[env.network]   // HELIX / TestTokenB
+const outputTokenAddress = contracts.helixToken[env.network]   // HELIX / TestTokenB
 const treasuryAddress = initials.PUBLIC_PRESALE_TREASURY[env.network]
 const inputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.network]
 const outputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.network]

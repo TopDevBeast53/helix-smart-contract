@@ -64,7 +64,7 @@ contract PublicPresale is Pausable, ReentrancyGuard {
     }
 
     /// Maximum number of tickets available for purchase at the start of the sale
-    uint256 public constant TICKET_MAX = 21000;
+    uint256 public constant TICKET_MAX = 2000;
 
     /// Minimum number of tickets that can be purchased at a time
     uint256 public constant MINIMUM_TICKET_PURCHASE = 1;
@@ -87,7 +87,7 @@ contract PublicPresale is Pausable, ReentrancyGuard {
     uint256 public OUTPUT_RATE;
 
     /// Number of decimals on the `inputToken` used for calculating ticket exchange rates
-    uint256 public constant INPUT_TOKEN_DECIMALS = 1e18;
+    uint256 public constant INPUT_TOKEN_DECIMALS = 1e6;
 
     /// Number of decimals on the `outputToken` used for calculating ticket exchange rates
     uint256 public constant OUTPUT_TOKEN_DECIMALS = 1e18;
