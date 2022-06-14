@@ -58,6 +58,7 @@ module.exports.fullExchangeFixture = async () => {
     const swapRewardsContractFactory = await ethers.getContractFactory("SwapRewards")
     const masterChefContractFactory = await ethers.getContractFactory("MasterChef")
     const publicPresaleContractFactory = await ethers.getContractFactory("PublicPresale")
+    const airdropContractFactory = await ethers.getContractFactory("AirDrop")
 
     // 
     // Deploy misc token contracts
@@ -184,6 +185,7 @@ module.exports.fullExchangeFixture = async () => {
     // Deploy presale contracts
     // 
 
+    // deploy public presale
     const publicPresale = await publicPresaleContractFactory.deploy(
         tokenA.address,
         helixToken.address,
@@ -191,6 +193,13 @@ module.exports.fullExchangeFixture = async () => {
         publicPresaleInputRate,
         publicPresaleOutputRate,
         publicPresalePurchasePhaseDuration
+    )
+
+    // deploy airdrop presale
+    const airdrop = await airdropContractFactory.deploy(
+        "Airdrop",
+        helixToken.address,
+        airdropWithdrawPhaseDuration
     )
 
     // 
@@ -209,6 +218,7 @@ module.exports.fullExchangeFixture = async () => {
     await helixToken.addMinter(vault.address)
     await helixToken.addMinter(masterChef.address)
     await helixToken.addMinter(publicPresale.address) // approve to burn helix
+    await helixToken.addMinter(airdrop.address) // approve to burn helix
 
     // init helixChefNFT
     await helixChefNft.addAccruer(feeHandler.address)
@@ -258,6 +268,7 @@ module.exports.fullExchangeFixture = async () => {
         migrator,
         swapRewards,
         masterChef,
-        publicPresale
+        publicPresale,
+        airdrop
     }
 }

@@ -1,52 +1,38 @@
-import chai, { expect } from 'chai'
-import { solidity, MockProvider, createFixtureLoader, deployContract } from 'legacy-ethereum-waffle'
-import { Contract, constants } from 'legacy-ethers'
-import { BigNumber, bigNumberify } from 'legacy-ethers/utils'
-import { MaxUint256 } from 'legacy-ethers/constants'
-
-import { fullExchangeFixture } from './shared/fixtures'
-import { expandTo18Decimals } from './shared/utilities'
-
-import AirDrop from '../build/contracts/AirDrop.json'
-import TestToken from '../build/contracts/TestToken.json'
-import HelixToken from '../build/contracts/HelixToken.json'
+const { expect } = require("chai")                                                                   
+                                                                                                   
+const { waffle } = require("hardhat")                                                              
+const { loadFixture } = waffle                                                                     
+                                                                                                   
+const { bigNumberify } = require("legacy-ethers/utils")                                
+const { expandTo18Decimals } = require("./shared/utilities")                                       
+const { fullExchangeFixture } = require("./shared/fixtures")                                       
+const { constants } = require("@openzeppelin/test-helpers")                                        
+                                                                                                   
+const verbose = true      
 
 const initials = require('../scripts/constants/initials')
 const env = require('../scripts/constants/env')
 
 const initialBalance = initials.AIRDROP_INITIAL_BALANCE[env.network]
 
-chai.use(solidity)
-
-const overrides = {
-    gasLimit: 99999999999
-}
-
 const SECONDS_PER_DAY = 86400
 const wallet1InitialBalance = 1000
 
-const verbose = true
-
 describe('AirDrop Presale', () => {
-    const provider = new MockProvider({
-        hardfork: 'istanbul',
-        mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-        gasLimit: 99999999999
-    })
+    let wallet0, wallet1, wallet2
 
-    const [wallet0, wallet1, wallet2] = provider.getWallets()
-    const loadFixture = createFixtureLoader(provider, [wallet0])
-
-    let airDrop: Contract
-    let helixToken: Contract    // output token
+    let airDrop
+    let helixToken
 
     // contracts owned by wallet 1, used when wallet 1 should be msg.sender 
-    let airDrop1: Contract
-    let helixToken1: Contract
+    let airDrop1
+    let helixToken1
 
     beforeEach(async () => {
+        [wallet0, wallet1, wallet2] = await ethers.getSigners()
+        
         const fullExchange = await loadFixture(fullExchangeFixture)
-        airDrop = fullExchange.airDrop
+        airDrop = fullExchange.airdrop
         helixToken = fullExchange.helixToken
 
         // Make self a helix token minter and mint to public presale initial balance
@@ -54,11 +40,12 @@ describe('AirDrop Presale', () => {
         await helixToken.mint(airDrop.address, expandTo18Decimals(initialBalance))
 
         // Pre-approve the presale to spend caller's funds
-        await helixToken.approve(airDrop.address, MaxUint256)
+        await helixToken.approve(airDrop.address, expandTo18Decimals(100000))
     
         // create the wallet 1 owned contracts
-        airDrop1 = new Contract(airDrop.address, JSON.stringify(AirDrop.abi), provider).connect(wallet1)   
-        helixToken1 = new Contract(helixToken.address, JSON.stringify(HelixToken.abi), provider).connect(wallet1)   
+        airDrop1 = airDrop.connect(wallet1)
+
+        helixToken1 = helixToken.connect(wallet1)
     })
 
     it('airDrop: initialized with expected values', async () => {
@@ -85,13 +72,7 @@ describe('AirDrop Presale', () => {
 
     it('airDrop: add owner as non-owner fails', async () => {
         await expect(airDrop1.addOwner(wallet2.address))
-            .to.be.revertedWith('AirDrop: not owner')
-    })
-
-    it('airDrop: add owner duplicate fails', async () => {
-        // wallet 0 is added as owner on contract creation
-        await expect(airDrop.addOwner(wallet0.address))
-            .to.be.revertedWith('AirDrop: already owner')
+            .to.be.revertedWith('NotAnOwner')
     })
 
     it('airDrop: airdrop add', async () => {
@@ -118,7 +99,7 @@ describe('AirDrop Presale', () => {
         const amounts = [wallet1Amount, wallet2Amount]
         
         await expect(airDrop1.airdropAdd(users, amounts))
-            .to.be.revertedWith('AirDrop: not owner')
+            .to.be.revertedWith('NotAnOwner')
     })
 
     it('airDrop: airdrop add with unequal argument arrays fails', async () => {
@@ -127,17 +108,17 @@ describe('AirDrop Presale', () => {
         const amounts = [wallet1Amount]
         
         await expect(airDrop.airdropAdd(users, amounts))
-            .to.be.revertedWith('AirDrop: users and amounts must be same length')
+            .to.be.revertedWith('ArrayLengthMismatch')
     })
 
     it('airDrop: airdrop add user with too many tokens fails', async () => {
         const users = [wallet1.address, wallet2.address]
-        const wallet1Amount = MaxUint256
+        const wallet1Amount = expandTo18Decimals(10000000000000)
         const wallet2Amount = 100
         const amounts = [wallet1Amount, wallet2Amount]
         
         await expect(airDrop.airdropAdd(users, amounts))
-            .to.be.revertedWith("AirDrop: amount exceeds tokens available")
+            .to.be.revertedWith("InsufficientBalance")
     })
 
     it('airDrop: airdrop remove', async () => {
@@ -172,7 +153,7 @@ describe('AirDrop Presale', () => {
     
         // then expect to fail
         await expect(airDrop1.airdropRemove(wallet1.address, wallet1Amount))
-            .to.be.revertedWith('AirDrop: not owner')
+            .to.be.revertedWith('NotAnOwner')
     })
 
     it('airDrop: set withdraw phase', async () => {
@@ -198,7 +179,7 @@ describe('AirDrop Presale', () => {
     it('airDrop: set withdraw phase as non-owner fails', async () => {
         const phase = 0
         await expect(airDrop1.setWithdrawPhase(phase))
-            .to.be.revertedWith('AirDrop: not owner')
+            .to.be.revertedWith('NotAnOwner')
     })
 
     it('airDrop: set withdraw phase with invalid phase fails', async () => {
@@ -212,11 +193,6 @@ describe('AirDrop Presale', () => {
         const phaseDuration = (await airDrop.WITHDRAW_PHASE_DURATION()).toNumber()
         await expect(airDrop.setWithdrawPhase(phase))
             .to.emit(airDrop, "SetWithdrawPhase")
-            .withArgs(
-                phase,
-                Math.trunc(Date.now() / 1000),
-                Math.trunc(Date.now() / 1000) + phaseDuration
-            )
     })
 
     it('airDrop: max removable by owner when unpaused', async () => {
@@ -395,7 +371,7 @@ describe('AirDrop Presale', () => {
         expect(await helixToken.balanceOf(wallet0.address)).to.eq(expectedOwnerBalance)
     })
 
-    function print(str: string) {
+    function print(str) {
         if (verbose) console.log(str)
     }
 })
