@@ -97,6 +97,6 @@ module.exports = {
     },
     publicSale: {
         1: '',
-        4: '0x35B7646E3585edeF1f8a50Ba8f88a646A9AeaBcF',
+        4: '0x296d49dDAf208e5049153FB57371f08Be1Df1cEd',
     },
 }

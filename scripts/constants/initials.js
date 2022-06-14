@@ -183,10 +183,8 @@ module.exports = {
     // Amount of HELIX to fund Public Presale contract with
     // don't forget to multiply by 1e18
     PUBLIC_PRESALE_INITIAL_BALANCE : {
-        1: 105000000,
-        4: 105000000,
-        56: 105000000,       // 105,000,000
-        97: 105000000,       // 105,000,000
+        1: 2000000,
+        4: 2000000,
     },
 
     // --------- Airdrop Presale --------- //

@@ -17,7 +17,7 @@ const publicPresale = contracts.publicSale[env.network]
 
 // contract constructor arguments                                           // main  / test
 const inputTokenAddress = initials.PUBLIC_PRESALE_INPUT_TOKEN[env.network]     // BUSD  / TestTokenA
-const outputTokenAddress = initials.PUBLIC_PRESALE_OUTPUT_TOKEN[env.network]   // HELIX / TestTokenB
+const outputTokenAddress = contracts.helixToken[env.network]   // HELIX / TestTokenB
 const treasuryAddress = initials.PUBLIC_PRESALE_TREASURY[env.network]
 const inputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.network]
 const outputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.network]

@@ -197,14 +197,13 @@ contract PublicPresale is Pausable, ReentrancyGuard {
         uint256 inputTokenAmount = getAmountOut(_amount, inputToken); 
 
         // Pay for the `amount` of tickets
-        require(
-            inputTokenAmount <= inputToken.balanceOf(msg.sender), 
-            "PublicPresale: insufficient balance"
-        );
-        require(
-            inputTokenAmount <= inputToken.allowance(msg.sender, address(this)), 
-            "PublicPresale: insufficient allowance"
-        );
+        uint256 balance = inputToken.balanceOf(msg.sender);
+        if (inputTokenAmount > balance) revert InsufficientBalance(inputTokenAmount, balance);
+    
+        uint256 allowance = inputToken.allowance(msg.sender, address(this));
+        if (inputTokenAmount > allowance) {
+            revert InsufficientAllowance(inputTokenAmount, allowance);
+        }
 
         // Pay for the tickets by withdrawing inputTokenAmount from caller
         inputToken.safeTransferFrom(msg.sender, treasury, inputTokenAmount);
@@ -324,10 +323,14 @@ contract PublicPresale is Pausable, ReentrancyGuard {
         view 
         onlyValidAddress(_user)
     {
-        require(purchasePhase != PurchasePhase.NoPurchase, "PublicPresale: purchase prohibited");
-        require(_amount >= MINIMUM_TICKET_PURCHASE, "PublicPresale: below minimum purchase");
+        if (purchasePhase == PurchasePhase.NoPurchase) {
+            revert PurchaseProhibited(uint(purchasePhase));
+        }
+        if (_amount < MINIMUM_TICKET_PURCHASE) {
+            revert InsufficientAmount(_amount, MINIMUM_TICKET_PURCHASE);
+        }
         if (purchasePhase == PurchasePhase.WhitelistOnly) { 
-            require(whitelist[_user], "PublicPresale: not whitelisted");
+            if (!whitelist[_user]) revert NotWhitelisted(_user);
         }
     }
 
