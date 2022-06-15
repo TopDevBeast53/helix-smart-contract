@@ -103,6 +103,7 @@ module.exports.fullExchangeFixture = async () => {
 
     // 1. deploy helix nft
     const helixNft = await helixNftContractFactory.deploy()
+    await helixNft.initialize('BASEURI') // TODO replace
 
     // 2. deploy fee minter
     const feeMinterContractFactory = await ethers.getContractFactory("FeeMinter")
@@ -219,6 +220,9 @@ module.exports.fullExchangeFixture = async () => {
     await helixToken.addMinter(masterChef.address)
     await helixToken.addMinter(publicPresale.address) // approve to burn helix
     await helixToken.addMinter(airdrop.address) // approve to burn helix
+
+    // init helixNft
+    await helixNft.addStaker(helixChefNft.address)
 
     // init helixChefNFT
     await helixChefNft.addAccruer(feeHandler.address)
