@@ -233,7 +233,7 @@ describe('Vault', () => {
 
         // +1 since update pool occurs on block after reading the block number
         let prevLastRewardBlock = await vault2.lastUpdateBlock()
-        let expectedBlockNumber = (await provider.getBlockNumber()) + 1
+        let expectedBlockNumber = (await ethers.provider.getBlockNumber()) + 1
 
         await vault2.updatePool()
 
@@ -245,7 +245,7 @@ describe('Vault', () => {
         prevAccTokenPerShare = await vault.accTokenPerShare()
         prevLastRewardBlock = await vault.lastUpdateBlock()
 
-        expectedBlockNumber = (await provider.getBlockNumber()) + 1
+        expectedBlockNumber = (await ethers.provider.getBlockNumber()) + 1
         const expectedAccTokenPerShare = await getAccTokenPerShare(expectedBlockNumber)
 
         await vault.updatePool()
@@ -264,7 +264,7 @@ describe('Vault', () => {
 
     it('vault: new deposit triggers update pool', async () => {
         // only testing that update is called during successful deposit
-        const expectedBlockNumber = (await provider.getBlockNumber()) + 1
+        const expectedBlockNumber = (await ethers.provider.getBlockNumber()) + 1
         const expectedAccTokenPerShare = await getAccTokenPerShare(expectedBlockNumber)
 
         const amount = expandTo18Decimals(100)
@@ -449,7 +449,7 @@ describe('Vault', () => {
 
         // expect another withdrawal to fail
         await expect(vault.withdraw(amount, id))
-            .to.be.revertedWith('Vault: withdrawn')
+            .to.be.revertedWith('Withdrawn')
     })
 
     it('vault: withdraw fails if withdrawing amount larger than that deposited', async () => {
@@ -477,7 +477,7 @@ describe('Vault', () => {
         const invalidAmount = amount.add(1)
         id = (await vault.depositId()).sub(1)
         await expect(vault.withdraw(invalidAmount, id))
-            .to.be.reverted()
+            .to.be.reverted
     })
 
     it('vault: withdraw fails if tokens are locked', async () => {
@@ -583,7 +583,7 @@ describe('Vault', () => {
 
         // expect call to fail since deposit is withdrawn
         await expect(vault.pendingReward(id))
-            .to.be.revertedWith('Vault: withdrawn')
+            .to.be.revertedWith('Withdrawn()')
     })
 
     it('vault: pending reward', async () => {
@@ -689,7 +689,7 @@ describe('Vault', () => {
 
         // expect call to fail since deposit is withdrawn
         await expect(vault.claimReward(id))
-            .to.be.revertedWith('Vault: withdrawn')
+            .to.be.revertedWith('Withdrawn()')
     })
 
     it('vault: claim reward emits Reward Claimed event', async () => {
@@ -803,7 +803,10 @@ describe('Vault', () => {
 
     // return the current timestamp
     async function now() {
-        return (await provider.getBlock(provider.getBlockNumber())).timestamp
+        const blockNumber = await ethers.provider.getBlockNumber()
+        const block = await ethers.provider.getBlock(blockNumber)
+        const timestamp = block.timestamp
+        return timestamp
     }
 
     // used to wait until withdraw can be called

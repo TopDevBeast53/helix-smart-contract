@@ -4,7 +4,7 @@ const { waffle } = require("hardhat")
 const { loadFixture } = waffle                                                                     
                                                                                                    
 const { bigNumberify, MaxUint256 } = require("legacy-ethers/utils")                                
-const { expandTo18Decimals, mineBlock } = require("./shared/utilities")                                       
+const { expandTo18Decimals, encodePrice } = require("./shared/utilities")                                       
 const { fullExchangeFixture } = require("./shared/fixtures")                                       
 const { constants } = require("@openzeppelin/test-helpers")                                        
                                                                                                    
@@ -191,13 +191,13 @@ describe('HelixPair', () => {
         await addLiquidity(token0Amount, token1Amount)
 
         // ensure that setting price{0,1}CumulativeLast for the first time doesn't affect our gas math
-        await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
+        await mineBlocks(1)
         await pair.sync()
 
         const swapAmount = expandTo18Decimals(1)
         const expectedOutputAmount = bigNumberify('453305446940074565')
         await token1.transfer(pair.address, swapAmount)
-        await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
+        await mineBlocks(1)
         const tx = await pair.swap(expectedOutputAmount, 0, wallet.addresss)
         const receipt = await tx.wait()
         expect(receipt.gasUsed).to.eq(205225)
@@ -238,7 +238,7 @@ describe('HelixPair', () => {
         await addLiquidity(token0Amount, token1Amount)
 
         const blockTimestamp = (await pair.getReserves())[2]
-        await mineBlock(provider, blockTimestamp + 1)
+        await mineBlocks(1)
         await pair.sync()
 
         const initialPrice = encodePrice(token0Amount, token1Amount)
@@ -248,7 +248,7 @@ describe('HelixPair', () => {
 
         const swapAmount = expandTo18Decimals(3)
         await token0.transfer(pair.address, swapAmount)
-        await mineBlock(provider, blockTimestamp + 10)
+        await mineBlocks(10)
         // swap to a new price eagerly instead of syncing
         await pair.swap(0, expandTo18Decimals(1), wallet.address) // make the price nice
 
@@ -256,7 +256,7 @@ describe('HelixPair', () => {
         expect(await pair.price1CumulativeLast()).to.eq(initialPrice[1].mul(10))
         expect((await pair.getReserves())[2]).to.eq(blockTimestamp + 10)
 
-        await mineBlock(provider, blockTimestamp + 20)
+        await mineBlocks(20)
         await pair.sync()
 
         const newPrice = encodePrice(expandTo18Decimals(6), expandTo18Decimals(2))
@@ -304,4 +304,10 @@ describe('HelixPair', () => {
         expect(await token0.balanceOf(pair.address)).to.eq(bigNumberify(1000).add('1497010102184673'))
         expect(await token1.balanceOf(pair.address)).to.eq(bigNumberify(1000).add('1500001123877809'))
     })
+
+    async function mineBlocks(n) {
+        for (let i = 0; i < n; i++) {
+            await ethers.provider.send('evm_mine')
+        }
+    }
 })

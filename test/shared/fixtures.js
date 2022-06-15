@@ -221,6 +221,9 @@ module.exports.fullExchangeFixture = async () => {
     await helixToken.addMinter(publicPresale.address) // approve to burn helix
     await helixToken.addMinter(airdrop.address) // approve to burn helix
 
+    // init helixNft
+    await helixNft.addStaker(helixChefNft.address)
+
     // init helixChefNFT
     await helixChefNft.addAccruer(feeHandler.address)
 

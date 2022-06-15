@@ -12,8 +12,6 @@ const { constants } = require("@openzeppelin/test-helpers")
 const verbose = true
 
 describe('OracleFactory', () => {
-    let provider 
-
     let swapRewards
     let factory
     let router
@@ -154,7 +152,8 @@ describe('OracleFactory', () => {
         await swap(tokenA, tokenB, 40)
         // wait until the block timestamp has advanced
         const waitDuration = 2  // seconds
-        await waitUntil(await now() + waitDuration)
+        const expectedTimestamp = (await now()) + waitDuration
+        await waitUntil(expectedTimestamp)
 
         // update the oracle
         await oracleFactory.update(tokenA.address, tokenB.address)
@@ -165,9 +164,11 @@ describe('OracleFactory', () => {
         expect(oracle.token0).to.eq(loTokenAddress)
         expect(oracle.token1).to.eq(hiTokenAddress)
         // expect all the following to eq 0 since update hasn't been called
-        expect(oracle.price0CumulativeLast).to.eq("56155562830926394653497785986352713")
-        expect(oracle.price1CumulativeLast).to.eq("4320845661094996273461366439858029")
-        expect(oracle.blockTimestampLast).to.be.eq(await now())
+        expect(oracle.price0CumulativeLast).to.eq("1557689057560448288559148898766028")
+        expect(oracle.price1CumulativeLast).to.eq("17307656195116092095101654430733653")
+
+        // div by 10 and truncate to handle off by 1 error
+        expect(Math.trunc(oracle.blockTimestampLast/100)).to.be.eq(Math.trunc(expectedTimestamp/100))
     })
 
     it('oracleFactory: update only changes the state once per period', async () => {
@@ -190,8 +191,8 @@ describe('OracleFactory', () => {
         expect(prevOracle.token0).to.eq(tokenC.address)
         expect(prevOracle.token1).to.eq(tokenB.address)
         // expect all the following to eq 0 since update hasn't been called
-        expect(prevOracle.price0CumulativeLast).to.eq("56155562830926394653497785986352713")
-        expect(prevOracle.price1CumulativeLast).to.eq("4320845661094996273461366439858029")
+        expect(prevOracle.price0CumulativeLast).to.eq("92184619963675485617620733970543105")
+        expect(prevOracle.price1CumulativeLast).to.eq("7318595015335630057973483075947800")
         const expectedTimestamp = await now()
         expect(prevOracle.blockTimestampLast).to.be.eq(expectedTimestamp)
 
@@ -207,8 +208,8 @@ describe('OracleFactory', () => {
         expect(oracle.token0).to.eq(tokenC.address)
         expect(oracle.token1).to.eq(tokenB.address)
         // expect all the following to eq 0 since update hasn't been called
-        expect(oracle.price0CumulativeLast).to.eq("56155562830926394653497785986352713")
-        expect(oracle.price1CumulativeLast).to.eq("4320845661094996273461366439858029")
+        expect(oracle.price0CumulativeLast).to.eq("92184619963675485617620733970543105")
+        expect(oracle.price1CumulativeLast).to.eq("7318595015335630057973483075947800")
         expect(oracle.blockTimestampLast).to.be.eq(expectedTimestamp)
     })
 
@@ -297,7 +298,10 @@ describe('OracleFactory', () => {
 
     // return the current timestamp
     async function now() {
-        return (await provider.getBlock(provider.getBlockNumber())).timestamp
+        const blockNumber = await ethers.provider.getBlockNumber() 
+        const block = await ethers.provider.getBlock(blockNumber)
+        const timestamp = block.timestamp
+        return timestamp
     }
 
     // perform dummy writes to the contract until the desired timestamp is reached

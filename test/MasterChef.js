@@ -4,7 +4,7 @@ const { waffle } = require("hardhat")
 const { loadFixture } = waffle                                                                        
                                                                                                       
 const { bigNumberify } = require("legacy-ethers/utils")                                               
-const { expandTo18Decimals, mineBlocks } = require("./shared/utilities")                                          
+const { expandTo18Decimals } = require("./shared/utilities")                                          
 const { fullExchangeFixture } = require("./shared/fixtures")                                          
                                                                                                       
 const { constants } = require("@openzeppelin/test-helpers")                                           
@@ -81,8 +81,8 @@ describe('MasterChef', () => {
         await lpToken.approve(chef.address, expandTo18Decimals(10000))
         await chef.deposit(1, 99000)
 
-        // Mine 100 blocks
-        await mineBlocks(100, provider)
+        // Wait 100 blocks
+        await mineBlocks(100)
 
         // Withdraw LP token from chef & ensure rewards have been given
         const helixBalanceBefore = await helixToken.balanceOf(wallet.address)
@@ -115,4 +115,10 @@ describe('MasterChef', () => {
         const userBalanceAfterUnStaking = await helixToken.balanceOf(wallet.address)
         expect(userBalanceAfterUnStaking).to.eq("160000058474260000000000000")
     })
+
+    async function mineBlocks(n) {
+        for (let i = 0; i < n; i++) {
+            await ethers.provider.send('evm_mine')
+        }
+    }
 })
