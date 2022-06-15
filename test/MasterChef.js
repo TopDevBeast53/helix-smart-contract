@@ -83,12 +83,20 @@ describe('MasterChef', () => {
 
         // Wait 100 blocks
         await mineBlocks(100)
-
+    
         // Withdraw LP token from chef & ensure rewards have been given
         const helixBalanceBefore = await helixToken.balanceOf(wallet.address)
         const previousBalanceOfLp = await lpToken.balanceOf(wallet.address)
         expect(previousBalanceOfLp).to.eq(0)
         expect(helixBalanceBefore).to.eq("160000000000000000000000000")
+
+        /*
+        await chef.updatePool(1)
+        const pool  = await chef.poolInfo(1)
+        const user = await chef.userInfo(1, wallet.address)
+        console.log(`pool ${pool}`)
+        console.log(`user ${user}`)
+        */
 
         await chef.withdraw(1, 99000)
 
