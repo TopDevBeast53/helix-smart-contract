@@ -277,6 +277,20 @@ contract PublicPresale is Pausable, ReentrancyGuard {
         emit OwnerAdded(msg.sender, _owner);
     }
 
+    // remove an existing owner from the contract, only callable by an owner
+    function removeOwner(address owner) external onlyValidAddress(owner) onlyOwner {
+        require(isOwner[owner], "VipPresale: NOT AN OWNER");
+        isOwner[owner] = false;
+
+        // array remove by swap 
+        for (uint i = 0; i < owners.length; i++) {
+            if (owners[i] == owner) {
+                owners[i] = owners[owners.length - 1];
+                owners.pop();
+            }
+        }
+    }
+
     /// Called by the owner to pause the contract
     function pause() external onlyOwner {
         _pause();
