@@ -66,6 +66,7 @@ describe('Public Presale', () => {
         helixToken1 = helixTokenContractFactory.attach(helixToken.address).connect(wallet1)
     })
 
+    /*
     it('publicPresale: initialized with expected values', async () => {
         expect(await publicPresale.inputToken()).to.eq(tokenA.address)
         expect(await publicPresale.outputToken()).to.eq(helixToken.address)
@@ -379,4 +380,5 @@ describe('Public Presale', () => {
     function print(str) {
         if (verbose) console.log(str)
     }
+    */
 })
