@@ -74,7 +74,7 @@ contract PublicPresale is Pausable, ReentrancyGuard {
     /// where user.purchased is in range [0, user.maxTicket] for user in whitelist
     uint256 public ticketsAvailable;
 
-    /// Token exchanged to purchase tickets, i.e. BUSD
+    /// Token exchanged to purchase tickets, i.e. USDC
     IERC20 public inputToken;
 
     /// Number of tickets a user gets per `inputToken`
