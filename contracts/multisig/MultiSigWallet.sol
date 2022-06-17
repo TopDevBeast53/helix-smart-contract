@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.10;
 
-/// Taken from https://solidity-by-example.org/app/multi-sig-wallet/
+/// Adapted from https://solidity-by-example.org/app/multi-sig-wallet
+
 contract MultiSigWallet {
     event Deposit(address indexed sender, uint amount, uint balance);
     event SubmitTransaction(
         address indexed owner,
-        uint indexed txId,
+        uint indexed txIndex,
         address indexed to,
         uint value,
         bytes data
     );
-    event ConfirmTransaction(address indexed owner, uint indexed txId);
-    event RevokeConfirmation(address indexed owner, uint indexed txId);
-    event ExecuteTransaction(address indexed owner, uint indexed txId);
+    event ConfirmTransaction(address indexed owner, uint indexed txIndex);
+    event RevokeConfirmation(address indexed owner, uint indexed txIndex);
+    event ExecuteTransaction(address indexed owner, uint indexed txIndex);
 
     address[] public owners;
     mapping(address => bool) public isOwner;
@@ -37,18 +38,18 @@ contract MultiSigWallet {
         _;
     }
 
-    modifier txExists(uint _txId) {
-        require(_txId < transactions.length, "tx does not exist");
+    modifier txExists(uint _txIndex) {
+        require(_txIndex < transactions.length, "tx does not exist");
         _;
     }
 
-    modifier notExecuted(uint _txId) {
-        require(!transactions[_txId].executed, "tx already executed");
+    modifier notExecuted(uint _txIndex) {
+        require(!transactions[_txIndex].executed, "tx already executed");
         _;
     }
 
-    modifier notConfirmed(uint _txId) {
-        require(!isConfirmed[_txId][msg.sender], "tx already confirmed");
+    modifier notConfirmed(uint _txIndex) {
+        require(!isConfirmed[_txIndex][msg.sender], "tx already confirmed");
         _;
     }
 
@@ -82,7 +83,7 @@ contract MultiSigWallet {
         uint _value,
         bytes memory _data
     ) public onlyOwner {
-        uint txId = transactions.length;
+        uint txIndex = transactions.length;
 
         transactions.push(
             Transaction({
@@ -94,30 +95,30 @@ contract MultiSigWallet {
             })
         );
 
-        emit SubmitTransaction(msg.sender, txId, _to, _value, _data);
+        emit SubmitTransaction(msg.sender, txIndex, _to, _value, _data);
     }
 
-    function confirmTransaction(uint _txId)
+    function confirmTransaction(uint _txIndex)
         public
         onlyOwner
-        txExists(_txId)
-        notExecuted(_txId)
-        notConfirmed(_txId)
+        txExists(_txIndex)
+        notExecuted(_txIndex)
+        notConfirmed(_txIndex)
     {
-        Transaction storage transaction = transactions[_txId];
+        Transaction storage transaction = transactions[_txIndex];
         transaction.numConfirmations += 1;
-        isConfirmed[_txId][msg.sender] = true;
+        isConfirmed[_txIndex][msg.sender] = true;
 
-        emit ConfirmTransaction(msg.sender, _txId);
+        emit ConfirmTransaction(msg.sender, _txIndex);
     }
 
-    function executeTransaction(uint _txId)
+    function executeTransaction(uint _txIndex)
         public
         onlyOwner
-        txExists(_txId)
-        notExecuted(_txId)
+        txExists(_txIndex)
+        notExecuted(_txIndex)
     {
-        Transaction storage transaction = transactions[_txId];
+        Transaction storage transaction = transactions[_txIndex];
 
         require(
             transaction.numConfirmations >= numConfirmationsRequired,
@@ -131,23 +132,23 @@ contract MultiSigWallet {
         );
         require(success, "tx failed");
 
-        emit ExecuteTransaction(msg.sender, _txId);
+        emit ExecuteTransaction(msg.sender, _txIndex);
     }
 
-    function revokeConfirmation(uint _txId)
+    function revokeConfirmation(uint _txIndex)
         public
         onlyOwner
-        txExists(_txId)
-        notExecuted(_txId)
+        txExists(_txIndex)
+        notExecuted(_txIndex)
     {
-        Transaction storage transaction = transactions[_txId];
+        Transaction storage transaction = transactions[_txIndex];
 
-        require(isConfirmed[_txId][msg.sender], "tx not confirmed");
+        require(isConfirmed[_txIndex][msg.sender], "tx not confirmed");
 
         transaction.numConfirmations -= 1;
-        isConfirmed[_txId][msg.sender] = false;
+        isConfirmed[_txIndex][msg.sender] = false;
 
-        emit RevokeConfirmation(msg.sender, _txId);
+        emit RevokeConfirmation(msg.sender, _txIndex);
     }
 
     function getOwners() public view returns (address[] memory) {
@@ -158,7 +159,7 @@ contract MultiSigWallet {
         return transactions.length;
     }
 
-    function getTransaction(uint _txId)
+    function getTransaction(uint _txIndex)
         public
         view
         returns (
@@ -169,7 +170,7 @@ contract MultiSigWallet {
             uint numConfirmations
         )
     {
-        Transaction storage transaction = transactions[_txId];
+        Transaction storage transaction = transactions[_txIndex];
 
         return (
             transaction.to,
