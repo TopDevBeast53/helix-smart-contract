@@ -34,6 +34,7 @@ contract TokenMultiSigWallet {
         uint256 approvals;
         bool executed; 
     }
+
     Transfer[] public transfers;
 
     /// Addresses that can submit, approve, and execute transfers
