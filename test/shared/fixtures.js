@@ -30,6 +30,7 @@ const billion = 1000000000
 // 
 // Define contract factories
 // Deploy misc token contracts
+// Deploy MultiSig wallets
 // Deploy external DEX contracts
 // Deploy DEX contracts
 // Deploy presale contracts 
@@ -59,6 +60,7 @@ module.exports.fullExchangeFixture = async () => {
     const masterChefContractFactory = await ethers.getContractFactory("MasterChef")
     const publicPresaleContractFactory = await ethers.getContractFactory("PublicPresale")
     const airdropContractFactory = await ethers.getContractFactory("AirDrop")
+    const TokenMultiSigWalletContractFactory = await ethers.getContractFactory("TokenMultiSigWallet")
 
     // 
     // Deploy misc token contracts
@@ -78,6 +80,10 @@ module.exports.fullExchangeFixture = async () => {
     )
 
     const weth = await wethContractFactory.deploy()
+
+    //
+    // Deploy MultiSig wallets
+    //
 
 
     //
