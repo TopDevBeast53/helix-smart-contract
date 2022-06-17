@@ -55,25 +55,10 @@ contract TokenMultiSigWallet is MultiSigWallet {
         if (_amount == 0) revert ZeroTransferAmount();
         if (_amount > balance) revert InsufficientBalance(_amount, balance);
 
-        submitTransaction(address(this), 0, getTransferData(_token, _to, _amount)); 
+        submitTransaction(address(this), 0, _getTransferData(_token, _to, _amount)); 
         uint256 transferId = getTransactionCount() - 1;
 
         emit SubmitTransfer(msg.sender, transferId, _token, _to, _amount);
-    }
-
-    // Called as a template for encoding the transaction
-    function _transfer(address _token, address _to, uint256 _amount) private {
-        IERC20(_token).safeTransfer(_to, _amount);
-    }
-
-    // Called to generate the data to transfer _amount of _token to _to
-    function getTransferData(address _token, address _to, uint256 _amount) 
-        private 
-        pure 
-        returns 
-        (bytes memory) 
-    {
-        return abi.encodeWithSignature("_transfer(address,address,uint256)", _token, _to, _amount);    
     }
 
     /// Approve transfer request on _transferId
@@ -98,5 +83,20 @@ contract TokenMultiSigWallet is MultiSigWallet {
     function getBalance(address _token) public view returns (uint256) {
         if (_token == address(0)) revert ZeroAddress();
         return IERC20(_token).balanceOf(address(this));
+    }
+
+    // Called as a template for encoding the transaction
+    function _transfer(address _token, address _to, uint256 _amount) private {
+        IERC20(_token).safeTransfer(_to, _amount);
+    }
+
+    // Called to generate the data to transfer _amount of _token to _to
+    function _getTransferData(address _token, address _to, uint256 _amount) 
+        private 
+        pure 
+        returns 
+        (bytes memory) 
+    {
+        return abi.encodeWithSignature("_transfer(address,address,uint256)", _token, _to, _amount);    
     }
 }
