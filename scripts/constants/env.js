@@ -3,7 +3,7 @@ module.exports = {
     // bscTestNet:97
     // EthereumMainNet:1
     // Rinkeby:4
-    network: 4,
+    network: 1,
 
     // bscMainNet: https://bsc-dataseed1.binance.org
     // bscTestNet: https://data-seed-prebsc-1-s1.binance.org:8545
