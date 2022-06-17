@@ -29,7 +29,6 @@ contract TokenMultiSigWallet is MultiSigWallet {
     /// Name assigned to this contract 
     string public name;
 
-    error ZeroAddress();
     error ZeroTransferAmount();
     error InsufficientBalance(uint256 amount, uint256 balance);
 
