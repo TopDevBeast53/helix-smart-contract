@@ -146,23 +146,23 @@ module.exports = {
 
     // Input token address
     PUBLIC_PRESALE_INPUT_TOKEN: {
-        1: '',
+        1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC on mainnet
         4: '0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b', // USDC on Rinkeby
     },
 
     // Output token address
     PUBLIC_PRESALE_OUTPUT_TOKEN: {
-        1: '',
+        1: '0x231CC03E6d8b7368eC2aBfAfb5f73D216c8af980', // HELIX on mainnet
         4: '0x79DD2dad8D04F9279F94580DBEd2306A0aE118Bd', // rinkeby HELIX
     },
 
-    // Treasury address
+    // Treasury address - address that receives INPUT token payments
     PUBLIC_PRESALE_TREASURY: {
-        1: '',
+        1: '0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7', 
         4: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57',
     },
 
-    // BUSD per ticket
+    // USDC per ticket
     PUBLIC_PRESALE_INPUT_RATE : {
         1: 25,
         4: 25,
@@ -174,7 +174,7 @@ module.exports = {
         4: 1000,
     },
 
-    // Length of time between purchase phases
+    // Length of time between purchase phases (in seconds)
     PUBLIC_PRESALE_PURCHASE_PHASE_DURATION: {
         1: 1800,
         4: 300,

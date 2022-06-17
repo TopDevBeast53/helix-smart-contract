@@ -422,15 +422,24 @@ const addresses = [
     '0xfBE6006A193560150F63902B7C8B69fa8739Bc95',
     '0x6bfcb9202058314b967f377a22CaAb03920eEbF0',
     '0xFF50CD21eDa03f05B73a9949EBd197B6Ab85f3b3',
-    '0xcdFbFA3309fB7e8Bc604F27f42D906f8E62B7797'
+    '0xcdFbFA3309fB7e8Bc604F27f42D906f8E62B7797',
+    '0x413Cb059a15f1De3FC236E432149918E46F4e6ed'
 ]
 
+const overrides = {
+    gasLimit: 799999
+}
+
 async function main() {
-    const rpc = new ethers.providers.JsonRpcProvider(env.rpcURL);
-    const admin = new ethers.Wallet(process.env.PRIVATE_KEY, rpc);
+    // const rpc = new ethers.providers.JsonRpcProvider(env.rpcURL);
+    // const admin = new ethers.Wallet(process.env.PRIVATE_KEY, rpc);
+    const [deployer] = await ethers.getSigners()
+    console.log(`deployer ${deployer.address}`)
 
     const IVipPresale = await ethers.getContractFactory('PublicPresale')
-    const VipPresale = IVipPresale.attach(publicSaleAddress).connect(admin);
+    const VipPresale = IVipPresale.attach(publicSaleAddress).connect(deployer);
+
+    /*
     console.log(`Add WhiteList...`)
     const len = addresses.length;
     
@@ -439,10 +448,17 @@ async function main() {
         console.log(`address i    == ${addresses[i]}`)
         console.log(`address i+19 == ${addresses[Math.min(i+19, len)]}`) 
         const txx = await VipPresale.whitelistAdd(
-            addresses.slice(i, Math.min(i + 20, len)))
+            addresses.slice(i, Math.min(i + 20, len)),
+            overrides
+        )
         await txx.wait()
         console.log(`done`)
     }
+    */
+
+    const txx = await VipPresale.whitelistAdd(addresses, overrides)
+    await txx.wait()
+
     console.log(`All Completed`)
     console.log(`\n`)
 }
