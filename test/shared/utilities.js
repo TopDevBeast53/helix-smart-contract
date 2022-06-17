@@ -86,6 +86,11 @@ module.exports.encodePrice = (reserve0, reserve1) => {
     ]
 }
 
+const verbose = true;
+module.exports.print = (str) => {
+    if (verbose) console.log(str)
+}
+
 const PERMIT_TYPEHASH = keccak256(
   toUtf8Bytes('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)')
 )
