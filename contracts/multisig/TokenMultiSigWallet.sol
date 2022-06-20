@@ -31,6 +31,12 @@ contract TokenMultiSigWallet is MultiSigWallet {
 
     error ZeroTransferAmount();
     error InsufficientBalance(uint256 amount, uint256 balance);
+    error InvalidCaller();
+
+    modifier onlyThis() {
+        if (msg.sender != address(this)) revert InvalidCaller();
+        _;
+    }
 
     constructor (
         address[] memory _owners,
@@ -50,13 +56,13 @@ contract TokenMultiSigWallet is MultiSigWallet {
     /// Submit request to transfer _amount of _token from contract to _to
     function submitTransfer(address _token, address _to, uint256 _amount) external {
         if (_to == address(0)) revert ZeroAddress();
-        uint256 balance = getBalance(_token);
         if (_amount == 0) revert ZeroTransferAmount();
+        uint256 balance = getBalance(_token);
         if (_amount > balance) revert InsufficientBalance(_amount, balance);
 
         submitTransaction(address(this), 0, _getTransferData(_token, _to, _amount)); 
-        uint256 transferId = getTransactionCount() - 1;
 
+        uint256 transferId = getTransactionCount() - 1;
         emit SubmitTransfer(msg.sender, transferId, _token, _to, _amount);
     }
 
@@ -85,7 +91,8 @@ contract TokenMultiSigWallet is MultiSigWallet {
     }
 
     // Called as a template for encoding the transaction
-    function _transfer(address _token, address _to, uint256 _amount) private {
+    // Visibility is public so that it's callable but access is restricted to multiSigWallet
+    function _transfer(address _token, address _to, uint256 _amount) public onlyThis {
         IERC20(_token).safeTransfer(_to, _amount);
     }
 

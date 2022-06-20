@@ -37,8 +37,7 @@ const billion = 1000000000
 // Initialize external DEX contracts
 // Initialize DEX contracts
 //
-module.exports.fullExchangeFixture = async () => {
-
+module.exports.fullExchangeFixture = async (wallets, provider) => {
     //
     // Define contract factories
     // 
@@ -60,7 +59,7 @@ module.exports.fullExchangeFixture = async () => {
     const masterChefContractFactory = await ethers.getContractFactory("MasterChef")
     const publicPresaleContractFactory = await ethers.getContractFactory("PublicPresale")
     const airdropContractFactory = await ethers.getContractFactory("AirDrop")
-    const TokenMultiSigWalletContractFactory = await ethers.getContractFactory("TokenMultiSigWallet")
+    const tokenMultiSigWalletContractFactory = await ethers.getContractFactory("TokenMultiSigWallet")
 
     // 
     // Deploy misc token contracts
@@ -85,6 +84,8 @@ module.exports.fullExchangeFixture = async () => {
     // Deploy MultiSig wallets
     //
 
+    const tokenMultiSigWallet = await tokenMultiSigWalletContractFactory
+        .deploy(wallets, "TokenMultiSigWallet", 2)
 
     //
     // Deploy external DEX contracts
@@ -258,6 +259,8 @@ module.exports.fullExchangeFixture = async () => {
         tokenB,
         tokenC,
         weth,
+        // Multisig wallets
+        tokenMultiSigWallet,
         // External contracts
         externalFactory,
         externalOracleFactory,
