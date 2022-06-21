@@ -37,7 +37,7 @@ const billion = 1000000000
 // Initialize external DEX contracts
 // Initialize DEX contracts
 //
-module.exports.fullExchangeFixture = async (wallets, provider) => {
+module.exports.fullExchangeFixture = async () => {
     //
     // Define contract factories
     // 
@@ -84,12 +84,14 @@ module.exports.fullExchangeFixture = async (wallets, provider) => {
     //
     // Deploy MultiSig wallets
     //
+    const [alice, bobby, carol, david, edith] = await ethers.getSigners()
+    const owners = [alice.address, bobby.address, carol.address]
 
     const tokenMultiSigWallet = await tokenMultiSigWalletContractFactory
-        .deploy(wallets, "TokenMultiSigWallet", 2)
+        .deploy(owners, "TokenMultiSigWallet", 2)
 
     const subMultiSigWallet = await subMultiSigWalletContractFactory
-        .deploy(wallets, 2)
+        .deploy(owners, 2)
 
     //
     // Deploy external DEX contracts

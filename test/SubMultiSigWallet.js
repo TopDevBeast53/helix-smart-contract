@@ -1,7 +1,7 @@
 const { expect } = require("chai")                                                                                                      
                                                                                                    
 const { waffle } = require("hardhat")                                                              
-const { loadFixture, createFixtureLoader, createMockProvider, getWallets } = waffle                                                                     
+const { loadFixture } = waffle                                                                     
                                                                                                    
 const { bigNumberify, MaxUint256 } = require("legacy-ethers/utils")                                            
 const { expandTo18Decimals, print } = require("./shared/utilities")                                       
@@ -21,7 +21,6 @@ describe("SubMultiSigWallet", () => {
         [alice, bobby, carol, david, edith] = await ethers.getSigners()
         owners = [alice.address, bobby.address, carol.address]
 
-        const loadFixture = createFixtureLoader(owners, createMockProvider)
         const fixture = await loadFixture(fullExchangeFixture)
 
         subMultiSig = fixture.subMultiSigWallet
