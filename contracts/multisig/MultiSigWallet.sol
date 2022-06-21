@@ -124,6 +124,7 @@ contract MultiSigWallet {
 
     function executeTransaction(uint _txIndex)
         public
+        virtual
         onlyOwner
         txExists(_txIndex)
         notExecuted(_txIndex)
