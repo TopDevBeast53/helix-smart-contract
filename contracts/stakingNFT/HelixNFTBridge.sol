@@ -114,7 +114,7 @@ contract HelixNFTBridge is Ownable, Pausable {
         helixNFT = _helixNFT;
     }
     
-    function addBridgeFactory(address _user, string[] calldata _externalIDs, string[] calldata _tokenURIs)
+    function addBridgeFactory(address _user, string[] memory _externalIDs, string[] memory _tokenURIs)
       external 
       onlyOwner
     {
@@ -202,7 +202,7 @@ contract HelixNFTBridge is Ownable, Pausable {
         
         uint256 bridgeFactoryId = helixNFT.getBridgeFactoryId(_tokenId);
         BridgeFactory storage _bridgeFactory = bridgeFactories[bridgeFactoryId];
-        if (_bridgeFactory.bridgeStatus != BridgeStatus.Bridged) AlreadyBridgedEthereumToken(_tokenId);
+        if (_bridgeFactory.bridgeStatus != BridgeStatus.Bridged) revert AlreadyBridgedEthereumToken(_tokenId);
 
         string[] memory externalTokenIDs = _bridgeFactory.externalIDs;
         uint256 length = externalTokenIDs.length;

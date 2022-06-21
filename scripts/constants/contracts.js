@@ -5,11 +5,11 @@ module.exports = {
     },
     helixNFT: {
         1: '',
-        4: '0xE54Ae8147af2B800CA0b47036176b37f42a94800',
+        4: '0x9D99283AA1F41907E9CbB177e7B7676a5B8aFE27',
     },
     helixNFTImplementation: {
         1: '',
-        4: '0xB8dF9dbf268E18026705757e91fAeEbb1B5b916E',
+        4: '0x9ffb21cbd2034A4697D82B7691E0295A124d1261',
     },
     feeMinter: {
         1: '',
@@ -17,7 +17,7 @@ module.exports = {
     },
     helixNFTBridge: {
         1: '',
-        4: '0x3E9bdCfF21871c0751b8Fb3b17AC883e36aBa23B',
+        4: '0x6010640dc6F4387d3848401A1FBAB164661D7468',
     },
     helixChefNFT: {
         1: '',
