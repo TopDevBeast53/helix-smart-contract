@@ -10,7 +10,7 @@ const { constants } = require("@openzeppelin/test-helpers")
                                                                                                    
 const verbose = true  
 
-describe("TokenMultiSigWallet", () => {
+describe("SubMultiSigWallet", () => {
     let alice, bobby, carol, david, edith
     let owners
     let subMultiSig
@@ -55,7 +55,27 @@ describe("TokenMultiSigWallet", () => {
             .to.be.revertedWith("NotMasterConfirmed")
     })
 
-    it("subMultiSigWallet: execute transaction", async () => {
+    it("subMultiSigWallet: execute transaction if transaction already executed fails", async () => {
+        // submit transaction
+        await subMultiSig.submitTransaction(constants.ZERO_ADDRESS, 0, constants.ZERO_ADDRESS)
+        const txIndex = (await subMultiSig.getTransactionCount()).sub(1)
+
+        // confirm the transaction as master (alice)
+        await subMultiSig.confirmTransaction(txIndex)
+
+        // confirm the transaction as owner (bobby)
+        const subMultiSigBobby = subMultiSig.connect(bobby)
+        await subMultiSigBobby.confirmTransaction(txIndex)
+
+        // execute the transaction
+        await subMultiSig.executeTransaction(txIndex)
+
+        // try to execute again
+        await expect(subMultiSig.executeTransaction(txIndex))
+            .to.be.revertedWith("TxAlreadyExecuted")
+    })
+
+    it("subMultiSigWallet: execute transaction marks transaction as executed", async () => {
         // submit transaction
         await subMultiSig.submitTransaction(constants.ZERO_ADDRESS, 0, constants.ZERO_ADDRESS)
         const txIndex = (await subMultiSig.getTransactionCount()).sub(1)
@@ -73,5 +93,22 @@ describe("TokenMultiSigWallet", () => {
         // confirm that the transaction is marked as executed
         const transaction = await subMultiSig.getTransaction(txIndex)
         expect(transaction.executed).to.be.true
+    })
+
+    it("subMultiSigWallet: execute transaction emits ExecuteTransaction event", async () => {
+        // submit transaction
+        await subMultiSig.submitTransaction(constants.ZERO_ADDRESS, 0, constants.ZERO_ADDRESS)
+        const txIndex = (await subMultiSig.getTransactionCount()).sub(1)
+
+        // confirm the transaction as master (alice)
+        await subMultiSig.confirmTransaction(txIndex)
+
+        // confirm the transaction as owner (bobby)
+        const subMultiSigBobby = subMultiSig.connect(bobby)
+        await subMultiSigBobby.confirmTransaction(txIndex)
+
+        // execute the transaction
+        await expect(subMultiSig.executeTransaction(txIndex))
+            .to.emit(subMultiSig, "ExecuteTransaction")
     })
 })

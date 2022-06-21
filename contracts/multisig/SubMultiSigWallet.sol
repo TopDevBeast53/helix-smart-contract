@@ -3,10 +3,10 @@ pragma solidity >=0.8.10;
 
 /// Adapted from https://solidity-by-example.org/app/multi-sig-wallet
 
-import "./MultiSigWallet.sol";
+import "./ConfigurableMultiSigWallet.sol";
 
 /// Requires master approval before executing transactions
-contract SubMultiSigWallet is MultiSigWallet {
+contract SubMultiSigWallet is ConfigurableMultiSigWallet {
     error NotMasterConfirmed(uint256 txIndex);
 
     modifier onlyMasterConfirmed(uint256 _txIndex) {
@@ -15,7 +15,7 @@ contract SubMultiSigWallet is MultiSigWallet {
     }
 
     constructor(address[] memory _owners, uint _numConfirmationsRequired) 
-        MultiSigWallet(_owners, _numConfirmationsRequired) {
+        ConfigurableMultiSigWallet(_owners, _numConfirmationsRequired) {
     }
 
     function masterHasConfirmed(uint256 _txIndex) public view returns (bool) {
