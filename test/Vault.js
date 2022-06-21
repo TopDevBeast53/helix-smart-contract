@@ -206,7 +206,7 @@ describe('Vault', () => {
         // require "to" to be less than "from" for following test to fail as expected
         expect(to).to.be.below(from)
         await expect(vault.getBlocksDifference(from, to))
-            .to.be.revertedWith("FromGreaterThanTo(999, 998)")
+            .to.be.revertedWith("FromGreaterThanTo")
     })
 
     it('vault: update pool', async () => {
@@ -554,7 +554,7 @@ describe('Vault', () => {
         // get the most recent depositId
         let id = (await vault.depositId()).sub(1)
         await expect(vault1.pendingReward(id))
-            .to.be.revertedWith(`CallerIsNotDepositor(\"${wallet1.address}\", \"${wallet0.address}\")`)
+            .to.be.revertedWith("CallerIsNotDepositor")
     })
 
     it('vault: pending reward fails if deposit is already withdrawn', async () => {
