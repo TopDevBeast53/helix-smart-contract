@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "./MultiSigWallet.sol";
+import "./ConfigurableMultiSigWallet.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract TokenMultiSigWallet is MultiSigWallet {
+contract TokenMultiSigWallet is ConfigurableMultiSigWallet {
     using SafeERC20 for IERC20;
 
     event NotifyDeposit(
@@ -31,13 +31,19 @@ contract TokenMultiSigWallet is MultiSigWallet {
 
     error ZeroTransferAmount();
     error InsufficientBalance(uint256 amount, uint256 balance);
+    error InvalidCaller();
+
+    modifier onlyThis() {
+        if (msg.sender != address(this)) revert InvalidCaller();
+        _;
+    }
 
     constructor (
         address[] memory _owners,
         string memory _name,
         uint256 _requiredApprovals
     ) 
-        MultiSigWallet(_owners, _requiredApprovals)
+        ConfigurableMultiSigWallet(_owners, _requiredApprovals)
     {
         name = _name;
     }
@@ -50,13 +56,13 @@ contract TokenMultiSigWallet is MultiSigWallet {
     /// Submit request to transfer _amount of _token from contract to _to
     function submitTransfer(address _token, address _to, uint256 _amount) external {
         if (_to == address(0)) revert ZeroAddress();
-        uint256 balance = getBalance(_token);
         if (_amount == 0) revert ZeroTransferAmount();
+        uint256 balance = getBalance(_token);
         if (_amount > balance) revert InsufficientBalance(_amount, balance);
 
         submitTransaction(address(this), 0, _getTransferData(_token, _to, _amount)); 
-        uint256 transferId = getTransactionCount() - 1;
 
+        uint256 transferId = getTransactionCount() - 1;
         emit SubmitTransfer(msg.sender, transferId, _token, _to, _amount);
     }
 
@@ -85,7 +91,8 @@ contract TokenMultiSigWallet is MultiSigWallet {
     }
 
     // Called as a template for encoding the transaction
-    function _transfer(address _token, address _to, uint256 _amount) private {
+    // Visibility is public so that it's callable but access is restricted to multiSigWallet
+    function _transfer(address _token, address _to, uint256 _amount) public onlyThis {
         IERC20(_token).safeTransfer(_to, _amount);
     }
 
