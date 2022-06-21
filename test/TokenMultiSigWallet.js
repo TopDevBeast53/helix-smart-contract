@@ -447,10 +447,4 @@ describe("TokenMultiSigWallet", () => {
         await tokenB.transfer(tokenMultiSig.address, amountB)
         expect(await tokenMultiSig.getBalance(tokenB.address)).to.eq(amountB)
     })
-
-    it("tokenMultiSigWallet: call to transfer fails", async () => {
-        const amount = expandTo18Decimals(100)
-        await expect(tokenMultiSig._transfer(tokenA.address, bobby.address, amount))
-            to.be.revertedWith("InvalidCaller")
-    })
 })
