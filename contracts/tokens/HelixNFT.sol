@@ -56,6 +56,8 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         bool isStaked;
         // how many it is wrapped from solana
         uint256 wrappedNfts;
+        // by which bridge factory id
+        uint256 bridgeFactoryId;
     }
 
     // map token info by token ID : TokenId => Token
@@ -131,6 +133,10 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         return string(abi.encodePacked(_tokens[id].tokenURI));
     }
 
+    function getBridgeFactoryId(uint256 _tokenId) external view tokenIdExists(_tokenId) returns (uint256) {
+        return _tokens[_tokenId].bridgeFactoryId;
+    }
+
     /**
      * @dev Override funtion to avoid the approval of the staked token
      */
@@ -182,7 +188,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
     }
 
     // Mints external NFT
-    function mintExternal(address to, string[] calldata externalTokenIDs, string calldata uri) 
+    function mintExternal(address to, string[] calldata externalTokenIDs, string calldata uri, uint256 _bridgeFactoryId) 
         external 
         onlyMinter 
         nonReentrant 
@@ -192,6 +198,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         uint256 tokenId = _lastTokenId;
         _tokens[tokenId].createTimestamp = block.timestamp;
         _tokens[tokenId].tokenURI = uri;
+        _tokens[tokenId].bridgeFactoryId = _bridgeFactoryId;
         uint256 length = externalTokenIDs.length;
         for (uint256 i = 0; i < length; i++) {
             string memory externalID = externalTokenIDs[i];
