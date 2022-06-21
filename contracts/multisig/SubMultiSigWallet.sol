@@ -30,8 +30,8 @@ contract SubMultiSigWallet is MultiSigWallet {
         public
         override
         onlyOwner
-        onlyMasterConfirmed(_txIndex)
         txExists(_txIndex)
+        onlyMasterConfirmed(_txIndex)
         notExecuted(_txIndex)
     {
         Transaction storage transaction = transactions[_txIndex];
