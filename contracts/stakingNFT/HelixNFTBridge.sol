@@ -10,13 +10,27 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 error NotBridger(address caller);
 
 /// Thrown when the token is already bridged
-error AlreadyBridged(string externalId);
+error AlreadyBridgedToken(string externalTokenID);
+
+/// Thrown when bridgeFactoryId is already bridged
+error AlreadyBridgedFactory(uint256 bridgeFactoryId);
 
 /// Thrown when address(0) is encountered
 error ZeroAddress();
 
 /// Thrown when index is out of bounds
 error IndexOutOfBounds(uint256 index, uint256 length);
+
+/// Array length is 0
+error NotArray();
+
+/// Invalid array
+error InvalidArray();
+
+/// Invalid array
+error NotOwner();
+
+error AlreadyBridgedEthereumToken(uint256 tokenId);
 
 /**
  * HelixNFTBridge is responsible for many things related to NFT Bridging from-/to-
@@ -27,22 +41,44 @@ contract HelixNFTBridge is Ownable, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /**
+     * Bridge status determines
+     *  0: pendding status, so when the BridgeServer adds BridgedToken
+     *  1: after minted the Ethereum NFT
+     */
+    enum BridgeStatus {
+        Pendding,
+        Bridged,
+        Burned
+    }
+
+    struct BridgeFactory {
+        address user;                   // owner of Ethereum NFT
+        string[] externalIDs;           // wrapped tokenIDs of Solana
+        string[] tokenURIs;             // wrapped tokenURIs of Solana : Ethereum NFT's TokenURI will be tokenURIs[0]
+        BridgeStatus bridgeStatus;      // bridge status
+    }
+
+    /// bridgeFactoryId => BridgeFactory
+    mapping(uint256 => BridgeFactory) public bridgeFactories;
+
+    /// user -> bridgeFactoryIDs[]
+    mapping(address => uint[]) public bridgeFactoryIDs;
+    
+    /// ethereum NFT tokenId -> true/false
+    mapping(uint256 => bool) private _bridgedTokenIDs;
+    
+    /**
      * @dev If the NFT is available on the Ethereum, then this map stores true
      * for the externalID, false otherwise.
      */
     mapping(string => bool) private _bridgedExternalTokenIDs;
 
-    /**
-     * @dev If the NFT is available on the Ethereum, but it either:
-     * - has not been minted
-     * - has not been picked up by the owner from the bridge contract
-     */
-    mapping(string => address) private _bridgedExternalTokenIDsPickUp;
-
     /// for counting whenever add bridge once approve on solana 
     /// if it's down to 0, will call to remove bridger
     /// user => counts
     mapping(address => uint256) private _countAddBridge;
+ 
+    uint256 public bridgeFactoryLastId;  
     /**
      * @dev Bridgers are Helix service accounts which listen to the events
      *      happening on the Solana chain and then enabling the NFT for
@@ -53,7 +89,6 @@ contract HelixNFTBridge is Ownable, Pausable {
     // Emitted when tokens are bridged to Ethereum
     event BridgeToEthereum(
         address indexed bridger,
-        address indexed owner,
         string[] indexed externalTokenIds,
         string uri
     );
@@ -61,12 +96,11 @@ contract HelixNFTBridge is Ownable, Pausable {
     // Emitted when tokens are bridged to Solana
     event BridgeToSolana(
         string indexed externalRecipientAddr, 
-        uint256 indexed tokenId,
-        uint256 timestamp
+        string[] externalTokenIDs
     );
 
     // Emitted when a bridger is added
-    event AddBridger(address indexed bridger, string externalTokenID);
+    event AddBridger(address indexed bridger, string[] indexed externalIDs);
     
     // Emitted when a bridger is deleted
     event DelBridger(address indexed bridger);
@@ -80,32 +114,62 @@ contract HelixNFTBridge is Ownable, Pausable {
         helixNFT = _helixNFT;
     }
     
+    function addBridgeFactory(address _user, string[] calldata _externalIDs, string[] calldata _tokenURIs)
+      external 
+      onlyOwner
+    {
+        if (_user == address(0)) revert ZeroAddress();
+        if (_externalIDs.length == 0) revert NotArray();
+        if (_externalIDs.length != _tokenURIs.length) revert InvalidArray();
+        
+        uint256 length = _externalIDs.length;
+        for (uint256 i = 0; i < length; i++) {
+            string memory _externalID = _externalIDs[i];
+            if (_bridgedExternalTokenIDs[_externalID]) revert AlreadyBridgedToken(_externalID);
+            _bridgedExternalTokenIDs[_externalID] = true;
+        }
+        
+        uint256 _bridgeFactoryId = bridgeFactoryLastId++;
+        BridgeFactory storage _factory = bridgeFactories[_bridgeFactoryId];
+        _factory.user = _user;
+        _factory.bridgeStatus = BridgeStatus.Pendding;
+        _factory.externalIDs = _externalIDs;
+        _factory.tokenURIs = _tokenURIs;
+
+        // Relay the bridge id to the user's account
+        bridgeFactoryIDs[_user].push(_bridgeFactoryId);
+
+        _countAddBridge[_user]++;
+        EnumerableSet.add(_bridgers, _user);
+        emit AddBridger(_user, _externalIDs);
+    }
     /**
      * @dev This function is called ONLY by bridgers to bridge the token to Ethereum
      */
-    function bridgeToEthereum(string[] calldata _externalTokenIDs, address _owner, string calldata _uri)
-      onlyBridger
+    function bridgeToEthereum(uint256 _bridgeFactoryId)
       external
+      onlyBridger
       whenNotPaused
       returns(bool) 
     {
-        if (_countAddBridge[_owner] == 0) revert NotBridger(_owner);
-        uint256 length = _externalTokenIDs.length;
-        for (uint256 i = 0; i < length; i++) {
-            string memory externalID = _externalTokenIDs[i];
-            if (_bridgedExternalTokenIDs[externalID]) revert AlreadyBridged(externalID);
-            _bridgedExternalTokenIDs[externalID] = true;
-            _bridgedExternalTokenIDsPickUp[externalID] = _owner;
-        }
-        
-        _countAddBridge[_owner]--;
+        address _user = msg.sender;
+        if (_countAddBridge[_user] == 0) revert NotBridger(_user);
+        BridgeFactory memory _bridgeFactory = bridgeFactories[_bridgeFactoryId];
+        if (_bridgeFactory.user != _user) revert NotBridger(_user);
+        if (_bridgeFactory.bridgeStatus != BridgeStatus.Pendding) revert AlreadyBridgedFactory(_bridgeFactoryId);
 
-        helixNFT.mintExternal(_owner, _externalTokenIDs, _uri);
-        // If the token is already minted, we could send it directly to the user's wallet
-        if (_countAddBridge[_owner] == 0) 
-            return _delBridger(_owner);
+        _countAddBridge[_user]--;
+        bridgeFactories[_bridgeFactoryId].bridgeStatus = BridgeStatus.Bridged;
+        uint256 tokenId = helixNFT.getLastTokenId() + 1;
+        _bridgedTokenIDs[tokenId] = true;
+        // Ethereum NFT's TokenURI is first URI of wrapped geobots
+        string memory tokenURI = _bridgeFactory.tokenURIs[0];
+        helixNFT.mintExternal(_user, _bridgeFactory.externalIDs, tokenURI, _bridgeFactoryId);
 
-        emit BridgeToEthereum(msg.sender, _owner, _externalTokenIDs, _uri);
+        if (_countAddBridge[_user] == 0) 
+            _delBridger(_user);
+
+        emit BridgeToEthereum(_user, _bridgeFactory.externalIDs, tokenURI);
         return true;
     }
 
@@ -114,13 +178,6 @@ contract HelixNFTBridge is Ownable, Pausable {
      */
     function isBridged(string calldata _externalTokenID) external view returns (bool) {
         return _bridgedExternalTokenIDs[_externalTokenID];
-    }
-
-    /**
-     * @dev Get the owner to pick up the NFT from the bridge contract.
-     */
-    function getPickUpOwner(string calldata _externalTokenID) external view returns (address) {
-        return _bridgedExternalTokenIDsPickUp[_externalTokenID];
     }
 
     /// Called by the owner to pause the contract
@@ -140,32 +197,25 @@ contract HelixNFTBridge is Ownable, Pausable {
        external 
        whenNotPaused
     {
-        string[] memory externalTokenIDs = helixNFT.getExternalTokenIDs(_tokenId);
+        if (helixNFT.ownerOf(_tokenId) != msg.sender) revert NotOwner();
+        if (!_bridgedTokenIDs[_tokenId]) revert AlreadyBridgedEthereumToken(_tokenId);
+        
+        uint256 bridgeFactoryId = helixNFT.getBridgeFactoryId(_tokenId);
+        BridgeFactory storage _bridgeFactory = bridgeFactories[bridgeFactoryId];
+        if (_bridgeFactory.bridgeStatus != BridgeStatus.Bridged) AlreadyBridgedEthereumToken(_tokenId);
+
+        string[] memory externalTokenIDs = _bridgeFactory.externalIDs;
         uint256 length = externalTokenIDs.length;
         for (uint256 i = 0; i < length; i++) {
             string memory externalID = externalTokenIDs[i];
-            if (!_bridgedExternalTokenIDs[externalID]) revert AlreadyBridged(externalID);
-            if (_bridgedExternalTokenIDsPickUp[externalID] != msg.sender) revert NotBridger(msg.sender);
-
-            // Mark as unavailable on Ethereum.
+            if (!_bridgedExternalTokenIDs[externalID]) revert AlreadyBridgedToken(externalID);
             _bridgedExternalTokenIDs[externalID] = false;
-            _bridgedExternalTokenIDsPickUp[externalID] = address(0);
         }
+        _bridgedTokenIDs[_tokenId] = false;
+        _bridgeFactory.bridgeStatus = BridgeStatus.Burned;
+
         helixNFT.burn(_tokenId);
-
-        emit BridgeToSolana(_externalRecipientAddr, _tokenId, block.timestamp);
-    }
-
-    /**
-     * @dev used by owner to add a bridger service account who calls `bridgeFromSolana`
-     * @param _bridger address of bridger to be added.
-     * @return true if successful.
-     */
-    function addBridger(address _bridger, string calldata _externalTokenID) external onlyOwner returns (bool) {
-        if (_bridger == address(0)) revert ZeroAddress();
-        _countAddBridge[_bridger]++;
-        emit AddBridger(_bridger, _externalTokenID);
-        return EnumerableSet.add(_bridgers, _bridger);
+        emit BridgeToSolana(_externalRecipientAddr, externalTokenIDs);
     }
 
     /**
