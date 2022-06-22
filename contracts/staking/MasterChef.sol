@@ -403,6 +403,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
 
         if (pending > 0) {
+            refRegister.rewardStake(msg.sender, pending);
             safeHelixTokenTransfer(msg.sender, pending);
         }
         if (_amount > 0) {
@@ -488,6 +489,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         bucket.yield = 0;
 
         // Withdraw the yield and lpToken
+        refRegister.rewardStake(msg.sender, yield);
         safeHelixTokenTransfer(msg.sender, yield);
         TransferHelper.safeTransfer(address(pool.lpToken), address(msg.sender), _amount);
 
@@ -552,6 +554,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         bucket.rewardDebt = bucket.amount * (pool.accHelixTokenPerShare) / (1e12);
         yield -= _yield;
 
+        refRegister.rewardStake(msg.sender, yield);
         safeHelixTokenTransfer(_recipient, _yield);
 
         emit BucketWithdrawYieldTo(msg.sender, _recipient, _bucketId, _poolId, _yield);
@@ -593,6 +596,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         user.rewardDebt = user.amount * (pool.accHelixTokenPerShare) / (1e12);
         
         if (pending > 0) {
+            refRegister.rewardStake(msg.sender, pending);
             safeHelixTokenTransfer(msg.sender, pending);
         }
         if (_amount > 0) {
