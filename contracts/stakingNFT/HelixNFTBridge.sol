@@ -96,7 +96,7 @@ contract HelixNFTBridge is Ownable, Pausable {
     // Emitted when tokens are bridged to Solana
     event BridgeToSolana(
         string indexed externalRecipientAddr, 
-        string[] externalTokenIDs
+        string[] indexed externalTokenIDs
     );
 
     // Emitted when a bridger is added
@@ -144,7 +144,7 @@ contract HelixNFTBridge is Ownable, Pausable {
 
         _countAddBridge[_user]++;
         EnumerableSet.add(_bridgers, _user);
-        emit AddBridger(_user, _externalIDs, _bridgeFactoryId);
+        emit AddBridger(_user, _newExternalIDs, _bridgeFactoryId);
     }
     /**
      * @dev This function is called ONLY by bridgers to bridge the token to Ethereum
