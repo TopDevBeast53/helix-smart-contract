@@ -100,7 +100,7 @@ contract HelixNFTBridge is Ownable, Pausable {
     );
 
     // Emitted when a bridger is added
-    event AddBridger(address indexed bridger, string[] indexed externalIDs);
+    event AddBridger(address indexed bridger, string[] indexed externalIDs, uint256 newBridgeFactoryId);
     
     // Emitted when a bridger is deleted
     event DelBridger(address indexed bridger);
@@ -114,7 +114,7 @@ contract HelixNFTBridge is Ownable, Pausable {
         helixNFT = _helixNFT;
     }
     
-    function addBridgeFactory(address _user, string[] memory _externalIDs, string[] memory _tokenURIs)
+    function addBridgeFactory(address _user, string[] calldata _externalIDs, string[] calldata _tokenURIs)
       external 
       onlyOwner
     {
@@ -128,20 +128,23 @@ contract HelixNFTBridge is Ownable, Pausable {
             if (_bridgedExternalTokenIDs[_externalID]) revert AlreadyBridgedToken(_externalID);
             _bridgedExternalTokenIDs[_externalID] = true;
         }
-        
+        string[] memory _newExternalIDs = new string[](length);
+        string[] memory _newTokenURIs = new string[](length);
+        _newExternalIDs = _externalIDs;
+        _newTokenURIs = _tokenURIs;
         uint256 _bridgeFactoryId = bridgeFactoryLastId++;
         BridgeFactory storage _factory = bridgeFactories[_bridgeFactoryId];
         _factory.user = _user;
         _factory.bridgeStatus = BridgeStatus.Pendding;
-        _factory.externalIDs = _externalIDs;
-        _factory.tokenURIs = _tokenURIs;
+        _factory.externalIDs = _newExternalIDs;
+        _factory.tokenURIs = _newTokenURIs;
 
         // Relay the bridge id to the user's account
         bridgeFactoryIDs[_user].push(_bridgeFactoryId);
 
         _countAddBridge[_user]++;
         EnumerableSet.add(_bridgers, _user);
-        emit AddBridger(_user, _externalIDs);
+        emit AddBridger(_user, _externalIDs, _bridgeFactoryId);
     }
     /**
      * @dev This function is called ONLY by bridgers to bridge the token to Ethereum
