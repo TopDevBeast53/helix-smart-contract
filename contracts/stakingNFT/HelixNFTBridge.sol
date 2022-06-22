@@ -173,6 +173,19 @@ contract HelixNFTBridge is Ownable, Pausable {
         return true;
     }
 
+    function getBridgeFactoryIDs(address _user) external view returns (uint[] memory) {
+        return bridgeFactoryIDs[_user];
+    }
+
+    function getBridgeFactorys(address _user) external view returns (BridgeFactory[] memory) {
+        uint256 length = bridgeFactoryIDs[_user].length;
+        BridgeFactory[] memory _bridgeFactories = new BridgeFactory[](length);
+        for (uint256 i = 0; i < length; i++) {
+            _bridgeFactories[i] = bridgeFactories[bridgeFactoryIDs[_user][i]];
+        }
+        return _bridgeFactories;
+    }
+
     /**
      * @dev Whether the token is bridged or not.
      */
