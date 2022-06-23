@@ -5,6 +5,7 @@ import "../tokens/HelixToken.sol";
 import "../libraries/Percent.sol";
 import "../fees/FeeCollector.sol";
 import "../interfaces/IFeeMinter.sol";
+import "../timelock/OwnableTimelockUpgradeable.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -58,7 +59,8 @@ contract HelixVault is
     FeeCollector, 
     OwnableUpgradeable, 
     PausableUpgradeable, 
-    ReentrancyGuardUpgradeable 
+    ReentrancyGuardUpgradeable,
+    OwnableTimelockUpgradeable
 {
     struct Deposit {
         address depositor;                  // user making the deposit
@@ -188,6 +190,7 @@ contract HelixVault is
         uint256 _lastRewardBlock
     ) external initializer {
         __Ownable_init();
+        __OwnableTimelock_init();
         __Pausable_init();
         __ReentrancyGuard_init();
 
@@ -355,7 +358,7 @@ contract HelixVault is
     /// new _duration and _weight
     function setDuration(uint256 _index, uint256 _duration, uint256 _weight)
         external
-        onlyOwner
+        onlyTimelock
         onlyValidIndex(_index)
         onlyValidDuration(_duration)
         onlyValidWeight(_weight)  
@@ -367,7 +370,7 @@ contract HelixVault is
     /// Called by the owner to add a new duration with _duration and _weight
     function addDuration(uint256 _duration, uint256 _weight) 
         external 
-        onlyOwner
+        onlyTimelock
         onlyValidDuration(_duration) 
         onlyValidWeight(_weight)
     {
@@ -377,7 +380,7 @@ contract HelixVault is
     /// Called by the owner to remove the duration at _index
     function removeDuration(uint256 _index) 
         external 
-        onlyOwner
+        onlyTimelock
         onlyValidIndex(_index)
     {
         // remove by array shift to preserve order
@@ -410,13 +413,13 @@ contract HelixVault is
     }
 
     /// Called by the owner to set the _feeMinter
-    function setFeeMinter(address _feeMinter) external onlyOwner {
+    function setFeeMinter(address _feeMinter) external onlyTimelock {
         feeMinter = IFeeMinter(_feeMinter);
         emit SetFeeMinter(msg.sender, _feeMinter);
     }
 
     /// Called by the owner to set the _collectorPercent
-    function setCollectorPercent(uint256 _collectorPercent) external onlyOwner {
+    function setCollectorPercent(uint256 _collectorPercent) external onlyTimelock {
         _setCollectorPercent(_collectorPercent);
     }
 

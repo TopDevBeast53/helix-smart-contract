@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "../interfaces/IMigratorChef.sol";
 import "../interfaces/IMasterChef.sol";
+import "../timelock/OwnableTimelockUpgradeable.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -36,7 +36,7 @@ error ZeroWithdraw();
 /// Thrown when amount exceeds balance
 error InsufficientBalance(uint256 amount, uint256 balance);
 
-contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
+contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, OwnableTimelockUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     struct UserInfo {
@@ -120,6 +120,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
         address _treasury
     ) external initializer {
         __Ownable_init();
+        __OwnableTimelock_init();
         __Pausable_init();
         token = IERC20Upgradeable(_token);
         masterchef = _masterchef;
@@ -200,7 +201,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
      * @notice Sets treasury address
      * @dev Only callable by the contract owner.
      */
-    function setTreasury(address _treasury) external onlyOwner {
+    function setTreasury(address _treasury) external onlyTimelock {
         if (_treasury == address(0)) revert ZeroAddress();
         treasury = _treasury;
     }
@@ -209,7 +210,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
      * @notice Sets performance fee
      * @dev Only callable by the contract owner.
      */
-    function setPerformanceFee(uint256 _performanceFee) external onlyOwner {
+    function setPerformanceFee(uint256 _performanceFee) external onlyTimelock {
         if (_performanceFee > MAX_PERFORMANCE_FEE) {
             revert FeeExceedsMax(_performanceFee, MAX_PERFORMANCE_FEE);
         }
@@ -221,7 +222,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
      * @notice Sets call fee
      * @dev Only callable by the contract owner.
      */
-    function setCallFee(uint256 _callFee) external onlyOwner {
+    function setCallFee(uint256 _callFee) external onlyTimelock {
         if (_callFee > MAX_CALL_FEE) {
             revert FeeExceedsMax(_callFee, MAX_CALL_FEE);
         }
@@ -233,7 +234,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
      * @notice Sets withdraw fee
      * @dev Only callable by the contract owner.
      */
-    function setWithdrawFee(uint256 _withdrawFee) external onlyOwner {
+    function setWithdrawFee(uint256 _withdrawFee) external onlyTimelock {
         if (_withdrawFee > MAX_WITHDRAW_FEE) {
             revert FeeExceedsMax(_withdrawFee, MAX_WITHDRAW_FEE);
         }
@@ -245,7 +246,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable {
      * @notice Sets withdraw fee period
      * @dev Only callable by the contract owner.
      */
-    function setWithdrawFeePeriod(uint256 _withdrawFeePeriod) external onlyOwner {
+    function setWithdrawFeePeriod(uint256 _withdrawFeePeriod) external onlyTimelock {
         if (_withdrawFeePeriod > MAX_WITHDRAW_FEE_PERIOD) {
             revert FeeExceedsMax(_withdrawFeePeriod, MAX_WITHDRAW_FEE_PERIOD);
         }

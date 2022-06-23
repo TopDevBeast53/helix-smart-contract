@@ -38,7 +38,7 @@ describe("Fee Minter", () => {
 
     it("feeMinter: set total to mint per block as non-owner fails", async () => {
         await expect(feeMinter1.setTotalToMintPerBlock(0))
-            .to.be.revertedWith("Ownable: caller is not the owner")
+            .to.be.revertedWith("CallerIsNotTimelockOwner")
     })
 
     it("feeMinter: set total to mint per block", async () => {
@@ -56,7 +56,7 @@ describe("Fee Minter", () => {
 
     it("feeMinter: set to mint percents as non-owner fails", async () => {
         await expect(feeMinter1.setToMintPercents([], []))
-            .to.be.revertedWith("Ownable: caller is not the owner")
+            .to.be.revertedWith("CallerIsNotTimelockOwner")
     })
 
     it("feeMinter: set to mint percents with array length mismatch fails", async () => {

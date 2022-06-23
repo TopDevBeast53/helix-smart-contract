@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Enumer
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
 import "../libraries/Percent.sol";
 
 contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyGuardUpgradeable {
@@ -341,7 +342,6 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
     function getStaker(uint256 _index)
         external
         view
-        onlyOwner
         returns (address)
     {
         uint256 length = getStakerLength() - 1;
@@ -401,7 +401,6 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
     function getMinter(uint256 _index)
         external
         view
-        onlyOwner
         returns (address)
     {
         uint256 length = getMinterLength() - 1; 

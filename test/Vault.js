@@ -763,7 +763,7 @@ describe('Vault', () => {
     it('vault: set fee as non-owner fails', async () => {
         const fee = 0
         await expect(vault1.setCollectorPercent(fee))
-            .to.be.revertedWith("Ownable: caller is not the owner")
+            .to.be.revertedWith("CallerIsNotTimelockOwner")
     })
 
     it('vault: set fee with invalid percent fails', async () => {

@@ -6,6 +6,7 @@ import "../interfaces/IOracleFactory.sol";
 import "../interfaces/IHelixToken.sol";
 import "../interfaces/IReferralRegister.sol";
 import "../libraries/Percent.sol";
+
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
