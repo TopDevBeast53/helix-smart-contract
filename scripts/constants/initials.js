@@ -257,4 +257,60 @@ module.exports = {
         3: [8333, 476, 1191],
         4: [8333, 476, 1191]
     },
+
+    // --------- Treasury MultiSig --------- //
+    
+    TREASURY_MULTISIG_ADMINS: {
+        3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+    },
+
+    TREASURY_MULTISIG_OWNERS: {
+        3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+    },
+
+    TREASURY_MULTISIG_NUM_ADMIN_CONFIRMATIONS_REQUIRED: {
+        3: 1,
+    },
+
+    TREASURY_MULTISIG_NUM_OWNER_CONFIRMATIONS_REQUIRED: {
+        3: 1,
+    },
+
+    // --------- Owner MultiSig --------- //
+    
+    OWNER_MULTISIG_ADMINS: {
+        3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+    },
+
+    OWNER_MULTISIG_OWNERS: {
+        3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+    },
+
+    OWNER_MULTISIG_NUM_ADMIN_CONFIRMATIONS_REQUIRED: {
+        3: 1,
+    },
+
+    OWNER_MULTISIG_NUM_OWNER_CONFIRMATIONS_REQUIRED: {
+        3: 1,
+    },
+
+    // --------- Dev Team MultiSig --------- //
+    
+    DEV_TEAM_MULTISIG_ADMINS: {
+        3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+    },
+
+    DEV_TEAM_MULTISIG_OWNERS: {
+        3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+    },
+
+    DEV_TEAM_MULTISIG_NUM_ADMIN_CONFIRMATIONS_REQUIRED: {
+        3: 1,
+    },
+
+    DEV_TEAM_MULTISIG_NUM_OWNER_CONFIRMATIONS_REQUIRED: {
+        3: 1,
+    },
+
+
 }
