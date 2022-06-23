@@ -100,7 +100,11 @@ contract HelixNFTBridge is Ownable, Pausable {
     );
 
     // Emitted when a bridger is added
-    event AddBridger(address indexed bridger, string[] indexed externalIDs, uint256 newBridgeFactoryId);
+    event AddBridger(
+        address indexed bridger,
+        string externalIDs,
+        uint256 newBridgeFactoryId
+    );
     
     // Emitted when a bridger is deleted
     event DelBridger(address indexed bridger);
@@ -144,7 +148,7 @@ contract HelixNFTBridge is Ownable, Pausable {
 
         _countAddBridge[_user]++;
         EnumerableSet.add(_bridgers, _user);
-        emit AddBridger(_user, _newExternalIDs, _bridgeFactoryId);
+        emit AddBridger(_user, _newExternalIDs[0], _bridgeFactoryId);
     }
     /**
      * @dev This function is called ONLY by bridgers to bridge the token to Ethereum
