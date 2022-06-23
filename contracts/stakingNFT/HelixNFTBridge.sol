@@ -2,6 +2,7 @@
 pragma solidity >= 0.8.0;
 
 import "../tokens/HelixNFT.sol";
+
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -277,7 +278,6 @@ contract HelixNFTBridge is Ownable, Pausable {
     function getBridger(uint256 _index)
         external
         view
-        onlyOwner
         returns (address)
     {
         uint256 length = getBridgersLength() - 1;

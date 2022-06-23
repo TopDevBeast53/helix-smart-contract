@@ -4,6 +4,7 @@ pragma solidity >=0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../libraries/Percent.sol";
+import "../timelock/OwnableTimelock.sol";
 
 /// Thrown when a should equal b but doesn't
 error NotEqual(uint256 a, uint256 b);
@@ -14,7 +15,7 @@ error ZeroAddress();
 /// Thrown when a should be less than or equal to b but isn't
 error NotLessThanOrEqualTo(uint256 a, uint256 b);
 
-contract FeeMinter is Ownable {
+contract FeeMinter is Ownable, OwnableTimelock {
     /// Overall rate at which to mint new tokens
     uint256 public totalToMintPerBlock;
 
@@ -50,7 +51,7 @@ contract FeeMinter is Ownable {
     }
 
     /// Set the _totalToMintPerBlock rate
-    function setTotalToMintPerBlock(uint256 _totalToMintPerBlock) external onlyOwner {
+    function setTotalToMintPerBlock(uint256 _totalToMintPerBlock) external onlyTimelock {
         totalToMintPerBlock = _totalToMintPerBlock;
         emit SetTotalToMintPerBlock(msg.sender, _totalToMintPerBlock);
     }
@@ -58,7 +59,7 @@ contract FeeMinter is Ownable {
     /// Set the toMintPercent for each minter in _minters
     function setToMintPercents(address[] calldata _minters, uint256[] calldata _toMintPercents) 
         external 
-        onlyOwner 
+        onlyTimelock 
     { 
         if (_minters.length != _toMintPercents.length) {
             revert NotEqual(_minters.length, _toMintPercents.length);

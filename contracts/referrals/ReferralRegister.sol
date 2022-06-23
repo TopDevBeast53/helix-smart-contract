@@ -5,6 +5,7 @@ import "../interfaces/IHelixToken.sol";
 import "../interfaces/IFeeMinter.sol";
 import "../fees/FeeCollector.sol";
 import "../libraries/Percent.sol";
+import "../timelock/OwnableTimelockUpgradeable.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -34,7 +35,8 @@ contract ReferralRegister is
     Initializable, 
     OwnableUpgradeable, 
     PausableUpgradeable,
-    ReentrancyGuardUpgradeable 
+    ReentrancyGuardUpgradeable,
+    OwnableTimelockUpgradeable
 {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
@@ -126,6 +128,7 @@ contract ReferralRegister is
         uint256 _lastMintBlock
     ) external initializer {
         __Ownable_init();
+        __OwnableTimelock_init();
         __ReentrancyGuard_init();
         feeMinter = IFeeMinter(_feeMinter);
         _setFeeHandler(_feeHandler);
@@ -188,13 +191,13 @@ contract ReferralRegister is
     }
 
     /// Called by the owner to set the percent earned by referrers on stake transactions
-    function setStakeRewardPercent(uint256 _stakeRewardPercent) external onlyOwner {
+    function setStakeRewardPercent(uint256 _stakeRewardPercent) external onlyTimelock {
         stakeRewardPercent = _stakeRewardPercent;
         emit SetStakeRewardPercent(msg.sender, _stakeRewardPercent);
     }
 
     /// Called by the owner to set the percent earned by referrers on swap transactions
-    function setSwapRewardPercent(uint256 _swapRewardPercent) external onlyOwner {
+    function setSwapRewardPercent(uint256 _swapRewardPercent) external onlyTimelock {
         swapRewardPercent = _swapRewardPercent;
         emit SetSwapRewardPercent(msg.sender, _swapRewardPercent);
     }
@@ -263,23 +266,23 @@ contract ReferralRegister is
     }
 
     /// Called by owner to set feeHandler address
-    function setFeeHandler(address _feeHandler) external onlyOwner {
+    function setFeeHandler(address _feeHandler) external onlyTimelock {
         _setFeeHandler(_feeHandler);
     }
 
     /// Called by owner to set _feeMinter address
-    function setFeeMinter(address _feeMinter) external onlyOwner {
+    function setFeeMinter(address _feeMinter) external onlyTimelock {
         feeMinter = IFeeMinter(_feeMinter);
         emit SetFeeMinter(msg.sender, _feeMinter);
     }
    
     /// Called by the owner to set the percent charged on withdrawals
-    function setCollectorPercent(uint256 _collectorPercent) external onlyOwner {
+    function setCollectorPercent(uint256 _collectorPercent) external onlyTimelock {
         _setCollectorPercent(_collectorPercent);
     }
 
     /// Return the address of the recorder at _index
-    function getRecorder(uint256 _index) external view onlyOwner returns (address) {
+    function getRecorder(uint256 _index) external view returns (address) {
         uint256 recorderLength = getRecorderLength() - 1;
         if (_index > recorderLength) revert IndexOutOfBounds(_index, recorderLength);
         return EnumerableSetUpgradeable.at(_recorders, _index);

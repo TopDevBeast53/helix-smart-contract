@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 import "../libraries/Percent.sol";
+import "../timelock/OwnableTimelockUpgradeable.sol";
 
 import "../interfaces/IHelixChefNFT.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -16,7 +17,7 @@ error ZeroFee();
 error ZeroAddress();
 
 /// Handles routing received fees to internal contracts
-contract FeeHandler is Initializable, OwnableUpgradeable {
+contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /// Owner defined fee recipient
@@ -66,6 +67,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
 
     function initialize(address _treasury, address _nftChef) external initializer {
         __Ownable_init();
+        __OwnableTimelock_init();
         treasury = _treasury;
         nftChef = IHelixChefNFT(_nftChef);
     }
@@ -105,7 +107,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     }
 
     /// Called by the owner to set a new _treasury address
-    function setTreasury(address _treasury) external onlyOwner onlyValidAddress(_treasury) { 
+    function setTreasury(address _treasury) external onlyTimelock onlyValidAddress(_treasury) { 
         treasury = _treasury;
         emit SetTreasury(msg.sender, _treasury);
     }
@@ -113,7 +115,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable {
     /// Called by the owner to set a new _nftChef address
     function setNftChef(address _nftChef) 
         external 
-        onlyOwner 
+        onlyOwner
         onlyValidAddress(_nftChef) 
     {
         nftChef = IHelixChefNFT(_nftChef);

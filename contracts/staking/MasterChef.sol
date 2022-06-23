@@ -2,9 +2,9 @@
 pragma solidity >=0.8.0;
 
 import "../tokens/HelixToken.sol";
-import "../interfaces/IMigratorChef.sol";
 import "../interfaces/IReferralRegister.sol";
 import "../interfaces/IFeeMinter.sol";
+import "../timelock/OwnableTimelockUpgradeable.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -33,7 +33,7 @@ error AmountExceedsAllowance(uint256 amount, uint256 allowance);
 /// Thrown when a transfer fails
 error TransferFailed();
 
-contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
+contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, OwnableTimelockUpgradeable {
     // Info of each user.
     struct UserInfo {
         uint256 amount; // How many LP tokens the user has provided.
@@ -92,9 +92,6 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     // Bonus muliplier for early HelixToken makers.
     uint256 public BONUS_MULTIPLIER;
 
-    // The migrator contract. It has a lot of power. Can only be set through governance (owner).
-    IMigratorChef public migrator;
-
     // Referral Register contract
     IReferralRegister public refRegister;
 
@@ -145,12 +142,6 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Emitted when the owner sets the pool alloc point
     event AllocPointSet(uint256 indexed poolId, uint256 allocPoint, bool withUpdate);
-
-    // Emitted when the owner sets a new migrator contract
-    event MigratorSet(address migrator);
-
-    // Emitted when when a pool's liquidity is migrated
-    event LiquidityMigrated(uint256 indexed poolId, address indexed lpToken);
 
     // Emitted when the owner sets a new referral register contract
     event ReferralRegisterSet(address referralRegister);
@@ -224,6 +215,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         IReferralRegister _referralRegister
     ) external initializer {
         __Ownable_init();
+        __OwnableTimelock_init();
         helixToken = _HelixToken;
         devaddr = _devaddr;
         feeMinter = IFeeMinter(_feeMinter);
@@ -247,7 +239,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         BONUS_MULTIPLIER = 1;
     }
 
-    function updateMultiplier(uint256 multiplierNumber) external onlyOwner {
+    function updateMultiplier(uint256 multiplierNumber) external onlyTimelock {
         BONUS_MULTIPLIER = multiplierNumber;
     }
 
@@ -279,7 +271,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
     // Add a new lp to the pool. Can only be called by the owner.
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
-    function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) external onlyOwner {
+    function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) external onlyTimelock {
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -301,7 +293,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
     }
 
     // Update the given pool's HelixToken allocation point. Can only be called by the owner.
-    function set( uint256 _pid, uint256 _allocPoint, bool _withUpdate) external onlyOwner {
+    function set( uint256 _pid, uint256 _allocPoint, bool _withUpdate) external onlyTimelock {
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -309,12 +301,6 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         poolInfo[_pid].allocPoint = _allocPoint;
 
         emit AllocPointSet(_pid, _allocPoint, _withUpdate);
-    }
-
-    // Set the migrator contract. Can only be called by the owner.
-    function setMigrator(IMigratorChef _migrator) external onlyOwner {
-        migrator = _migrator;
-        emit MigratorSet(address(_migrator));
     }
 
     /// Called by the owner to pause the contract
@@ -667,12 +653,12 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable {
         if (!transferSucceeded) revert TransferFailed();
     }
 
-    function setDevAddress(address _devaddr) external onlyOwner {
+    function setDevAddress(address _devaddr) external onlyTimelock {
         devaddr = _devaddr;
         emit DevAddressSet(_devaddr);
     }
 
-    function setFeeMinter(address _feeMinter) external onlyOwner {
+    function setFeeMinter(address _feeMinter) external onlyTimelock {
         feeMinter = IFeeMinter(_feeMinter);
         emit SetFeeMinter(msg.sender, _feeMinter);
     }
