@@ -312,5 +312,18 @@ module.exports = {
         3: 1,
     },
 
+    // --------- Timelock --------- //
+    
+    TIMELOCK_MIN_DELAY: {
+        3: 21600,   // 6 hours 
+    },
+
+    TIMELOCK_PROPOSERS: {
+        3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+    },
+
+    TIMELOCK_EXECUTORS: {
+        3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+    },
 
 }
