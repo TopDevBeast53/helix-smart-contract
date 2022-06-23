@@ -126,7 +126,7 @@ contract AdminMultiSigWallet {
     ) {
         if (_admins.length == 0) revert AdminsAreRequired();
         if (_owners.length == 0) revert OwnersAreRequired();
-        if (_numAdminConfirmationsRequired == 0 || _numAdminConfirmationsRequired > _admins.length) {
+        if (_numAdminConfirmationsRequired > _admins.length) {
             revert InvalidNumAdminConfirmationsRequired(_numAdminConfirmationsRequired);
         }
         if (_numConfirmationsRequired == 0 || _numConfirmationsRequired > _owners.length) {
@@ -187,11 +187,18 @@ contract AdminMultiSigWallet {
 
     function confirmTransaction(uint256 _txIndex)
         public
-        onlyOwner
+        onlyOwnerOrAdmin
         txExists(_txIndex)
         notExecuted(_txIndex)
-        notConfirmed(_txIndex)
     {
+        if (isAdmin[msg.sender]) {
+            _adminConfirmTransaction(_txIndex);
+        } else {
+            _ownerConfirmTransaction(_txIndex);
+        }
+    }
+
+    function _ownerConfirmTransaction(uint256 _txIndex) private notConfirmed(_txIndex) {
         Transaction storage transaction = transactions[_txIndex];
         transaction.numConfirmations += 1;
         isConfirmed[_txIndex][msg.sender] = true;
@@ -199,13 +206,7 @@ contract AdminMultiSigWallet {
         emit ConfirmTransaction(msg.sender, _txIndex);
     }
 
-    function adminConfirmTransaction(uint256 _txIndex)
-        public
-        onlyAdmin
-        txExists(_txIndex)
-        notExecuted(_txIndex)
-        notAdminConfirmed(_txIndex)
-    {
+    function _adminConfirmTransaction(uint256 _txIndex) private notAdminConfirmed(_txIndex) {
         Transaction storage transaction = transactions[_txIndex];
         transaction.numAdminConfirmations += 1;
         isAdminConfirmed[_txIndex][msg.sender] = true;
@@ -244,10 +245,18 @@ contract AdminMultiSigWallet {
 
     function revokeConfirmation(uint256 _txIndex)
         public
-        onlyOwner
+        onlyOwnerOrAdmin
         txExists(_txIndex)
         notExecuted(_txIndex)
     {
+        if (isAdmin[msg.sender]) {
+            _revokeAdminConfirmation(_txIndex);
+        } else {
+            _revokeOwnerConfirmation(_txIndex);
+        }
+    }
+
+    function _revokeOwnerConfirmation(uint256 _txIndex) private {
         Transaction storage transaction = transactions[_txIndex];
 
         if (!isConfirmed[_txIndex][msg.sender]) revert TxNotConfirmed(_txIndex, msg.sender);
@@ -258,12 +267,7 @@ contract AdminMultiSigWallet {
         emit RevokeConfirmation(msg.sender, _txIndex);
     }
 
-    function revokeAdminConfirmation(uint256 _txIndex)
-        public
-        onlyAdmin
-        txExists(_txIndex)
-        notExecuted(_txIndex)
-    {
+    function _revokeAdminConfirmation(uint256 _txIndex) private {
         Transaction storage transaction = transactions[_txIndex];
 
         if (!isAdminConfirmed[_txIndex][msg.sender]) revert TxNotConfirmed(_txIndex, msg.sender);
