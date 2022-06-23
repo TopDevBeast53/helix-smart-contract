@@ -8,6 +8,7 @@ module.exports = {
 
     FEEHANDLER_NFTCHEF_PERCENT:{
         1: 0,
+        3: 50,
         4: 50,
     },
 
@@ -15,22 +16,26 @@ module.exports = {
 
     REFERRAL_STAKE_REWARD_PERCENT: {
         1: 0,
+        3: 3,
         4: 3,
         56: 3, // 3%
         97: 3, // 3%
     },
     REFERRAL_SWAP_REWARD_PERCENT: {
         1: 0,
+        3: 5,
         4: 5,
         56: 5, // 5%
         97: 5, // 5%
     },
     REFERRAL_LAST_MINT_BLOCK: {
         1: 0,
+        3: 0,
         4: 0,
     },
     REFERRAL_COLLECTOR_PERCENT: {
         1: 0,
+        3: 10,
         4: 10,
     },
 
@@ -38,16 +43,19 @@ module.exports = {
 
     MASTERCHEF_START_BLOCK : {
         1: 0,
+        3: 0,
         4: 0,
         56: 0,
         97: 0,
     },
     MASTERCHEF_STAKING_PERCENT : {
         1: 714000,
+        3: 714000,
         4: 714000,
     },
     MASTERCHEF_DEV_PERCENT : {
         1: 286000,
+        3: 286000,
         4: 286000,
     },
     MASTERCHEF_LPTOKEN_ADDRESSES: {
@@ -60,12 +68,14 @@ module.exports = {
     },
     MASTERCHEF_ALLOC_POINTS:{
         //HELIX-WETH, DAI-USDC, USDC-WETH, DAI-WETH, USDT-USDC
+        3: [3500, 1500, 1500, 1500, 1500],
         4: [3500, 1500, 1500, 1500, 1500]
     },
 
     // --------- Helix Vault --------- //
     HELIX_VAULT_START_BLOCK : {
         1: 0,
+        3: 0,
         4: 0,
         56: 0, 
         97: 0,
@@ -74,6 +84,7 @@ module.exports = {
     //block when rewards are no longer being given away
     HELIX_VAULT_LAST_REWARD_BLOCK : {
         1: 1000000000,
+        3: 1000000000,
         4: 1000000000,
         56: 1000000000,
         97: 1000000000,
@@ -81,6 +92,7 @@ module.exports = {
 
     HELIX_VAULT_COLLECTOR_PERCENT: {
         1: 0,
+        3: 10,
         4: 10,
     },
 
@@ -231,6 +243,7 @@ module.exports = {
     // Vault:       11.70
     // Sum:         98.28
     FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK: {
+        3: '98280000000000000000',
         4: '98280000000000000000'
     },
 
@@ -241,6 +254,7 @@ module.exports = {
     // Vault:       11.91%
     // Sum:        100.00%
     FEE_MINTER_TO_MINT_PERCENTS: {
+        3: [8333, 476, 1191],
         4: [8333, 476, 1191]
     },
 }
