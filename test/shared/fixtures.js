@@ -135,7 +135,7 @@ module.exports.fullExchangeFixture = async () => {
 
     // 5. deploy fee handler
     const feeHandler = await feeHandlerContractFactory.deploy()
-    await feeHandler.initialize(treasuryAddress, helixChefNft.address)
+    await feeHandler.initialize(treasuryAddress, helixChefNft.address, helixToken.address)
 
     // 6. deploy referral register
     const referralRegister = await referralRegisterContractFactory.deploy()

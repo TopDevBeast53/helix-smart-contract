@@ -20,6 +20,8 @@ error ZeroAddress();
 contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    address public helixToken;
+
     /// Owner defined fee recipient
     address public treasury;
 
@@ -65,11 +67,12 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
         _;
     } 
 
-    function initialize(address _treasury, address _nftChef) external initializer {
+    function initialize(address _treasury, address _nftChef, address _helixToken) external initializer {
         __Ownable_init();
         __OwnableTimelock_init();
         treasury = _treasury;
         nftChef = IHelixChefNFT(_nftChef);
+        helixToken = _helixToken;
     }
     
     /// Called by a FeeCollector to send _amount of _token to this FeeHandler
@@ -83,8 +86,15 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
         external 
         onlyValidFee(_fee) 
     {
-        (uint256 nftChefAmount, uint256 treasuryAmount) = _getSplit(_fee, nftChefPercent);
+        uint256 nftChefAmount;
+        uint256 treasuryAmount;
 
+        if (address(_token) == helixToken) {
+            (nftChefAmount, treasuryAmount) = _getSplit(_fee, nftChefPercent);
+        } else {
+            treasuryAmount = _fee;
+        }
+        
         if (nftChefAmount > 0) {
             _token.safeTransferFrom(_from, address(nftChef), nftChefAmount);
             nftChef.accrueReward(_rewardAccruer, nftChefAmount);

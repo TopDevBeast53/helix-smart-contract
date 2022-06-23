@@ -22,6 +22,7 @@ describe('Fee Handler', () => {
     let feeHandler
     let helixChefNft
     let tokenA
+    let helixToken
 
     // contracts owned by wallet1
     let feeHandler1
@@ -33,6 +34,7 @@ describe('Fee Handler', () => {
         feeHandler = fullExchange.feeHandler
         helixChefNft = fullExchange.helixChefNft
         tokenA = fullExchange.tokenA
+        helixToken = fullExchange.helixToken
 
         feeHandler1 = await feeHandler.connect(wallet1)
     })
@@ -41,12 +43,13 @@ describe('Fee Handler', () => {
         expect(await feeHandler.owner()).to.eq(wallet0.address)
         expect(await feeHandler.treasury()).to.eq(treasuryAddress)
         expect(await feeHandler.nftChef()).to.eq(helixChefNft.address)
+        expect(await feeHandler.helixToken()).to.eq(helixToken.address)
     })
 
     it("feeHandler: set treasury as non-owner fails", async () => {
         const treasuryAddress = wallet0.address
         await expect(feeHandler1.setTreasury(treasuryAddress))
-            .to.be.revertedWith("Ownable: caller is not the owner")
+            .to.be.revertedWith("CallerIsNotTimelockOwner")
     })
 
     it("feeHandler: set treasury with invalid address fails", async () => {
@@ -149,7 +152,7 @@ describe('Fee Handler', () => {
 
     it("feeHandler: transfer fee with invalid fee fails", async () => {
         await expect(feeHandler.transferFee(
-            tokenA.address,
+            helixToken.address,
             wallet0.address,
             wallet0.address,
             0   // Fee can't equal 0
@@ -163,18 +166,18 @@ describe('Fee Handler', () => {
         await feeHandler.setTreasury(wallet1.address)
 
         // Get the treasury balance before the transfer
-        const prevTreasuryBalance = await tokenA.balanceOf(wallet1.address)
+        const prevTreasuryBalance = await helixToken.balanceOf(wallet1.address)
 
         const fee = expandTo18Decimals(100)
 
         // Must approve the handler to transfer the fee
-        await tokenA.approve(feeHandler.address, fee)
+        await helixToken.approve(feeHandler.address, fee)
 
         // Transfer the fee
-        await feeHandler.transferFee(tokenA.address, wallet0.address, wallet0.address, fee)
+        await feeHandler.transferFee(helixToken.address, wallet0.address, wallet0.address, fee)
 
         // Expect the treasury balance to have increased by the fee amount
-        const newTreasuryBalance = await tokenA.balanceOf(wallet1.address)
+        const newTreasuryBalance = await helixToken.balanceOf(wallet1.address)
         expect(newTreasuryBalance).to.eq(prevTreasuryBalance.add(fee))
     })
 
@@ -185,25 +188,25 @@ describe('Fee Handler', () => {
         await feeHandler.setTreasury(wallet1.address)
 
         // Get the treasury balance before the transfer
-        const prevTreasuryBalance = await tokenA.balanceOf(wallet1.address)
+        const prevTreasuryBalance = await helixToken.balanceOf(wallet1.address)
 
         // Get the nftChef balance before the transfer
-        const prevNftChefBalance = await tokenA.balanceOf(helixChefNft.address)
+        const prevNftChefBalance = await helixToken.balanceOf(helixChefNft.address)
 
         const fee = expandTo18Decimals(100)
 
         // Must approve the handler to transfer the fee
-        await tokenA.approve(feeHandler.address, fee)
+        await helixToken.approve(feeHandler.address, fee)
 
         // Transfer the fee
-        await feeHandler.transferFee(tokenA.address, wallet0.address, wallet0.address, fee)
+        await feeHandler.transferFee(helixToken.address, wallet0.address, wallet0.address, fee)
 
         // Expect the treasury balance to have increased by half the fee amount
-        const newTreasuryBalance = await tokenA.balanceOf(wallet1.address)
+        const newTreasuryBalance = await helixToken.balanceOf(wallet1.address)
         expect(newTreasuryBalance).to.eq(prevTreasuryBalance.add(fee.div(2)))
 
         // Expect the nftChef balance to have increased by half the fee amount
-        const newNftChefBalance = await tokenA.balanceOf(helixChefNft.address)
+        const newNftChefBalance = await helixToken.balanceOf(helixChefNft.address)
         expect(newNftChefBalance).to.eq(prevNftChefBalance.add(fee.div(2)))
     })
 
@@ -211,7 +214,32 @@ describe('Fee Handler', () => {
         await feeHandler.setNftChefPercent(100)
 
         // Get the nftChef balance before the transfer
+        const prevNftChefBalance = await helixToken.balanceOf(helixChefNft.address)
+
+        const fee = expandTo18Decimals(100)
+
+        // Must approve the handler to transfer the fee
+        await helixToken.approve(feeHandler.address, fee)
+
+        // Transfer the fee
+        await feeHandler.transferFee(helixToken.address, wallet0.address, wallet0.address, fee)
+
+        // Expect the nftChef balance to have increased by the fee amount
+        const newNftChefBalance = await helixToken.balanceOf(helixChefNft.address)
+        expect(newNftChefBalance).to.eq(prevNftChefBalance.add(fee))
+    })
+
+    it("feeHandler: transfer fee when token is helix transfers all to treasury", async () => {
+        const treasuryAddress = await feeHandler.treasury()
+
+        // Set chef percent to 50
+        // if token is helix expect 50% to treasury and 50% to nftChef
+        // else if token is not helix expect 100% to treasury
+        await feeHandler.setNftChefPercent(50)
+
+        // Get the nftChef balance before the transfer
         const prevNftChefBalance = await tokenA.balanceOf(helixChefNft.address)
+        const prevTreasuryBalance = await tokenA.balanceOf(treasuryAddress)
 
         const fee = expandTo18Decimals(100)
 
@@ -221,9 +249,13 @@ describe('Fee Handler', () => {
         // Transfer the fee
         await feeHandler.transferFee(tokenA.address, wallet0.address, wallet0.address, fee)
 
-        // Expect the nftChef balance to have increased by the fee amount
+        // Expect the nftChef balance to have remained the same since token was not helix
         const newNftChefBalance = await tokenA.balanceOf(helixChefNft.address)
-        expect(newNftChefBalance).to.eq(prevNftChefBalance.add(fee))
+        expect(newNftChefBalance).to.eq(0)
+
+        // And expect treasury to have received entire fee
+        const newTreasuryBalance = await tokenA.balanceOf(treasuryAddress)
+        expect(newTreasuryBalance).to.eq(prevTreasuryBalance.add(fee))
     })
 
     function print(str) {
