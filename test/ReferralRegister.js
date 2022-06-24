@@ -17,7 +17,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
     let referred
     let referrer
 
-    const stakeFee = 3
+    const stakeFee = 5
     const swapFee = 5
 
     const newStakeFee = 20
