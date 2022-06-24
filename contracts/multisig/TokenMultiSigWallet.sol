@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "./AdminMultiSigWallet.sol";
+import "./MultiSigWallet.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract TokenMultiSigWallet is AdminMultiSigWallet {
+contract TokenMultiSigWallet is MultiSigWallet {
     using SafeERC20 for IERC20;
 
     event NotifyDeposit(
@@ -45,7 +45,7 @@ contract TokenMultiSigWallet is AdminMultiSigWallet {
         uint256 _numConfirmationsRequired,
         string memory _name
     ) 
-        AdminMultiSigWallet(
+        MultiSigWallet(
             _admin, 
             _owners, 
             _numAdminConfirmationsRequired,
