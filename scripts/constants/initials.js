@@ -15,9 +15,9 @@ module.exports = {
 
     REFERRAL_STAKE_REWARD_PERCENT: {
         1: 0,
-        4: 3,
-        56: 3, // 3%
-        97: 3, // 3%
+        4: 5,
+        56: 5, // 5%
+        97: 5, // 5%
     },
     REFERRAL_SWAP_REWARD_PERCENT: {
         1: 0,
