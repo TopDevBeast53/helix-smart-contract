@@ -2,7 +2,7 @@
  * @dev Used to (re)build all required references for Helix Factory
  * 
  * Run from project root using:
- *     npx hardhat run scripts/initialize/initFactory.js --network rinkeby
+ *     npx hardhat run scripts/initialize/initFactory.js --network ropsten
  */
 
 const verbose = true

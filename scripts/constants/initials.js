@@ -326,4 +326,18 @@ module.exports = {
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
     },
 
+    // --------- YieldSwap --------- //
+    
+    YIELD_SWAP_MIN_LOCK_DURATION: {
+        3: 300, 
+    },
+    
+    YIELD_SWAP_MAX_LOCK_DURATION: {
+        3: 31536000,    // 1 year in seconds
+    },
+
+    YIELD_SWAP_COLLECTOR_PERCENT: {
+        3: 10,
+    },
+
 }

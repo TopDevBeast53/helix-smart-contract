@@ -2,7 +2,7 @@
  * @dev Used to (re)build all required references for Helix Token
  * 
  * Run from project root using:
- *     npx hardhat run scripts/initialize/initHelixToken.js --network rinkeby
+ *     npx hardhat run scripts/initialize/initHelixToken.js --network ropsten
  */
 
 const verbose = true

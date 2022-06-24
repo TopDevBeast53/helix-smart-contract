@@ -135,4 +135,16 @@ module.exports = {
         1: '0x8DB40469E27496b3ed7AC3bf493c385e942aEd8A',
         4: '0x296d49dDAf208e5049153FB57371f08Be1Df1cEd',
     },
+    yieldSwap: {
+        3: '0xC5dC74188662DA19688a96e67a621eDD028F9550',
+    },
+    yieldSwapImplementation: {
+        3: '0xFF344b8b048176f988F76cD4d1EA033473D0D157',
+    },
+    lpSwap: {
+        3: '0xC7DBb90E75053d5624764c1dc3AaAD86Dd0033eE',
+    },
+    lpSwapImplementation: {
+        3: '0x1DeCFA1fD7C6E1CC80C99fc3fdF5bbc63bba3ea0',
+    }
 }
