@@ -21,6 +21,13 @@ async function main() {
     const [deployer] = await ethers.getSigners()
     console.log(`Deployer address: ${ deployer.address}`)
 
+    console.log(`helixTokenAddress ${helixTokenAddress}`)
+    console.log(`feeHandlerAddress ${feeHandlerAddress}`)
+    console.log(`feeMinterAddress ${feeMinterAddress}`)
+    console.log(`stakeRewardPercent ${stakeRewardPercent}`)
+    console.log(`swapRewardPercent ${swapRewardPercent}`)
+    console.log(`lastMintBlock ${lastMintBlock}`)
+
     console.log(`------ Start deploying Referral Register contract ---------`)
     const ReferralRegister = await ethers.getContractFactory(`ReferralRegister`)
     ref = await upgrades.deployProxy(

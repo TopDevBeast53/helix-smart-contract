@@ -5,7 +5,7 @@ module.exports = {
     // Rinkeby:4
     // Ropsten:3
     // Goerli:5
-    network: 5,
+    network: 3,
 
     // bscMainNet: https://bsc-dataseed1.binance.org
     // bscTestNet: https://data-seed-prebsc-1-s1.binance.org:8545

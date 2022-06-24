@@ -2,7 +2,7 @@
  * deploy Master Chef
  *
  * run from root:
- *      npx hardhat run scripts/deploy/17_deployMasterChef.js --network rinkeby
+ *      npx hardhat run scripts/deploy/17_deployMasterChef.js --network ropsten
  */
 
 const { ethers, upgrades } = require(`hardhat`);

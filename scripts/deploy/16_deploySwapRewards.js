@@ -2,7 +2,7 @@
  * deploy Swap Rewards
  * 
  * run from root: 
- *      npx hardhat run scripts/deploy/16_deploySwapRewards.js --network rinkeby
+ *      npx hardhat run scripts/deploy/16_deploySwapRewards.js --network ropsten
  */
 
 const {ethers} = require('hardhat')

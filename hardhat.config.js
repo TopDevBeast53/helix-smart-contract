@@ -10,7 +10,7 @@ const bscScanApiKey = process.env.BSCSCANAPIKEY;
 const etherscanApiKey = process.env.ETHERSCANAPIKEY;
 const ropstenURL = process.env.ROPSTEN_URL;
 const rinkebyURL = process.env.RINKEBY_URL;
-const goerliURL = procsess.env.GOERLI_URL;
+const goerliURL = process.env.GOERLI_URL;
 const alchemyURL = process.env.ALCHEMY_URL;
 const privateKey = process.env["PRIVATE_KEY"];
 
