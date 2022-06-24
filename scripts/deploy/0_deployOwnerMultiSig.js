@@ -24,7 +24,7 @@ async function main() {
     console.log(`numOwnerConfirmationsRequired ${numOwnerConfirmationsRequired}`)
 
     console.log(`------ Start deploying owner multisig ---------`)
-    const ContractFactory = await ethers.getContractFactory('ConfigurableMultiSigWallet')
+    const ContractFactory = await ethers.getContractFactory('AdminMultiSigWallet')
     const contract = await ContractFactory.deploy(
         admins,
         owners,
