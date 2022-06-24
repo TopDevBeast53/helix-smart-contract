@@ -2,7 +2,7 @@
  * deploy Referral Register
  *
  * run from root: 
- *      npx hardhat run scripts/deploy/6_deployReferralRegister.js --network rinkeby
+ *      npx hardhat run scripts/deploy/10_deployReferralRegister.js --network rinkeby
  */
 
 const { ethers, upgrades } = require(`hardhat`)

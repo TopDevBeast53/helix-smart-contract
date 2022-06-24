@@ -2,7 +2,7 @@
  * deploy FeeHandler
  * 
  * run from root:
- *      npx hardhat run scripts/deploy/5_deployFeeHandler.js --network rinkeby
+ *      npx hardhat run scripts/deploy/9_deployFeeHandler.js --network rinkeby
  */
 
 const { ethers, upgrades } = require("hardhat")
@@ -12,6 +12,7 @@ const env = require("../constants/env")
 
 const treasuryAddress = addresses.TREASURY[env.network]
 const nftChefAddress = contracts.helixChefNFT[env.network]
+const helixTokenAddress = contracts.helixToken[env.network]
 
 async function main() {
     console.log(`Deploy FeeHandler Proxy and Implementation`)
@@ -26,7 +27,8 @@ async function main() {
         FeeHandlerContractFactory, 
         [
             treasuryAddress, 
-            nftChefAddress
+            nftChefAddress,
+            helixTokenAddress
         ]
     ) 
     await feeHandlerProxy.deployTransaction.wait()

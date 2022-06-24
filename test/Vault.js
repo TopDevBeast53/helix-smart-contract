@@ -110,7 +110,7 @@ describe('Vault', () => {
         const duration = 1;
         const weight = 100;
         await expect(vault1.addDuration(duration, weight))
-            .to.be.revertedWith('Ownable: caller is not the owner')
+            .to.be.revertedWith("CallerIsNotTimelockOwner")
     })
 
     it('vault: remove duration', async () => {
@@ -178,7 +178,8 @@ describe('Vault', () => {
     })
 
     it('vault: remove duration as non-owner fails to remove', async () => {
-        await expect(vault1.removeDuration(0)).to.be.revertedWith('Ownable: caller is not the owner')
+        await expect(vault1.removeDuration(0))
+            .to.be.revertedWith('CallerIsNotTimelockOwner')
     })
 
     it('vault: get blocks difference', async () => {
