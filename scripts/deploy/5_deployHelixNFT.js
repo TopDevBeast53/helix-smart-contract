@@ -2,7 +2,7 @@
  * deploy Helix NFT
  *
  * run from root: 
- *      npx hardhat run scripts/deploy/5_deployHelixNFT.js --network rinkeby
+ *      npx hardhat run scripts/deploy/5_deployHelixNFT.js --network ropsten
  */
 
 const { ethers, network, upgrades } = require(`hardhat`)

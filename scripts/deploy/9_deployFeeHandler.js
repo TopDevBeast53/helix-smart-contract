@@ -2,7 +2,7 @@
  * deploy FeeHandler
  * 
  * run from root:
- *      npx hardhat run scripts/deploy/9_deployFeeHandler.js --network rinkeby
+ *      npx hardhat run scripts/deploy/9_deployFeeHandler.js --network ropsten
  */
 
 const { ethers, upgrades } = require("hardhat")

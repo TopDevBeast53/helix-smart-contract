@@ -2,12 +2,12 @@
  * @dev Deployment script timelock contract
  *
  * Run from project root using:
- *     npx hardhat run scripts/3_deployTimelock.js --network rinkeby
+ *     npx hardhat run scripts/deploy/3_deployTimelock.js --network ropsten
  */
 
 const { ethers } = require(`hardhat`)
-const env = require("../constnat
-const initials = require("../constants/contracts")
+const env = require("../constants/env")
+const initials = require("../constants/initials")
 
 const minDelay = initials.TIMELOCK_MIN_DELAY[env.network]
 const proposers = initials.TIMELOCK_PROPOSERS[env.network]
