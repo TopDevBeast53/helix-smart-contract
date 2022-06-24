@@ -2,7 +2,7 @@
  * deploy Helix Migrator
  * 
  * run from root: 
- *      npx hardhat run scripts/deploy/11_deployMigrator.js --network rinkeby
+ *      npx hardhat run scripts/deploy/15_deployMigrator.js --network rinkeby
  */
 
 const {ethers} = require('hardhat');

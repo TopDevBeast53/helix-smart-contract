@@ -2,7 +2,7 @@
  * deploy Router
  * 
  * run from root:
- *      npx hardhat run scripts/deploy/10_deployRouter.js --network rinkeby
+ *      npx hardhat run scripts/deploy/14_deployRouter.js --network rinkeby
  */
 
 const hre  = require("hardhat")
