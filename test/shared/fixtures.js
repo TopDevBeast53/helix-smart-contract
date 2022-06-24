@@ -60,7 +60,7 @@ module.exports.fullExchangeFixture = async () => {
     const publicPresaleContractFactory = await ethers.getContractFactory("PublicPresale")
     const airdropContractFactory = await ethers.getContractFactory("AirDrop")
     const tokenMultiSigWalletContractFactory = await ethers.getContractFactory("TokenMultiSigWallet")
-    const subMultiSigWalletContractFactory = await ethers.getContractFactory("SubMultiSigWallet")
+    const subMultiSigWalletContractFactory = await ethers.getContractFactory("MultiSigWallet")
 
     // 
     // Deploy misc token contracts
@@ -85,13 +85,23 @@ module.exports.fullExchangeFixture = async () => {
     // Deploy MultiSig wallets
     //
     const [alice, bobby, carol, david, edith] = await ethers.getSigners()
-    const owners = [alice.address, bobby.address, carol.address]
 
     const tokenMultiSigWallet = await tokenMultiSigWalletContractFactory
-        .deploy(owners, "TokenMultiSigWallet", 2)
+        .deploy(
+            [alice.address],
+            [bobby.address, carol.address, david.address],
+            0,
+            2,
+            "TokenMultiSigWallet"
+        )
 
     const subMultiSigWallet = await subMultiSigWalletContractFactory
-        .deploy(owners, 2)
+        .deploy(
+            [],
+            [alice.address, bobby.address, carol.address],
+            0,
+            2,
+        )
 
     //
     // Deploy external DEX contracts

@@ -19,7 +19,8 @@ describe("TokenMultiSigWallet", () => {
 
     beforeEach(async () => {
         [alice, bobby, carol, david, edith] = await ethers.getSigners()
-        owners = [alice.address, bobby.address, carol.address]
+        admins = [alice.address]
+        owners = [bobby.address, carol.address, david.address]
 
         const fixture = await loadFixture(fullExchangeFixture)
 
@@ -29,8 +30,10 @@ describe("TokenMultiSigWallet", () => {
     })
 
     it("tokenMultiSigWallet: initialized correctly", async () => {
+        expect(await tokenMultiSig.getAdmins()).to.deep.eq(admins)
         expect(await tokenMultiSig.getOwners()).to.deep.eq(owners)
-        expect(await tokenMultiSig.numConfirmationsRequired()).to.eq(2)
+        expect(await tokenMultiSig.adminConfirmationsRequired()).to.eq(0)
+        expect(await tokenMultiSig.ownerConfirmationsRequired()).to.eq(2)
         expect(await tokenMultiSig.name()).to.eq("TokenMultiSigWallet")
     })
 
@@ -90,8 +93,8 @@ describe("TokenMultiSigWallet", () => {
         const amount = expandTo18Decimals(100)
         await tokenA.transfer(tokenMultiSig.address, amount)
 
-        const tokenMultiSigDavid = tokenMultiSig.connect(david)
-        await expect(tokenMultiSigDavid.submitTransfer(
+        const tokenMultiSigEdith = tokenMultiSig.connect(edith)
+        await expect(tokenMultiSigEdith.submitTransfer(
             tokenA.address, 
             bobby.address,
             amount)
@@ -110,7 +113,7 @@ describe("TokenMultiSigWallet", () => {
         expect(transaction.to).to.eq(tokenMultiSig.address)
         expect(transaction.value).to.eq(0)
         expect(transaction.executed).to.be.false
-        expect(transaction.numConfirmations).to.eq(0)
+        expect(transaction.ownerConfirmations).to.eq(0)
     })
 
     it("tokenMultiSigWallet: submit transfer emits SubmitTransfer event", async () => {
@@ -140,8 +143,8 @@ describe("TokenMultiSigWallet", () => {
         const transaction = await tokenMultiSig.getTransaction(txIndex)
 
         // Approve the transfer as a non-owner
-        const tokenMultiSigDavid = tokenMultiSig.connect(david)
-        await expect(tokenMultiSigDavid.approveTransfer(txIndex))
+        const tokenMultiSigEdith = tokenMultiSig.connect(edith)
+        await expect(tokenMultiSigEdith.approveTransfer(txIndex))
             .to.be.revertedWith("NotAnOwner")
     })
 
@@ -192,26 +195,27 @@ describe("TokenMultiSigWallet", () => {
             .to.be.revertedWith("")
     })
 
-    it("tokenMultiSigWallet: approve transfer increments transaction num confirmations", async () => {
+    it("tokenMultiSigWallet: owner approve transfer increments transaction num confirmations", async () => {
         // Open a new transfer
         let amount = expandTo18Decimals(100)
         await tokenA.transfer(tokenMultiSig.address, amount)
-         
+        
+        const tokenMultiSigBobby = tokenMultiSig.connect(bobby)
         await tokenMultiSig.submitTransfer(tokenA.address, bobby.address, amount)
     
         let txIndex = (await tokenMultiSig.getTransactionCount()).sub(1)
         let transaction = await tokenMultiSig.getTransaction(txIndex)
 
-        expect(transaction.numConfirmations).to.eq(0)
+        expect(transaction.ownerConfirmations).to.eq(0)
 
         // Approve the transfer
-        await tokenMultiSig.approveTransfer(txIndex)
+        await tokenMultiSigBobby.approveTransfer(txIndex)
 
         transaction = await tokenMultiSig.getTransaction(txIndex)
-        expect(transaction.numConfirmations).to.eq(1)
+        expect(transaction.ownerConfirmations).to.eq(1)
     })
 
-    it("tokenMultiSigWallet: approve transfer marks caller as confirmed", async () => {
+    it("tokenMultiSigWallet: approve transfer as owner marks caller as confirmed", async () => {
         // Open a new transfer
         let amount = expandTo18Decimals(100)
         await tokenA.transfer(tokenMultiSig.address, amount)
@@ -222,9 +226,10 @@ describe("TokenMultiSigWallet", () => {
         expect(await tokenMultiSig.isConfirmed(txIndex, alice.address)).to.be.false
 
         // Approve the transfer
-        await tokenMultiSig.approveTransfer(txIndex)
+        const tokenMultiSigBobby = tokenMultiSig.connect(bobby)
+        await tokenMultiSigBobby.approveTransfer(txIndex)
 
-        expect(await tokenMultiSig.isConfirmed(txIndex, alice.address)).to.be.true
+        expect(await tokenMultiSig.isConfirmed(txIndex, bobby.address)).to.be.true
     })
 
     it("tokenMultiSigWallet: approve transfer emits ApproveTransfer event", async () => {
@@ -251,8 +256,8 @@ describe("TokenMultiSigWallet", () => {
     
         let txIndex = (await tokenMultiSig.getTransactionCount()).sub(1)
     
-        const tokenMultiSigDavid = tokenMultiSig.connect(david)
-        await expect(tokenMultiSigDavid.executeTransfer(txIndex))
+        const tokenMultiSigEdith = tokenMultiSig.connect(edith)
+        await expect(tokenMultiSigEdith.executeTransfer(txIndex))
             .to.be.revertedWith("NotAnOwner")
     })
 
@@ -312,9 +317,9 @@ describe("TokenMultiSigWallet", () => {
     })
 
     it("tokenMultiSigWallet: revoke approval as non-owner fails", async () => {
-        const tokenMultiSigDavid = tokenMultiSig.connect(david)
+        const tokenMultiSigEdith = tokenMultiSig.connect(edith)
         let txIndex = 0
-        await expect(tokenMultiSigDavid.revokeApproval(txIndex))
+        await expect(tokenMultiSigEdith.revokeApproval(txIndex))
             .to.be.revertedWith("NotAnOwner")
     })
 
@@ -335,10 +340,11 @@ describe("TokenMultiSigWallet", () => {
         let txIndex = (await tokenMultiSig.getTransactionCount()).sub(1)
 
         // Approve the transfer
-        await tokenMultiSig.approveTransfer(txIndex)
-
         const tokenMultiSigBobby = tokenMultiSig.connect(bobby)
         await tokenMultiSigBobby.approveTransfer(txIndex)
+
+        const tokenMultiSigCarol = tokenMultiSig.connect(carol)
+        await tokenMultiSigCarol.approveTransfer(txIndex)
 
         // Execute the transfer
         await tokenMultiSig.executeTransfer(txIndex)
@@ -363,7 +369,7 @@ describe("TokenMultiSigWallet", () => {
             .to.be.revertedWith("TxNotConfirmed")
     })
 
-    it("tokenMultiSigWallet: revoke approval decrements number of confirmations", async () => {
+    it("tokenMultiSigWallet: revoke approval as owner decrements number of confirmations", async () => {
         // Open a new transfer
         let amount = expandTo18Decimals(100)
         await tokenA.transfer(tokenMultiSig.address, amount)
@@ -374,20 +380,21 @@ describe("TokenMultiSigWallet", () => {
         let txIndex = (await tokenMultiSig.getTransactionCount()).sub(1)
 
         // Approve the transfer
-        await tokenMultiSig.approveTransfer(txIndex)
+        const tokenMultiSigBobby = tokenMultiSig.connect(bobby)
+        await tokenMultiSigBobby.approveTransfer(txIndex)
 
         let transaction = await tokenMultiSig.getTransaction(txIndex)
 
         // Check that the transaction is confirmed
-        expect(transaction.numConfirmations).to.eq(1)
+        expect(transaction.ownerConfirmations).to.eq(1)
 
         // Revoke the approval
-        await tokenMultiSig.revokeApproval(txIndex)
+        await tokenMultiSigBobby.revokeApproval(txIndex)
 
         transaction = await tokenMultiSig.getTransaction(txIndex)
 
         // Check that the transaction is revoked
-        expect(transaction.numConfirmations).to.eq(0)
+        expect(transaction.ownerConfirmations).to.eq(0)
     })
 
     it("tokenMultiSigWallet: revoke approval marks caller as not confirmed", async () => {
@@ -401,15 +408,16 @@ describe("TokenMultiSigWallet", () => {
         let txIndex = (await tokenMultiSig.getTransactionCount()).sub(1)
 
         // Approve the transfer
-        await tokenMultiSig.approveTransfer(txIndex)
+        const tokenMultiSigBobby = tokenMultiSig.connect(bobby)
+        await tokenMultiSigBobby.approveTransfer(txIndex)
 
         let transaction = await tokenMultiSig.getTransaction(txIndex)
 
         // Check that the transaction is confirmed
-        expect(transaction.numConfirmations).to.eq(1)
+        expect(transaction.ownerConfirmations).to.eq(1)
 
         // Revoke the approval
-        await tokenMultiSig.revokeApproval(txIndex)
+        await tokenMultiSigBobby.revokeApproval(txIndex)
 
         expect(await tokenMultiSig.isConfirmed(txIndex, alice.address)).to.be.false
     })
@@ -425,15 +433,16 @@ describe("TokenMultiSigWallet", () => {
         let txIndex = (await tokenMultiSig.getTransactionCount()).sub(1)
 
         // Approve the transfer
-        await tokenMultiSig.approveTransfer(txIndex)
+        const tokenMultiSigBobby = tokenMultiSig.connect(bobby)
+        await tokenMultiSigBobby.approveTransfer(txIndex)
 
         let transaction = await tokenMultiSig.getTransaction(txIndex)
 
         // Check that the transaction is confirmed
-        expect(transaction.numConfirmations).to.eq(1)
+        expect(transaction.ownerConfirmations).to.eq(1)
 
         // Revoke the approval
-        await expect(tokenMultiSig.revokeApproval(txIndex))
+        await expect(tokenMultiSigBobby.revokeApproval(txIndex))
             .to.emit(tokenMultiSig, "RevokeApproval")
     })
 
