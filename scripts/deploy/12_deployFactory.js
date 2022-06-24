@@ -2,7 +2,7 @@
  * deploy Helix Factory
  *
  * run from root:
- *      npx hardhat run scripts/deploy/8_deployFactory.js --network rinkeby
+ *      npx hardhat run scripts/deploy/12_deployFactory.js --network rinkeby
  */
 
 const { ethers, upgrades } = require("hardhat")

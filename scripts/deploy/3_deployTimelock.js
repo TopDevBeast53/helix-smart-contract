@@ -2,7 +2,7 @@
  * @dev Deployment script timelock contract
  *
  * Run from project root using:
- *     npx hardhat run scripts/0_deployTimelock.js --network rinkeby
+ *     npx hardhat run scripts/3_deployTimelock.js --network rinkeby
  */
 
 const { ethers } = require(`hardhat`)

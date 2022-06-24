@@ -2,7 +2,7 @@
  * deploy Oracle Factory
  *
  * run from root:
- *     npx hardhat run scripts/deploy/9_deployOracleFactory.js --network rinkeby
+ *     npx hardhat run scripts/deploy/13_deployOracleFactory.js --network rinkeby
  */
 
 const { ethers, upgrades } = require(`hardhat`)
