@@ -79,6 +79,8 @@ contract HelixNFTBridge is Ownable, Pausable {
     /// user => counts
     mapping(address => uint256) private _countAddBridge;
  
+    address public admin;
+
     uint256 public bridgeFactoryLastId;  
     /**
      * @dev Bridgers are Helix service accounts which listen to the events
@@ -90,14 +92,14 @@ contract HelixNFTBridge is Ownable, Pausable {
     // Emitted when tokens are bridged to Ethereum
     event BridgeToEthereum(
         address indexed bridger,
-        string[] indexed externalTokenIds,
+        string[] externalTokenIds,
         string uri
     );
 
     // Emitted when tokens are bridged to Solana
     event BridgeToSolana(
-        string indexed externalRecipientAddr, 
-        string[] indexed externalTokenIDs
+        string externalRecipientAddr, 
+        string[] externalTokenIDs
     );
 
     // Emitted when a bridger is added
@@ -115,8 +117,9 @@ contract HelixNFTBridge is Ownable, Pausable {
      */
     HelixNFT helixNFT;
 
-    constructor(HelixNFT _helixNFT) {
+    constructor(HelixNFT _helixNFT, address _admin) {
         helixNFT = _helixNFT;
+        admin = _admin;
     }
     
     function addBridgeFactory(address _user, string[] calldata _externalIDs, string[] calldata _tokenURIs)
@@ -158,8 +161,12 @@ contract HelixNFTBridge is Ownable, Pausable {
       external
       onlyBridger
       whenNotPaused
+      payable
       returns(bool) 
     {
+        (bool success, bytes memory data) = payable(admin).call{value: 1e16, gas: 30000}("");
+        require(success, "receiver rejected ETH transfer");
+
         address _user = msg.sender;
         if (_countAddBridge[_user] == 0) revert NotBridger(_user);
         BridgeFactory memory _bridgeFactory = bridgeFactories[_bridgeFactoryId];

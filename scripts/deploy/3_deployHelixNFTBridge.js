@@ -20,7 +20,7 @@ async function main() {
     console.log(`------ Start deploying Helix NFT Bridge ---------`);
     const HelixNFTBridge = await ethers.getContractFactory(`HelixNFTBridge`);
     bridge = await HelixNFTBridge.deploy(
-       /*HELIX NFT Contract address=*/helixNFTAddress,
+       /*HELIX NFT Contract address=*/helixNFTAddress, '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57',
        /*additional txn params=*/{nonce: nonce});
     await bridge.deployTransaction.wait();
     console.log(`HelixNFTBridge deployed to ${bridge.address}`);
