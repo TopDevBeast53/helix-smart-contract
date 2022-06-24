@@ -214,8 +214,8 @@ contract MultiSigWallet {
         public
         onlyAdminOrOwner
         txExists(_txIndex)
-        onlyConfirmed(_txIndex)
         notExecuted(_txIndex)
+        onlyConfirmed(_txIndex)
     {
         isConfirmed[_txIndex][msg.sender] = false;
 

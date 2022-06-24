@@ -60,7 +60,7 @@ module.exports.fullExchangeFixture = async () => {
     const publicPresaleContractFactory = await ethers.getContractFactory("PublicPresale")
     const airdropContractFactory = await ethers.getContractFactory("AirDrop")
     const tokenMultiSigWalletContractFactory = await ethers.getContractFactory("TokenMultiSigWallet")
-    const subMultiSigWalletContractFactory = await ethers.getContractFactory("SubMultiSigWallet")
+    const subMultiSigWalletContractFactory = await ethers.getContractFactory("MultiSigWallet")
 
     // 
     // Deploy misc token contracts
@@ -97,8 +97,10 @@ module.exports.fullExchangeFixture = async () => {
 
     const subMultiSigWallet = await subMultiSigWalletContractFactory
         .deploy(
+            [],
             [alice.address, bobby.address, carol.address],
-            2
+            0,
+            2,
         )
 
     //

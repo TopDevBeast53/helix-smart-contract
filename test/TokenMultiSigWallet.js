@@ -32,8 +32,8 @@ describe("TokenMultiSigWallet", () => {
     it("tokenMultiSigWallet: initialized correctly", async () => {
         expect(await tokenMultiSig.getAdmins()).to.deep.eq(admins)
         expect(await tokenMultiSig.getOwners()).to.deep.eq(owners)
-        expect(await tokenMultiSig.numAdminConfirmationsRequired()).to.eq(0)
-        expect(await tokenMultiSig.numConfirmationsRequired()).to.eq(2)
+        expect(await tokenMultiSig.adminConfirmationsRequired()).to.eq(0)
+        expect(await tokenMultiSig.ownerConfirmationsRequired()).to.eq(2)
         expect(await tokenMultiSig.name()).to.eq("TokenMultiSigWallet")
     })
 
@@ -113,7 +113,7 @@ describe("TokenMultiSigWallet", () => {
         expect(transaction.to).to.eq(tokenMultiSig.address)
         expect(transaction.value).to.eq(0)
         expect(transaction.executed).to.be.false
-        expect(transaction.numConfirmations).to.eq(0)
+        expect(transaction.ownerConfirmations).to.eq(0)
     })
 
     it("tokenMultiSigWallet: submit transfer emits SubmitTransfer event", async () => {
@@ -206,13 +206,13 @@ describe("TokenMultiSigWallet", () => {
         let txIndex = (await tokenMultiSig.getTransactionCount()).sub(1)
         let transaction = await tokenMultiSig.getTransaction(txIndex)
 
-        expect(transaction.numConfirmations).to.eq(0)
+        expect(transaction.ownerConfirmations).to.eq(0)
 
         // Approve the transfer
         await tokenMultiSigBobby.approveTransfer(txIndex)
 
         transaction = await tokenMultiSig.getTransaction(txIndex)
-        expect(transaction.numConfirmations).to.eq(1)
+        expect(transaction.ownerConfirmations).to.eq(1)
     })
 
     it("tokenMultiSigWallet: approve transfer as owner marks caller as confirmed", async () => {
@@ -386,7 +386,7 @@ describe("TokenMultiSigWallet", () => {
         let transaction = await tokenMultiSig.getTransaction(txIndex)
 
         // Check that the transaction is confirmed
-        expect(transaction.numConfirmations).to.eq(1)
+        expect(transaction.ownerConfirmations).to.eq(1)
 
         // Revoke the approval
         await tokenMultiSigBobby.revokeApproval(txIndex)
@@ -394,7 +394,7 @@ describe("TokenMultiSigWallet", () => {
         transaction = await tokenMultiSig.getTransaction(txIndex)
 
         // Check that the transaction is revoked
-        expect(transaction.numConfirmations).to.eq(0)
+        expect(transaction.ownerConfirmations).to.eq(0)
     })
 
     it("tokenMultiSigWallet: revoke approval marks caller as not confirmed", async () => {
@@ -414,7 +414,7 @@ describe("TokenMultiSigWallet", () => {
         let transaction = await tokenMultiSig.getTransaction(txIndex)
 
         // Check that the transaction is confirmed
-        expect(transaction.numConfirmations).to.eq(1)
+        expect(transaction.ownerConfirmations).to.eq(1)
 
         // Revoke the approval
         await tokenMultiSigBobby.revokeApproval(txIndex)
@@ -439,7 +439,7 @@ describe("TokenMultiSigWallet", () => {
         let transaction = await tokenMultiSig.getTransaction(txIndex)
 
         // Check that the transaction is confirmed
-        expect(transaction.numConfirmations).to.eq(1)
+        expect(transaction.ownerConfirmations).to.eq(1)
 
         // Revoke the approval
         await expect(tokenMultiSigBobby.revokeApproval(txIndex))
