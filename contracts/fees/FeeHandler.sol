@@ -10,26 +10,10 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
-/// Thrown when attempting to transfer a fee of 0
-error ZeroFee();
-
-/// Thrown when address(0) is encountered
-error ZeroAddress();
 
 /// Handles routing received fees to internal contracts
 contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
-
-    address public helixToken;
-
-    /// Owner defined fee recipient
-    address public treasury;
-
-    /// Owner defined pool where fees can be staked
-    IHelixChefNFT public nftChef;
-
-    /// Determines percentage of collector fees sent to nftChef
-    uint256 public nftChefPercent;
 
     // Emitted when a new treasury address is set by the owner
     event SetTreasury(address indexed setter, address _treasury);
@@ -38,7 +22,17 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
     event SetNftChef(address indexed setter, address _nftChef);
 
     // Emitted when a new nftChef percent is set by the owner
-    event SetNftChefPercent(address indexed setter, uint256 _nftChefPercent);
+    event SetDefaultNftChefPercent(address indexed setter, uint256 _defaultNftChefPercent);
+
+    event AddFeeCollector(address indexed setter, address indexed feeCollector);
+    event RemoveFeeCollector(address indexed setter, address indexed feeCollector);
+
+    // Emitted when a new nftChef percent relating to a particular source is set by the owner
+    event SetNftChefPercents(
+        address indexed setter, 
+        address indexed source,
+        uint256 _nftChefPercent
+    );
 
     // Emitted when fees are transferred by the handler
     event TransferFee(
@@ -52,6 +46,38 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
         uint256 treasuryAmount
     );
 
+    /// Thrown when attempting to transfer a fee of 0
+    error ZeroFee();
+
+    /// Thrown when address(0) is encountered
+    error ZeroAddress();
+
+    error NotFeeCollector(address _feeCollector);
+    error AlreadyFeeCollector(address _feeCollector);
+
+    /// Thrown when this contract's balance of token is less than amount
+    error InsufficientBalance(address token, uint256 amount);
+
+    address public helixToken;
+
+    /// Owner defined fee recipient
+    address public treasury;
+
+    /// Owner defined pool where fees can be staked
+    IHelixChefNFT public nftChef;
+
+    /// Determines default percentage of collector fees sent to nftChef
+    uint256 public defaultNftChefPercent;
+
+    /// Maps contract address to individual nftChef collector fee percents
+    mapping(address => uint256) public nftChefPercents;
+
+    /// Maps contrct address to true if address has nftChefPercent set and false otherwise
+    mapping(address => bool) public hasNftChefPercent;
+
+    /// Maps address to true if address is registered as a feeCollector and false otherwise
+    mapping(address => bool) public isFeeCollector;
+    
     modifier onlyValidFee(uint256 _fee) {
         if (_fee == 0) revert ZeroFee();
         _;
@@ -67,6 +93,23 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
         _;
     } 
 
+    modifier onlyFeeCollector(address _feeCollector) {
+        if (!isFeeCollector[_feeCollector]) revert NotFeeCollector(_feeCollector);
+        _;
+    }
+
+    modifier notFeeCollector(address _feeCollector) {
+        if (isFeeCollector[_feeCollector]) revert AlreadyFeeCollector(_feeCollector);
+        _;
+    }
+
+    modifier hasBalance(address _token, uint256 _amount) {
+        if (IERC20Upgradeable(_token).balanceOf(address(this)) < _amount) {
+            revert InsufficientBalance(_token, _amount);
+        }
+        _;
+    }
+
     function initialize(address _treasury, address _nftChef, address _helixToken) external initializer {
         __Ownable_init();
         __OwnableTimelock_init();
@@ -78,7 +121,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
     /// Called by a FeeCollector to send _amount of _token to this FeeHandler
     /// handles sending fees to treasury and staking with nftChef
     function transferFee(
-        IERC20Upgradeable _token, 
+        address _token, 
         address _from, 
         address _rewardAccruer, 
         uint256 _fee
@@ -86,22 +129,15 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
         external 
         onlyValidFee(_fee) 
     {
-        uint256 nftChefAmount;
-        uint256 treasuryAmount;
-
-        if (address(_token) == helixToken) {
-            (nftChefAmount, treasuryAmount) = _getSplit(_fee, nftChefPercent);
-        } else {
-            treasuryAmount = _fee;
-        }
+        (uint256 nftChefAmount, uint256 treasuryAmount) = _getNftChefAndTreasuryAmounts(_token, _fee);
         
         if (nftChefAmount > 0) {
-            _token.safeTransferFrom(_from, address(nftChef), nftChefAmount);
+            IERC20Upgradeable(_token).safeTransferFrom(_from, address(nftChef), nftChefAmount);
             nftChef.accrueReward(_rewardAccruer, nftChefAmount);
         }
 
         if (treasuryAmount > 0) {
-            _token.safeTransferFrom(_from, treasury, treasuryAmount);
+            IERC20Upgradeable(_token).safeTransferFrom(_from, treasury, treasuryAmount);
         }
 
         emit TransferFee(
@@ -114,6 +150,20 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
             nftChefAmount,
             treasuryAmount
         );
+    }
+
+    /// Return the amounts to send to the nft chef and treasury based on the _fee and _token
+    function _getNftChefAndTreasuryAmounts(address _token, uint256 _fee) 
+        private 
+        view 
+        returns (uint256 nftChefAmount, uint256 treasuryAmount)
+    {
+        if (_token == helixToken) {
+            uint256 nftChefPercent = hasNftChefPercent[msg.sender] ? nftChefPercents[msg.sender] : defaultNftChefPercent;
+            (nftChefAmount, treasuryAmount) = _getSplit(_fee, nftChefPercent);
+        } else {
+            treasuryAmount = _fee;
+        }
     }
 
     /// Called by the owner to set a new _treasury address
@@ -132,29 +182,64 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
         emit SetNftChef(msg.sender, _nftChef);
     }
 
-    /// Called by the owner to set the _nftChefPercent taken from the total collector fees
+    /// Called by the owner to set the _defaultNftChefPercent taken from the total collector fees
     /// and staked with the nftChef
-    function setNftChefPercent(uint256 _nftChefPercent) 
+    function setDefaultNftChefPercent(uint256 _defaultNftChefPercent) 
         external 
         onlyOwner 
-        onlyValidPercent(_nftChefPercent) 
+        onlyValidPercent(_defaultNftChefPercent) 
     {
-        nftChefPercent = _nftChefPercent;
-        emit SetNftChefPercent(msg.sender, _nftChefPercent);
+        defaultNftChefPercent = _defaultNftChefPercent;
+        emit SetDefaultNftChefPercent(msg.sender, _defaultNftChefPercent);
     }
 
-    /// Return the nftChef fee computed from the _amount and the nftChefPercent
-    function getNftChefFee(uint256 _amount) external view returns (uint256 nftChefFee) {
+    /// Called by the owner to set the _nftChefPercent taken from the total collector fees
+    /// when the fee is received from _source and staked with the nftChef
+    function setNftChefPercent(address _source, uint256 _nftChefPercent) 
+        external
+        onlyOwner
+        onlyValidPercent(_nftChefPercent)
+    {
+        nftChefPercents[_source] = _nftChefPercent;
+        hasNftChefPercent[_source] = true;
+        emit SetNftChefPercents(msg.sender, _source, _nftChefPercent);
+    }
+
+    /// Called by the owner to register a new _feeCollector
+    function addFeeCollector(address _feeCollector) 
+        external 
+        onlyOwner 
+        onlyValidAddress(_feeCollector) 
+        notFeeCollector(_feeCollector)
+    {
+        isFeeCollector[_feeCollector] = true;
+        emit AddFeeCollector(msg.sender, _feeCollector);
+    }
+
+    /// Called by the owner to remove a registered _feeCollector
+    function removeFeeCollector(address _feeCollector)
+        external
+        onlyOwner
+        onlyFeeCollector(_feeCollector)
+    {
+        isFeeCollector[_feeCollector] = false;
+        emit RemoveFeeCollector(msg.sender, _feeCollector);
+    }
+
+    /// Return the nftChef fee computed from the _amount and the _caller's nftChefPercent
+    function getNftChefFee(address _caller, uint256 _amount) external view returns (uint256 nftChefFee) {
+        uint256 nftChefPercent = hasNftChefPercent[_caller] ? nftChefPercents[_caller] : defaultNftChefPercent;
         nftChefFee = _getFee(_amount, nftChefPercent);
     }
 
-    /// Split _amount based on nftChefPercent and return the nftChefFee and the remainder
+    /// Split _amount based on _caller's nftChef percent and return the nftChefFee and the remainder
     /// where remainder == _amount - nftChefFee
-    function getNftChefFeeSplit(uint256 _amount)
+    function getNftChefFeeSplit(address _caller, uint256 _amount)
         external 
         view
         returns (uint256 nftChefFee, uint256 remainder)
     {
+        uint256 nftChefPercent = hasNftChefPercent[_caller] ? nftChefPercents[_caller] : defaultNftChefPercent;
         (nftChefFee, remainder) = _getSplit(_amount, nftChefPercent);
     }
 
