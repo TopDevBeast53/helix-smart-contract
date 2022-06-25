@@ -61,6 +61,9 @@ contract ReferralRegister is
     /// Referral fees are stored as: referred address => referrer address
     mapping(address => address) public referrers;
 
+    /// referrer address => referred addresses
+    mapping(address => address[]) public referees;
+
     /// Rewards balance of each referrer.
     mapping(address => uint256) public rewards;
 
@@ -212,7 +215,12 @@ contract ReferralRegister is
         if (referrers[msg.sender] != address(0)) return;
         if (msg.sender == _referrer) revert NoSelfReferral();
         referrers[msg.sender] = _referrer;
+        referees[_referrer].push(msg.sender);
         emit AddReferrer(msg.sender, _referrer);
+    }
+
+    function getReferees(address _referrer) view external returns (address[] memory) {
+        return referees[_referrer];
     }
 
     /// Remove the caller's referrer
