@@ -129,7 +129,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
         external 
         onlyValidFee(_fee) 
     {
-        (uint256 nftChefAmount, uint256 treasuryAmount) = _getNftChefAndTreasuryAmounts(_token, _fee);
+        (uint256 nftChefAmount, uint256 treasuryAmount) = getNftChefAndTreasuryAmounts(_token, _fee);
         
         if (nftChefAmount > 0) {
             IERC20Upgradeable(_token).safeTransferFrom(_from, address(nftChef), nftChefAmount);
@@ -150,20 +150,6 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
             nftChefAmount,
             treasuryAmount
         );
-    }
-
-    /// Return the amounts to send to the nft chef and treasury based on the _fee and _token
-    function _getNftChefAndTreasuryAmounts(address _token, uint256 _fee) 
-        private 
-        view 
-        returns (uint256 nftChefAmount, uint256 treasuryAmount)
-    {
-        if (_token == helixToken) {
-            uint256 nftChefPercent = hasNftChefPercent[msg.sender] ? nftChefPercents[msg.sender] : defaultNftChefPercent;
-            (nftChefAmount, treasuryAmount) = _getSplit(_fee, nftChefPercent);
-        } else {
-            treasuryAmount = _fee;
-        }
     }
 
     /// Called by the owner to set a new _treasury address
@@ -241,6 +227,20 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
     {
         uint256 nftChefPercent = hasNftChefPercent[_caller] ? nftChefPercents[_caller] : defaultNftChefPercent;
         (nftChefFee, remainder) = _getSplit(_amount, nftChefPercent);
+    }
+
+    /// Return the amounts to send to the nft chef and treasury based on the _fee and _token
+    function getNftChefAndTreasuryAmounts(address _token, uint256 _fee) 
+        public
+        view 
+        returns (uint256 nftChefAmount, uint256 treasuryAmount)
+    {
+        if (_token == helixToken) {
+            uint256 nftChefPercent = hasNftChefPercent[msg.sender] ? nftChefPercents[msg.sender] : defaultNftChefPercent;
+            (nftChefAmount, treasuryAmount) = _getSplit(_fee, nftChefPercent);
+        } else {
+            treasuryAmount = _fee;
+        }
     }
 
     /// Return the fee computed from the _amount and the _percent

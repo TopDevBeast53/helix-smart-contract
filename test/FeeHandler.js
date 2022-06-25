@@ -16,19 +16,19 @@ const treasuryAddress = addresses.TREASURY[env.network]
 const verbose = true
 
 describe('Fee Handler', () => {
-    let wallet0, wallet1, wallet2
+    let alice, bobby, carol
 
-    // contracts owned by wallet0
+    // contracts owned by alice
     let feeHandler
     let helixChefNft
     let tokenA
     let helixToken
 
-    // contracts owned by wallet1
+    // contracts owned by bobby
     let feeHandler1
 
     beforeEach(async () => {
-        [wallet0, wallet1, wallet2] = await ethers.getSigners()
+        [alice, bobby, carol] = await ethers.getSigners()
 
         const fullExchange = await loadFixture(fullExchangeFixture)
         feeHandler = fullExchange.feeHandler
@@ -36,18 +36,18 @@ describe('Fee Handler', () => {
         tokenA = fullExchange.tokenA
         helixToken = fullExchange.helixToken
 
-        feeHandler1 = await feeHandler.connect(wallet1)
+        feeHandler1 = await feeHandler.connect(bobby)
     })
 
     it("feeHandler: initialized with expected values", async () => {
-        expect(await feeHandler.owner()).to.eq(wallet0.address)
+        expect(await feeHandler.owner()).to.eq(alice.address)
         expect(await feeHandler.treasury()).to.eq(treasuryAddress)
         expect(await feeHandler.nftChef()).to.eq(helixChefNft.address)
         expect(await feeHandler.helixToken()).to.eq(helixToken.address)
     })
 
     it("feeHandler: set treasury as non-owner fails", async () => {
-        const treasuryAddress = wallet0.address
+        const treasuryAddress = alice.address
         await expect(feeHandler1.setTreasury(treasuryAddress))
             .to.be.revertedWith("CallerIsNotTimelockOwner")
     })
@@ -59,14 +59,14 @@ describe('Fee Handler', () => {
     })
 
     it("feeHandler: set treasury emits SetTreasury event", async () => {
-        const treasuryAddress = wallet0.address
+        const treasuryAddress = alice.address
         await expect(feeHandler.setTreasury(treasuryAddress))
             .to.emit(feeHandler, "SetTreasury")
-            .withArgs(wallet0.address, wallet0.address)
+            .withArgs(alice.address, alice.address)
     })
 
     it("feeHandler: set treasury", async () => {
-        const treasuryAddress = wallet0.address
+        const treasuryAddress = alice.address
         await feeHandler.setTreasury(treasuryAddress)
         expect(await feeHandler.treasury()).to.eq(treasuryAddress)
     })
@@ -87,7 +87,7 @@ describe('Fee Handler', () => {
         const nftChefAddress = helixChefNft.address
         await expect(feeHandler.setNftChef(nftChefAddress))
             .to.emit(feeHandler, "SetNftChef")
-            .withArgs(wallet0.address, nftChefAddress)
+            .withArgs(alice.address, nftChefAddress)
     })
 
     it("feeHandler: set nft chef", async () => {
@@ -96,65 +96,110 @@ describe('Fee Handler', () => {
         expect(await feeHandler.nftChef()).to.eq(nftChefAddress)
     })
 
-    it("feeHandler: set nftChef percent as non-owner fails", async () => {
+    it("feeHandler: set default nft chef percent as non-owner fails", async () => {
         const defaultNftChefPercent = 0
         await expect(feeHandler1.setDefaultNftChefPercent(defaultNftChefPercent))
             .to.be.revertedWith("Ownable: caller is not the owner")
     })
 
-    it("feeHandler: set nftChef percent with invalid percent fails", async () => {
+    it("feeHandler: set default nft chef percent with invalid percent fails", async () => {
         const percent = 101     // Invalid since 100 is max
         await expect(feeHandler.setDefaultNftChefPercent(percent))
             .to.be.revertedWith("InvalidPercent(101, 0)")
     })
 
-    it("feeHandler: set nft chef percent emits SetDefaultNftChefPercent event", async () => {
+    it("feeHandler: set default nft chef percent emits SetDefaultNftChefPercent event", async () => {
         const percent = 50
         await expect(feeHandler.setDefaultNftChefPercent(percent))
             .to.emit(feeHandler, "SetDefaultNftChefPercent")
-            .withArgs(wallet0.address, percent)
+            .withArgs(alice.address, percent)
     })
 
-    it("feeHandler: set nft chef percent", async () => {
+    it("feeHandler: set default nft chef percent", async () => {
         const percent = 50
         await feeHandler.setDefaultNftChefPercent(percent)
         expect(await feeHandler.defaultNftChefPercent()).to.eq(percent)
     })
 
+    it("feeHandler: set nft chef percent as non-owner fails", async () => {
+        const feeHandlerBobby = feeHandler.connect(bobby)
+        await expect(feeHandlerBobby.setNftChefPercent(alice.address, 100))
+            .to.be.revertedWith("Ownable: caller is not the owner")
+    })
+
+    it("feeHandler: set nft chef percent with invalid percent fails", async () => {
+        const percent = 101     // Invalid since 100 is max
+        await expect(feeHandler.setNftChefPercent(alice.address, percent))
+            .to.be.revertedWith("InvalidPercent(101, 0)")
+    })
+
+    it("feeHandler: set nft chef percent overrides default", async () => {
+        // Set the default nftChef percent
+        await feeHandler.setDefaultNftChefPercent(50)
+
+        // Since bobby doesn't have a percent set, expect the default 50:50
+        let result = await feeHandler.getNftChefFeeSplit(bobby.address, 100)
+        expect(result[0]).to.eq(50)
+        expect(result[1]).to.eq(50)
+
+        // Set bobby's nftchef percent
+        await feeHandler.setNftChefPercent(bobby.address, 25)
+
+        // Since bobby has a percent set, expect it to override the default 
+        result = await feeHandler.getNftChefFeeSplit(bobby.address, 100)
+        expect(result[0]).to.eq(25)
+        expect(result[1]).to.eq(75)
+    })
+
+    it("feeHandler: get nft chef and treasury amounts changes based on token", async () => {
+        // Set the default nftChef percent
+        await feeHandler.setDefaultNftChefPercent(50)
+
+        // Since token is helix, expect the reward to be split 50:50
+        let result = await feeHandler.getNftChefAndTreasuryAmounts(helixToken.address, 100)
+        expect(result[0]).to.eq(50)
+        expect(result[1]).to.eq(50)
+
+        // Since token is not helix, expect the full amount to go to treasury
+        result = await feeHandler.getNftChefAndTreasuryAmounts(tokenA.address, 100)
+        expect(result[0]).to.eq(0)
+        expect(result[1]).to.eq(100)
+    })
+
     it("feeHandler: get nft chef fee", async () => {
         await feeHandler.setDefaultNftChefPercent(0)
-        expect(await feeHandler.getNftChefFee(wallet1.address, 100)).to.eq(0)
+        expect(await feeHandler.getNftChefFee(bobby.address, 100)).to.eq(0)
         await feeHandler.setDefaultNftChefPercent(10)
-        expect(await feeHandler.getNftChefFee(wallet1.address, 100)).to.eq(10)
+        expect(await feeHandler.getNftChefFee(bobby.address, 100)).to.eq(10)
         await feeHandler.setDefaultNftChefPercent(50)
-        expect(await feeHandler.getNftChefFee(wallet1.address, 100)).to.eq(50)
+        expect(await feeHandler.getNftChefFee(bobby.address, 100)).to.eq(50)
         await feeHandler.setDefaultNftChefPercent(100)
-        expect(await feeHandler.getNftChefFee(wallet1.address, 100)).to.eq(100)
+        expect(await feeHandler.getNftChefFee(bobby.address, 100)).to.eq(100)
     })
 
     it("feeHandler: get nft chef fee split", async () => {
         await feeHandler.setDefaultNftChefPercent(0)
-        expect((await feeHandler.getNftChefFeeSplit(wallet1.address, 100))[0]).to.eq(0)
-        expect((await feeHandler.getNftChefFeeSplit(wallet1.address, 100))[1]).to.eq(100)
+        expect((await feeHandler.getNftChefFeeSplit(bobby.address, 100))[0]).to.eq(0)
+        expect((await feeHandler.getNftChefFeeSplit(bobby.address, 100))[1]).to.eq(100)
 
         await feeHandler.setDefaultNftChefPercent(10)
-        expect((await feeHandler.getNftChefFeeSplit(wallet1.address, 100))[0]).to.eq(10)
-        expect((await feeHandler.getNftChefFeeSplit(wallet1.address, 100))[1]).to.eq(90)
+        expect((await feeHandler.getNftChefFeeSplit(bobby.address, 100))[0]).to.eq(10)
+        expect((await feeHandler.getNftChefFeeSplit(bobby.address, 100))[1]).to.eq(90)
 
         await feeHandler.setDefaultNftChefPercent(50)
-        expect((await feeHandler.getNftChefFeeSplit(wallet1.address, 100))[0]).to.eq(50)
-        expect((await feeHandler.getNftChefFeeSplit(wallet1.address, 100))[1]).to.eq(50)
+        expect((await feeHandler.getNftChefFeeSplit(bobby.address, 100))[0]).to.eq(50)
+        expect((await feeHandler.getNftChefFeeSplit(bobby.address, 100))[1]).to.eq(50)
 
         await feeHandler.setDefaultNftChefPercent(100)
-        expect((await feeHandler.getNftChefFeeSplit(wallet1.address, 100))[0]).to.eq(100)
-        expect((await feeHandler.getNftChefFeeSplit(wallet1.address, 100))[1]).to.eq(0)
+        expect((await feeHandler.getNftChefFeeSplit(bobby.address, 100))[0]).to.eq(100)
+        expect((await feeHandler.getNftChefFeeSplit(bobby.address, 100))[1]).to.eq(0)
     })
 
     it("feeHandler: transfer fee with invalid fee fails", async () => {
         await expect(feeHandler.transferFee(
             helixToken.address,
-            wallet0.address,
-            wallet0.address,
+            alice.address,
+            alice.address,
             0   // Fee can't equal 0
         )).to.be.revertedWith("ZeroFee()")
     })
@@ -162,11 +207,11 @@ describe('Fee Handler', () => {
     it("feeHandler: transfer fee when nft chef amount equals 0", async () => {
         await feeHandler.setDefaultNftChefPercent(0)
 
-        // Set the treasury to wallet1 so that the balance can be checked
-        await feeHandler.setTreasury(wallet1.address)
+        // Set the treasury to bobby so that the balance can be checked
+        await feeHandler.setTreasury(bobby.address)
 
         // Get the treasury balance before the transfer
-        const prevTreasuryBalance = await helixToken.balanceOf(wallet1.address)
+        const prevTreasuryBalance = await helixToken.balanceOf(bobby.address)
 
         const fee = expandTo18Decimals(100)
 
@@ -174,21 +219,21 @@ describe('Fee Handler', () => {
         await helixToken.approve(feeHandler.address, fee)
 
         // Transfer the fee
-        await feeHandler.transferFee(helixToken.address, wallet0.address, wallet0.address, fee)
+        await feeHandler.transferFee(helixToken.address, alice.address, alice.address, fee)
 
         // Expect the treasury balance to have increased by the fee amount
-        const newTreasuryBalance = await helixToken.balanceOf(wallet1.address)
+        const newTreasuryBalance = await helixToken.balanceOf(bobby.address)
         expect(newTreasuryBalance).to.eq(prevTreasuryBalance.add(fee))
     })
 
     it("feeHandler: transfer fee when nft chef amount equals 50", async () => {
         await feeHandler.setDefaultNftChefPercent(50)
 
-        // Set the treasury to wallet1 so that the balance can be checked
-        await feeHandler.setTreasury(wallet1.address)
+        // Set the treasury to bobby so that the balance can be checked
+        await feeHandler.setTreasury(bobby.address)
 
         // Get the treasury balance before the transfer
-        const prevTreasuryBalance = await helixToken.balanceOf(wallet1.address)
+        const prevTreasuryBalance = await helixToken.balanceOf(bobby.address)
 
         // Get the nftChef balance before the transfer
         const prevNftChefBalance = await helixToken.balanceOf(helixChefNft.address)
@@ -199,10 +244,10 @@ describe('Fee Handler', () => {
         await helixToken.approve(feeHandler.address, fee)
 
         // Transfer the fee
-        await feeHandler.transferFee(helixToken.address, wallet0.address, wallet0.address, fee)
+        await feeHandler.transferFee(helixToken.address, alice.address, alice.address, fee)
 
         // Expect the treasury balance to have increased by half the fee amount
-        const newTreasuryBalance = await helixToken.balanceOf(wallet1.address)
+        const newTreasuryBalance = await helixToken.balanceOf(bobby.address)
         expect(newTreasuryBalance).to.eq(prevTreasuryBalance.add(fee.div(2)))
 
         // Expect the nftChef balance to have increased by half the fee amount
@@ -222,7 +267,7 @@ describe('Fee Handler', () => {
         await helixToken.approve(feeHandler.address, fee)
 
         // Transfer the fee
-        await feeHandler.transferFee(helixToken.address, wallet0.address, wallet0.address, fee)
+        await feeHandler.transferFee(helixToken.address, alice.address, alice.address, fee)
 
         // Expect the nftChef balance to have increased by the fee amount
         const newNftChefBalance = await helixToken.balanceOf(helixChefNft.address)
@@ -247,7 +292,7 @@ describe('Fee Handler', () => {
         await tokenA.approve(feeHandler.address, fee)
 
         // Transfer the fee
-        await feeHandler.transferFee(tokenA.address, wallet0.address, wallet0.address, fee)
+        await feeHandler.transferFee(tokenA.address, alice.address, alice.address, fee)
 
         // Expect the nftChef balance to have remained the same since token was not helix
         const newNftChefBalance = await tokenA.balanceOf(helixChefNft.address)
