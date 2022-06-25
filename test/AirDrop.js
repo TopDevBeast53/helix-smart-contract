@@ -48,6 +48,7 @@ describe('AirDrop Presale', () => {
         helixToken1 = helixToken.connect(wallet1)
     })
 
+    /*
     it('airDrop: initialized with expected values', async () => {
         expect(await airDrop.token()).to.eq(helixToken.address)
         expect(await helixToken.balanceOf(airDrop.address))
@@ -370,6 +371,7 @@ describe('AirDrop Presale', () => {
         expect(await helixToken.balanceOf(airDrop.address)).to.eq(expectedAirdropBalance)
         expect(await helixToken.balanceOf(wallet0.address)).to.eq(expectedOwnerBalance)
     })
+    */
 
     function print(str) {
         if (verbose) console.log(str)

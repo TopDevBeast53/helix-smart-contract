@@ -25,6 +25,11 @@ const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHAS
 
 const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.network]
 
+console.log(publicPresaleInputRate)
+console.log(publicPresaleOutputRate)
+console.log(publicPresalePurchasePhaseDuration)
+console.log(airdropWithdrawPhaseDuration)
+
 const billion = 1000000000
 
 // 
@@ -136,7 +141,8 @@ module.exports.fullExchangeFixture = async () => {
 
     // 3. deploy helix nft bridge
     const helixNftBridge = await helixNftBridgeContractFactory.deploy(
-        helixNft.address
+        helixNft.address,
+        alice.address    
     )
 
     // 4. deploy helix chef nft
@@ -241,6 +247,7 @@ module.exports.fullExchangeFixture = async () => {
     await helixToken.addMinter(referralRegister.address)
     await helixToken.addMinter(vault.address)
     await helixToken.addMinter(masterChef.address)
+    // Temporary solution 
     await helixToken.addMinter(publicPresale.address) // approve to burn helix
     await helixToken.addMinter(airdrop.address) // approve to burn helix
 
