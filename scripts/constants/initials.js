@@ -177,18 +177,21 @@ module.exports = {
     // USDC per ticket
     PUBLIC_PRESALE_INPUT_RATE : {
         1: 25,
+        3: 25,
         4: 25,
     },
 
     // HELIX per ticket
     PUBLIC_PRESALE_OUTPUT_RATE : {
         1: 1000,
+        3: 1000,
         4: 1000,
     },
 
     // Length of time between purchase phases (in seconds)
     PUBLIC_PRESALE_PURCHASE_PHASE_DURATION: {
         1: 1800,
+        3: 300,
         4: 300,
     },
 
@@ -229,6 +232,7 @@ module.exports = {
     // Length of time between withdraw phases
     AIRDROP_WITHDRAW_PHASE_DURATION: {
         1: 0,
+        3: 7862400,
         4: 7862400,
         56: 0,
         97: 7862400,     // 91 days, 86400 == 1 day
