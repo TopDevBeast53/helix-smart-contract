@@ -30,6 +30,7 @@ async function main() {
     const rpc =  new ethers.providers.JsonRpcProvider(env.rpcURL) ;
     const admin = new ethers.Wallet( process.env.PRIVATE_KEY, rpc);
 
+    /*
     const referralRegisterName = "ReferralRegister"
     const referralRegister = await getContract(referralRegisterName, referralRegisterAddress, admin)
     await setCollectorPercent(
@@ -56,6 +57,7 @@ async function main() {
         vaultCollectorPercent,
         overrides
     )
+    */
 
     const feeHandlerName = "FeeHandler"
     const feeHandler = await getContract(feeHandlerName, feeHandlerAddress, admin)
