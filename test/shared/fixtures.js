@@ -25,11 +25,6 @@ const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHAS
 
 const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.network]
 
-console.log(publicPresaleInputRate)
-console.log(publicPresaleOutputRate)
-console.log(publicPresalePurchasePhaseDuration)
-console.log(airdropWithdrawPhaseDuration)
-
 const billion = 1000000000
 
 // 
