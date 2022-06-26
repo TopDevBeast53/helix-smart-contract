@@ -344,4 +344,10 @@ module.exports = {
         3: 10,
     },
 
+    // --------- LpSwap --------- //
+    
+    LP_SWAP_COLLECTOR_PERCENT: {
+        3: 10, 
+    }
+
 }
