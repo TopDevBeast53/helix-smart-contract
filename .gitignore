@@ -11,3 +11,4 @@ cache/
 target/
 test-ledger/
 solana/package-lock.json
+contracts/p2p

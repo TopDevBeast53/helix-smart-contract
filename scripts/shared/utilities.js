@@ -46,7 +46,29 @@ module.exports.transferOwnership = async (contract, contractName, owner) => {
     await tx.wait()
 }
 
+// Set the oracleFactory of the contract
+module.exports.setOracleFactory = async (contract, contractName, oracleFactory) => {
+    print(`set ${contractName} oracle factory to ${oracleFactory}`)
+    // const tx = await contract.setOracleFactory(oracleFactory)
+    // await tx.wait()
+}
+
+// Set the array of minters and the toMintPercent of each
+module.exports.setToMintPercents = async (contract, contractName, minters, toMintPercents) => {
+    print(`set ${contractName} minters and to mint percents`)
+    if (minters.length != toMintPercents.length) {
+        throw "SetToMintPercents: minters.length != toMintPercents.length"
+    }
+    for (let i = 0; i < minters.length; i++) {
+        print(`\t${minters[i]}:\t${toMintPercents[i]}`)
+    }
+
+    // const tx = await contract.setToMintPercents(minters, toMintPercents)
+    // await tx.wait()
+}
+
 // Print the given string if verbose is true and do nothing otherwise
 const print = (str) => {
     if (verbose) console.log(str)
+
 }
