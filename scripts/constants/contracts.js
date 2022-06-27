@@ -78,27 +78,27 @@ module.exports = {
     },
     factory: {
         1: '',
-        3: '0x174ec2E3bDA5beC9cEb854D73731A7a6A1e57F23',
+        3: '0xff6382373574E6C623D2B3A7efa66d714656572b',
         4: '0x968Ff589F8cd372907f3e1B9efF9b059b39FbAf3',
     },
     factoryImplementation: {
         1: '',
-        3: '0x080dA53A6dF53e22FdfF02657CfE724BD8596ad9',
+        3: '0xceb586CdfAC3ab5B64034DD3a50DA4b3931b9254',
         4: '0x154b7Ce289060E6D8d53A39Db758a9e8970cf2f9',
     },
     oracleFactory: {
         1: '',
-        3: '0xF9a8da398f852968203C975426653d4336Ea249B',
+        3: '0xDC3C3F15CD18F19119EeD246f76f963d66b367a2',
         4: '0x6DB607B979e4161871c4Ee00B309054a2C5f6189',
     },
     oracleFactoryImplementation: {
         1: '',
-        3: '0xC5B43C8fdb3c487b6582E5321f43381AB83A8119',
+        3: '0x5C25c057E4D7B362DF069B1b97Be315E845aafFB',
         4: '0x643fe9ADA52AD1d8FD952f91c831be104c0f7C00',
     },
     router: {
         1: '',
-        3: '0x701dE9c64bb09C3B9E66E3620Bb4a8a1B6331A54',
+        3: '0x14De24378171537E513CFF22bE8C6f794243A949',
         4: '0x543E2039E95c38E1742534680f681349118c0d0a',
     },
     helixMigrator: {
@@ -108,27 +108,27 @@ module.exports = {
     },
     swapRewards: {
         1: '',
-        3: '0x6adb0f41dc115168eb14Af8EaD14B7D432E42D71',
+        3: '0x673D5214A3f47BCBF8fbC468A75807f779546e8e',
         4: '0x3eF1c28Cbd1cc3b71c5FA4517Bf9463BdD7F43C9',
     },
     masterChef: {
         1: '',
-        3: '0x52CFC77bFc26a3e2e093e23C95601ee19F04a523',
+        3: '0x009aCC077E211C1b32c8e928A6bB08e20789f8E7',
         4: '0xEa0DDa9B02EAfc1a4863008a74f7C2320795bF6c',
     },
     masterChefImplementation: {
         1: '',
-        3: '0xaEaD56A540873130c5B973E1A64378aca343F6BC',
+        3: '0x95f264A61be229d29340164CA2f016C20b966232',
         4: '0xa528C05b9d1EEDB8020b849EA9c037017aA4871A',
     },
     autoHelix: {
         1: '',
-        3: '0x2a4a8B7555bDbBfef4a50E4E5c4Ed42C7A504Ce5',
+        3: '0x5eD59f79E34fF2c3B45735AB46B2c348a6537c52',
         4: '0x9bE078ce4379c260d16fF58349d48fB09B014Faa',
     },
     autoHelixImplementation: {
         1: '',
-        3: '0xe9987A2fFCe10623680de0F4c5f66566b53E739E',
+        3: '0x5eD59f79E34fF2c3B45735AB46B2c348a6537c52',
         4: '0xAd99Fd1A9Abe867d53C90fCFC47aADb144264b61',
     },
     publicSale: {
