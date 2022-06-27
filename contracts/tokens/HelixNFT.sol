@@ -273,10 +273,11 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         external 
         view 
         tokenIdExists(tokenId) 
-        returns (address tokenOwner, bool isStaked) 
+        returns (address tokenOwner, bool isStaked, uint256 wrappedNFTs) 
     {
         tokenOwner = ownerOf(tokenId);
         isStaked = _tokens[tokenId].isStaked;
+        wrappedNFTs = _tokens[tokenId].wrappedNfts;
     }
 
     /** 

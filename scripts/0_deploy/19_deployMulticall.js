@@ -3,7 +3,8 @@
  *
  * command for deploy on bsc-testnet: 
  * 
- *      npx hardhat run scripts/19_deployMulticall.js --network rinkeby
+ *      npx hardhat run scripts/0_deploy/19_deployMulticall.js --network rinkeby
+ *      npx hardhat run scripts/0_deploy/19_deployMulticall.js --network ropsten
  */
 const { ethers, network } = require(`hardhat`);
 

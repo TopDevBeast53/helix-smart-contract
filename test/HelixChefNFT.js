@@ -75,10 +75,6 @@ describe("HelixChefNft", () => {
 
     /*
     describe("Initialize of Staking", async () => {
-        it('When an user stakes, should be added him/her to map of `users', async () => {
-            await this.helixChefNFT.stake([1, 2], { from: alice })
-            assert.equal((await this.helixChefNFT.getUserStakedTokens(alice)).length, 2)
-        })
         it('When an user stakes, the helixPointAmount of user should have a default amount', async () => {
             await this.helixChefNFT.stake([1, 2], { from: alice })
             assert.equal((await this.helixChefNFT.getUserHelixPointAmount(alice)).toString(), (INITIAL_HELIXPOINTS * 2).toString())
