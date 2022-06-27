@@ -82,11 +82,36 @@ const initFeeMinter = async (name, address, wallet, minters, toMintPercents) => 
     await setToMintPercents(feeMinter, name, minters, toMintPercents)
 }
 
-// Add a new accruer
+// Add a new accruer to contract
 const addAccruer = async (contract, contractName, accruer) => {
     print(`add ${accruer} as an accruer to ${contractName}`)
     // const tx = await contract.addAccruer(accruer)
     // await tx.wait()
+}
+
+// Add a new minter to contract
+const addMinter = async (contract, contractName, minter) => {
+    print(`add ${minter} as a minter to ${contractName}`)
+    // const tx = await contract.addMinter(minter)
+    // await tx.wait()
+}
+
+// Add a new staker to contract
+const addStaker = async (contract, contractName, staker) => {
+    print(`add ${staker} as a staker to ${contractName}`)
+    // const tx = await contract.addStaker(staker)
+    // await tx.wait()
+}
+
+const connectHelixChefNft = async (helixChefNftName, helixChefNftAddress, wallet, feeHandlerAddress) => {
+    const helixChefNft = await loadContract(helixChefNftName, helixChefNftAddress, wallet)
+    await addAccruer(helixChefNft, helixChefNftName, feeHandlerAddress)
+}
+
+const connectHelixNft = async (helixNftName, helixNftAddress, wallet, helixNftBridgeAddress, helixChefNftAddress) => {
+    const helixNft = await loadContract(helixNftName, helixNftAddress, wallet)
+    await addMinter(helixNft, helixNftName, helixNftBridgeAddress)
+    await addStaker(helixNft, helixNftName, helixChefNftAddress)
 }
 
 module.exports = {
@@ -99,9 +124,12 @@ module.exports = {
     transferTimelockOwnership: transferTimelockOwnership,
     transferOwnership: transferOwnership,
     setToMintPercents: setToMintPercents,
-    setOracleFactory: setOracleFactory,
+    setOracleFminteactory: setOracleFactory,
     connectFactory: connectFactory,
     initFeeMinter: initFeeMinter,
     addAccruer: addAccruer,
+    addMinter: addMinter,
+    addStaker: addStaker,
+    connectHelixChefNft: connectHelixChefNft,
+    connectHelixNft: connectHelixNft,
 }
-
