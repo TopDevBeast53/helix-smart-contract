@@ -17,6 +17,7 @@ const {
     connectHelixToken,
     connectMasterChef,
     connectReferralRegister,
+    connectRouter,
 } = require("../shared/utilities")
 
 const env = require("../constants/env")
@@ -37,6 +38,7 @@ const helixNftAddress = contracts.helixNFT[env.network]
 const helixTokenAddress = contracts.helixToken[env.network]
 const vaultAddress = contracts.helixVault[env.network]
 const swapRewardsAddress = contracts.swapRewards[env.network]
+const routerAddress = contracts.router[env.network]
 
 const factoryName = names.factoryAddress
 const feeMinterName = names.feeMinterAddress
@@ -46,6 +48,7 @@ const helixNftName = names.helixNftAddress
 const helixTokenName = names.helixTokenAddress
 const masterChefName = names.masterChefAddress
 const referralRegisterName = names.referralRegisterAddress
+const routerName = names.routerAddress
 
 const toMintPercents = initials.FEE_MINTER_TO_MINT_PERCENTS[env.network]
 
@@ -92,6 +95,9 @@ async function main() {
         swapRewardsAddress,
         masterChefAddress
     )
+    print("\n")
+
+    await connectRouter(routerName, routerAddress, wallet, swapRewardsAddress)
     print("\n")
 
     print("done")

@@ -159,7 +159,6 @@ const addRecorder = async (contract, contractName, recorderAddress) => {
     print(`add ${recorderAddress} as a recorder to ${contractName}`)
     // const tx = await contract.addRecorder(recorderAddress)
     // await tx.wait()
-
 }
 
 const connectReferralRegister = async (
@@ -176,6 +175,22 @@ const connectReferralRegister = async (
     )
     await addRecorder(referralRegister, referralRegisterName, swapRewardsAddress)
     await addRecorder(referralRegister, referralRegisterName, masterChefAddress) 
+}
+
+const setSwapRewards = async (contract, contractName, swapRewardsAddress) => {
+    print(`add ${swapRewardsAddress} as the swap rewards contract for ${contractName}`)
+    // const tx = await contract.setSwapRewards(swapRewardsAddress)
+    // await tx.wait()
+}
+
+const connectRouter = async (
+    routerName, 
+    routerAddress, 
+    wallet, 
+    swapRewardsAddress, 
+) => {
+    const router = await loadContract(routerName, routerAddress, wallet)
+    await setSwapRewards(router, routerName, swapRewardsAddress) 
 }
 
 module.exports = {
@@ -201,4 +216,6 @@ module.exports = {
     connectMasterChef: connectMasterChef,
     addRecorder: addRecorder,
     connectReferralRegister: connectReferralRegister,
+    setSwapRewards: setSwapRewards,
+    connectRouter: connectRouter,
 }
