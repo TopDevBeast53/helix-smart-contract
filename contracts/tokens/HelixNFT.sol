@@ -199,7 +199,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         nonReentrant 
         isNotZeroAddress(to) 
     {
-        if (mintTokenIDs.length == 0) revert InvalidMintTokenIdsLength();
+        require(mintTokenIDs.length != 0, "Invalid Mint Token IDs length");
         _lastTokenId += 1;
         uint256 tokenId = _lastTokenId;
         Token storage _newToken = _tokens[tokenId];
