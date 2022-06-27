@@ -103,12 +103,23 @@ const addStaker = async (contract, contractName, staker) => {
     // await tx.wait()
 }
 
-const connectHelixChefNft = async (helixChefNftName, helixChefNftAddress, wallet, feeHandlerAddress) => {
+const connectHelixChefNft = async (
+    helixChefNftName, 
+    helixChefNftAddress, 
+    wallet, 
+    feeHandlerAddress
+) => {
     const helixChefNft = await loadContract(helixChefNftName, helixChefNftAddress, wallet)
     await addAccruer(helixChefNft, helixChefNftName, feeHandlerAddress)
 }
 
-const connectHelixNft = async (helixNftName, helixNftAddress, wallet, helixNftBridgeAddress, helixChefNftAddress) => {
+const connectHelixNft = async (
+    helixNftName, 
+    helixNftAddress, 
+    wallet, 
+    helixNftBridgeAddress, 
+    helixChefNftAddress
+) => {
     const helixNft = await loadContract(helixNftName, helixNftAddress, wallet)
     await addMinter(helixNft, helixNftName, helixNftBridgeAddress)
     await addStaker(helixNft, helixNftName, helixChefNftAddress)
@@ -134,9 +145,37 @@ const setReferralRegister = async (contract, contractName, referralRegisterAddre
     // await tx.wait()
 }
 
-const connectMasterChef = async (masterChefName, masterChefAddress, wallet, referralRegisterAddress) => {
+const connectMasterChef = async (
+    masterChefName, 
+    masterChefAddress, 
+    wallet, 
+    referralRegisterAddress
+) => {
     const masterChef = await loadContract(masterChefName, masterChefAddress, wallet)
     await setReferralRegister(masterChef, masterChefName, referralRegisterAddress)
+}
+
+const addRecorder = async (contract, contractName, recorderAddress) => {
+    print(`add ${recorderAddress} as a recorder to ${contractName}`)
+    // const tx = await contract.addRecorder(recorderAddress)
+    // await tx.wait()
+
+}
+
+const connectReferralRegister = async (
+    referralRegisterName, 
+    referralRegisterAddress, 
+    wallet, 
+    swapRewardsAddress, 
+    masterChefAddress
+) => {
+    const referralRegister = await loadContract(
+        referralRegisterName, 
+        referralRegisterAddress, 
+        wallet
+    )
+    await addRecorder(referralRegister, referralRegisterName, swapRewardsAddress)
+    await addRecorder(referralRegister, referralRegisterName, masterChefAddress) 
 }
 
 module.exports = {
@@ -160,4 +199,6 @@ module.exports = {
     connectHelixToken: connectHelixToken,
     setReferralRegister: setReferralRegister,
     connectMasterChef: connectMasterChef,
+    addRecorder: addRecorder,
+    connectReferralRegister: connectReferralRegister,
 }

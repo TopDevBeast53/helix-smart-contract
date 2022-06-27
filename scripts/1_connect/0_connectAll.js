@@ -16,6 +16,7 @@ const {
     connectHelixNft,
     connectHelixToken,
     connectMasterChef,
+    connectReferralRegister,
 } = require("../shared/utilities")
 
 const env = require("../constants/env")
@@ -35,9 +36,7 @@ const feeHandlerAddress = contracts.feeHandler[env.network]
 const helixNftAddress = contracts.helixNFT[env.network]
 const helixTokenAddress = contracts.helixToken[env.network]
 const vaultAddress = contracts.helixVault[env.network]
-console.log(`vaultAddress ${vaultAddress}`)
-
-const toMintPercents = initials.FEE_MINTER_TO_MINT_PERCENTS[env.network]
+const swapRewardsAddress = contracts.swapRewards[env.network]
 
 const factoryName = names.factoryAddress
 const feeMinterName = names.feeMinterAddress
@@ -46,6 +45,9 @@ const helixChefNftName = names.helixChefNftAddress
 const helixNftName = names.helixNftAddress
 const helixTokenName = names.helixTokenAddress
 const masterChefName = names.masterChefAddress
+const referralRegisterName = names.referralRegisterAddress
+
+const toMintPercents = initials.FEE_MINTER_TO_MINT_PERCENTS[env.network]
 
 /// (Re)build any connections between contracts 
 async function main() {
@@ -61,7 +63,13 @@ async function main() {
     await connectHelixChefNft(helixChefNftName, helixChefNftAddress, wallet, feeHandlerAddress)
     print("\n")
 
-    await connectHelixNft(helixNftName, helixNftAddress, wallet, helixNftBridgeAddress, helixChefNftAddress)
+    await connectHelixNft(
+        helixNftName, 
+        helixNftAddress, 
+        wallet, 
+        helixNftBridgeAddress, 
+        helixChefNftAddress
+    )
     print("\n")
 
     await connectHelixToken(
@@ -75,6 +83,15 @@ async function main() {
     print("\n")
 
     await connectMasterChef(masterChefName, masterChefAddress, wallet, referralRegisterAddress)
+    print("\n")
+
+    await connectReferralRegister(
+        referralRegisterName,
+        referralRegisterAddress, 
+        wallet,
+        swapRewardsAddress,
+        masterChefAddress
+    )
     print("\n")
 
     print("done")
