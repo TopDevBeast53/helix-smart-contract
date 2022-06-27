@@ -14,6 +14,7 @@ const {
     initFeeMinter,
     connectHelixChefNft,
     connectHelixNft,
+    connectHelixToken,
 } = require("../shared/utilities")
 
 const env = require("../constants/env")
@@ -31,6 +32,9 @@ const helixChefNftAddress = contracts.helixChefNFT[env.network]
 const helixNftBridgeAddress = contracts.helixNFTBridge[env.network]
 const feeHandlerAddress = contracts.feeHandler[env.network]
 const helixNftAddress = contracts.helixNFT[env.network]
+const helixTokenAddress = contracts.helixToken[env.network]
+const vaultAddress = contracts.helixVault[env.network]
+console.log(`vaultAddress ${vaultAddress}`)
 
 const toMintPercents = initials.FEE_MINTER_TO_MINT_PERCENTS[env.network]
 
@@ -39,6 +43,7 @@ const feeMinterName = names.feeMinterAddress
 const oracleFactoryName = names.oracleFactoryAddress
 const helixChefNftName = names.helixChefNftAddress
 const helixNftName = names.helixNftAddress
+const helixTokenName = names.helixTokenAddress
 
 /// (Re)build any connections between contracts 
 async function main() {
@@ -55,6 +60,16 @@ async function main() {
     print("\n")
 
     await connectHelixNft(helixNftName, helixNftAddress, wallet, helixNftBridgeAddress, helixChefNftAddress)
+    print("\n")
+
+    await connectHelixToken(
+        helixTokenName, 
+        helixTokenAddress, 
+        wallet, 
+        referralRegisterAddress,
+        vaultAddress,
+        masterChefAddress
+    )
     print("\n")
 
     print("done")

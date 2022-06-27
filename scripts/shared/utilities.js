@@ -114,6 +114,20 @@ const connectHelixNft = async (helixNftName, helixNftAddress, wallet, helixNftBr
     await addStaker(helixNft, helixNftName, helixChefNftAddress)
 }
 
+const connectHelixToken = async (
+    helixTokenName, 
+    helixTokenAddress, 
+    wallet, 
+    referralRegisterAddress,
+    vaultAddress,
+    masterChefAddress
+) => {
+    const helixToken = await loadContract(helixTokenName, helixTokenAddress, wallet) 
+    await addMinter(helixToken, helixTokenName, referralRegisterAddress)
+    await addMinter(helixToken, helixTokenName, vaultAddress)
+    await addMinter(helixToken, helixTokenName, masterChefAddress)
+}
+
 module.exports = {
     verbose: verbose,
     overrides: overrides,
@@ -132,4 +146,5 @@ module.exports = {
     addStaker: addStaker,
     connectHelixChefNft: connectHelixChefNft,
     connectHelixNft: connectHelixNft,
+    connectHelixToken: connectHelixToken,
 }
