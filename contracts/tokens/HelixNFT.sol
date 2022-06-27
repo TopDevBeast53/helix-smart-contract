@@ -90,6 +90,8 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
     /// Thrown when a caller is not an owner
     error NotOwner(address caller);
 
+    error InvalidMintTokenIdsLength();
+
     modifier isNotZeroAddress(address _address) {
         if (_address == address(0)) revert ZeroAddress();
         _;
@@ -197,6 +199,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         nonReentrant 
         isNotZeroAddress(to) 
     {
+        if (mintTokenIDs.length == 0) revert InvalidMintTokenIdsLength();
         _lastTokenId += 1;
         uint256 tokenId = _lastTokenId;
         Token storage _newToken = _tokens[tokenId];
