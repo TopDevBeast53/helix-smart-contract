@@ -2,6 +2,10 @@
 
 const verbose = true;
 
+const overrides = {
+    gasLimit: 9999999
+}
+
 module.exports.print = (str) => {
     print(str)
 }
@@ -25,6 +29,20 @@ module.exports.setCollectorPercent = async (contract, contractName, percent) => 
 module.exports.setNftChefPercent = async (contract, contractName, percent) => {
     print(`set ${contractName} nft chef percent to ${percent}`)
     const tx = await contract.setNftChefPercent(percent)
+    await tx.wait()
+}
+
+// Transfer timelock ownership of the contract
+module.exports.transferTimelockOwnership = async (contract, contractName, timelockOwner) => {
+    print(`transfer timelock ownership of ${contractName} to ${timelockOwner}`)
+    const tx = await contract.transferTimelockOwnership(timelockOwner)
+    await tx.wait()
+}
+
+// Transfer ownership of the contract
+module.exports.transferOwnership = async (contract, contractName, owner) => {
+    print(`transfer ownership of ${contractName} to ${owner}`)
+    const tx = await contract.transferOwnership(owner)
     await tx.wait()
 }
 
