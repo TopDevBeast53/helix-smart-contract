@@ -2,7 +2,7 @@
  * deploy Helix Factory
  *
  * run from root:
- *      npx hardhat run scripts/deploy/12_deployFactory.js --network ropsten
+ *      npx hardhat run scripts/0_deploy/12_deployFactory.js --network ropsten
  */
 
 const { ethers, upgrades } = require("hardhat")

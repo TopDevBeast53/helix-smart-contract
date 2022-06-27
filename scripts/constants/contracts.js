@@ -78,7 +78,7 @@ module.exports = {
     },
     factory: {
         1: '',
-        3: '0xa21336F61E8dA10D5bAC1aBE4AD787b61870F343',
+        3: '0x174ec2E3bDA5beC9cEb854D73731A7a6A1e57F23',
         4: '0x968Ff589F8cd372907f3e1B9efF9b059b39FbAf3',
     },
     factoryImplementation: {
@@ -98,7 +98,7 @@ module.exports = {
     },
     router: {
         1: '',
-        3: '0x68533AEE895aD4ff21EBeD34043156C13aF657A6',
+        3: '0x701dE9c64bb09C3B9E66E3620Bb4a8a1B6331A54',
         4: '0x543E2039E95c38E1742534680f681349118c0d0a',
     },
     helixMigrator: {
@@ -113,7 +113,7 @@ module.exports = {
     },
     masterChef: {
         1: '',
-        3: '0xd0Ab9e57ED6a72c31F36DC82f94539b462455d84',
+        3: '0x52CFC77bFc26a3e2e093e23C95601ee19F04a523',
         4: '0xEa0DDa9B02EAfc1a4863008a74f7C2320795bF6c',
     },
     masterChefImplementation: {
@@ -123,7 +123,7 @@ module.exports = {
     },
     autoHelix: {
         1: '',
-        3: '0x4d6224Cb75DE6904f760c46c4e84E809E046cB41',
+        3: '0x2a4a8B7555bDbBfef4a50E4E5c4Ed42C7A504Ce5',
         4: '0x9bE078ce4379c260d16fF58349d48fB09B014Faa',
     },
     autoHelixImplementation: {

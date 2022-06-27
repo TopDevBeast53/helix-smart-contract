@@ -2,7 +2,7 @@
  * deploy Auto Helix
  *
  * run from root:
- *      npx hardhat run scripts/deploy/18_deployAutoHelix.js --network ropsten
+ *      npx hardhat run scripts/0_deploy/18_deployAutoHelix.js --network ropsten
  */
 
 const { ethers, upgrades } = require(`hardhat`);
