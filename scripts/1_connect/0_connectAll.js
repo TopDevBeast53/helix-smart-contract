@@ -15,6 +15,7 @@ const {
     connectHelixChefNft,
     connectHelixNft,
     connectHelixToken,
+    connectMasterChef,
 } = require("../shared/utilities")
 
 const env = require("../constants/env")
@@ -44,6 +45,7 @@ const oracleFactoryName = names.oracleFactoryAddress
 const helixChefNftName = names.helixChefNftAddress
 const helixNftName = names.helixNftAddress
 const helixTokenName = names.helixTokenAddress
+const masterChefName = names.masterChefAddress
 
 /// (Re)build any connections between contracts 
 async function main() {
@@ -70,6 +72,9 @@ async function main() {
         vaultAddress,
         masterChefAddress
     )
+    print("\n")
+
+    await connectMasterChef(masterChefName, masterChefAddress, wallet, referralRegisterAddress)
     print("\n")
 
     print("done")

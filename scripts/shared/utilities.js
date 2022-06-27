@@ -128,6 +128,17 @@ const connectHelixToken = async (
     await addMinter(helixToken, helixTokenName, masterChefAddress)
 }
 
+const setReferralRegister = async (contract, contractName, referralRegisterAddress) => {
+    print(`set ${contractName} referral register to ${referralRegisterAddress}`)
+    // const tx = await contract.setReferralRegister(referralRegisterAddress)
+    // await tx.wait()
+}
+
+const connectMasterChef = async (masterChefName, masterChefAddress, wallet, referralRegisterAddress) => {
+    const masterChef = await loadContract(masterChefName, masterChefAddress, wallet)
+    await setReferralRegister(masterChef, masterChefName, referralRegisterAddress)
+}
+
 module.exports = {
     verbose: verbose,
     overrides: overrides,
@@ -147,4 +158,6 @@ module.exports = {
     connectHelixChefNft: connectHelixChefNft,
     connectHelixNft: connectHelixNft,
     connectHelixToken: connectHelixToken,
+    setReferralRegister: setReferralRegister,
+    connectMasterChef: connectMasterChef,
 }
