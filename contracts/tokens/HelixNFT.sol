@@ -47,8 +47,10 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
      * @dev Structure for attributes the Helix NFTs
      */
     struct Token {
-        // ID of the bridged NFT.
-        string[] externalTokenIDs;
+        // mintTokenIDs on solana.
+        string[] mintTokenIDs;
+        // label IDs on solana(eg. #345, #8900)
+        string[] nftIDs;
         // External token URI to use.
         string tokenURI;
         // Timestamp the token is minted(block's timestamp)
@@ -189,7 +191,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
     }
 
     // Mints external NFT
-    function mintExternal(address to, string[] calldata externalTokenIDs, string calldata uri, uint256 _bridgeFactoryId) 
+    function mintExternal(address to, string[] calldata mintTokenIDs, string[] calldata nftIDs, string calldata uri, uint256 _bridgeFactoryId) 
         external 
         onlyMinter 
         nonReentrant 
@@ -197,15 +199,19 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
     {
         _lastTokenId += 1;
         uint256 tokenId = _lastTokenId;
-        _tokens[tokenId].createTimestamp = block.timestamp;
-        _tokens[tokenId].tokenURI = uri;
-        _tokens[tokenId].bridgeFactoryId = _bridgeFactoryId;
-        uint256 length = externalTokenIDs.length;
-        for (uint256 i = 0; i < length; i++) {
-            string memory externalID = externalTokenIDs[i];
-            _tokens[tokenId].externalTokenIDs.push(externalID);
-        }
-        _tokens[tokenId].wrappedNfts = externalTokenIDs.length;
+        Token storage _newToken = _tokens[tokenId];
+        _newToken.createTimestamp = block.timestamp;
+        _newToken.tokenURI = uri;
+        _newToken.bridgeFactoryId = _bridgeFactoryId;
+
+        uint256 length = mintTokenIDs.length;
+        string[] memory _newMintTokenIDs = new string[](length);
+        string[] memory _newNftIDs = new string[](length);
+        _newMintTokenIDs = mintTokenIDs;
+        _newNftIDs = nftIDs;
+        _newToken.mintTokenIDs = _newMintTokenIDs;
+        _newToken.nftIDs = _newNftIDs;
+        _newToken.wrappedNfts = length;
         _safeMint(to, tokenId);
     }
 
@@ -254,8 +260,8 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         return(tokenOwner, uri, tokenId, token);
     }
 
-    function getExternalTokenIDs(uint256 _tokenId) external view tokenIdExists(_tokenId) returns (string[] memory) {
-        return _tokens[_tokenId].externalTokenIDs;
+    function getMintTokenIDs(uint256 _tokenId) external view tokenIdExists(_tokenId) returns (string[] memory) {
+        return _tokens[_tokenId].mintTokenIDs;
     }
 
     /**
