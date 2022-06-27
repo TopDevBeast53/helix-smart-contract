@@ -15,36 +15,36 @@ const print = (str) => {
 const loadContract = async (name, address, wallet) => {
     print(`load ${name} from ${address}`)
     const contractFactory = await ethers.getContractFactory(name)
-    const contract = contractFactory.attach(address).connect(wallet)
-    return contract
+    // const contract = contractFactory.attach(address).connect(wallet)
+    // return contract
 }
 
 // Set the fee collector percent on the contract
 const setCollectorPercent = async (contract, contractName, percent) => {
     print(`set ${contractName} collector percent to ${percent}`)
-    const tx = await contract.setCollectorPercent(percent)
-    await tx.wait()
+    // const tx = await contract.setCollectorPercent(percent)
+    // await tx.wait()
 }
 
 // Set the nft chef percent on the contract
 const setNftChefPercent = async (contract, contractName, percent) => {
     print(`set ${contractName} nft chef percent to ${percent}`)
-    const tx = await contract.setNftChefPercent(percent)
-    await tx.wait()
+    // const tx = await contract.setNftChefPercent(percent)
+    // await tx.wait()
 }
 
 // Transfer timelock ownership of the contract
 const transferTimelockOwnership = async (contract, contractName, timelockOwner) => {
     print(`transfer timelock ownership of ${contractName} to ${timelockOwner}`)
-    const tx = await contract.transferTimelockOwnership(timelockOwner)
-    await tx.wait()
+    // const tx = await contract.transferTimelockOwnership(timelockOwner)
+    // await tx.wait()
 }
 
 // Transfer ownership of the contract
 const transferOwnership = async (contract, contractName, owner) => {
     print(`transfer ownership of ${contractName} to ${owner}`)
-    const tx = await contract.transferOwnership(owner)
-    await tx.wait()
+    // const tx = await contract.transferOwnership(owner)
+    // await tx.wait()
 }
 
 // Set the array of minters and the toMintPercent of each
@@ -70,14 +70,23 @@ const setOracleFactory = async (contract, contractName, oracleFactory) => {
 
 // Load the factory contract and (re)build any connections it has to other contracts
 const connectFactory = async (name, address, wallet, oracleFactoryAddress) => {
+    print(`(re)build any references the factory contract holds to other contracts`)
     const factory = await loadContract(name, address, wallet)
     await setOracleFactory(factory, name, oracleFactoryAddress)
 }
 
 // Load the feeMinter contract and (re)initialize it's state
 const initFeeMinter = async (name, address, wallet, minters, toMintPercents) => {
+    print(`(re)initialize the feeMinter to it's default state`)
     const feeMinter = await loadContract(name, address, wallet)
     await setToMintPercents(feeMinter, name, minters, toMintPercents)
+}
+
+// Add a new accruer
+const addAccruer = async (contract, contractName, accruer) => {
+    print(`add ${accruer} as an accruer to ${contractName}`)
+    // const tx = await contract.addAccruer(accruer)
+    // await tx.wait()
 }
 
 module.exports = {
@@ -93,5 +102,6 @@ module.exports = {
     setOracleFactory: setOracleFactory,
     connectFactory: connectFactory,
     initFeeMinter: initFeeMinter,
+    addAccruer: addAccruer,
 }
 
