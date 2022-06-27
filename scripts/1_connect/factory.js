@@ -5,19 +5,11 @@
  *     npx hardhat run scripts/1_connect/factory.js --network ropsten
  */
 
-const verbose = true
-
 const { ethers } = require(`hardhat`)
-const { print, loadContract, setOracleFactory } = require("../shared/utilities")
+const { print, connectFactory } = require("../shared/utilities")
 
 const env = require('./../constants/env')
 const contracts = require('./../constants/contracts')
-
-/// Wallet making the transactions in this script
-let wallet
-
-/// The contract whose setters are being called by this script
-let contract
 
 const factoryAddress = contracts.factory[env.network]
 const oracleFactoryAddress = contracts.oracleFactory[env.network]
@@ -28,19 +20,9 @@ const factoryName = 'HelixFactory'
 async function main() {
     const [wallet] = await ethers.getSigners()
 
-    await connectFactory()
+    await connectFactory(factoryName, factoryAddress, wallet, oracleFactoryAddress)
 
     print('done')
-}
-
-async function connectFactory(wallet) {
-    const factory = await loadContract(factoryName, factoryAddress, wallet)
-
-    await setOracleFactory(factory, factoryName, oracleFactoryAddress)
-}
-
-module.exports.connectFactory = async (wallet) => {
-    await connectFactory(wallet)
 }
 
 main()
