@@ -2,7 +2,7 @@
  * @dev Used to (re)build all required references for Fee Minter
  * 
  * Run from project root using:
- *     npx hardhat run scripts/initialize/initFeeMinter.js --network ropsten
+ *     npx hardhat run scripts/1_connect/initFeeMinter.js --network ropsten
  */
 
 const verbose = true

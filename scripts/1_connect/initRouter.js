@@ -2,7 +2,7 @@
  * @dev Used to (re)build all required references for Router
  * 
  * Run from project root using:
- *     npx hardhat run scripts/initialize/initRouter.js --network ropsten
+ *     npx hardhat run scripts/1_connect/initRouter.js --network ropsten
  */
 
 const verbose = true
