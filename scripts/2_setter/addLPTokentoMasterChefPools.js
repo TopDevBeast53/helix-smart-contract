@@ -4,6 +4,7 @@
  * Run on bsc-testnet: 
  *      npx hardhat run scripts/initialize/AddLPTokentoMasterChefPools.js --network testnetBSC
  *      npx hardhat run scripts/initialize/AddLPTokentoMasterChefPools.js --network rinkeby
+ *      npx hardhat run scripts/2_setter/AddLPTokentoMasterChefPools.js --network ropsten
  */
 const { ethers, network } = require(`hardhat`);
 const contracts = require("../constants/contracts")
