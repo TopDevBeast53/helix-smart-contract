@@ -8,9 +8,9 @@ const { verifyTimelock } = require("./timelock")
 */
 const { verifyHelixToken } = require("./helixToken")
 const { verifyHelixNft } = require("./helixNft")
-/*
 const { verifyFeeMinter } = require("./feeMinter")
 const { verifyHelixNftBridge } = require("./helixNftBridge")
+/*
 const { verifyHelixChefNft } = require("./helixChefNft")
 const { verifyFeeHandler } = require("./feeHandler")
 const { verifyReferralRegister } = require("./referralRegister")
@@ -38,9 +38,9 @@ module.exports = {
     */
     verifyHelixToken,
     verifyHelixNft,
-    /*
     verifyFeeMinter,
     verifyHelixNftBridge,
+    /*
     verifyHelixChefNft,
     verifyFeeHandler,
     verifyReferralRegister,
