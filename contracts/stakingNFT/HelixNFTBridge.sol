@@ -54,8 +54,9 @@ contract HelixNFTBridge is Ownable, Pausable {
 
     struct BridgeFactory {
         address user;                   // owner of Ethereum NFT
-        string[] externalIDs;           // wrapped tokenIDs of Solana
-        string[] tokenURIs;             // wrapped tokenURIs of Solana : Ethereum NFT's TokenURI will be tokenURIs[0]
+        string[] externalIDs;           // mint tokenIDs on Solana
+        string[] nftIDs;                // label IDs on Solana
+        string[] tokenURIs;             // tokenURIs on Solana : Ethereum NFT's TokenURI will be tokenURIs[0]
         BridgeStatus bridgeStatus;      // bridge status
     }
 
@@ -80,6 +81,9 @@ contract HelixNFTBridge is Ownable, Pausable {
     mapping(address => uint256) private _countAddBridge;
  
     address public admin;
+
+    /// user should send some ETH to admin wallet when doing bridgeToEthereum
+    uint256 public gasFeeETH;
 
     uint256 public bridgeFactoryLastId;  
     /**
@@ -117,17 +121,19 @@ contract HelixNFTBridge is Ownable, Pausable {
      */
     HelixNFT helixNFT;
 
-    constructor(HelixNFT _helixNFT, address _admin) {
+    constructor(HelixNFT _helixNFT, address _admin, uint256 _gasFeeETH) {
         helixNFT = _helixNFT;
         admin = _admin;
+        gasFeeETH = _gasFeeETH;
     }
     
-    function addBridgeFactory(address _user, string[] calldata _externalIDs, string[] calldata _tokenURIs)
+    function addBridgeFactory(address _user, string[] calldata _externalIDs, string[] calldata _nftIDs, string[] calldata _tokenURIs)
       external 
       onlyOwner
     {
         if (_user == address(0)) revert ZeroAddress();
         if (_externalIDs.length == 0) revert NotArray();
+        if (_externalIDs.length != _nftIDs.length) revert InvalidArray();
         if (_externalIDs.length != _tokenURIs.length) revert InvalidArray();
         
         uint256 length = _externalIDs.length;
@@ -137,14 +143,18 @@ contract HelixNFTBridge is Ownable, Pausable {
             _bridgedExternalTokenIDs[_externalID] = true;
         }
         string[] memory _newExternalIDs = new string[](length);
+        string[] memory _newNftIDs = new string[](length);
         string[] memory _newTokenURIs = new string[](length);
         _newExternalIDs = _externalIDs;
+        _newNftIDs = _nftIDs;
         _newTokenURIs = _tokenURIs;
+        
         uint256 _bridgeFactoryId = bridgeFactoryLastId++;
         BridgeFactory storage _factory = bridgeFactories[_bridgeFactoryId];
         _factory.user = _user;
         _factory.bridgeStatus = BridgeStatus.Pendding;
         _factory.externalIDs = _newExternalIDs;
+        _factory.nftIDs = _newNftIDs;
         _factory.tokenURIs = _newTokenURIs;
 
         // Relay the bridge id to the user's account
@@ -164,7 +174,8 @@ contract HelixNFTBridge is Ownable, Pausable {
       payable
       returns(bool) 
     {
-        (bool success, bytes memory data) = payable(admin).call{value: 1e16, gas: 30000}("");
+        require(msg.value >= gasFeeETH, "Insufficient Gas FEE");
+        (bool success, ) = payable(admin).call{value: gasFeeETH, gas: 30000}("");
         require(success, "receiver rejected ETH transfer");
 
         address _user = msg.sender;
@@ -179,7 +190,7 @@ contract HelixNFTBridge is Ownable, Pausable {
         _bridgedTokenIDs[tokenId] = true;
         // Ethereum NFT's TokenURI is first URI of wrapped geobots
         string memory tokenURI = _bridgeFactory.tokenURIs[0];
-        helixNFT.mintExternal(_user, _bridgeFactory.externalIDs, tokenURI, _bridgeFactoryId);
+        helixNFT.mintExternal(_user, _bridgeFactory.externalIDs, _bridgeFactory.nftIDs, tokenURI, _bridgeFactoryId);
 
         if (_countAddBridge[_user] == 0) 
             _delBridger(_user);

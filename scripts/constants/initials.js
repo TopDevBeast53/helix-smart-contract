@@ -68,6 +68,11 @@ module.exports = {
     },
     MASTERCHEF_LPTOKEN_ADDRESSES: {
         //HELIX-WETH, DAI-USDC, USDC-WETH, DAI-WETH, USDT-USDC
+        3: ['0x674f337EacE3Cb33907daAdA40Ba081326f19022',
+            '0xDF7E7d20eF68Dc304f0C446def7E2eaB4A877fdD',
+            '0xA8bBC7bF44FBFA4218654676095bA6af9A15877B',
+            '0x84F1889112009AA2418AEa8FC66c1e45eFb3Adc9',
+            '0x971a6BbC05fCdDbA1dD65dCE9B247831fc167bEf'],
         4: ['0x50687BB28cf31E574F15E5d33Cde669a2cE07a52',
             '0x308C01C493196178214Ec8067CFFaf12c9A511Cc',
             '0x10B7B59d8b26fE3D0C30193F107F937fe48A4c47',
@@ -362,4 +367,16 @@ module.exports = {
         3: 10, 
     }
 
+    // --------- Bridge --------- //
+
+    BRIDGE_ADMIN_ADDRESS: {
+        3: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57', 
+        4: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57', 
+    },
+    
+    BRIDGE_FEE_ETH_AMOUNT: {
+        1: '1000000000000000', //0.001 ether  
+        3: '1000000000000000', //0.001 ether  
+        4: '1000000000000000', //0.001 ether 
+    },
 }

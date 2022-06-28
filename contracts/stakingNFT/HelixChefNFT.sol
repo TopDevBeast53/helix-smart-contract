@@ -55,13 +55,13 @@ contract HelixChefNFT is
     IERC20Upgradeable public rewardToken;
 
     /// Total number of NFTs staked in this contract
-    uint256 public totalStakedNfts;
+    uint256 public totalStakedWrappedNfts;
 
     /// Maps a user's address to their info struct
     mapping(address => UserInfo) public users;
 
     /// Maps a user's address to the number of NFTs they've staked
-    mapping(address => uint256) public usersStakedNfts;
+    mapping(address => uint256) public usersStakedWrappedNfts;
 
     // Emitted when an NFTs are staked
     event Stake(address indexed user, uint256[] tokenIds);
@@ -108,15 +108,15 @@ contract HelixChefNFT is
     
         uint256 length = _tokenIds.length; 
         for (uint256 i = 0; i < length; i++){
-            (address tokenOwner, bool isStaked) = helixNFT.getInfoForStaking(_tokenIds[i]);
+            (address tokenOwner, bool isStaked, uint256 wrappedNFTs) = helixNFT.getInfoForStaking(_tokenIds[i]);
             _requireIsTokenOwner(msg.sender, tokenOwner);
             if (isStaked) revert IsStaked(_tokenIds[i]);
 
             helixNFT.setIsStaked(_tokenIds[i], true);
             user.stakedNFTsId.push(_tokenIds[i]);
 
-            usersStakedNfts[msg.sender]++;
-            totalStakedNfts++;
+            usersStakedWrappedNfts[msg.sender] += wrappedNFTs;
+            totalStakedWrappedNfts += wrappedNFTs;
         }
 
         emit Stake(msg.sender, _tokenIds);
@@ -128,15 +128,15 @@ contract HelixChefNFT is
 
         uint256 length = _tokenIds.length; 
         for (uint256 i = 0; i < length; i++){
-            (address tokenOwner, bool isStaked) = helixNFT.getInfoForStaking(_tokenIds[i]);
+            (address tokenOwner, bool isStaked, uint256 wrappedNFTs) = helixNFT.getInfoForStaking(_tokenIds[i]);
             _requireIsTokenOwner(msg.sender, tokenOwner);
             if (!isStaked) revert NotStaked(_tokenIds[i]);
 
             helixNFT.setIsStaked(_tokenIds[i], false);
             _removeTokenIdFromUser(msg.sender, _tokenIds[i]);
 
-            usersStakedNfts[msg.sender]--;
-            totalStakedNfts--;
+            usersStakedWrappedNfts[msg.sender] -= wrappedNFTs;
+            totalStakedWrappedNfts -= wrappedNFTs;
         }
         
         emit Unstake(msg.sender, _tokenIds);
@@ -186,16 +186,9 @@ contract HelixChefNFT is
         return EnumerableSetUpgradeable.at(_accruers, _index);
     }
 
-    /// Return the array of NFT ids that _user has staked
-    function getUserStakedTokens(address _user) external view returns(uint256[] memory){
-        uint256[] memory tokenIds = new uint256[](usersStakedNfts[_user]);
-        tokenIds = users[_user].stakedNFTsId;
-        return tokenIds;
-    }
-
     /// Return the number of NFTs the _user has staked
-    function getUsersStakedNfts(address _user) external view returns(uint256) {
-        return usersStakedNfts[_user];
+    function getUsersStakedWrappedNfts(address _user) external view returns(uint256) {
+        return usersStakedWrappedNfts[_user];
     }
 
     /// Return the _user's pending reward
@@ -210,10 +203,10 @@ contract HelixChefNFT is
 
     /// Return the reward accrued to _user based on the transaction _fee
     function getAccruedReward(address _user, uint256 _fee) public view returns (uint256) {
-        if (totalStakedNfts == 0) {
+        if (totalStakedWrappedNfts == 0) {
             return 0;
         }
-        return usersStakedNfts[_user] * _fee / totalStakedNfts ;
+        return usersStakedWrappedNfts[_user] * _fee / totalStakedWrappedNfts ;
     }
 
     /// Return true if the _address is a registered accruer and false otherwise

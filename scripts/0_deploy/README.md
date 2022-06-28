@@ -7,18 +7,26 @@ contract is correctly configured.
 For convenience, listed below are the commands to deploy each contract to the rinkeby network:  
 Take care to update each contract's deployed address(es) in ../constants/contracts.js.
 
-npx hardhat run scripts/deploy/0_deployHelixToken.js --network rinkeby  
-npx hardhat run scripts/deploy/1_deployHelixNFT.js --network rinkeby  
-npx hardhat run scripts/deploy/2_deployFeeMinter.js --network rinkeby  
-npx hardhat run scripts/deploy/3_deployHelixNFTBridge.js --network rinkeby  
-npx hardhat run scripts/deploy/4_deployHelixChefNFT.js --network rinkeby  
-npx hardhat run scripts/deploy/5_deployFeeHandler.js --network rinkeby  
-npx hardhat run scripts/deploy/6_deployReferralRegister.js --network rinkeby  
-npx hardhat run scripts/deploy/7_deployHelixVault.js --network rinkeby  
-npx hardhat run scripts/deploy/8_deployFactory.js --network rinkeby  
-npx hardhat run scripts/deploy/9_deployOracleFactory.js --network rinkeby  
-npx hardhat run scripts/deploy/10_deployRouter.js --network rinkeby  
-npx hardhat run scripts/deploy/11_deployMigrator.js --network rinkeby  
-npx hardhat run scripts/deploy/12_deploySwapRewards.js --network rinkeby  
-npx hardhat run scripts/deploy/13_deployMasterChef.js --network rinkeby  
-npx hardhat run scripts/deploy/14_deployAutoHelix.js --network rinkeby  
+npx hardhat run scripts/0_deploy/0_deployOwnerMultiSig.js --network ropsten
+npx hardhat run scripts/0_deploy/1_deployTreasuryMultiSig.js --network ropsten
+npx hardhat run scripts/0_deploy/2_deployDevTeamMultiSig.js --network ropsten
+npx hardhat run scripts/0_deploy/3_deployTimelock.js --network ropsten
+npx hardhat run scripts/0_deploy/4_deployHelixToken.js --network ropsten
+npx hardhat run scripts/0_deploy/5_deployHelixNFT.js --network ropsten
+npx hardhat run scripts/0_deploy/6_deployFeeMinter.js --network ropsten
+npx hardhat run scripts/0_deploy/7_deployHelixNFTBridge.js --network ropsten
+npx hardhat run scripts/0_deploy/8_deployHelixChefNFT.js --network ropsten
+npx hardhat run scripts/0_deploy/9_deployFeeHandler.js --network ropsten
+npx hardhat run scripts/0_deploy/10_deployReferralRegister.js --network ropsten
+npx hardhat run scripts/0_deploy/11_deployHelixVault.js --network ropsten
+npx hardhat run scripts/0_deploy/12_deployFactory.js --network ropsten
+npx hardhat run scripts/0_deploy/13_deployOracleFactory.js --network ropsten
+npx hardhat run scripts/0_deploy/14_deployRouter.js --network ropsten
+npx hardhat run scripts/0_deploy/15_deployMigrator.js --network ropsten
+npx hardhat run scripts/0_deploy/16_deploySwapRewards.js --network ropsten
+npx hardhat run scripts/0_deploy/17_deployMasterChef.js --network ropsten
+npx hardhat run scripts/0_deploy/18_deployAutoHelix.js --network ropsten
+npx hardhat run scripts/0_deploy/19_deployMulticall.js --network ropsten
+npx hardhat run scripts/0_deploy/20_deployYieldSwap.js --network ropsten
+npx hardhat run scripts/0_deploy/21_deployLpSwap.js --network ropsten
+
