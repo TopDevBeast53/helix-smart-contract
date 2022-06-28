@@ -7,8 +7,8 @@ const { verifyDevTeamMultiSig } = require("./devTeamMultiSig")
 const { verifyTimelock } = require("./timelock")
 */
 const { verifyHelixToken } = require("./helixToken")
-/*
 const { verifyHelixNft } = require("./helixNft")
+/*
 const { verifyFeeMinter } = require("./feeMinter")
 const { verifyHelixNftBridge } = require("./helixNftBridge")
 const { verifyHelixChefNft } = require("./helixChefNft")
@@ -37,8 +37,8 @@ module.exports = {
     verifyTimelock,
     */
     verifyHelixToken,
-    /*
     verifyHelixNft,
+    /*
     verifyFeeMinter,
     verifyHelixNftBridge,
     verifyHelixChefNft,
