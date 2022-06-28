@@ -1,28 +1,25 @@
-/*
- * @dev Deployment script for Yield Swap contract.
- *
- * Run from project root using:
- *     npx hardhat run scripts/deploy/20_deployYieldSwap.js --network ropsten
- */
-
-// Define script parameters
 const { ethers } = require(`hardhat`)
-const env = require('../constants/env')
-const contracts = require('../constants/contracts')
-const initials = require('../constants/initials')
+const { print } = require("../utilities")
 
-// Define contract constructor arguments
+const env = require('../../constants/env')
+const contracts = require('../../constants/contracts')
+const initials = require('../../constants/initials')
+
 const chefAddress = contracts.masterChef[env.network]
 const rewardTokenAddress = contracts.helixToken[env.network]
 const feeHandlerAddress = contracts.feeHandler[env.network]
 const minLockDuration = initials.YIELD_SWAP_MIN_LOCK_DURATION[env.network]
 const maxLockDuration = initials.YIELD_SWAP_MAX_LOCK_DURATION[env.network]
 
-async function main() {
-    const [deployer] = await ethers.getSigners();
-    console.log(`Deployer address: ${deployer.address}`);
+const deployYieldSwap = async (deployer) => {
+    print(`Deploy Yield Swap`);
+    print(`chefAddress: ${chefAddress}`)
+    print(`rewardTokenAddress: ${rewardTokenAddress}`)
+    print(`feeHandlerAddress: ${feeHandlerAddress}`)
+    print(`minLockDuration: ${minLockDuration}`)
+    print(`maxLockDuration: ${maxLockDuration}`)
 
-    console.log(`Deploy Yield Swap`);
+    /*
     const ContractFactory = await ethers.getContractFactory('YieldSwap');
     const contract = await upgrades.deployProxy(
         ContractFactory,
@@ -36,19 +33,13 @@ async function main() {
     );     
     await contract.deployTransaction.wait();
     
-    console.log(`Yield Swap deployed to ${contract.address}`);
+    print(`Yield Swap deployed to ${contract.address}`);
 
     const implementationAddress = await upgrades.erc1967.getImplementationAddress(
         contract.address
     )   
-    console.log(`Implementation address: ${implementationAddress}`)       
-
-    console.log(`Done`)
+    print(`Implementation address: ${implementationAddress}`)       
+    */
 }
 
-main()
-    .then(() => process.exit(0))
-    .catch((error) => {
-        console.error(error);
-        process.exit(1);
-    });
+module.exports = { deployYieldSwap }
