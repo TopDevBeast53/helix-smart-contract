@@ -20,12 +20,8 @@ const { verifySwapRewards } = require("./swapRewards")
 const { verifyMasterChef } = require("./masterChef")
 const { verifyAutoHelix } = require("./autoHelix")
 const { verifyMulticall } = require("./multicall")
-/*
-const { verifyYieldSwap } = require("./yieldSwap")
-const { verifyLpSwap } = require("./lpSwap")
 const { verifyAirDrop } = require("./airDrop")
 const { verifyTestToken } = require("./testToken")
-*/
 
 module.exports = {
     verifyOwnerMultiSig,
@@ -48,10 +44,6 @@ module.exports = {
     verifyMasterChef,
     verifyAutoHelix,
     verifyMulticall,
-    /*
-    verifyYieldSwap,
-    verifyLpSwap,
     verifyAirDrop,
     verifyTestToken,
-    */
 }

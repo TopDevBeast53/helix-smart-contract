@@ -1,22 +1,31 @@
-const { ethers } = require(`hardhat`);
+const { run } = require(`hardhat`);
 const { print } = require("../utilities")
+
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
+
+const testTokenAddress = contracts.testToken[env.network]
 
 const name = 'Test Token B'
 const symbol = 'TTB'
 const totalSupply = '1000000000000000000000000000';        // 1 billion
 
-const deployTestToken = async (deployer) => {
-    print(`Deploy Test Token`);
+const verifyTestToken = async () => {
+    print(`verify Test Token`);
     print(`name: ${name}`)
     print(`symbol: ${symbol}`)
     print(`totalSupply: ${totalSupply}`)
 
-    /*
-    const TestToken = await ethers.getContractFactory('TestToken');
-    const testToken = await TestToken.deploy(name, symbol, totalSupply);
-    await testToken.deployTransaction.wait();
-    print(`${name} deployed to ${testToken.address}`);
-    */
+    await run(
+        "verify:verify", {
+            address: testTokenAddress,
+            constructorArguments: [
+                name,
+                symbol,
+                totalSupply
+            ]
+        }
+    )
 }
 
-module.exports = { deployTestToken }
+module.exports = { verifyTestToken }

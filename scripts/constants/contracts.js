@@ -138,6 +138,12 @@ module.exports = {
     multicall: {
         3: ''
     },
+    airDrop: {
+        3: ''
+    },
+    testToken: {
+        3: ''
+    },
     yieldSwap: {
         3: '0x124c90bF3777F0570845Fbdd67e337BC0D5A0e68',
     },
