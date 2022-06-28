@@ -3,9 +3,7 @@
 const { verifyOwnerMultiSig } = require("./ownerMultiSig")
 const { verifyTreasuryMultiSig } = require("./treasuryMultiSig")
 const { verifyDevTeamMultiSig } = require("./devTeamMultiSig")
-/*
 const { verifyTimelock } = require("./timelock")
-*/
 const { verifyHelixToken } = require("./helixToken")
 const { verifyHelixNft } = require("./helixNft")
 const { verifyFeeMinter } = require("./feeMinter")
@@ -33,9 +31,7 @@ module.exports = {
     verifyOwnerMultiSig,
     verifyTreasuryMultiSig,
     verifyDevTeamMultiSig,
-    /*
     verifyTimelock,
-    */
     verifyHelixToken,
     verifyHelixNft,
     verifyFeeMinter,
