@@ -19,7 +19,6 @@ const deployHelixVault = async (deployer) => {
     print(`startBlock: ${startBlock}`)
     print(`lastRewardBlock: ${lastRewardBlock}`)
 
-    /*
     const VaultContract = await ethers.getContractFactory('HelixVault');
     const vaultProxy = await upgrades.deployProxy(
         VaultContract,
@@ -39,7 +38,6 @@ const deployHelixVault = async (deployer) => {
         vaultProxy.address
     )
     print(`Implementation address: ${implementationAddress}`)
-    */
 }
 
 module.exports = { deployHelixVault }

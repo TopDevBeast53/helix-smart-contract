@@ -16,7 +16,6 @@ const deployDevTeamMultiSig = async (deployer) => {
     print(`adminConfirmationsRequired: ${adminConfirmationsRequired}`)
     print(`ownerConfirmationsRequired: ${ownerConfirmationsRequired}`)
 
-    /*
     const ContractFactory = await ethers.getContractFactory('TokenMultiSigWallet')
     const contract = await ContractFactory.deploy(
         admins,
@@ -27,7 +26,6 @@ const deployDevTeamMultiSig = async (deployer) => {
     )
     await contract.deployTransaction.wait()
     print(`devTeam multiSig deployed to ${contract.address}`)
-    */
 }
 
 module.exports = { deployDevTeamMultiSig }

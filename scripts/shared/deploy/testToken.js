@@ -11,12 +11,10 @@ const deployTestToken = async (deployer) => {
     print(`symbol: ${symbol}`)
     print(`totalSupply: ${totalSupply}`)
 
-    /*
     const TestToken = await ethers.getContractFactory('TestToken');
     const testToken = await TestToken.deploy(name, symbol, totalSupply);
     await testToken.deployTransaction.wait();
     print(`${name} deployed to ${testToken.address}`);
-    */
 }
 
 module.exports = { deployTestToken }

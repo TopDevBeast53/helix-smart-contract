@@ -17,9 +17,8 @@ const deployOwnerMultiSig = async (deployer) => {
     print(`adminConfirmationsRequired: ${adminConfirmationsRequired}`)
     print(`ownerConfirmationsRequired: ${ownerConfirmationsRequired}`)
 
-    /*
     const contractFactory = await ethers.getContractFactory('MultiSigWallet')
-    const contract = await ContractFactory.deploy(
+    const contract = await contractFactory.deploy(
         admins,
         owners,
         adminConfirmationsRequired,
@@ -28,7 +27,6 @@ const deployOwnerMultiSig = async (deployer) => {
     await contract.deployTransaction.wait()
 
     print(`deployed to ${contract.address}`)
-    */
 }
 
 module.exports = {

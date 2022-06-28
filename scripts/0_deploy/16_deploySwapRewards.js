@@ -2,6 +2,7 @@
  * deploy Swap Rewards
  * 
  * run from root: 
+ *      npx hardhat run scripts/0_deploy/16_deploySwapRewards.js --network rinkeby
  *      npx hardhat run scripts/0_deploy/16_deploySwapRewards.js --network ropsten
  */
 

@@ -15,7 +15,6 @@ const deployFeeHandler = async (deployer) => {
     print(`nftChefAddress: ${nftChefAddress}`)
     print(`helixTokenAddress: ${helixTokenAddress}`)
 
-    /*
     const FeeHandlerContractFactory = await ethers.getContractFactory("FeeHandler")
 
     // Deploy the fee handler proxy
@@ -35,7 +34,6 @@ const deployFeeHandler = async (deployer) => {
         feeHandlerProxy.address
     )
     print(`FeeHandler Implementation address: ${feeHandlerImplementationAddress}`)
-    */
 }
 
 module.exports = { deployFeeHandler }

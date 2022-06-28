@@ -2,6 +2,7 @@
  * deploy Helix Migrator
  * 
  * run from root: 
+ *      npx hardhat run scripts/0_deploy/15_deployMigrator.js --network rinkeby
  *      npx hardhat run scripts/0_deploy/15_deployMigrator.js --network ropsten
  */
 

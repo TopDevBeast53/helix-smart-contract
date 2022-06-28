@@ -10,13 +10,11 @@ const deployMigrator = async (deployer) => {
     print('Deploy Migrator');
     print(`routerAddress: ${routerAddress}`)
 
-    /*
     const Migrator = await ethers.getContractFactory('HelixMigrator');
     const migrator = await Migrator.deploy(routerAddress);
     await migrator.deployTransaction.wait();
 
     print(`HelixMigrator deployed to ${migrator.address}`);
-    */
 }
 
 module.exports = { deployMigrator }

@@ -266,6 +266,7 @@ module.exports = {
 
     FEE_MINTER_MINTERS: {
         3: [masterChefAddress, referralRegisterAddress, vaultAddress],
+        4: [masterChefAddress, referralRegisterAddress, vaultAddress],
     },
 
     // Represents the percents of the to mint per block rate to delegate to each task
@@ -283,88 +284,107 @@ module.exports = {
     
     TREASURY_MULTISIG_ADMINS: {
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
     },
 
     TREASURY_MULTISIG_OWNERS: {
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
     },
 
     TREASURY_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
         3: 1,
+        4: 1,
     },
 
     TREASURY_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
         3: 1,
+        4: 1,
     },
 
     // --------- Owner MultiSig --------- //
     
     OWNER_MULTISIG_ADMINS: {
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
     },
 
     OWNER_MULTISIG_OWNERS: {
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
     },
 
     OWNER_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
         3: 1,
+        4: 1,
     },
 
     OWNER_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
         3: 1,
+        4: 1,
     },
 
     // --------- Dev Team MultiSig --------- //
     
     DEV_TEAM_MULTISIG_ADMINS: {
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
     },
 
     DEV_TEAM_MULTISIG_OWNERS: {
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
     },
 
     DEV_TEAM_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
         3: 1,
+        4: 1,
     },
 
     DEV_TEAM_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
         3: 1,
+        4: 1,
     },
 
     // --------- Timelock --------- //
     
     TIMELOCK_MIN_DELAY: {
         3: 21600,   // 6 hours 
+        4: 21600,   // 6 hours 
     },
 
     TIMELOCK_PROPOSERS: {
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
     },
 
     TIMELOCK_EXECUTORS: {
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
     },
 
     // --------- YieldSwap --------- //
     
     YIELD_SWAP_MIN_LOCK_DURATION: {
         3: 300, 
+        4: 300, 
     },
     
     YIELD_SWAP_MAX_LOCK_DURATION: {
         3: 31536000,    // 1 year in seconds
+        4: 31536000,    // 1 year in seconds
     },
 
     YIELD_SWAP_COLLECTOR_PERCENT: {
         3: 10,
+        4: 10,
     },
 
     // --------- LpSwap --------- //
     
     LP_SWAP_COLLECTOR_PERCENT: {
         3: 10, 
+        4: 10, 
     },
 
     // --------- Bridge --------- //

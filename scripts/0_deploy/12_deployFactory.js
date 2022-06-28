@@ -2,6 +2,7 @@
  * deploy Helix Factory
  *
  * run from root:
+ *      npx hardhat run scripts/0_deploy/12_deployFactory.js --network rinkeby
  *      npx hardhat run scripts/0_deploy/12_deployFactory.js --network ropsten
  */
 

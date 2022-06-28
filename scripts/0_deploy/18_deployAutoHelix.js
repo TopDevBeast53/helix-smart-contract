@@ -2,6 +2,7 @@
  * deploy Auto Helix
  *
  * run from root:
+ *      npx hardhat run scripts/0_deploy/18_deployAutoHelix.js --network rinkeby
  *      npx hardhat run scripts/0_deploy/18_deployAutoHelix.js --network ropsten
  */
 

@@ -7,21 +7,22 @@ const initials = require("../../constants/initials")
 
 const helixNftAddress = contracts.helixNFT[env.network]
 const adminAddress = initials.BRIDGE_ADMIN_ADDRESS[env.network]
+const fee_eth = initials.BRIDGE_FEE_ETH_AMOUNT[env.network]
 
 const deployHelixNftBridge = async (deployer) => {
     print("deploy helix nft bridge")
     print(`helixNftAddress: ${helixNftAddress}`)
     print(`adminAddress: ${adminAddress}`)
+    print(`fee_eth: ${fee_eth}`)
 
-    /*
-    const HelixNftBridge = await ethers.getContractFactory(`HelixNftBridge`)
+    const HelixNftBridge = await ethers.getContractFactory(`HelixNFTBridge`)
     bridge = await HelixNftBridge.deploy(
        helixNftAddress, 
-       adminAddress
+       adminAddress,
+       fee_eth
     )
     await bridge.deployTransaction.wait()
     print(`HelixNftBridge deployed to ${bridge.address}`)
-    */
 }
 
 module.exports = { deployHelixNftBridge } 

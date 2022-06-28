@@ -23,7 +23,6 @@ const deploySwapRewards = async (deployer) => {
     print(`referralRegisterAddress: ${referralRegisterAddress}`)
     print(`routerAddress: ${routerAddress}`)
 
-    /*
     const contractFactory = await ethers.getContractFactory('SwapRewards')
     const contract = await contractFactory.deploy(
         helixTokenAddress,
@@ -34,7 +33,6 @@ const deploySwapRewards = async (deployer) => {
     await contract.deployTransaction.wait()
 
     print(`swapRewards deployed to ${contract.address}`)
-    */
 }
 
 module.exports = { deploySwapRewards }

@@ -2,6 +2,7 @@
  * deploy Helix Vault
  *
  * run from root: 
+ *     npx hardhat run scripts/0_deploy/11_deployHelixVault.js --network rinkeby
  *     npx hardhat run scripts/0_deploy/11_deployHelixVault.js --network ropsten
  */
 
