@@ -156,8 +156,10 @@ module.exports = {
     },
     lpSwap: {
         3: '0xa8C743768D29cBD0e94737276ED0d97468bB4970',
+        4: '0xD16847cB936161F5F3C9a9f73955ee94D87bDb58',
     },
     lpSwapImplementation: {
-        3: '0x38029335267Da6f1f7e7A2EC2C07012DF378dF73',
+        3: '0xa8C743768D29cBD0e94737276ED0d97468bB4970',
+        4: '0x892e45382744ea2633EdDD44e87E38A745cF71d0',
     }
 }
