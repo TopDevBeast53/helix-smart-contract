@@ -5,30 +5,13 @@
  *      npx hardhat run scripts/0_deploy/16_deploySwapRewards.js --network ropsten
  */
 
-const {ethers} = require('hardhat')
-const contracts = require("../constants/contracts")
-const env = require("../constants/env")
-
-const helixTokenAddress = contracts.helixToken[env.network]
-const oracleFactoryAddress = contracts.oracleFactory[env.network]
-const refRegAddress = contracts.referralRegister[env.network]
-const routerAddress = contracts.router[env.network]
+const { ethers } = require('hardhat')
+const { deploySwapRewards } = require("../shared/deploy/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners()
     console.log(`Deployer address: ${deployer.address}`)
-
-    console.log('Deploy SwapRewards')
-    const contractFactory = await ethers.getContractFactory('SwapRewards')
-    const contract = await contractFactory.deploy(
-        helixTokenAddress,
-        oracleFactoryAddress,
-        refRegAddress,
-        routerAddress
-    )
-    await contract.deployTransaction.wait()
-
-    console.log(`swapRewards deployed to ${contract.address}`)
+    await deploySwapRewards(deployer)
     console.log('done')
 }
 

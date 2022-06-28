@@ -2,25 +2,17 @@
  * deploy Helix Migrator
  * 
  * run from root: 
- *      npx hardhat run scripts/deploy/15_deployMigrator.js --network ropsten
+ *      npx hardhat run scripts/0_deploy/15_deployMigrator.js --network ropsten
  */
 
-const {ethers} = require('hardhat');
-const contracts = require("../constants/contracts")
-const env = require("../constants/env")
-
-const routerAddress = contracts.router[env.network];
+const { ethers } = require('hardhat');
+const { deployMigrator } = require("../shared/deploy/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${deployer.address}`);
-
-    console.log('Deploy HelixMigrator');
-    const Migrator = await ethers.getContractFactory('HelixMigrator');
-    const migrator = await Migrator.deploy(routerAddress);
-    await migrator.deployTransaction.wait();
-
-    console.log(`HelixMigrator deployed to ${migrator.address}`);
+    await deployMigrator(deployer)
+    console.log("done")
 }
 
 main()

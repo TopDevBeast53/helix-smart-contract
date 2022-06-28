@@ -2,43 +2,16 @@
  * deploy FeeHandler
  * 
  * run from root:
- *      npx hardhat run scripts/deploy/9_deployFeeHandler.js --network ropsten
+ *      npx hardhat run scripts/0_deploy/9_deployFeeHandler.js --network ropsten
  */
 
-const { ethers, upgrades } = require("hardhat")
-const addresses = require("../constants/addresses")
-const contracts = require("../constants/contracts")
-const env = require("../constants/env")
-
-const treasuryAddress = addresses.TREASURY[env.network]
-const nftChefAddress = contracts.helixChefNFT[env.network]
-const helixTokenAddress = contracts.helixToken[env.network]
+const { ethers } = require("hardhat")
+const { deployFeeHandler } = require("../shared/deploy/deployers")
 
 async function main() {
-    console.log(`Deploy FeeHandler Proxy and Implementation`)
-
     const [deployer] = await ethers.getSigners()
     console.log(`Deployer address: ${deployer.address}`)
-    
-    const FeeHandlerContractFactory = await ethers.getContractFactory("FeeHandler")
-
-    // Deploy the fee handler proxy
-    const feeHandlerProxy = await upgrades.deployProxy(
-        FeeHandlerContractFactory, 
-        [
-            treasuryAddress, 
-            nftChefAddress,
-            helixTokenAddress
-        ]
-    ) 
-    await feeHandlerProxy.deployTransaction.wait()
-    console.log(`FeeHandler Proxy address: ${feeHandlerProxy.address}`)
-
-    // Output the fee handler implementation address
-    const feeHandlerImplementationAddress = await upgrades.erc1967.getImplementationAddress(
-        feeHandlerProxy.address
-    )
-    console.log(`FeeHandler Implementation address: ${feeHandlerImplementationAddress}`)
+    await deployFeeHandler(deployer)
     console.log('done')
 }
 

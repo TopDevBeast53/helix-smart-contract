@@ -1,3 +1,11 @@
+
+const env = require("./env")
+const contracts = require("./contracts")
+
+const masterChefAddress = contracts.masterChef[env.network]
+const referralRegisterAddress = contracts.referralRegister[env.network]
+const vaultAddress = contracts.helixVault[env.network]
+
 module.exports = {
     FACTORY_INIT_CODE_HASH: {
         1: '',
@@ -256,6 +264,10 @@ module.exports = {
         4: '98280000000000000000'
     },
 
+    FEE_MINTER_MINTERS: {
+        3: [masterChefAddress, referralRegisterAddress, vaultAddress],
+    },
+
     // Represents the percents of the to mint per block rate to delegate to each task
     // Percents to each task with 2 decimals of precision
     // Chef:        83.33%     (Stake: 59.52% + Dev Team: 23.81%)
@@ -348,6 +360,12 @@ module.exports = {
     YIELD_SWAP_COLLECTOR_PERCENT: {
         3: 10,
     },
+
+    // --------- LpSwap --------- //
+    
+    LP_SWAP_COLLECTOR_PERCENT: {
+        3: 10, 
+    }
 
     // --------- Bridge --------- //
 
