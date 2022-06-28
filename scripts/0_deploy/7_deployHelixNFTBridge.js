@@ -2,6 +2,7 @@
  * deploy HelixNFT Bridge
  * 
  * run from root:
+ *      npx hardhat run scripts/0_deploy/7_deployHelixNFTBridge.js --network rinkeby
  *      npx hardhat run scripts/0_deploy/7_deployHelixNFTBridge.js --network ropsten
  */
 

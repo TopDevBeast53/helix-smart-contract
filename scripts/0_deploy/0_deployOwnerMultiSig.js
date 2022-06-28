@@ -2,6 +2,7 @@
  * @dev Deployment script owner multisig contract
  *
  * Run from project root using:
+ *     npx hardhat run scripts/0_deploy/0_deployOwnerMultiSig.js --network rinkeby
  *     npx hardhat run scripts/0_deploy/0_deployOwnerMultiSig.js --network ropsten
  */
 

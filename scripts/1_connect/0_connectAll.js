@@ -2,6 +2,7 @@
  * @dev Used to (re)connect all contract references to other contracts
  * 
  * Run from project root using:
+ *     npx hardhat run scripts/1_connect/0_connectAll.js --network rinkeby
  *     npx hardhat run scripts/1_connect/0_connectAll.js --network ropsten
  */
 

@@ -2,6 +2,7 @@
  * deploy FeeHandler
  * 
  * run from root: 
+ *      npx hardhat run scripts/0_deploy/6_deployFeeMinter.js --network rinkeby
  *      npx hardhat run scripts/0_deploy/6_deployFeeMinter.js --network ropsten
  */
 

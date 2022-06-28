@@ -2,6 +2,7 @@
  * deploy Oracle Factory
  *
  * run from root:
+ *     npx hardhat run scripts/0_deploy/13_deployOracleFactory.js --network rinkeby
  *     npx hardhat run scripts/0_deploy/13_deployOracleFactory.js --network ropsten
  */
 

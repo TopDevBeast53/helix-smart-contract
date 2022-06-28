@@ -2,6 +2,7 @@
  * @dev Deployment script treasury multisig contract
  *
  * Run from project root using:
+ *     npx hardhat run scripts/0_deploy/1_deployTreasuryMultiSig.js --network rinkeby
  *     npx hardhat run scripts/0_deploy/1_deployTreasuryMultiSig.js --network ropsten
  */
 
