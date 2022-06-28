@@ -3,9 +3,10 @@ const { print } = require("../utilities")
 
 const env = require("../../constants/env")
 const contracts = require("../../constants/contracts")
+const initials = require("../../constants/initials")
 
 const helixNftAddress = contracts.helixNFT[env.network]
-const adminAddress = "0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57"
+const adminAddress = initials.BRIDGE_ADMIN_ADDRESS[env.network]
 
 const deployHelixNftBridge = async (deployer) => {
     print("deploy helix nft bridge")
