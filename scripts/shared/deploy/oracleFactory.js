@@ -10,7 +10,6 @@ const deployOracleFactory = async (deployer) => {
     print("deploy oracle factory")
     print(`factoryAddress: ${factoryAddress}`)
 
-    /*
     const OracleFactory = await ethers.getContractFactory('OracleFactory')
     const oracleFactory = await upgrades.deployProxy(OracleFactory, [factoryAddress])
     await oracleFactory.deployTransaction.wait()
@@ -21,7 +20,6 @@ const deployOracleFactory = async (deployer) => {
         oracleFactory.address
     )
     print(`Implementation address: ${implementationAddress}`)
-    */
 }
 
 module.exports = { deployOracleFactory } 

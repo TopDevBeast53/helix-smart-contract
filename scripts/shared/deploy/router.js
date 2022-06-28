@@ -13,12 +13,10 @@ const deployRouter = async (deployer) => {
     print(`factory address: ${factoryAddress}`)
     print(`weth address: ${wethAddress}`)
 
-    /*
     const routerContractFactory = await ethers.getContractFactory("HelixRouterV1")
     const router = await routerContractFactory.deploy(factoryAddress, wethAddress)
     await router.deployTransaction.wait()
     print(`Router deployed to ${router.address}`)
-    */
 }
 
 module.exports = { deployRouter }

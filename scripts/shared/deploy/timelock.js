@@ -14,7 +14,6 @@ const deployTimelock = async (deployer) => {
     print(`proposers: ${proposers}`)
     print(`executors: ${executors}`)
 
-    /*
     const ContractFactory = await ethers.getContractFactory('TimelockController')
     const contract = await ContractFactory.deploy(
         minDelay,
@@ -23,7 +22,6 @@ const deployTimelock = async (deployer) => {
     )
     await contract.deployTransaction.wait()
     print(`owner multisig deployed to ${contract.address}`)
-    */
 }
 
 module.exports = { deployTimelock }

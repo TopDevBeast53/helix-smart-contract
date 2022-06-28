@@ -18,7 +18,6 @@ const deployAirDrop = async (deployer) => {
     print(`name: ${name}`)
     print(`withdrawPhaseDuration: ${withdrawPhaseDuration}`)
 
-    /*
     const ContractFactory = await ethers.getContractFactory('AirDrop')
     const contract = await ContractFactory.deploy(
         name,
@@ -27,7 +26,6 @@ const deployAirDrop = async (deployer) => {
     )     
     await contract.deployTransaction.wait()
     print(`Air Drop deployed to ${contract.address}`)
-    */
 
     /*
     // Send funds of outputToken to the contract

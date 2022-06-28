@@ -19,7 +19,6 @@ const deployYieldSwap = async (deployer) => {
     print(`minLockDuration: ${minLockDuration}`)
     print(`maxLockDuration: ${maxLockDuration}`)
 
-    /*
     const ContractFactory = await ethers.getContractFactory('YieldSwap');
     const contract = await upgrades.deployProxy(
         ContractFactory,
@@ -39,7 +38,6 @@ const deployYieldSwap = async (deployer) => {
         contract.address
     )   
     print(`Implementation address: ${implementationAddress}`)       
-    */
 }
 
 module.exports = { deployYieldSwap }

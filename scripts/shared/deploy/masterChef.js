@@ -36,7 +36,6 @@ const deployMasterChef = async (deployer) => {
     print(`stakingPercent: ${stakingPercent}`)
     print(`devPercent: ${devPercent}`)
 
-    /*
     const MasterChef = await ethers.getContractFactory(`MasterChef`)
     const chef = await upgrades.deployProxy(MasterChef, [
         helixTokenAddress,
@@ -55,7 +54,6 @@ const deployMasterChef = async (deployer) => {
         chef.address
     )
     print(`Implementation address: ${implementationAddress}`)
-    */
 }
 
 module.exports = { deployMasterChef }

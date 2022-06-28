@@ -13,7 +13,6 @@ const deployHelixNftBridge = async (deployer) => {
     print(`helixNftAddress: ${helixNftAddress}`)
     print(`adminAddress: ${adminAddress}`)
 
-    /*
     const HelixNftBridge = await ethers.getContractFactory(`HelixNftBridge`)
     bridge = await HelixNftBridge.deploy(
        helixNftAddress, 
@@ -21,7 +20,6 @@ const deployHelixNftBridge = async (deployer) => {
     )
     await bridge.deployTransaction.wait()
     print(`HelixNftBridge deployed to ${bridge.address}`)
-    */
 }
 
 module.exports = { deployHelixNftBridge } 
