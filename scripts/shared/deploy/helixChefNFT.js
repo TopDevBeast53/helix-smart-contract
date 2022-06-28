@@ -12,7 +12,6 @@ const deployHelixChefNft = async (deployer) => {
     print(`rewardToken: ${rewardToken}`)
     print(`helixNftAddress: ${helixNftAddress}`)
 
-    /*
     const HelixChefNftFactory = await ethers.getContractFactory(`HelixChefNft`)
     const helixChefNftProxy = await upgrades.deployProxy(
         HelixChefNftFactory, 
@@ -25,7 +24,6 @@ const deployHelixChefNft = async (deployer) => {
         helixChefNftProxy.address
     )
     print(`Helix Chef Nft Implementation address: ${helixChefNftImplementationAddress}`)   
-    */
 }
 
 module.exports = { deployHelixChefNft } 

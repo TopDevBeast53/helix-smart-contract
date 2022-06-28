@@ -21,7 +21,6 @@ const deployReferralRegister = async (deployer) => {
     print(`swapRewardPercent: ${swapRewardPercent}`)
     print(`lastMintBlock: ${lastMintBlock}`)
 
-    /*
     const ReferralRegister = await ethers.getContractFactory(`ReferralRegister`)
     ref = await upgrades.deployProxy(
         ReferralRegister, 
@@ -41,7 +40,6 @@ const deployReferralRegister = async (deployer) => {
         ref.address
     )
     print(`Implementation address: ${implementationAddress}`)
-    */
 }
 
 module.exports = { deployReferralRegister }

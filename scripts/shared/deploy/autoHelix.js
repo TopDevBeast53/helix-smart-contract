@@ -15,7 +15,6 @@ const deployAutoHelix = async (deployer) => {
     print(`masterChefAddress: ${masterChefAddress}`)
     print(`treasuryAddress: ${treasuryAddress}`)
 
-    /*
     const AutoHelix = await ethers.getContractFactory(`AutoHelix`)
     const autoHelix = await upgrades.deployProxy(AutoHelix, 
         [
@@ -32,7 +31,6 @@ const deployAutoHelix = async (deployer) => {
         autoHelix.address
     )
     print(`Implementation address: ${implementationAddress}`)
-    */
 }
 
 module.exports = { deployAutoHelix }

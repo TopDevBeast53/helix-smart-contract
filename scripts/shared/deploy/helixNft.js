@@ -4,7 +4,6 @@ const { print } = require("../utilities")
 const deployHelixNft = async (deployer) => {
     print(`deploy upgradeable Helix NFT`)
    
-    /*
     const helixNftFactory = await ethers.getContractFactory(`HelixNFT`)
     const helixNftProxy = await upgrades.deployProxy(helixNftFactory, [``])
     await helixNftProxy.deployTransaction.wait()
@@ -14,7 +13,6 @@ const deployHelixNft = async (deployer) => {
         helixNftProxy.address
     )
     print(`Helix NFT Implementation address: ${helixNftImplementationAddress}`)   
-    */
 }
 
 module.exports = { deployHelixNft } 

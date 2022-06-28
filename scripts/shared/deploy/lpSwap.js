@@ -4,7 +4,6 @@ const { print } = require("../utilities")
 const deployLpSwap = async (deployer) => {
     print(`Deploy LP Swap`)
 
-    /*
     const ContractFactory = await ethers.getContractFactory('LpSwap')
     const contract = await upgrades.deployProxy(ContractFactory, [])     
     await contract.deployTransaction.wait()
@@ -14,7 +13,6 @@ const deployLpSwap = async (deployer) => {
         contract.address
     )
     print(`Implementation address: ${implementationAddress}`)
-    */
 }
 
 module.exports = { deployLpSwap }

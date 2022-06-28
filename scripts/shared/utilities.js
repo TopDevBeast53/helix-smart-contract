@@ -15,8 +15,8 @@ const print = (str) => {
 const loadContract = async (name, address, wallet) => {
     print(`load ${name} from ${address}`)
     const contractFactory = await ethers.getContractFactory(name)
-    // const contract = contractFactory.attach(address).connect(wallet)
-    // return contract
+    const contract = contractFactory.attach(address).connect(wallet)
+    return contract
 }
 
 module.exports = {
