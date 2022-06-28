@@ -12,8 +12,8 @@ const { verifyFeeMinter } = require("./feeMinter")
 const { verifyHelixNftBridge } = require("./helixNftBridge")
 const { verifyHelixChefNft } = require("./helixChefNft")
 const { verifyFeeHandler } = require("./feeHandler")
-/*
 const { verifyReferralRegister } = require("./referralRegister")
+/*
 const { verifyHelixVault } = require("./helixVault")
 const { verifyFactory } = require("./factory")
 const { verifyOracleFactory } = require("./oracleFactory")
@@ -42,8 +42,8 @@ module.exports = {
     verifyHelixNftBridge,
     verifyHelixChefNft,
     verifyFeeHandler,
-    /*
     verifyReferralRegister,
+    /*
     verifyHelixVault,
     verifyFactory,
     verifyOracleFactory,
