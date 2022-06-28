@@ -14,6 +14,7 @@ const { deployReferralRegister } = require("./referralRegister")
 const { deployHelixVault } = require("./helixVault")
 const { deployFactory } = require("./factory")
 const { deployOracleFactory } = require("./oracleFactory")
+const { deployRouter } = require("./router")
 
 module.exports = {
     deployOwnerMultiSig,
@@ -30,4 +31,5 @@ module.exports = {
     deployHelixVault,
     deployFactory,
     deployOracleFactory,
+    deployRouter,
 }

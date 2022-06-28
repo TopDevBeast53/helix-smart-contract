@@ -2,31 +2,16 @@
  * deploy Router
  * 
  * run from root:
- *      npx hardhat run scripts/deploy/14_deployRouter.js --network ropsten
+ *      npx hardhat run scripts/0_deploy/14_deployRouter.js --network ropsten
  */
 
-const hre  = require("hardhat")
 const { ethers } = require("hardhat")
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
-const addresses = require("../constants/addresses")
-
-const factoryAddress = contracts.factory[env.network]
-const wethAddress = addresses.WETH[env.network]
+const { deployRouter } = require("../shared/deploy/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners()
     console.log(`Deployer address: ${deployer.address}`)
-
-    console.log(`factory address ${factoryAddress}`)
-    console.log(`weth address ${wethAddress}`)
-
-    console.log(`------ Deploy Router contract ---------`)
-    const routerContractFactory = await ethers.getContractFactory("HelixRouterV1")
-    const router = await routerContractFactory.deploy(factoryAddress, wethAddress)
-    await router.deployTransaction.wait()
-    console.log(`Router deployed to ${router.address}`)
-
+    await deployRouter(deployer)
     console.log(`done`)
 }
 
