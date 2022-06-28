@@ -1,9 +1,9 @@
 // This script exports the "verify" functions in this directory
 
 const { verifyOwnerMultiSig } = require("./ownerMultiSig")
-/*
 const { verifyTreasuryMultiSig } = require("./treasuryMultiSig")
 const { verifyDevTeamMultiSig } = require("./devTeamMultiSig")
+/*
 const { verifyTimelock } = require("./timelock")
 */
 const { verifyHelixToken } = require("./helixToken")
@@ -14,8 +14,8 @@ const { verifyHelixChefNft } = require("./helixChefNft")
 const { verifyFeeHandler } = require("./feeHandler")
 const { verifyReferralRegister } = require("./referralRegister")
 const { verifyHelixVault } = require("./helixVault")
-/*
 const { verifyFactory } = require("./factory")
+/*
 const { verifyOracleFactory } = require("./oracleFactory")
 const { verifyRouter } = require("./router")
 const { verifyMigrator } = require("./migrator")
@@ -31,9 +31,9 @@ const { verifyTestToken } = require("./testToken")
 
 module.exports = {
     verifyOwnerMultiSig,
-    /*
     verifyTreasuryMultiSig,
     verifyDevTeamMultiSig,
+    /*
     verifyTimelock,
     */
     verifyHelixToken,
@@ -44,8 +44,8 @@ module.exports = {
     verifyFeeHandler,
     verifyReferralRegister,
     verifyHelixVault,
-    /*
     verifyFactory,
+    /*
     verifyOracleFactory,
     verifyRouter,
     verifyMigrator,
