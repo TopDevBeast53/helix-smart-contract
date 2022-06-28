@@ -2,32 +2,17 @@
  * deploy Oracle Factory
  *
  * run from root:
- *     npx hardhat run scripts/deploy/13_deployOracleFactory.js --network ropsten
+ *     npx hardhat run scripts/0_deploy/13_deployOracleFactory.js --network ropsten
  */
 
-const { ethers, upgrades } = require(`hardhat`)
-const contracts = require('../constants/contracts')
-const env = require('../constants/env')
-
-const factoryAddress = contracts.factory[env.network]
+const { ethers } = require(`hardhat`)
+const { deployOracleFactory } = require("../shared/deploy/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners()
     console.log(`Deployer address: ${deployer.address}`)
-
-    // 1. Deploy the Oracle Factory
-    console.log(`------ Start deploying Oracle Factory -------`)
-
-    const OracleFactory = await ethers.getContractFactory('OracleFactory')
-    const oracleFactory = await upgrades.deployProxy(OracleFactory, [factoryAddress])
-    await oracleFactory.deployTransaction.wait()
-    
-    console.log(`Oracle Factory proxy deployed to ${oracleFactory.address}`)
-
-    const implementationAddress = await upgrades.erc1967.getImplementationAddress(
-        oracleFactory.address
-    )
-    console.log(`Implementation address: ${implementationAddress}`)
+    await deployOracleFactory(deployer)
+    console.log("done")
 }
 
 main()
