@@ -266,6 +266,7 @@ module.exports = {
 
     FEE_MINTER_MINTERS: {
         3: [masterChefAddress, referralRegisterAddress, vaultAddress],
+        4: [masterChefAddress, referralRegisterAddress, vaultAddress],
     },
 
     // Represents the percents of the to mint per block rate to delegate to each task
