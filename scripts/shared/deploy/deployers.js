@@ -2,8 +2,10 @@
 
 const { deployOwnerMultiSig } = require("./ownerMultiSig")
 const { deployTreasuryMultiSig } = require("./treasuryMultiSig")
+const { deployDevTeamMultiSig } = require("./devTeamMultiSig")
 
 module.exports = {
     deployOwnerMultiSig,
     deployTreasuryMultiSig,
+    deployDevTeamMultiSig,
 }
