@@ -1,14 +1,14 @@
 /**
- * @dev Verify the deployed helix token
+ * @dev Verify the deployed Migrator
  *
  * command for verify on testnet: 
- *      npx hardhat run scripts/5_verify/verifyHelixToken.js --network ropsten
+ *      npx hardhat run scripts/5_verify/migrator.js --network ropsten
  */
 
-const { verifyHelixToken } = require("../shared/verify/verifiers")
+const { verifyMigrator } = require("../shared/verify/verifiers")
 
 async function main() {
-    await verifyHelixToken()
+    await verifyMigrator()
     console.log("done")
 }
 

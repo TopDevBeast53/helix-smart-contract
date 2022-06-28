@@ -1,14 +1,14 @@
 /**
- * @dev Verify the deployed helix token
+ * @dev Verify the deployed OracleFactory
  *
  * command for verify on testnet: 
- *      npx hardhat run scripts/5_verify/verifyHelixToken.js --network ropsten
+ *      npx hardhat run scripts/5_verify/oracleFactory.js --network ropsten
  */
 
-const { verifyHelixToken } = require("../shared/verify/verifiers")
+const { verifyOracleFactory } = require("../shared/verify/verifiers")
 
 async function main() {
-    await verifyHelixToken()
+    await verifyOracleFactory()
     console.log("done")
 }
 

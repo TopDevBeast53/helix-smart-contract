@@ -1,14 +1,14 @@
 /**
- * @dev Verify the deployed helix token
+ * @dev Verify the deployed AirDrop
  *
  * command for verify on testnet: 
- *      npx hardhat run scripts/5_verify/verifyHelixToken.js --network ropsten
+ *      npx hardhat run scripts/5_verify/airDrop.js --network ropsten
  */
 
-const { verifyHelixToken } = require("../shared/verify/verifiers")
+const { verifyAirDrop } = require("../shared/verify/verifiers")
 
 async function main() {
-    await verifyHelixToken()
+    await verifyAirDrop()
     console.log("done")
 }
 
