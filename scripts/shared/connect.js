@@ -47,73 +47,45 @@ const masterChefName = names.masterChefAddress
 const referralRegisterName = names.referralRegisterAddress                                            
 const routerName = names.routerAddress                                                                
                                                                                                       
+const minters = initials.FEE_MINTER_MINTERS[env.network]
 const toMintPercents = initials.FEE_MINTER_TO_MINT_PERCENTS[env.network] 
 
-const connectFactory = async (name, address, wallet, oracleFactoryAddress) => {
+const connectFactory = async (wallet) => {
     print(`(re)build any references the factory contract holds to other contracts`)
-    const factory = await loadContract(name, address, wallet)
-    await setOracleFactory(factory, name, oracleFactoryAddress)
+    const factory = await loadContract(factoryName, factoryAddress, wallet)
+    await setOracleFactory(factory, factoryName, oracleFactoryAddress)
 }
 
-const initFeeMinter = async (name, address, wallet, minters, toMintPercents) => {
+const initFeeMinter = async (wallet) => {
     print(`(re)initialize the feeMinter to it's default state`)
-    const feeMinter = await loadContract(name, address, wallet)
-    await setToMintPercents(feeMinter, name, minters, toMintPercents)
+    const feeMinter = await loadContract(feeMinterName, feeMinterAddress, wallet)
+    await setToMintPercents(feeMinter, feeMinterName, minters, toMintPercents)
 }
 
-const connectHelixChefNft = async (
-    helixChefNftName,
-    helixChefNftAddress,
-    wallet,
-    feeHandlerAddress
-) => {
+const connectHelixChefNft = async (wallet) => {
     const helixChefNft = await loadContract(helixChefNftName, helixChefNftAddress, wallet)
     await addAccruer(helixChefNft, helixChefNftName, feeHandlerAddress)
 }
 
-const connectHelixNft = async (
-    helixNftName,
-    helixNftAddress,
-    wallet,
-    helixNftBridgeAddress,
-    helixChefNftAddress
-) => {
+const connectHelixNft = async (wallet) => {
     const helixNft = await loadContract(helixNftName, helixNftAddress, wallet)
     await addMinter(helixNft, helixNftName, helixNftBridgeAddress)
     await addStaker(helixNft, helixNftName, helixChefNftAddress)
 }
 
-const connectHelixToken = async (
-    helixTokenName,
-    helixTokenAddress,
-    wallet,
-    referralRegisterAddress,
-    vaultAddress,
-    masterChefAddress
-) => {
+const connectHelixToken = async (wallet) => {
     const helixToken = await loadContract(helixTokenName, helixTokenAddress, wallet)
     await addMinter(helixToken, helixTokenName, referralRegisterAddress)
     await addMinter(helixToken, helixTokenName, vaultAddress)
     await addMinter(helixToken, helixTokenName, masterChefAddress)
 }
 
-const connectMasterChef = async (
-    masterChefName,
-    masterChefAddress,
-    wallet,
-    referralRegisterAddress
-) => {
+const connectMasterChef = async (wallet) => {
     const masterChef = await loadContract(masterChefName, masterChefAddress, wallet)
     await setReferralRegister(masterChef, masterChefName, referralRegisterAddress)
 }
 
-const connectReferralRegister = async (
-    referralRegisterName,
-    referralRegisterAddress,
-    wallet,
-    swapRewardsAddress,
-    masterChefAddress
-) => {
+const connectReferralRegister = async (wallet) => {
     const referralRegister = await loadContract(
         referralRegisterName,
         referralRegisterAddress,
@@ -123,12 +95,7 @@ const connectReferralRegister = async (
     await addRecorder(referralRegister, referralRegisterName, masterChefAddress)
 }
 
-const connectRouter = async (
-    routerName,
-    routerAddress,
-    wallet,
-    swapRewardsAddress,
-) => {
+const connectRouter = async (wallet) => {
     const router = await loadContract(routerName, routerAddress, wallet)
     await setSwapRewards(router, routerName, swapRewardsAddress)
 }

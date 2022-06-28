@@ -6,22 +6,12 @@
  */
 
 const { ethers } = require(`hardhat`)
-const { print, connectFactory } = require("../shared/utilities")
+const { print } = require("../shared/utilities")
+const { connectFactory } = require("../shared/connect")
 
-const env = require('./../constants/env')
-const contracts = require('./../constants/contracts')
-
-const factoryAddress = contracts.factory[env.network]
-const oracleFactoryAddress = contracts.oracleFactory[env.network]
-
-const factoryName = 'HelixFactory'
-
-/// (Re)build any connections by calling this script's contract's setters
 async function main() {
     const [wallet] = await ethers.getSigners()
-
-    await connectFactory(factoryName, factoryAddress, wallet, oracleFactoryAddress)
-
+    await connectFactory(wallet)
     print('done')
 }
 

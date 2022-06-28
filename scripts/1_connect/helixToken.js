@@ -6,32 +6,12 @@
  */
 
 const { ethers } = require(`hardhat`);
-const { print, connectHelixToken } = require("../shared/utilities")
+const { print } = require("../shared/utilities")
+const { connectHelixToken } = require("../shared/connect")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
-const names = require("../constants/names")
-
-const helixTokenAddress = contracts.helixToken[env.network]
-const referralRegisterAddress = contracts.referralRegister[env.network]
-const vaultAddress = contracts.helixVault[env.network]
-const masterChefAddress = contracts.masterChef[env.network]
-
-const helixTokenName = names.helixTokenAddress
-
-/// (Re)build any connections by calling this script"s contract"s setters
 async function main() {
     const [wallet] = await ethers.getSigners()
-
-    await connectHelixToken(
-        helixTokenName, 
-        helixTokenAddress,
-        wallet,
-        referralRegisterAddress,
-        vaultAddress,
-        masterChefAddress
-    )
-
+    await connectHelixToken(wallet)
     print("done")
 }
 

@@ -6,23 +6,12 @@
  */
 
 const { ethers } = require(`hardhat`);
-const { print, connectMasterChef } = require("../shared/utilities")
+const { print } = require("../shared/utilities")
+const { connectMasterChef } = require("../shared/connect")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
-const names = require("../constants/names")
-
-const masterChefAddress = contracts.masterChef[env.network]
-const referralRegisterAddress = contracts.referralRegister[env.network]
-
-const masterChefName = names.masterChefAddress
-
-/// (Re)build any connections by calling this script"s contract"s setters
 async function main() {
     const [wallet] = await ethers.getSigners()
-
-    await connectMasterChef(masterChefName, masterChefAddress, wallet, referralRegisterAddress)
-    
+    await connectMasterChef(wallet)
     print("done")
 }
 

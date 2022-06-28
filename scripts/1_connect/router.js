@@ -6,23 +6,12 @@
  */
 
 const { ethers } = require(`hardhat`);
-const { print, connectRouter } = require("../shared/utilities")
+const { print } = require("../shared/utilities")
+const { connectRouter } = require("../shared/connect")
 
-const env = require("./../constants/env")
-const contracts = require("./../constants/contracts")
-const names = require("./../constants/names")
-
-const routerAddress = contracts.router[env.network]
-const swapRewardsAddress = contracts.swapRewards[env.network]
-
-const routerName = names.routerAddress
-
-/// (Re)build any connections by calling this script"s contract"s setters
 async function main() {
     const [wallet] = await ethers.getSigners()
-
-    await connectRouter(routerName, routerAddress, wallet, swapRewardsAddress)
-
+    await connectRouter(wallet)
     print("done")
 }
 

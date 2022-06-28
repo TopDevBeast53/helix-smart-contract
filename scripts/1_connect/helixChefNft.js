@@ -8,23 +8,12 @@
 const verbose = true
 
 const { ethers } = require(`hardhat`);
-const { print, connectHelixChefNft } = require("../shared/utilities")
+const { print } = require("../shared/utilities")
+const { connectHelixChefNft } = require("../shared/connect")
 
-const env = require('./../constants/env')
-const contracts = require('../constants/contracts')
-const names = require("../constants/names")
-
-const helixChefNftAddress = contracts.helixChefNFT[env.network]
-const feeHandlerAddress = contracts.feeHandler[env.network]
-
-const helixChefNftName = names.helixChefNftAddress
-
-/// (Re)initialize this contract
 async function main() {
     const [wallet] = await ethers.getSigners()
-
-    await connectHelixChefNft(helixChefNftName, helixChefNftAddress, wallet, feeHandlerAddress)
-
+    await connectHelixChefNft(wallet)
     print('done')
 }
 
