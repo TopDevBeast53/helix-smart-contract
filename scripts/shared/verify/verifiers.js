@@ -19,8 +19,8 @@ const { verifyMigrator } = require("./migrator")
 const { verifySwapRewards } = require("./swapRewards")
 const { verifyMasterChef } = require("./masterChef")
 const { verifyAutoHelix } = require("./autoHelix")
-/*
 const { verifyMulticall } = require("./multicall")
+/*
 const { verifyYieldSwap } = require("./yieldSwap")
 const { verifyLpSwap } = require("./lpSwap")
 const { verifyAirDrop } = require("./airDrop")
@@ -47,8 +47,8 @@ module.exports = {
     verifySwapRewards,
     verifyMasterChef,
     verifyAutoHelix,
-    /*
     verifyMulticall,
+    /*
     verifyYieldSwap,
     verifyLpSwap,
     verifyAirDrop,

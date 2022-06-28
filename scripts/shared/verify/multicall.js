@@ -1,14 +1,19 @@
-const { ethers } = require(`hardhat`)
+const { run } = require(`hardhat`)
 const { print } = require("../utilities")
 
-const deployMulticall = async (deployer) => {
-    print("deploy multicall")
-    /*
-    const Multicall2 = await ethers.getContractFactory(`Multicall2`)
-    let contract = await Multicall2.deploy()
-    await contract.deployTransaction.wait()
-    print(`Multicall2 deployed to ${contract.address}`)
-    */
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
+
+const multicallAddress = contracts.multicall[env.network]
+
+const verifyMulticall = async () => {
+    print("verify multicall")
+
+    await run(
+        "verify:verify", {
+            address: multicallAddress
+        }
+    )
 }
 
-module.exports = { deployMulticall } 
+module.exports = { verifyMulticall } 

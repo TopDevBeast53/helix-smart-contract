@@ -135,6 +135,9 @@ module.exports = {
         1: '0x8DB40469E27496b3ed7AC3bf493c385e942aEd8A',
         4: '0x296d49dDAf208e5049153FB57371f08Be1Df1cEd',
     },
+    multicall: {
+        3: ''
+    },
     yieldSwap: {
         3: '0x124c90bF3777F0570845Fbdd67e337BC0D5A0e68',
     },
