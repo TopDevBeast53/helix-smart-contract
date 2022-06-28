@@ -2,26 +2,16 @@
  * deploy FeeHandler
  * 
  * run from root: 
- *      npx hardhat run scripts/deploy/6_deployFeeMinter.js --network ropsten
+ *      npx hardhat run scripts/0_deploy/6_deployFeeMinter.js --network ropsten
  */
 
-const { ethers, upgrades } = require("hardhat")
-const initials = require("../constants/initials")
-const env = require("../constants/env")
-
-const totalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
+const { ethers } = require("hardhat")
+const { deployFeeMinter } = require("../shared/deploy/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners();
     console.log(`Deployer address: ${deployer.address}`);
-
-    console.log(`------ Start deploying FeeMinter ---------`);
-    console.log(`total to mint per block: ${totalToMintPerBlock}`)
-
-    const ContractFactory = await ethers.getContractFactory('FeeMinter');
-    const contract = await ContractFactory.deploy(totalToMintPerBlock);
-    await contract.deployTransaction.wait();
-    console.log(`FeeMinter deployed to ${contract.address}`);
+    await deployFeeMinter(deployer)
     console.log('done')
 }
 
