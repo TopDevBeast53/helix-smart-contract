@@ -11,6 +11,7 @@ const { deployHelixNftBridge } = require("./helixNftBridge")
 const { deployHelixChefNft } = require("./helixChefNft")
 const { deployFeeHandler } = require("./feeHandler")
 const { deployReferralRegister } = require("./referralRegister")
+const { deployHelixVault } = require("./helixVault")
 
 module.exports = {
     deployOwnerMultiSig,
@@ -24,4 +25,5 @@ module.exports = {
     deployHelixChefNft,
     deployFeeHandler,
     deployReferralRegister,
+    deployHelixVault,
 }
