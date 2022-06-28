@@ -8,8 +8,8 @@
 const verbose = true
 
 const { ethers } = require("hardhat");
-const { 
-    print, 
+const { print } = require("../shared/utilities")
+const {
     connectFactory,
     initFeeMinter,
     connectHelixChefNft,
@@ -18,7 +18,7 @@ const {
     connectMasterChef,
     connectReferralRegister,
     connectRouter,
-} = require("../shared/utilities")
+} = require("../shared/connect")
 
 const env = require("../constants/env")
 const contracts = require("../constants/contracts")

@@ -1,5 +1,7 @@
 // This script exports javascript versions of contract setters
 
+const { print } = require("./utilities")
+
 // Set the fee collector percent on the contract                                                   
 const setCollectorPercent = async (contract, contractName, percent) => {                           
     print(`set ${contractName} collector percent to ${percent}`)                                   
@@ -86,4 +88,19 @@ const setSwapRewards = async (contract, contractName, swapRewardsAddress) => {
     print(`add ${swapRewardsAddress} as the swap rewards contract for ${contractName}`)
     // const tx = await contract.setSwapRewards(swapRewardsAddress)
     // await tx.wait()
+}
+
+module.exports = {
+    setCollectorPercent: setCollectorPercent,
+    setNftChefPercent: setNftChefPercent,
+    transerTimelockOwnership: transferTimelockOwnership,
+    transferOwnership: transferOwnership,
+    setToMintPercents: setToMintPercents,
+    setOracleFactory: setOracleFactory,
+    addAccruer: addAccruer,
+    addMinter: addMinter,
+    addStaker: addStaker,
+    setReferralRegister: setReferralRegister,
+    addRecorder: addRecorder,
+    setSwapRewards: setSwapRewards,
 }

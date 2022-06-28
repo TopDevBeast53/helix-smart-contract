@@ -2,13 +2,23 @@
 // contracts
 
 const { ethers } = require(`hardhat`)
-const { // TODO } = require("../shared/utilities")
+const { print, loadContract } = require("./utilities")
+const { 
+    setCollectorPercent,
+    setNftChefPercent,
+    transferTimelockOwnership,
+    setToMintPercents,
+    setOracleFactory,
+    addAccruer,
+    addMinter,
+    addStaker,
+    setReferralRegister,
+    addRecorder,
+    setSwapRewards
+} = require("./setters")
 
-const env = require('./../constants/env')
-const contracts = require('./../constants/contracts')
-
-const env = require("../constants/env")                                                               
-const contracts = require("../constants/contracts")                                                   
+const env = require('../constants/env')
+const contracts = require('../constants/contracts')
 const initials = require("../constants/initials")                                                     
 const names = require("../constants/names")                                                           
                                                                                                       
@@ -125,11 +135,11 @@ const connectRouter = async (
 
 module.exports = {
     connectFactory: connectFactory,
-    connectFeeMinter: connectFeeMinter,
     connectHelixChefNft: connectHelixChefNft,
     connectHelixNft: connectHelixNft,
     connectHelixToken: connectHelixToken,
     connectMasterChef: connectMasterChef,
     connectReferralRegister: connectReferralRegister,
     connectRouter: connectRouter,
+    initFeeMinter: initFeeMinter,
 }
