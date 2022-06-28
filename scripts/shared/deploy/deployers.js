@@ -7,6 +7,7 @@ const { deployTimelock } = require("./timelock")
 const { deployHelixToken } = require("./helixToken")
 const { deployHelixNft } = require("./helixNft")
 const { deployFeeMinter } = require("./feeMinter")
+const { deployHelixNftBridge } = require("./helixNftBridge")
 
 module.exports = {
     deployOwnerMultiSig,
@@ -16,4 +17,5 @@ module.exports = {
     deployHelixToken,
     deployHelixNft,
     deployFeeMinter,
+    deployHelixNftBridge,
 }
