@@ -1,22 +1,25 @@
-const { ethers } = require('hardhat');
+const { run } = require('hardhat');
 const { print } = require("../utilities")
 
 const env = require("../../constants/env")
 const contracts = require("../../constants/contracts")
 
+const migratorAddress = contracts.helixMigrator[env.network]
+
 const routerAddress = contracts.router[env.network];
 
-const deployMigrator = async (deployer) => {
-    print('Deploy Migrator');
+const verifyMigrator = async () => {
+    print('verify Migrator');
     print(`routerAddress: ${routerAddress}`)
 
-    /*
-    const Migrator = await ethers.getContractFactory('HelixMigrator');
-    const migrator = await Migrator.deploy(routerAddress);
-    await migrator.deployTransaction.wait();
-
-    print(`HelixMigrator deployed to ${migrator.address}`);
-    */
+    await run(
+        "verify:verify", {
+            address: migratorAddress,
+            constructorArguments: [
+                routerAddress
+            ]
+        }
+    )
 }
 
-module.exports = { deployMigrator }
+module.exports = { verifyMigrator }

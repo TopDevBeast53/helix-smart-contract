@@ -15,8 +15,8 @@ const { verifyHelixVault } = require("./helixVault")
 const { verifyFactory } = require("./factory")
 const { verifyOracleFactory } = require("./oracleFactory")
 const { verifyRouter } = require("./router")
-/*
 const { verifyMigrator } = require("./migrator")
+/*
 const { verifySwapRewards } = require("./swapRewards")
 const { verifyMasterChef } = require("./masterChef")
 const { verifyAutoHelix } = require("./autoHelix")
@@ -43,8 +43,8 @@ module.exports = {
     verifyFactory,
     verifyOracleFactory,
     verifyRouter,
-    /*
     verifyMigrator,
+    /*
     verifySwapRewards,
     verifyMasterChef,
     verifyAutoHelix,
