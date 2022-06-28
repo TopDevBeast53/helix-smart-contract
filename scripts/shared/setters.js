@@ -93,7 +93,7 @@ const setSwapRewards = async (contract, contractName, swapRewardsAddress) => {
 module.exports = {
     setCollectorPercent: setCollectorPercent,
     setNftChefPercent: setNftChefPercent,
-    transerTimelockOwnership: transferTimelockOwnership,
+    transferTimelockOwnership: transferTimelockOwnership,
     transferOwnership: transferOwnership,
     setToMintPercents: setToMintPercents,
     setOracleFactory: setOracleFactory,
