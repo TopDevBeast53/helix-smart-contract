@@ -18,6 +18,7 @@ const { deployRouter } = require("./router")
 const { deployMigrator } = require("./migrator")
 const { deploySwapRewards } = require("./swapRewards")
 const { deployMasterChef } = require("./masterChef")
+const { deployAutoHelix } = require("./autoHelix")
 
 module.exports = {
     deployOwnerMultiSig,
@@ -38,4 +39,5 @@ module.exports = {
     deployMigrator,
     deploySwapRewards,
     deployMasterChef,
+    deployAutoHelix,
 }
