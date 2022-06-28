@@ -16,6 +16,7 @@ const { deployFactory } = require("./factory")
 const { deployOracleFactory } = require("./oracleFactory")
 const { deployRouter } = require("./router")
 const { deployMigrator } = require("./migrator")
+const { deploySwapRewards } = require("./swapRewards")
 
 module.exports = {
     deployOwnerMultiSig,
@@ -34,4 +35,5 @@ module.exports = {
     deployOracleFactory,
     deployRouter,
     deployMigrator,
+    deploySwapRewards,
 }
