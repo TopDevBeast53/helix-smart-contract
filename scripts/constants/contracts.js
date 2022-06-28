@@ -49,7 +49,7 @@ module.exports = {
         3: '0x8022E2b5960391F4cCBfCf0f026DE84eb77B24a6',
         4: '0xA68C609d8fCe1d738f18a5E77C8BaA54E9dAaC16',
     },
-    helixChefNFTImpl: {
+    helixChefNFTImplementation: {
         1: '',
         3: '0x1F59ccdb55F61Bf5Eaf6f152111455d2244886B1',
         4: '0xF3cdf9899F8913d24A51B333783205ffc8365a03',
