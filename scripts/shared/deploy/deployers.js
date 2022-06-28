@@ -21,6 +21,7 @@ const { deployMasterChef } = require("./masterChef")
 const { deployAutoHelix } = require("./autoHelix")
 const { deployMulticall } = require("./multicall")
 const { deployYieldSwap } = require("./yieldSwap")
+const { deployLpSwap } = require("./lpSwap")
 
 module.exports = {
     deployOwnerMultiSig,
@@ -44,4 +45,5 @@ module.exports = {
     deployAutoHelix,
     deployMulticall,
     deployYieldSwap,
+    deployLpSwap,
 }
