@@ -41,7 +41,7 @@ library HelixLibrary {
                 hex"ff",
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex"c982a01a3d96a6bfb7f46c8cdfa12bbe67c0deeaac07310f3cc6327e92f7fbce" // ropsten
+                hex"aa7f6a54c89269d994ced2ff5fd7b66d5ae4ae3e9a075f567db3315fc768a8b2" // ropsten
             )))));
     }
 

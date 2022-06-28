@@ -7,6 +7,10 @@
 
 // Define script parameters
 const { ethers } = require(`hardhat`)
+const env = require("../constants/env")
+const contracts = require("../constants/contracts")
+
+const feeHandlerAddress = contracts.feeHandler[env.network]
 
 async function main() {
     const [deployer] = await ethers.getSigners()
@@ -14,7 +18,7 @@ async function main() {
     
     console.log(`Deploy LP Swap`)
     const ContractFactory = await ethers.getContractFactory('LpSwap')
-    const contract = await upgrades.deployProxy(ContractFactory, [])     
+    const contract = await upgrades.deployProxy(ContractFactory, [feeHandlerAddress])     
     await contract.deployTransaction.wait()
     console.log(`LP Swap deployed to ${contract.address}`)
 

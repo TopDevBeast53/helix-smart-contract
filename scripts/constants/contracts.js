@@ -18,57 +18,57 @@ module.exports = {
     },
     helixNFT: {
         1: '',
-        3: '0xE54Ae8147af2B800CA0b47036176b37f42a94800',
+        3: '0x24be493d0f3b9C9Dd1f702d0917Cdcb6CbFfF0a2',
         4: '0x9da7694D1E947BCB320F19FfB9ea39790B3F22fB',
     },
     helixNFTImplementation: {
         1: '',
-        3: '0x5B746462211d3b5D0f04e31fE58b7021a34CA525',
+        3: '0x13A54Ee2FDA40A26C9A11167c8304338821eDD7B',
         4: '0x9ffb21cbd2034A4697D82B7691E0295A124d1261',
     },
     feeMinter: {
         1: '',
-        3: '0x9D5aD9644CAE37f8A89D3fa6756A38E944bbfAb8',
+        3: '0xaf18A1c4904F0fb15B0C95f19fCDAeFC86f8091E',
         4: '0x4C15257A0d66623E340d9cC80242eEA138FC4DE5',
     },
     helixNFTBridge: {
         1: '',
-        3: '0x3bD1a5865dB1c94e17Fa8E9628102FF72195e8F9',
+        3: '0xfE5C6695E4DD62ca97737823ef4BBB47D328C328',
         4: '0x0Fc9a2CbB031F22644334Bcd30efa6ae6F13c82e',
     },
     helixChefNFT: {
         1: '',
-        3: '0x6C3f85c7F3979308751EBFba244F6eF5400aA911',
+        3: '0x8022E2b5960391F4cCBfCf0f026DE84eb77B24a6',
         4: '0x05fd4D18e965926A121b479f0E6e77252256838F',
     },
     helixChefNFTImpl: {
         1: '',
-        3: '0x65FB68FF81c7CEB40B4888ea3ccd361dd97FFf8b',
+        3: '0x1F59ccdb55F61Bf5Eaf6f152111455d2244886B1',
         4: '0xA7d097e223d91B12A384D23f04353AFc39C51081',
     },
     feeHandler: {
         1: '',
-        3: '0x3E9bdCfF21871c0751b8Fb3b17AC883e36aBa23B',
+        3: '0x696C76AFe8D132377c2baF9E26fb372005dCb733',
         4: '0xf3046134b317d797a838F4a9c1Cf6C7cC0F713e5',
     },
     feeHandlerImplementation: {
         1: '',
-        3: '0x79f06e19cE76eEd33FEf1fC27c2e9B1ACB0E9B57',
+        3: '0xC624632696A01c7873E6C66D1561347BAE39d8A0',
         4: '0xaAD1208B19d475d720340992c56e11Ba4c501eF4',
     },
     referralRegister: {
         1: '',
-        3: '0x30a58b7bd76DF485D4E616609d480bf18B566328',
+        3: '0x49B240E9ae6Fa679E1Ff740D37a7A3716988eE61',
         4: '0xF8dC9fB2F20c32623a04Ca07B804636f8c30221b',
     },
     referralRegisterImplementation: {
         1: '',
-        3: '0x9c344695a43E85774F8F886DaBF9AE5C11428bC2',
+        3: '0xb3845217B046e86AbdA9E25aA6C00AaACaD5fcb4',
         4: '0x4A6aF13C9f9DF16f16D4Cf607e508f60D5Db6025',
     },
     helixVault: {
         1: '',
-        3: '0x9b2E0a33E1c09e3C062c811d269C74B414007fc1',
+        3: '0x355077B820Be6c398770efe2AD18112Ea140aCD4',
         4: '0x34C509C2AF0A5447E2174Be6DF344ad9caA226d5',
     },
     helixVaultImplementation: {
@@ -78,57 +78,57 @@ module.exports = {
     },
     factory: {
         1: '',
-        3: '0xff6382373574E6C623D2B3A7efa66d714656572b',
+        3: '0x747B22e305bB453D3a4D60205029721a6d8E083e',
         4: '0x968Ff589F8cd372907f3e1B9efF9b059b39FbAf3',
     },
     factoryImplementation: {
         1: '',
-        3: '0xceb586CdfAC3ab5B64034DD3a50DA4b3931b9254',
+        3: '0x080dA53A6dF53e22FdfF02657CfE724BD8596ad9',
         4: '0x154b7Ce289060E6D8d53A39Db758a9e8970cf2f9',
     },
     oracleFactory: {
         1: '',
-        3: '0xDC3C3F15CD18F19119EeD246f76f963d66b367a2',
+        3: '0x70ef799E09903a788a408daf9807074936F2CF75',
         4: '0x6DB607B979e4161871c4Ee00B309054a2C5f6189',
     },
     oracleFactoryImplementation: {
         1: '',
-        3: '0x5C25c057E4D7B362DF069B1b97Be315E845aafFB',
+        3: '0xC5B43C8fdb3c487b6582E5321f43381AB83A8119',
         4: '0x643fe9ADA52AD1d8FD952f91c831be104c0f7C00',
     },
     router: {
         1: '',
-        3: '0x14De24378171537E513CFF22bE8C6f794243A949',
+        3: '0x8814a50C6CB8E2E677933b7238c3fa9108c355fB',
         4: '0x543E2039E95c38E1742534680f681349118c0d0a',
     },
     helixMigrator: {
         1: '',
-        3: '0xE44adF0E7aa6D65847E624f8e373428aA8c55CDB',
+        3: '0x8039e51D0Df68d7Fe7B8F8d0B72331977382c339',
         4: '0x623135046ed867f454DA0e3B4d6d9B3F617130b0',
     },
     swapRewards: {
         1: '',
-        3: '0x673D5214A3f47BCBF8fbC468A75807f779546e8e',
+        3: '0xBc75Ee1697679FBc17644B565D37b00161605Bc8',
         4: '0x3eF1c28Cbd1cc3b71c5FA4517Bf9463BdD7F43C9',
     },
     masterChef: {
         1: '',
-        3: '0x009aCC077E211C1b32c8e928A6bB08e20789f8E7',
+        3: '0x01ebA7647C33d27742e774aB9507B11A153cde39',
         4: '0xEa0DDa9B02EAfc1a4863008a74f7C2320795bF6c',
     },
     masterChefImplementation: {
         1: '',
-        3: '0x95f264A61be229d29340164CA2f016C20b966232',
+        3: '0xaEaD56A540873130c5B973E1A64378aca343F6BC',
         4: '0xa528C05b9d1EEDB8020b849EA9c037017aA4871A',
     },
     autoHelix: {
         1: '',
-        3: '0x5eD59f79E34fF2c3B45735AB46B2c348a6537c52',
+        3: '0x3F98698C924941EDe401085D6B932C88e75E7C45',
         4: '0x9bE078ce4379c260d16fF58349d48fB09B014Faa',
     },
     autoHelixImplementation: {
         1: '',
-        3: '0x5eD59f79E34fF2c3B45735AB46B2c348a6537c52',
+        3: '0xe9987A2fFCe10623680de0F4c5f66566b53E739E',
         4: '0xAd99Fd1A9Abe867d53C90fCFC47aADb144264b61',
     },
     publicSale: {
@@ -142,9 +142,9 @@ module.exports = {
         3: '0xFF344b8b048176f988F76cD4d1EA033473D0D157',
     },
     lpSwap: {
-        3: '0x30b55f8D2C0A4B31Fa57D4aADE027616CB9FE294',
+        3: '0xa8C743768D29cBD0e94737276ED0d97468bB4970',
     },
     lpSwapImplementation: {
-        3: '0x1DeCFA1fD7C6E1CC80C99fc3fdF5bbc63bba3ea0',
+        3: '0x38029335267Da6f1f7e7A2EC2C07012DF378dF73',
     }
 }
