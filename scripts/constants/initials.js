@@ -365,7 +365,7 @@ module.exports = {
     
     LP_SWAP_COLLECTOR_PERCENT: {
         3: 10, 
-    }
+    },
 
     // --------- Bridge --------- //
 
