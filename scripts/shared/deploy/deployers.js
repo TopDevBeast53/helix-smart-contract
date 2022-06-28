@@ -22,6 +22,7 @@ const { deployAutoHelix } = require("./autoHelix")
 const { deployMulticall } = require("./multicall")
 const { deployYieldSwap } = require("./yieldSwap")
 const { deployLpSwap } = require("./lpSwap")
+const { deployAirDrop } = require("./airDrop")
 
 module.exports = {
     deployOwnerMultiSig,
@@ -46,4 +47,5 @@ module.exports = {
     deployMulticall,
     deployYieldSwap,
     deployLpSwap,
+    deployAirDrop,
 }
