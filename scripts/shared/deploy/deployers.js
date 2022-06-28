@@ -23,6 +23,7 @@ const { deployMulticall } = require("./multicall")
 const { deployYieldSwap } = require("./yieldSwap")
 const { deployLpSwap } = require("./lpSwap")
 const { deployAirDrop } = require("./airDrop")
+const { deployTestToken } = require("./testToken")
 
 module.exports = {
     deployOwnerMultiSig,
@@ -48,4 +49,5 @@ module.exports = {
     deployYieldSwap,
     deployLpSwap,
     deployAirDrop,
+    deployTestToken,
 }
