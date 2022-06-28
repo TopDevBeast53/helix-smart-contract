@@ -12,12 +12,12 @@ e.g. ReferralRegister.setFeeMinter(address) and not ReferralRegister.addReferrer
 
 For convenience, listed below are the commands to run each of the scripts in this directory
 
-npx hardhat run scripts/1_connect/initFactory.js --network ropsten
-npx hardhat run scripts/1_connect/initFeeMinter.js --network ropsten
-npx hardhat run scripts/1_connect/initHelixChefNft.js --network ropsten
-npx hardhat run scripts/1_connect/initHelixNft.js --network ropsten
-npx hardhat run scripts/1_connect/initHelixNftBridge.js --network ropsten
-npx hardhat run scripts/1_connect/initHelixToken.js --network ropsten
-npx hardhat run scripts/1_connect/initMasterChef.js --network ropsten
-npx hardhat run scripts/1_connect/initReferralRegister.js --network ropsten
-npx hardhat run scripts/1_connect/initRouter.js --network ropsten
+npx hardhat run scripts/1_connect/initFactory.js --network ropsten  
+npx hardhat run scripts/1_connect/initFeeMinter.js --network ropsten  
+npx hardhat run scripts/1_connect/initHelixChefNft.js --network ropsten  
+npx hardhat run scripts/1_connect/initHelixNft.js --network ropsten  
+npx hardhat run scripts/1_connect/initHelixNftBridge.js --network ropsten  
+npx hardhat run scripts/1_connect/initHelixToken.js --network ropsten  
+npx hardhat run scripts/1_connect/initMasterChef.js --network ropsten  
+npx hardhat run scripts/1_connect/initReferralRegister.js --network ropsten  
+npx hardhat run scripts/1_connect/initRouter.js --network ropsten  
