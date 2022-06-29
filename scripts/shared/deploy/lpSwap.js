@@ -1,15 +1,23 @@
 const { ethers } = require(`hardhat`)
 const { print } = require("../utilities")
 
-const contracts = require("../../constants/contracts")
 const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
+const initials = require("../../constants/initials")
+
 const feeHandlerAddress = contracts.feeHandler[env.network]
+const collectorPercent = contracts.LP_SWAP_COLLECTOR_PERCENT[env.network]
 
 const deployLpSwap = async (deployer) => {
     print(`Deploy LP Swap`)
+    print(`feeHandlerAddress: ${feeHandlerAddress}`)
+    print(`collectorPercent: ${collectorPercent}`)
 
     const ContractFactory = await ethers.getContractFactory('LpSwap')
-    const contract = await upgrades.deployProxy(ContractFactory, [feeHandlerAddress])     
+    const contract = await upgrades.deployProxy(ContractFactory, [
+        feeHandlerAddress,
+        collectorPercent
+    ])     
     await contract.deployTransaction.wait()
     print(`LP Swap deployed to ${contract.address}`)
 
