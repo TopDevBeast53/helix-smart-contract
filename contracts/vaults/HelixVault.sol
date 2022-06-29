@@ -187,7 +187,8 @@ contract HelixVault is
         address _feeHandler,
         address _feeMinter,
         uint256 _startBlock,
-        uint256 _lastRewardBlock
+        uint256 _lastRewardBlock,
+        uint256 _collectorPercent
     ) external initializer {
         __Ownable_init();
         __OwnableTimelock_init();
@@ -195,6 +196,7 @@ contract HelixVault is
         __ReentrancyGuard_init();
 
         _setFeeHandler(_feeHandler);
+        _setCollectorPercent(_collectorPercent);
         feeMinter = IFeeMinter(_feeMinter);
 
         token = _token;

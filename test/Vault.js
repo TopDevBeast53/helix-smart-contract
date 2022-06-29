@@ -222,7 +222,8 @@ describe('Vault', () => {
             feeHandler.address,                                                                        
             feeMinter.address,                                                                         
             0,                                                                           
-            0 
+            0,
+            0
         )
         expect(await helixToken.balanceOf(vault2.address)).to.eq(0)
 

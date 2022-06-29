@@ -14,7 +14,7 @@ module.exports = {
     
     // --------- FeeHandler --------- //
 
-    FEEHANDLER_NFTCHEF_PERCENT:{
+    FEE_HANDLER_DEFAULT_NFT_CHEF_PERCENT:{
         1: 0,
         3: 50,
         4: 50,

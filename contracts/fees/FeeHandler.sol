@@ -110,12 +110,18 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
         _;
     }
 
-    function initialize(address _treasury, address _nftChef, address _helixToken) external initializer {
+    function initialize(
+        address _treasury, 
+        address _nftChef, 
+        address _helixToken, 
+        uint256 _defaultNftChefPercent
+    ) external initializer {
         __Ownable_init();
         __OwnableTimelock_init();
         treasury = _treasury;
         nftChef = IHelixChefNFT(_nftChef);
         helixToken = _helixToken;
+        defaultNftChefPercent = _defaultNftChefPercent;
     }
     
     /// Called by a FeeCollector to send _amount of _token to this FeeHandler
