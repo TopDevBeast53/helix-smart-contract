@@ -8,7 +8,7 @@ const initials = require('../../constants/initials')
 const chefAddress = contracts.masterChef[env.network]
 const rewardTokenAddress = contracts.helixToken[env.network]
 const feeHandlerAddress = contracts.feeHandler[env.network]
-const collectorPercent = contracts.YIELD_SWAP_COLLECTOR_PERCENT[env.network]
+const collectorPercent = initials.YIELD_SWAP_COLLECTOR_PERCENT[env.network]
 const minLockDuration = initials.YIELD_SWAP_MIN_LOCK_DURATION[env.network]
 const maxLockDuration = initials.YIELD_SWAP_MAX_LOCK_DURATION[env.network]
 

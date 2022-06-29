@@ -2,22 +2,22 @@ module.exports = {
     ownerMultiSig: {
         1: '',
         3: '0x461e3e7C700Ba1a2282e63F43f34F9F0a37D328b',
-        4: '0x76f4c0118Bcea171f464E6Cb461E3313EB6DB9c4',
+        4: '0xeba90CFD456cCe4b7BbA0541Dc640af00FbE826A',
     },
     treasuryMultiSig: {
         1: '',
         3: '0x1Ed71D2D4ac77A5C0a9f2b4121A73C720D5feC73',
-        4: '0x6c7791Ea02cedb4D9b6769F94512503aBc0d2258',
+        4: '0x8c3426C04172758c0957A6a209397A6100A6D984',
     },
     devTeamMultiSig: {
         1: '',
         3: '0x202661dd1deE66f5f2A9e71fDC8d9706dd98E6fb',
-        4: '0x4e7832c1ff773F8FAC4b2eF87Ef8921Ec2Dc149d',
+        4: '0x45e102B43e737Dc0aF35f0E0d1A6614D7C79efaf',
     },
     timelock: {
         1: '',
         3: '0x202661dd1deE66f5f2A9e71fDC8d9706dd98E6fb',
-        4: '0x5922972Ce93B72c6B5679F249142AffE6feD4cc4',
+        4: '0x5c97B192735D14E1b89c8A1b3143b4d44018b97f',
     },
     helixToken: {
         1: '0x231CC03E6d8b7368eC2aBfAfb5f73D216c8af980', // launched 05/19
@@ -37,119 +37,116 @@ module.exports = {
     feeMinter: {
         1: '',
         3: '0xaf18A1c4904F0fb15B0C95f19fCDAeFC86f8091E',
-        4: '0x49139C6E07Cd25ee4d341e8eADf8F7661C648455',
+        4: '0x06c207dAb7473478E7745f8146B35F3CC935a1Eb',
     },
     helixNFTBridge: {
         1: '',
         3: '0xfE5C6695E4DD62ca97737823ef4BBB47D328C328',
-        4: '0xcDba5C571D4375194f8DD96E107C58037B17b84e',
+        4: '0x076080D6AA10175AAC0cfC9D5A5f9f64e57674d5',
     },
     helixChefNFT: {
         1: '',
         3: '0x8022E2b5960391F4cCBfCf0f026DE84eb77B24a6',
-        4: '0xA68C609d8fCe1d738f18a5E77C8BaA54E9dAaC16',
+        4: '0x440038fcC3a42B724B44515eFF394DfDC1E984ec',
     },
     helixChefNFTImplementation: {
         1: '',
         3: '0x1F59ccdb55F61Bf5Eaf6f152111455d2244886B1',
-        4: '0xF3cdf9899F8913d24A51B333783205ffc8365a03',
+        4: '0x5220d4D1aF293ca15e6cd2640dafA863830c0996',
     },
     feeHandler: {
         1: '',
         3: '0x696C76AFe8D132377c2baF9E26fb372005dCb733',
-        4: '0x758d06B9DB2DEa971D15C3dFaeA5a6B18fEFE48f',
+        4: '0x2f7267C7C5F246C9aacE4ceA9EaEF81EB28bbB41',
     },
     feeHandlerImplementation: {
         1: '',
         3: '0xC624632696A01c7873E6C66D1561347BAE39d8A0',
-        4: '0xE939Ba51904101b6326BABb881D9F2c914C0A60D',
+        4: '0xE1931D00ff196199B9Bbe3d5eF028B70C3F09F61',
     },
     referralRegister: {
         1: '',
         3: '0x49B240E9ae6Fa679E1Ff740D37a7A3716988eE61',
-        4: '0x732Ef0Fe956480D64a44065493ed008bC8DFa7eE',
+        4: '0x555A63C2ff6B34C72670C61D00C0aB957292dea0',
     },
     referralRegisterImplementation: {
         1: '',
         3: '0xb3845217B046e86AbdA9E25aA6C00AaACaD5fcb4',
-        4: '0x2cE0B0E666212FD8399D62125914909267728B1d',
+        4: '0xd1520116cBc99CCAEF36e4eEcC4d57da442D68Aa',
     },
     helixVault: {
         1: '',
         3: '0x355077B820Be6c398770efe2AD18112Ea140aCD4',
-        4: '0x866552b7690f68d5850BcA51DcD13ad6c02b85E6',
+        4: '0x9d2Be98C798E43ae459D96AFf110c8fa4a381616',
     },
     helixVaultImplementation: {
         1: '',
         3: '0xB4aEF4072fCE8B5c0120150fb6abD5Fd017DEc8D',
-        4: '0x9a256746f582936341C961674a5cf43c842d555d',
+        4: '0x1880f8d49D59A0bbd22a677132757439A55084FD',
     },
     factory: {
         1: '',
         3: '0x747B22e305bB453D3a4D60205029721a6d8E083e',
-        4: '0x0Cb3283bf3bA53E30186100466AC46e4aBadda38',
+        4: '0xE0e0d80Cc6811631393ae3fa79ba78Dd232a5e5f',
     },
     factoryImplementation: {
         1: '',
         3: '0x080dA53A6dF53e22FdfF02657CfE724BD8596ad9',
-        4: '0xEA39AE35227D5F37DFd56442106c8d300BA63902',
+        4: '0x88D3B3F28cD3e806C17A8E61AFF4194241b65d97',
     },
     oracleFactory: {
         1: '',
         3: '0x70ef799E09903a788a408daf9807074936F2CF75',
-        4: '0x91a849F87C43615B20c6AEe567302FFC95283426',
+        4: '0x4CA26b0707A7306FCA341E86034f1E852421c511',
     },
     oracleFactoryImplementation: {
         1: '',
         3: '0xC5B43C8fdb3c487b6582E5321f43381AB83A8119',
-        4: '0x6123c196be6B2363370993B8F5E924Aa5Ac9944D',
+        4: '0x1E11C0c4912236F79E6CF8c93c0557f88C484433',
     },
     router: {
         1: '',
         3: '0x8814a50C6CB8E2E677933b7238c3fa9108c355fB',
-        4: '0x0bdc79143a13FD54E49d17394FD605311f784A68',
+        4: '0xDc00f4CbEB4542a8E032a64f3437AA9E7885Ae65',
     },
     helixMigrator: {
         1: '',
         3: '0x8039e51D0Df68d7Fe7B8F8d0B72331977382c339',
-        4: '0x03344d6284248e4BC4834B6915B12fAc8C83e805',
+        4: '0x7289f14d4a97250C170A97C4C4036ac5843e266b',
     },
     swapRewards: {
         1: '',
         3: '0xBc75Ee1697679FBc17644B565D37b00161605Bc8',
-        4: '0x60A152170B627abE4aecce637cceA7220c396c6B',
+        4: '0xC56e0ed91422B8A64Bb83734E499Ed53a1b43367',
     },
     masterChef: {
         1: '',
         3: '0x01ebA7647C33d27742e774aB9507B11A153cde39',
-        4: '0x18c2380D881fcAA941e909ff7B37c87C8E71A8Eb',
+        4: '0x0FECf42FB7FD10635c51cAF29b55EFCfA1Ad1215',
     },
     masterChefImplementation: {
         1: '',
         3: '0xaEaD56A540873130c5B973E1A64378aca343F6BC',
-        4: '0xAC322Ea2e9D425eb7D5067D8224296fdD881d02f',
+        4: '0x1279B0956cC19a9Df4384a39633F36796b92FBAE',
     },
     autoHelix: {
         1: '',
         3: '0x3F98698C924941EDe401085D6B932C88e75E7C45',
-        4: '0x9432640E0A855ca62b65E7d9DDF4a24409F12126',
+        4: '0xD7a02f6B217E36f9e6fAE3e739710d597363BA0c',
     },
     autoHelixImplementation: {
         1: '',
         3: '0xe9987A2fFCe10623680de0F4c5f66566b53E739E',
-        4: '0xB09c733eDFd2FE390603baADBb1779662d195042',
+        4: '0x2477d173A3A44C753125848f86A0AAD3F2c493ee',
     },
-    multiCall: {
+    multicall: {
         1: '',
         3: '',
-        4: '0xDEAC443f2508495A566EC064968A6DFa065dFd11',
+        4: '0x48ebE03ca5787A28633fbB9FEb6086DaE51AFb4d',
     },
     publicSale: {
         1: '0x8DB40469E27496b3ed7AC3bf493c385e942aEd8A',
         4: '0x296d49dDAf208e5049153FB57371f08Be1Df1cEd',
-    },
-    multicall: {
-        3: ''
     },
     airDrop: {
         3: ''
@@ -165,10 +162,10 @@ module.exports = {
     },
     lpSwap: {
         3: '0xa8C743768D29cBD0e94737276ED0d97468bB4970',
-        4: '0xD16847cB936161F5F3C9a9f73955ee94D87bDb58',
+        4: '0x27309CEbdE46f9166370DA423b50e3187e5aDd6d',
     },
     lpSwapImplementation: {
         3: '0xa8C743768D29cBD0e94737276ED0d97468bB4970',
-        4: '0x892e45382744ea2633EdDD44e87E38A745cF71d0',
+        4: '0x4be51f979b9Cf1fe70172bFb772E86b9b7f9d735',
     }
 }
