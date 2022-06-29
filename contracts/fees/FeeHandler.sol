@@ -10,7 +10,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
-
 /// Handles routing received fees to internal contracts
 contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -79,17 +78,17 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
     mapping(address => bool) public isFeeCollector;
     
     modifier onlyValidFee(uint256 _fee) {
-        if (_fee == 0) revert ZeroFee();
+        require(_fee > 0, "FeeHandler: zero fee");
         _;
     }
 
     modifier onlyValidAddress(address _address) {
-        if (_address == address(0)) revert ZeroAddress();
+        require(_address != address(0), "FeeHandler: zero address");
         _;
     }
 
     modifier onlyValidPercent(uint256 _percent) {
-        if (!Percent.isValidPercent(_percent)) revert InvalidPercent(_percent, 0);
+        require(Percent.isValidPercent(_percent), "FeeHandler: percent exceeds max");
         _;
     } 
 

@@ -69,46 +69,23 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
     event Initialize(string baseURI);
     event TokenMint(address indexed to, uint256 indexed tokenId);
 
-    /// Thrown when address(0) is encountered
-    error ZeroAddress();
-
-    /// Thrown when the tokenId does not exist
-    error DoesNotExist(uint256 tokenId);
-
-    /// Thrown when an amount is 0 but shouldn't be
-    error Zero();
-
-    /// Thrown when an index is out of bounds
-    error IndexOutOfBounds(uint256 index, uint256 length);
-
-    /// Thrown when a caller is not a staker
-    error NotStaker(address caller);
-
-    /// Thrown when a caller is not a minter
-    error NotMinter(address caller);
-
-    /// Thrown when a caller is not an owner
-    error NotOwner(address caller);
-
-    error InvalidMintTokenIdsLength();
-
     modifier isNotZeroAddress(address _address) {
-        if (_address == address(0)) revert ZeroAddress();
+        require(_address != address(0), "HelixNFT: zero address");
         _;
     }
 
     modifier tokenIdExists(uint256 tokenId) {
-        if (!_exists(tokenId)) revert DoesNotExist(tokenId);
+        require(_exists(tokenId), "HelixNFT: nonexistent token");
         _;
     }
 
     modifier isNotZero(uint256 amount) {
-        if (amount == 0) revert Zero();
+        require(amount > 0, "HelixNFT: zero amount");
         _;
     }
 
     modifier onlyValidPercent(uint256 percent) {
-        if (!Percent.isValidPercent(percent)) revert InvalidPercent(percent, 0);
+        require(Percent.isValidPercent(percent), "HelixNFT: invalid percent");
         _;
     }
 
@@ -227,7 +204,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
      */
     function getTokenIdsOfOwner(address user) external view returns (uint[] memory) {
         uint256 balance = ERC721Upgradeable.balanceOf(user);
-        if (balance == 0) revert Zero();
+        require(balance > 0, "HelixNFT: insufficient balance");
         uint[] memory tokenIds = new uint[](balance);
         for (uint256 index = 0; index < balance; index++) {
             tokenIds[index] = tokenOfOwnerByIndex(user, index);
@@ -354,8 +331,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         view
         returns (address)
     {
-        uint256 length = getStakerLength() - 1;
-        if (_index > length) revert IndexOutOfBounds(_index, length);
+        require(_index <= getStakerLength() - 1, "HelixNFT: index out of bounds");
         return EnumerableSet.at(_stakers, _index);
     }
 
@@ -363,7 +339,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
      * @dev Modifier for changing `isStaked` of token
      */
     modifier onlyStaker() {
-        if (!isStaker(msg.sender)) revert NotStaker(msg.sender);
+        require(isStaker(msg.sender), "HelixNFT: not staker");
         _;
     }
 
@@ -413,8 +389,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
         view
         returns (address)
     {
-        uint256 length = getMinterLength() - 1; 
-        if (_index > length) revert IndexOutOfBounds(_index, length);
+        require(_index <= getMinterLength() - 1, "HelixNFT: index out of bounds");
         return EnumerableSet.at(_minters, _index);
     }
 
@@ -422,7 +397,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
      * @dev Modifier
      */
     modifier onlyMinter() {
-        if (!isMinter(msg.sender)) revert NotMinter(msg.sender);
+        require(isMinter(msg.sender), "HelixNFT: not minter");
         _;
     }
 
@@ -439,7 +414,7 @@ contract HelixNFT is ERC721Upgradeable, ERC721EnumerableUpgradeable, ReentrancyG
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        if (msg.sender != owner()) revert NotOwner(msg.sender);
+        require(owner() == msg.sender, "HelixNFT: not owner");
         _;
     }
 

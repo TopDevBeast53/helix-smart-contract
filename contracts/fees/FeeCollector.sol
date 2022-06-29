@@ -6,12 +6,6 @@ import "../interfaces/IFeeHandler.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-/// Thrown when address(0) is encountered
-error ZeroAddress();
-
-/// Thrown when performing a transaction requiring a feeHandler but none is set
-error FeeHandlerNotSet();
-
 abstract contract FeeCollector {
     /// Handler that this collector transfers fees to
     IFeeHandler public feeHandler;
@@ -47,7 +41,7 @@ abstract contract FeeCollector {
 
     // Delegate feeHandler to transfer _fee amount of _token from _from
     function _delegateTransfer(IERC20 _token, address _from, uint256 _fee) internal virtual {
-        if (address(feeHandler) == address(0)) revert FeeHandlerNotSet();
+        require(address(feeHandler) != address(0), "FeeCollector: handler not set");
         if (_fee > 0) {
             _token.approve(address(feeHandler), _fee);
             feeHandler.transferFee(_token, _from, msg.sender, _fee);
@@ -56,14 +50,14 @@ abstract contract FeeCollector {
 
     /// Called by the owner to set a new _feeHandler address
     function _setFeeHandler(address _feeHandler) internal virtual { 
-        if (_feeHandler == address(0)) revert ZeroAddress();
+        require(_feeHandler != address(0), "FeeCollector: zero address");
         feeHandler = IFeeHandler(_feeHandler);
         emit SetFeeHandler(msg.sender, address(_feeHandler));
     }
 
     // Called by the owner to set the _collectorPercent collected from transactions
     function _setCollectorPercent(uint256 _collectorPercent) internal virtual {
-        if (!Percent.isValidPercent(_collectorPercent)) revert InvalidPercent(_collectorPercent, 0);
+        require(Percent.isValidPercent(_collectorPercent), "FeeCollector: percent exceeds max");
         collectorPercent = _collectorPercent;
         emit SetCollectorPercent(msg.sender, _collectorPercent);
     }

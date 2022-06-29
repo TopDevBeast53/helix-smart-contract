@@ -12,27 +12,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
-/// Thrown when trying to access in invalid poolId
-error InvalidPoolId();
-
-/// Thrown when address(0) is encountered
-error ZeroAddress();
-
-/// Thrown when the token has not been added to a pool
-error TokenNotAdded(address token);
-
-/// Thrown when insufficient time has elapsed
-error WaitUntilAfter(uint256 time);
-
-/// Thrown when amount exceeds balance
-error AmountExceedsBalance(uint256 amount, uint256 balance);
-
-/// Thrown when amount exceeds allowance 
-error AmountExceedsAllowance(uint256 amount, uint256 allowance);
-
-/// Thrown when a transfer fails
-error TransferFailed();
-
 contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, OwnableTimelockUpgradeable {
     // Info of each user.
     struct UserInfo {
@@ -196,12 +175,12 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
     );
 
     modifier isNotHelixPoolId(uint256 poolId) {
-        if (poolId == 0) revert InvalidPoolId();
+        require(poolId != 0, "MasterChef: invalid pool id");
         _;
     }
 
     modifier isNotZeroAddress(address _address) {
-        if (_address == address(0)) revert ZeroAddress();
+        require(_address != address(0), "MasterChef: zero address");
         _;
     }
 
@@ -255,14 +234,14 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
     // Return the poolId associated with the lpToken address
     function getPoolId(address _lpToken) external view returns (uint256) {
         uint256 poolId = poolIds[_lpToken];
-        if (poolId == 0 && _lpToken != address(helixToken)) {
-            revert TokenNotAdded(_lpToken);
+        if (poolId == 0) {
+            require(_lpToken == address(helixToken), "MasterChef: token not added");
         }
         return poolId;
     }
 
     function withdrawDevAndRefFee() external {
-        if (lastBlockDevWithdraw >= block.number) revert WaitUntilAfter(lastBlockDevWithdraw);
+        require(lastBlockDevWithdraw < block.number, "MasterChef: wait for new block");
         uint256 blockDelta = getMultiplier(lastBlockDevWithdraw, block.number);
         uint256 helixTokenReward = blockDelta * _getDevToMintPerBlock();
         lastBlockDevWithdraw = block.number;
@@ -404,7 +383,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
         PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
-        if (_amount > user.amount) revert AmountExceedsBalance(_amount, user.amount);
+        require(user.amount >= _amount, "MasterChef: insufficient balance");
 
         updatePool(_pid);
 
@@ -449,8 +428,10 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
         bucket.rewardDebt = bucket.amount * (pool.accHelixTokenPerShare) / (1e12);
 
         // Transfer amount of lpToken from caller to chef
-        uint256 allowance = pool.lpToken.allowance(msg.sender, address(this));
-        if (_amount > allowance) revert AmountExceedsAllowance(_amount, allowance);
+        require(
+            _amount <= pool.lpToken.allowance(msg.sender, address(this)), 
+            "MasterChef: insufficient allowance"
+        );
         TransferHelper.safeTransferFrom(address(pool.lpToken), msg.sender, address(this), _amount);
 
         emit BucketDeposit(msg.sender, _bucketId, _poolId, _amount);
@@ -461,7 +442,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
         PoolInfo memory pool = poolInfo[_poolId];
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
 
-        if (_amount > bucket.amount) revert AmountExceedsBalance(_amount, bucket.amount);
+        require(_amount <= bucket.amount, "MasterChef: insufficient balance");
 
         updatePool(_poolId);
     
@@ -498,7 +479,10 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
         PoolInfo memory pool = poolInfo[_poolId];
 
         BucketInfo storage bucket = bucketInfo[_poolId][msg.sender][_bucketId];
-        if (_amount > bucket.amount) revert AmountExceedsBalance(_amount, bucket.amount);
+        require(
+            _amount <= bucket.amount, 
+            "MasterChef: insufficient balance"
+        );
 
         updatePool(_poolId);
 
@@ -534,7 +518,10 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
         uint256 pending = bucket.amount * (pool.accHelixTokenPerShare) / (1e12) - (bucket.rewardDebt);
         uint256 yield = bucket.yield + pending;
 
-        if (_yield > yield) revert AmountExceedsBalance(_yield, yield);
+        require(
+            _yield <= yield,
+            "MasterChef: insufficient balance"
+        );
 
         // Update bucket state
         bucket.rewardDebt = bucket.amount * (pool.accHelixTokenPerShare) / (1e12);
@@ -600,7 +587,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
         PoolInfo memory pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
 
-        if (_amount > user.amount) revert AmountExceedsBalance(_amount, user.amount);
+        require(user.amount >= _amount, "MasterChef: insufficient balance");
 
         uint256 pending = user.amount * (pool.accHelixTokenPerShare) / (1e12) - (user.rewardDebt);
         user.amount -= _amount;
@@ -649,8 +636,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
     function safeHelixTokenTransfer(address _to, uint256 _amount) internal {
         uint256 helixTokenBal = helixToken.balanceOf(address(this));
         uint256 toTransfer = _amount > helixTokenBal ? helixTokenBal : _amount;
-        bool transferSucceeded = helixToken.transfer(_to, toTransfer);
-        if (!transferSucceeded) revert TransferFailed();
+        require(helixToken.transfer(_to, toTransfer), "MasterChef: transfer failed");
     }
 
     function setDevAddress(address _devaddr) external onlyTimelock {

@@ -12,30 +12,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
-/// Thrown when caller is a contract
-error CallerIsContract(address caller);
-
-/// Thrown when caller is a proxy
-error CallerIsProxy(address caller);
-
-/// Thrown when deposit amount is 0
-error ZeroDeposit();
-
-/// Thrown when address(0) is encountered
-error ZeroAddress();
-
-/// Thrown when fee exceeds max
-error FeeExceedsMax(uint256 fee, uint256 max);
-
-/// Thrown when trying to "unstuck" token that isn't stuck
-error TokenNotStuck(address token);
-
-/// Thrown when withdraw amount is 0
-error ZeroWithdraw();
-
-/// Thrown when amount exceeds balance
-error InsufficientBalance(uint256 amount, uint256 balance);
-
 contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, OwnableTimelockUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -104,8 +80,8 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
      * @notice Checks if the msg.sender is a contract or a proxy
      */
     modifier notContract() {
-        if (AddressUpgradeable.isContract(msg.sender)) revert CallerIsContract(msg.sender);
-        if (msg.sender != tx.origin) revert CallerIsProxy(msg.sender);
+        require(!AddressUpgradeable.isContract(msg.sender), "AutoHelix: contract not allowed");
+        require(msg.sender == tx.origin, "AutoHelix: proxy not allowed");
         _;
     }
 
@@ -141,7 +117,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
      * @param _amount: number of tokens to deposit (in Helix)
      */
     function deposit(uint256 _amount) external whenNotPaused notContract {
-        if (_amount == 0) revert ZeroDeposit();
+        require(_amount > 0, "AutoHelix: zero amount");
 
         uint256 pool = balanceOf();
 
@@ -202,7 +178,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
      * @dev Only callable by the contract owner.
      */
     function setTreasury(address _treasury) external onlyTimelock {
-        if (_treasury == address(0)) revert ZeroAddress();
+        require(_treasury != address(0), "AutoHelix: zero address");
         treasury = _treasury;
     }
 
@@ -211,9 +187,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
      * @dev Only callable by the contract owner.
      */
     function setPerformanceFee(uint256 _performanceFee) external onlyTimelock {
-        if (_performanceFee > MAX_PERFORMANCE_FEE) {
-            revert FeeExceedsMax(_performanceFee, MAX_PERFORMANCE_FEE);
-        }
+        require(_performanceFee <= MAX_PERFORMANCE_FEE, "AutoHelix: invalid fee");
         performanceFee = _performanceFee;
         emit SetPerformanceFee(msg.sender, _performanceFee);
     }
@@ -223,9 +197,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
      * @dev Only callable by the contract owner.
      */
     function setCallFee(uint256 _callFee) external onlyTimelock {
-        if (_callFee > MAX_CALL_FEE) {
-            revert FeeExceedsMax(_callFee, MAX_CALL_FEE);
-        }
+        require(_callFee <= MAX_CALL_FEE, "AutoHelix: invalid fee");
         callFee = _callFee;
         emit SetCallFee(msg.sender, _callFee);
     }
@@ -235,9 +207,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
      * @dev Only callable by the contract owner.
      */
     function setWithdrawFee(uint256 _withdrawFee) external onlyTimelock {
-        if (_withdrawFee > MAX_WITHDRAW_FEE) {
-            revert FeeExceedsMax(_withdrawFee, MAX_WITHDRAW_FEE);
-        }
+        require(_withdrawFee <= MAX_WITHDRAW_FEE, "AutoHelix: invalid fee");
         withdrawFee = _withdrawFee;
         emit SetWithdrawFee(msg.sender, _withdrawFee);
     }
@@ -247,9 +217,10 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
      * @dev Only callable by the contract owner.
      */
     function setWithdrawFeePeriod(uint256 _withdrawFeePeriod) external onlyTimelock {
-        if (_withdrawFeePeriod > MAX_WITHDRAW_FEE_PERIOD) {
-            revert FeeExceedsMax(_withdrawFeePeriod, MAX_WITHDRAW_FEE_PERIOD);
-        }
+        require(
+            _withdrawFeePeriod <= MAX_WITHDRAW_FEE_PERIOD,
+            "AutoHelix: invalid fee period"
+        );
         withdrawFeePeriod = _withdrawFeePeriod;
         emit SetWithdrawFeePeriod(msg.sender, _withdrawFeePeriod);
     }
@@ -266,9 +237,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
      * @notice Withdraw unexpected tokens sent to the Helix Vault
      */
     function inCaseTokensGetStuck(address _token) external onlyOwner {
-        if (_token == address(token)) {
-            revert TokenNotStuck(_token);
-        }
+        require(_token != address(token), "AutoHelix: invalid token");
 
         uint256 amount = IERC20Upgradeable(_token).balanceOf(address(this));
         TransferHelper.safeTransfer(address(_token), msg.sender, amount);
@@ -326,8 +295,8 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
      */
     function withdraw(uint256 _shares) public notContract {
         UserInfo storage user = userInfo[msg.sender];
-        if (_shares == 0) revert ZeroWithdraw();
-        if (_shares > user.shares) revert InsufficientBalance(_shares, user.shares);
+        require(_shares > 0, "AutoHelix: zero amount");
+        require(_shares <= user.shares, "AutoHelix: insufficient balance");
 
         uint256 currentAmount = (balanceOf() * _shares) / totalShares;
         user.shares = user.shares - _shares;

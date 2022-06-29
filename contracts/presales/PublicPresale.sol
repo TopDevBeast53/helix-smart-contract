@@ -6,33 +6,6 @@ import "../libraries/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
-/// Thrown when a caller is not an owner
-error NotAnOwner(address caller);
-
-/// Thown when address(0) is encountered
-error ZeroAddress();
-
-/// Thrown when amount exceeds ticketsAvailable
-error AmountExceedsTicketsAvailable(uint256 amount, uint256 ticketsAvailable);
-
-/// Thrown when amount exceeds balance
-error InsufficientBalance(uint256 amount, uint256 balance);
-
-/// Thrown when amount exceeds allowance
-error InsufficientAllowance(uint256 amount, uint256 allowance);
-
-/// Thrown when purchase is prohibited in phase
-error PurchaseProhibited(uint256 phase);
-
-/// Thrown when amount is below the minimum purchase amount
-error InsufficientAmount(uint256 amount, uint256 minimum);
-
-/// Thrown when the user is not whitelisted
-error NotWhitelisted(address user);
-
-/// Thrown when removal is prohibited in phase
-error RemovalProhibited(uint256 phase);
-
 /*
  * Allow users to purchase outputToken using inputToken via the medium of tickets
  * Purchasing tickets with the inputToken is mediated by the INPUT_RATE and
@@ -126,26 +99,20 @@ contract PublicPresale is Pausable, ReentrancyGuard {
     event OwnerAdded(address indexed owner, address indexed newOwner);
 
     /// Emitted when the purchase phase is set
-    event SetPurchasePhase(
-        PurchasePhase purchasePhase, 
-        uint256 startTimestamp, 
-        uint256 endTimestamp
-    );
+    event SetPurchasePhase(PurchasePhase purchasePhase, uint256 startTimestamp, uint256 endTimestamp);
 
     modifier onlyOwner() {
-        if (!isOwner[msg.sender]) revert NotAnOwner(msg.sender);
+        require(isOwner[msg.sender], "PublicPresale: not owner");
         _;
     }
 
     modifier onlyValidAddress(address _address) {
-        if (_address == address(0)) revert ZeroAddress();
+        require(_address != address(0), "PublicPresale: zero address");
         _;
     }
 
     modifier onlyValidAmount(uint256 _amount) {
-        if (_amount > ticketsAvailable) {
-            revert AmountExceedsTicketsAvailable(_amount, ticketsAvailable);
-        }
+        require(_amount <= ticketsAvailable, "PublicPresale: insufficient tickets available");
         _;
     }
 
@@ -197,13 +164,14 @@ contract PublicPresale is Pausable, ReentrancyGuard {
         uint256 inputTokenAmount = getAmountOut(_amount, inputToken); 
 
         // Pay for the `amount` of tickets
-        uint256 balance = inputToken.balanceOf(msg.sender);
-        if (inputTokenAmount > balance) revert InsufficientBalance(inputTokenAmount, balance);
-    
-        uint256 allowance = inputToken.allowance(msg.sender, address(this));
-        if (inputTokenAmount > allowance) {
-            revert InsufficientAllowance(inputTokenAmount, allowance);
-        }
+        require(
+            inputTokenAmount <= inputToken.balanceOf(msg.sender), 
+            "PublicPresale: insufficient balance"
+        );
+        require(
+            inputTokenAmount <= inputToken.allowance(msg.sender, address(this)), 
+            "PublicPresale: insufficient allowance"
+        );
 
         // Pay for the tickets by withdrawing inputTokenAmount from caller
         inputToken.safeTransferFrom(msg.sender, treasury, inputTokenAmount);
@@ -253,8 +221,7 @@ contract PublicPresale is Pausable, ReentrancyGuard {
         _setPurchasePhase(_purchasePhase);
     }
 
-    /// Called externally to grant multiple _users permission to purchase tickets during 
-    /// WithdrawOnly phase
+    /// Called externally to grant multiple _users permission to purchase tickets during WithdrawOnly phase
     function whitelistAdd(address[] calldata _users) external onlyOwner {
         uint256 length = _users.length;
         for (uint256 i = 0; i < length; i++) {
@@ -270,7 +237,7 @@ contract PublicPresale is Pausable, ReentrancyGuard {
 
     /// Add a new _owner to the contract, only callable by an existing owner
     function addOwner(address _owner) external onlyOwner onlyValidAddress(_owner) {
-        if (isOwner[_owner]) return;
+        require(!isOwner[_owner], "PublicPresale: already owner");
         isOwner[_owner] = true;
         owners.push(_owner);
 
@@ -303,19 +270,13 @@ contract PublicPresale is Pausable, ReentrancyGuard {
 
     /// Called periodically and, if sufficient time has elapsed, update the PurchasePhase
     function updatePurchasePhase() public {
-        if (purchasePhase == PurchasePhase.WhitelistOnly && 
-            block.timestamp >= purchasePhaseEndTimestamp
-        ) {
+        if (purchasePhase == PurchasePhase.WhitelistOnly && block.timestamp >= purchasePhaseEndTimestamp) {
             _setPurchasePhase(PurchasePhase.Purchase);
         }
     }
 
     /// Get _amountOut of _tokenOut for _amountIn of tickets
-    function getAmountOut(uint256 _amountIn, IERC20 _tokenOut) 
-        public 
-        view 
-        returns (uint256 amountOut
-    ) {
+    function getAmountOut(uint256 _amountIn, IERC20 _tokenOut) public view returns (uint256 amountOut) {
         if (address(_tokenOut) == address(inputToken)) {
             amountOut = _amountIn * INPUT_RATE * INPUT_TOKEN_DECIMALS;
         } else if (address(_tokenOut) == address(outputToken)) {
@@ -337,14 +298,10 @@ contract PublicPresale is Pausable, ReentrancyGuard {
         view 
         onlyValidAddress(_user)
     {
-        if (purchasePhase == PurchasePhase.NoPurchase) {
-            revert PurchaseProhibited(uint(purchasePhase));
-        }
-        if (_amount < MINIMUM_TICKET_PURCHASE) {
-            revert InsufficientAmount(_amount, MINIMUM_TICKET_PURCHASE);
-        }
+        require(purchasePhase != PurchasePhase.NoPurchase, "PublicPresale: purchase prohibited");
+        require(_amount >= MINIMUM_TICKET_PURCHASE, "PublicPresale: below minimum purchase");
         if (purchasePhase == PurchasePhase.WhitelistOnly) { 
-            if (!whitelist[_user]) revert NotWhitelisted(_user);
+            require(whitelist[_user], "PublicPresale: not whitelisted");
         }
     }
 
@@ -353,9 +310,7 @@ contract PublicPresale is Pausable, ReentrancyGuard {
     function _remove(uint256 _amount) private onlyValidAmount(_amount) {
         // proceed only if the removal is valid
         // note that only owners can make removals
-        if (purchasePhase != PurchasePhase.NoPurchase) {
-            revert RemovalProhibited(uint(purchasePhase));
-        }
+        require(purchasePhase == PurchasePhase.NoPurchase, "PublicPresale: invalid phase");
 
         // decrease the tickets available by the amount being removed
         ticketsAvailable -= _amount;

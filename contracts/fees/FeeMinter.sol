@@ -6,15 +6,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../libraries/Percent.sol";
 import "../timelock/OwnableTimelock.sol";
 
-/// Thrown when a should equal b but doesn't
-error NotEqual(uint256 a, uint256 b);
-
-/// Thrown when address(0) is encountered
-error ZeroAddress();
-
-/// Thrown when a should be less than or equal to b but isn't
-error NotLessThanOrEqualTo(uint256 a, uint256 b);
-
 contract FeeMinter is Ownable, OwnableTimelock {
     /// Overall rate at which to mint new tokens
     uint256 public totalToMintPerBlock;
@@ -61,9 +52,7 @@ contract FeeMinter is Ownable, OwnableTimelock {
         external 
         onlyTimelock 
     { 
-        if (_minters.length != _toMintPercents.length) {
-            revert NotEqual(_minters.length, _toMintPercents.length);
-        }
+        require(_minters.length == _toMintPercents.length, "FeeMinter: array length mismatch");
 
         // Increment the version and delete the previous mapping
         _version++;
@@ -74,16 +63,15 @@ contract FeeMinter is Ownable, OwnableTimelock {
         uint256 length = _minters.length;
         for (uint256 i = 0; i < length; i++) {
             address minter = _minters[i];
-            if (minter == address(0)) revert ZeroAddress();
+            require(minter != address(0), "FeeMinter: zero address");
 
             uint256 toMintPercent = _toMintPercents[i];
             percentSum += toMintPercent;
-            
-            if (percentSum > _percent()) revert NotLessThanOrEqualTo(percentSum, _percent());
+            require(percentSum <= 100, "FeeMinter: percent sum exceeds 100");
 
             _toMintPercent[_key(minter)] = toMintPercent;
         }
-        if (percentSum != _percent()) revert NotEqual(percentSum, _percent());
+        require(percentSum == 100, "FeeMinter: percents do not total 100");
 
         minters = _minters;
 
