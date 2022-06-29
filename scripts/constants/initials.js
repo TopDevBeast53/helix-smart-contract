@@ -277,7 +277,7 @@ module.exports = {
     // Sum:        100.00%
     FEE_MINTER_TO_MINT_PERCENTS: {
         3: [8333, 476, 1191],
-        4: [83, 5, 12] // Edited because feeMinter was deployed without calling _percent() in setToMintPercents (an error)
+        4: [8333, 476, 1191],
     },
 
     // --------- Treasury MultiSig --------- //

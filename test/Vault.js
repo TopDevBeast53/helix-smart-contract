@@ -96,14 +96,14 @@ describe('Vault', () => {
         const invalidDuration = 0;
         const weight = 100;
         await expect(vault.addDuration(invalidDuration, weight))
-            .to.be.revertedWith("ZeroDuration()")
+            .to.be.revertedWith("Vault: zero duration")
     })
 
     it('vault: add duration with invalid weight fails to add', async () => {
         const duration = 1;
         const invalidWeight = 0;
         await expect(vault.addDuration(duration, invalidWeight))
-            .to.be.revertedWith("ZeroWeight()")
+            .to.be.revertedWith("Vault: zero weight")
     })
 
     it('vault: add duration as non-owner fails to add', async () => {
@@ -170,11 +170,11 @@ describe('Vault', () => {
 
         // try to remove from empty array and expect error
         await expect(vault.removeDuration(0))
-            .to.be.revertedWith("IndexOutOfBounds(0, 0)")
+            .to.be.revertedWith("Vault: invalid index")
     })
 
     it('vault: remove duration with invalid duration index fails to remove', async () => {
-        await expect(vault.removeDuration(5)).to.be.revertedWith("IndexOutOfBounds(5, 5)")
+        await expect(vault.removeDuration(5)).to.be.revertedWith("Vault: invalid index")
     })
 
     it('vault: remove duration as non-owner fails to remove', async () => {
@@ -207,7 +207,7 @@ describe('Vault', () => {
         // require "to" to be less than "from" for following test to fail as expected
         expect(to).to.be.below(from)
         await expect(vault.getBlocksDifference(from, to))
-            .to.be.revertedWith("FromGreaterThanTo")
+            .to.be.revertedWith("Vault: invalid block values")
     })
 
     it('vault: update pool', async () => {
@@ -261,7 +261,7 @@ describe('Vault', () => {
         const durationIndex = 0
 
         await expect(vault.newDeposit(invalidAmount, durationIndex))
-            .to.be.revertedWith("ZeroAmount()")
+            .to.be.revertedWith("Vault: zero amount")
     })
 
     it('vault: new deposit triggers update pool', async () => {
@@ -282,7 +282,7 @@ describe('Vault', () => {
         const invalidDurationIndex = (await vault.getDurations()).length
 
         await expect(vault.newDeposit(amount, invalidDurationIndex))
-            .to.be.revertedWith("IndexOutOfBounds(5, 5)")
+            .to.be.revertedWith("Vault: invalid index")
     })
 
     it('vault: new deposit', async () => {
@@ -336,7 +336,7 @@ describe('Vault', () => {
         let invalidId = 1
 
         await expect(vault.updateDeposit(amount, invalidId))
-            .to.be.revertedWith("NoDepositMade()")
+            .to.be.revertedWith("Vault: no deposit made")
     })
 
     it('vault: update deposit fails if caller is not depositor', async () => {
@@ -348,7 +348,7 @@ describe('Vault', () => {
         // then make deposit to depositId == 1 as wallet1
         let id = 0
         await expect(vault1.updateDeposit(amount, id))
-            .to.be.revertedWith(`CallerIsNotDepositor(\"${wallet1.address}\", \"${wallet0.address}\")`)
+            .to.be.revertedWith("Vault: not depositor")
     })
 
     it('vault: update deposit', async () => {
@@ -423,7 +423,7 @@ describe('Vault', () => {
 
         let id = 0
         await expect(vault1.withdraw(amount, id))
-            .to.be.revertedWith(`CallerIsNotDepositor(\"${wallet1.address}\", \"${wallet0.address}\")`)
+            .to.be.revertedWith("Vault: not depositor")
     })
 
     it('vault: withdraw fails if deposit is already withdrawn', async () => {
@@ -451,7 +451,7 @@ describe('Vault', () => {
 
         // expect another withdrawal to fail
         await expect(vault.withdraw(amount, id))
-            .to.be.revertedWith('Withdrawn')
+            .to.be.revertedWith('Vault: withdrawn')
     })
 
     it('vault: withdraw fails if withdrawing amount larger than that deposited', async () => {
@@ -495,7 +495,7 @@ describe('Vault', () => {
         // get locked until timestamp
         const lockedUntilTimestamp = (await vault.getDeposit(id)).withdrawTimestamp
         await expect(vault.withdraw(amount, id))
-            .to.be.revertedWith(`LockedUntil(${lockedUntilTimestamp})`)
+            .to.be.revertedWith("Vault: locked")
     })
 
     it('vault: withdraw', async () => {
@@ -544,7 +544,7 @@ describe('Vault', () => {
         // invalid because no deposits have been made
         const invalidId = 1
         await expect(vault.pendingReward(invalidId))
-            .to.be.revertedWith("NoDepositMade()")
+            .to.be.revertedWith("Vault: no deposit made")
     })
 
     it('vault: pending reward fails if caller is not depositor', async () => {
@@ -556,7 +556,7 @@ describe('Vault', () => {
         // get the most recent depositId
         let id = (await vault.depositId()).sub(1)
         await expect(vault1.pendingReward(id))
-            .to.be.revertedWith("CallerIsNotDepositor")
+            .to.be.revertedWith("Vault: not depositor")
     })
 
     it('vault: pending reward fails if deposit is already withdrawn', async () => {
@@ -585,7 +585,7 @@ describe('Vault', () => {
 
         // expect call to fail since deposit is withdrawn
         await expect(vault.pendingReward(id))
-            .to.be.revertedWith('Withdrawn()')
+            .to.be.revertedWith("Vault: withdrawn")
     })
 
     it('vault: pending reward', async () => {
@@ -650,7 +650,7 @@ describe('Vault', () => {
         // invalid because no deposits have been made
         const invalidId = 1
         await expect(vault.claimReward(invalidId))
-            .to.be.revertedWith("NoDepositMade()")
+            .to.be.revertedWith("Vault: no deposit made")
     })
 
     it('vault: claim reward fails if caller is not depositor', async () => {
@@ -662,7 +662,7 @@ describe('Vault', () => {
         // get the most recent depositId
         let id = (await vault.depositId()).sub(1)
         await expect(vault1.claimReward(id))
-            .to.be.revertedWith(`CallerIsNotDepositor(\"${wallet1.address}\", \"${wallet0.address}\")`)
+            .to.be.revertedWith("Vault: not depositor")
     })
 
     it('vault: claim reward fails if deposit is already withdrawn', async () => {
@@ -691,7 +691,7 @@ describe('Vault', () => {
 
         // expect call to fail since deposit is withdrawn
         await expect(vault.claimReward(id))
-            .to.be.revertedWith('Withdrawn()')
+            .to.be.revertedWith('Vault: withdrawn')
     })
 
     it('vault: claim reward emits Reward Claimed event', async () => {
@@ -746,7 +746,7 @@ describe('Vault', () => {
     it('vault: set treasury with invalid address fails', async () => {
         const invalidTreasury = constants.AddressZero       // invalid because 0x000..00 can not receive funds
         await expect(vault.setFeeHandler(invalidTreasury))
-            .to.be.revertedWith("ZeroAddress()")
+            .to.be.revertedWith("FeeCollector: zero address")
     })
 
     it('vault: set treasury', async () => {
@@ -771,7 +771,7 @@ describe('Vault', () => {
     it('vault: set fee with invalid percent fails', async () => {
         const invalidFee = 101      // invalid because max percent == 100
         await expect(vault.setCollectorPercent(invalidFee))
-            .to.be.revertedWith("InvalidPercent(101, 0)")
+            .to.be.revertedWith("FeeCollector: percent exceeds max")
     })
 
     it('vault: set fee', async () => {
