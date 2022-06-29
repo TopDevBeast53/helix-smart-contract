@@ -67,11 +67,11 @@ contract FeeMinter is Ownable, OwnableTimelock {
 
             uint256 toMintPercent = _toMintPercents[i];
             percentSum += toMintPercent;
-            require(percentSum <= 100, "FeeMinter: percent sum exceeds 100");
+            require(percentSum <= _percent(), "FeeMinter: percent sum exceeds 100");
 
             _toMintPercent[_key(minter)] = toMintPercent;
         }
-        require(percentSum == 100, "FeeMinter: percents do not total 100");
+        require(percentSum == _percent(), "FeeMinter: percents do not total 100");
 
         minters = _minters;
 
