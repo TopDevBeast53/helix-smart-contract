@@ -132,12 +132,12 @@ module.exports = {
     autoHelix: {
         1: '',
         3: '0x3F98698C924941EDe401085D6B932C88e75E7C45',
-        4: '0x3Bd2FAa12d81025404853Fe160E1EEc39d3913E2',
+        4: '0xD7a02f6B217E36f9e6fAE3e739710d597363BA0c',
     },
     autoHelixImplementation: {
         1: '',
         3: '0xe9987A2fFCe10623680de0F4c5f66566b53E739E',
-        4: '0x009fA06d5aBB2ae4326B174C4004dD97f920F826',
+        4: '0x2477d173A3A44C753125848f86A0AAD3F2c493ee',
     },
     multicall: {
         1: '',
