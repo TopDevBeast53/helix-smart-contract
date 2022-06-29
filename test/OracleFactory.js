@@ -66,28 +66,28 @@ describe('OracleFactory', () => {
         const invalidToken1Address = constants.ZERO_ADDRESS
 
         await expect(oracleFactory.create(invalidToken0Address, tokenB.address))
-            .to.be.revertedWith("ZeroAddress()")
+            .to.be.revertedWith("OracleFactory: zero address")
 
         await expect(oracleFactory.create(invalidToken0Address, tokenB.address))
-            .to.be.revertedWith("ZeroAddress()")
+            .to.be.revertedWith("OracleFactory: zero address")
     })
 
     it('oracleFactory: create oracle as non-owner/non-factory fails', async () => {
         // expect call to fail since msg.sender == wallet1.address
         await expect(oracleFactory1.create(tokenA.address, tokenB.address))
-            .to.be.revertedWith(`InvalidCaller(\"${wallet1.address}\")`)
+            .to.be.revertedWith("OracleFactory: invalid caller")
     })
 
     it('oracleFactory: create oracle with identical token addresses fails', async () => {
         await expect(oracleFactory.create(tokenA.address, tokenA.address))
-            .to.be.revertedWith("IdenticalTokens()")
+            .to.be.revertedWith("OracleFactory: identical addresses")
     })
 
     it('oracleFactory: create oracle when oracle already exists fails', async () => {
         // Call as factory first since pair has to be created in factory to avoid revert
         await factory.createPair(tokenA.address, tokenB.address)
         await expect(oracleFactory.create(tokenA.address, tokenB.address))
-            .to.be.revertedWith(`OracleExists(\"${tokenA.address}\", \"${tokenB.address}\")`)
+            .to.be.revertedWith("OracleFactory: already created")
     })
 
     it('oracleFactory: create oracle', async () => {
@@ -119,13 +119,13 @@ describe('OracleFactory', () => {
 
     it('oracleFactory: update when oracle not created fails', async () => {
         await expect(oracleFactory.update(tokenA.address, tokenB.address))
-            .to.be.revertedWith(`OracleDoesNotExist(\"${tokenA.address}\", \"${tokenB.address}\")`)
+            .to.be.revertedWith("OracleFactory: not created")
     })
 
     it('oracleFactory: update with no reserves fails', async () => {
         await factory.createPair(tokenA.address, tokenB.address)
         await expect(oracleFactory.update(tokenA.address, tokenB.address))
-            .to.be.revertedWith("NoReserves(0, 0)")
+            .to.be.revertedWith("OracleFactory: no reserves in pair")
     })
 
     it('oracleFactory: update updates oracle state', async () => {
@@ -259,7 +259,7 @@ describe('OracleFactory', () => {
 
     it('oracleFactory: get oracle that hasn\'t been created fails', async () => {
         await expect(oracleFactory.getOracle(tokenA.address, tokenA.address))
-            .to.be.revertedWith("OracleDoesNotExist")
+            .to.be.revertedWith("OracleFactory: not created")
     })
 
     function print(str) {

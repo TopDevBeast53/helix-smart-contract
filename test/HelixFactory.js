@@ -33,14 +33,14 @@ describe("HelixFactory", () => {
 
     it("factory: create pair with identical tokens fails", async () => {
         await expect(factory.createPair(tokenA.address, tokenA.address))
-            .to.be.revertedWith("IdenticalTokens()")
+            .to.be.revertedWith("Factory: identical addresses")
     })
 
     it("factory: create pair with zero address token fails", async () => {
         await expect(factory.createPair(constants.ZERO_ADDRESS, tokenB.address))
-            .to.be.revertedWith("ZeroAddress()")
+            .to.be.revertedWith("Factory: zero address")
         await expect(factory.createPair(tokenC.address, constants.ZERO_ADDRESS))
-            .to.be.revertedWith("ZeroAddress()")
+            .to.be.revertedWith("Factory: zero address")
     })
 
     it("factory: create pair when pair exists fails", async () => {
@@ -48,7 +48,7 @@ describe("HelixFactory", () => {
         const loTokenAddress = tokenA.address <= tokenB.address ? tokenA.address : tokenB.address
         const hiTokenAddress = loTokenAddress == tokenA.address ? tokenB.address : tokenA.address
         await expect(factory.createPair(tokenA.address, tokenB.address))
-            .to.be.revertedWith(`PairAlreadyExists(\"${loTokenAddress}\", \"${hiTokenAddress}\")`)
+            .to.be.revertedWith("Factory: pair exists")
     })
 
     it("factory: create pair", async () => {
@@ -72,7 +72,7 @@ describe("HelixFactory", () => {
     it("factory: setFeeTo", async () => {
         await expect(factory.connect(other)
             .setFeeTo(other.address))
-            .to.be.revertedWith(`NotFeeToSetter(\"${other.address}\", \"${wallet.address}\")`)
+            .to.be.revertedWith("Factory: not feeToSetter")
         await factory.setFeeTo(wallet.address)
         expect(await factory.feeTo()).to.eq(wallet.address)
     })
@@ -80,11 +80,11 @@ describe("HelixFactory", () => {
     it("factory: setFeeToSetter", async () => {
         await expect(factory.connect(other)
             .setFeeToSetter(other.address))
-            .to.be.revertedWith(`NotFeeToSetter(\"${other.address}\", \"${wallet.address}\")`)
+            .to.be.revertedWith("Factory: not feeToSetter")
         await factory.setFeeToSetter(other.address)
         expect(await factory.feeToSetter()).to.eq(other.address)
         await expect(factory.setFeeToSetter(wallet.address))
-            .to.be.revertedWith(`NotFeeToSetter(\"${wallet.address}\", \"${other.address}\")`)
+            .to.be.revertedWith("Factory: not feeToSetter")
     })
 
     async function getContract(name, address) {

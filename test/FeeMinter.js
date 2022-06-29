@@ -61,33 +61,33 @@ describe("Fee Minter", () => {
 
     it("feeMinter: set to mint percents with array length mismatch fails", async () => {
         await expect(feeMinter.setToMintPercents([], [1]))
-            .to.be.revertedWith("NotEqual(0, 1)")
+            .to.be.revertedWith("FeeMinter: array length mismatch")
     })
 
     it("feeMinter: set to mint percents with zero address fails", async () => {
         const minters = [constants.AddressZero]
         const toMintPercents = [100]
         await expect(feeMinter.setToMintPercents(minters, toMintPercents))
-            .to.be.revertedWith("ZeroAddress()")
+            .to.be.revertedWith("FeeMinter: zero address")
     })
 
     it("feeMinter: set to mint percents with invalid to mint percent fails", async () => {
         const minters = [wallet0.address]
         const toMintPercents = [10100]  // 101.00%
         await expect(feeMinter.setToMintPercents(minters, toMintPercents))
-            .to.be.revertedWith("NotLessThanOrEqualTo(10100, 10000)") 
+            .to.be.revertedWith("FeeMinter: percent sum exceeds 100")
     })
 
     it("feeMinter: set to mint percents with percents not totaling 100 fails", async () => {
         let minters = [wallet0.address]
         let toMintPercents = [99]   // 99.00%
         await expect(feeMinter.setToMintPercents(minters, toMintPercents))
-            .to.be.revertedWith("NotEqual(99, 10000)") 
+            .to.be.revertedWith("FeeMinter: percents do not total 100")
 
         minters = [wallet0.address, wallet1.address]
         toMintPercents = [97, 2]
         await expect(feeMinter.setToMintPercents(minters, toMintPercents))
-            .to.be.revertedWith("NotEqual(99, 10000)") 
+            .to.be.revertedWith("FeeMinter: percents do not total 100")
     })
 
     it("feeMinter: set to mint percents", async () => {
