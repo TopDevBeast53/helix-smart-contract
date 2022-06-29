@@ -139,7 +139,7 @@ module.exports = {
         3: '0xe9987A2fFCe10623680de0F4c5f66566b53E739E',
         4: '0x009fA06d5aBB2ae4326B174C4004dD97f920F826',
     },
-    multiCall: {
+    multicall: {
         1: '',
         3: '',
         4: '0x48ebE03ca5787A28633fbB9FEb6086DaE51AFb4d',

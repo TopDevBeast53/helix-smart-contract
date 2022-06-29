@@ -319,7 +319,11 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
             currentAmount -= currentWithdrawFee;
         }
 
-        user.helixAtLastUserAction = user.shares * balanceOf() / totalShares;
+        if (totalShares > 0) {
+            user.helixAtLastUserAction = user.shares * balanceOf() / totalShares;
+        } else {
+            user.helixAtLastUserAction = 0;
+        }
         user.lastUserActionTime = block.timestamp;
 
         if (currentWithdrawFee > 0) {
