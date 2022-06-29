@@ -6,7 +6,7 @@ const contracts = require("../../constants/contracts")
 const initials = require("../../constants/initials")
 
 const feeHandlerAddress = contracts.feeHandler[env.network]
-const collectorPercent = contracts.LP_SWAP_COLLECTOR_PERCENT[env.network]
+const collectorPercent = initials.LP_SWAP_COLLECTOR_PERCENT[env.network]
 
 const deployLpSwap = async (deployer) => {
     print(`Deploy LP Swap`)
