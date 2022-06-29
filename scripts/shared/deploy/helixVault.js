@@ -10,6 +10,7 @@ const feeHandlerAddress = contracts.feeHandler[env.network]
 const feeMinterAddress = contracts.feeMinter[env.network]
 const startBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
 const lastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.network]
+const collectorPercent = initials.HELIX_VAULT_COLLECTOR_PERCENT[env.network]
 
 const deployHelixVault = async (deployer) => {
     print(`Deploy Helix Vault`);
@@ -18,6 +19,7 @@ const deployHelixVault = async (deployer) => {
     print(`feeMinterAddress: ${feeMinterAddress}`)
     print(`startBlock: ${startBlock}`)
     print(`lastRewardBlock: ${lastRewardBlock}`)
+    print(`collectorPercent: ${collectorPercent}`)
 
     const VaultContract = await ethers.getContractFactory('HelixVault');
     const vaultProxy = await upgrades.deployProxy(
@@ -27,7 +29,8 @@ const deployHelixVault = async (deployer) => {
             feeHandlerAddress,
             feeMinterAddress,
             startBlock,
-            lastRewardBlock
+            lastRewardBlock,
+            collectorPercent
         ]
     )     
     await vaultProxy.deployTransaction.wait();

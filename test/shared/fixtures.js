@@ -11,9 +11,11 @@ const feeMinterToMintPercents = initials.FEE_MINTER_TO_MINT_PERCENTS[env.network
 
 const refRegStakeRewardPercent = initials.REFERRAL_STAKE_REWARD_PERCENT[env.network]
 const refRegSwapRewardPercent = initials.REFERRAL_SWAP_REWARD_PERCENT[env.network]
+const refRegCollectorPercent = initials.REFERRAL_COLLECTOR_PERCENT[env.network]
 
 const vaultStartBlock = initials.HELIX_VAULT_START_BLOCK[env.network]                         
 const vaultLastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.network]
+const vaultCollectorPercent = initials.HELIX_VAULT_COLLECTOR_PERCENT[env.network]
 
 const chefStartBlock = initials.MASTERCHEF_START_BLOCK[env.network]
 const chefStakingPercent = initials.MASTERCHEF_STAKING_PERCENT[env.network]
@@ -149,7 +151,13 @@ module.exports.fullExchangeFixture = async () => {
 
     // 5. deploy fee handler
     const feeHandler = await feeHandlerContractFactory.deploy()
-    await feeHandler.initialize(treasuryAddress, helixChefNft.address, helixToken.address)
+    const defaultNftChefPercent = 0
+    await feeHandler.initialize(
+        treasuryAddress, 
+        helixChefNft.address, 
+        helixToken.address, 
+        defaultNftChefPercent
+    )
 
     // 6. deploy referral register
     const referralRegister = await referralRegisterContractFactory.deploy()
@@ -159,7 +167,8 @@ module.exports.fullExchangeFixture = async () => {
         feeMinter.address,
         refRegStakeRewardPercent,
         refRegSwapRewardPercent,
-        0
+        0,
+        refRegCollectorPercent
     )
     
     // 7. deploy helix vault
@@ -169,7 +178,8 @@ module.exports.fullExchangeFixture = async () => {
         feeHandler.address,
         feeMinter.address,
         vaultStartBlock,
-        vaultLastRewardBlock
+        vaultLastRewardBlock,
+        vaultCollectorPercent
     )
 
     // 8. deploy factory

@@ -11,6 +11,7 @@ const feeMinterAddress = contracts.feeMinter[env.network]
 const stakeRewardPercent = initials.REFERRAL_STAKE_REWARD_PERCENT[env.network]
 const swapRewardPercent = initials.REFERRAL_SWAP_REWARD_PERCENT[env.network]
 const lastMintBlock = initials.REFERRAL_LAST_MINT_BLOCK[env.network]
+const collectorPercent = initials.REFERRAL_COLLECTOR_PERCENT[env.network]
 
 const deployReferralRegister = async (deployer) => {
     print("deploy referral register")
@@ -20,6 +21,7 @@ const deployReferralRegister = async (deployer) => {
     print(`stakeRewardPercent: ${stakeRewardPercent}`)
     print(`swapRewardPercent: ${swapRewardPercent}`)
     print(`lastMintBlock: ${lastMintBlock}`)
+    print(`collectorPercent: ${collectorPercent}`)
 
     const ReferralRegister = await ethers.getContractFactory(`ReferralRegister`)
     ref = await upgrades.deployProxy(
@@ -30,7 +32,8 @@ const deployReferralRegister = async (deployer) => {
             feeMinterAddress,
             stakeRewardPercent, 
             swapRewardPercent,
-            lastMintBlock
+            lastMintBlock,
+            collectorPercent
         ]
     )
     await ref.deployTransaction.wait()

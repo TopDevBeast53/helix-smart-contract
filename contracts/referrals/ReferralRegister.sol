@@ -115,13 +115,15 @@ contract ReferralRegister is
         address _feeMinter,
         uint256 _stakeRewardPercent, 
         uint256 _swapRewardPercent,
-        uint256 _lastMintBlock
+        uint256 _lastMintBlock,
+        uint256 _collectorPercent
     ) external initializer {
         __Ownable_init();
         __OwnableTimelock_init();
         __ReentrancyGuard_init();
         feeMinter = IFeeMinter(_feeMinter);
         _setFeeHandler(_feeHandler);
+        _setCollectorPercent(_collectorPercent);
 
         helixToken = _helixToken;
         stakeRewardPercent = _stakeRewardPercent;
