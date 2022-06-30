@@ -154,7 +154,7 @@ contract HelixVault is
         __ReentrancyGuard_init();
 
         _setFeeHandler(_feeHandler);
-        _setCollectorPercent(_collectorPercent);
+        _setCollectorPercentAndDecimals(_collectorPercent, 2); // Default to 2 decimals of precision
         feeMinter = IFeeMinter(_feeMinter);
 
         token = _token;
@@ -376,9 +376,12 @@ contract HelixVault is
         emit SetFeeMinter(msg.sender, _feeMinter);
     }
 
-    /// Called by the owner to set the _collectorPercent
-    function setCollectorPercent(uint256 _collectorPercent) external onlyTimelock {
-        _setCollectorPercent(_collectorPercent);
+    /// Called by the owner to set the _collectorPercent and _decimals of precision
+    function setCollectorPercentAndDecimals(uint256 _collectorPercent, uint256 _decimals) 
+        external 
+        onlyTimelock 
+    {
+        _setCollectorPercentAndDecimals(_collectorPercent, _decimals);
     }
 
     /// Called to get _depositId's pending reward

@@ -191,7 +191,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
     it('referralRegister: withdraw helix to referrer succeeds', async () => {
         // add a referrer
         await referralRegister.addReferrer(referrer)
-        await referralRegister.setCollectorPercent(0)
+        await referralRegister.setCollectorPercentAndDecimals(0, 0)
     
         // confirm that the referrer is added
         expect(await referralRegister.referrers(owner.address)).to.eq(referrer)
