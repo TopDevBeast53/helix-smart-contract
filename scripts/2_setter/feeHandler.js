@@ -5,7 +5,8 @@
  */
 
 const { ethers } = require("hardhat")
-const { print, loadContract, setNftChefPercent } = require("../shared/utilities")
+const { print, loadContract } = require("../shared/utilities")
+const { setNftChefPercent } = require("../shared/setters")
 
 const env = require("../constants/env")
 const contracts = require("../constants/contracts")
@@ -25,7 +26,7 @@ const lpSwapAddress = contracts.lpSwap[env.network]
 const lpSwapNftChefPercent = initials.FEE_HANDLER_LP_SWAP_NFT_CHEF_PERCENT[env.network]
 
 // const yieldSwapAddress = contracts.yieldSwap[env.network]
-// const yieldSwapNftChefPercent = initials.FEE_HANDLER_yield_SWAP_NFT_CHEF_PERCENT[env.network]
+// const yieldSwapNftChefPercent = initials.FEE_HANDLER_YIELD_SWAP_NFT_CHEF_PERCENT[env.network]
 
 async function main() {
     const [wallet] = await ethers.getSigners()
@@ -33,10 +34,10 @@ async function main() {
 
     const feeHandler = await loadContract(feeHandlerName, feeHandlerAddress, wallet)
 
-    await setNftChefPercent(feeHandlerAddress, feeHandlerName, vaultAddress, vaultNftChefPercent)
-    await setNftChefPercent(feeHandlerAddress, feeHandlerName, referralRegisterAddress, referralRegisterNftChefPercent)
-    await setNftChefPercent(feeHandlerAddress, feeHandlerName, lpSwapAddress, lpSwapNftChefPercent)
-    // await setNftChefPercent(feeHandlerAddress, feeHandlerName, yieldSwapAddress, yielSwapNftChefPercent)
+    await setNftChefPercent(feeHandler, feeHandlerName, vaultAddress, vaultNftChefPercent)
+    await setNftChefPercent(feeHandler, feeHandlerName, referralRegisterAddress, referralRegisterNftChefPercent)
+    await setNftChefPercent(feeHandler, feeHandlerName, lpSwapAddress, lpSwapNftChefPercent)
+    // await setNftChefPercent(feeHandler, feeHandlerName, yieldSwapAddress, yielSwapNftChefPercent)
 
     print("done")
 }    

@@ -36,13 +36,13 @@ module.exports = {
         1: 33,      // 33%
         3: 33,
         4: 33,
-    }
+    },
 
     FEE_HANDLER_YIELD_SWAP_NFT_CHEF_PERCENT: {
         1: 33,      // 33%
         3: 33,
         4: 33,
-    }
+    },
 
     // --------- Referral Register --------- //
 
