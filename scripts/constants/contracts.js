@@ -17,7 +17,7 @@ module.exports = {
     timelock: {
         1: '',
         3: '0x202661dd1deE66f5f2A9e71fDC8d9706dd98E6fb',
-        4: '0x5c97B192735D14E1b89c8A1b3143b4d44018b97f',
+        4: '0x61eCe3086fE3011bE5f3626EA166496bfFc72e38',
     },
     helixToken: {
         1: '0x231CC03E6d8b7368eC2aBfAfb5f73D216c8af980', // launched 05/19
@@ -67,7 +67,7 @@ module.exports = {
     referralRegister: {
         1: '',
         3: '0x49B240E9ae6Fa679E1Ff740D37a7A3716988eE61',
-        4: '0x555A63C2ff6B34C72670C61D00C0aB957292dea0',
+        4: '0xb5c8f433625a4e3781B4A3123aa8195f7B065092',
     },
     referralRegisterImplementation: {
         1: '',

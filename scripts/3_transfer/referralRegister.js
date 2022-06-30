@@ -2,7 +2,7 @@
  * @dev Used to transfer ownership to multiSig/timelock
  * 
  * Run from project root using:
- *     npx hardhat run scripts/transfer/referralRegister.js --network ropsten
+ *     npx hardhat run scripts/3_transfer/referralRegister.js --network ropsten
  */
 
 const verbose = true
