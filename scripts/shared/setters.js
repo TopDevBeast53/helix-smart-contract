@@ -9,12 +9,18 @@ const setCollectorPercent = async (contract, contractName, percent) => {
     await tx.wait()                                                                             
 }                                                                                                  
                                                                                                    
-// Set the nft chef percent on the contract                                                        
-const setNftChefPercent = async (contract, contractName, percent) => {                             
+// Set the default nft chef percent on the contract                                                        
+const setDefaultNftChefPercent = async (contract, contractName, percent) => {                             
     print(`set ${contractName} nft chef percent to ${percent}`)                                    
-    const tx = await contract.setNftChefPercent(percent)                                        
+    const tx = await contract.setDefaultNftChefPercent(percent)                                        
     await tx.wait()                                                                                                                                                                                      
 }                                                                                                  
+
+const setNftChefPercent = async (contract, contractName, source, nftChefPercent) => {
+    print(`set ${contractName} nftChefPercent for ${source} to ${nftChefPercent}`)
+    const tx = await contract.setNftChefPercent(source, nftChefPercent)
+    await tx.wait()
+}
                                                                                                    
 // Transfer timelock ownership of the contract                                                     
 const transferTimelockOwnership = async (contract, contractName, timelockOwner) => {               
@@ -91,16 +97,17 @@ const setSwapRewards = async (contract, contractName, swapRewardsAddress) => {
 }
 
 module.exports = {
-    setCollectorPercent: setCollectorPercent,
-    setNftChefPercent: setNftChefPercent,
-    transerTimelockOwnership: transferTimelockOwnership,
-    transferOwnership: transferOwnership,
-    setToMintPercents: setToMintPercents,
-    setOracleFactory: setOracleFactory,
-    addAccruer: addAccruer,
-    addMinter: addMinter,
-    addStaker: addStaker,
-    setReferralRegister: setReferralRegister,
-    addRecorder: addRecorder,
-    setSwapRewards: setSwapRewards,
+    setCollectorPercent,
+    setDefaultNftChefPercent,
+    setNftChefPercent,
+    transferTimelockOwnership,
+    transferOwnership,
+    setToMintPercents,
+    setOracleFactory,
+    addAccruer,
+    addMinter,
+    addStaker,
+    setReferralRegister,
+    addRecorder,
+    setSwapRewards,
 }
