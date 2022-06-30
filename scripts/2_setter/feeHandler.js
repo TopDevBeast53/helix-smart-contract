@@ -25,7 +25,7 @@ const lpSwapAddress = contracts.lpSwap[env.network]
 const lpSwapNftChefPercent = initials.FEE_HANDLER_LP_SWAP_NFT_CHEF_PERCENT[env.network]
 
 // const yieldSwapAddress = contracts.yieldSwap[env.network]
-// const yieldSwapNftChefPercent = initials.FEE_HANDLER_yield_SWAP_NFT_CHEF_PERCENT[env.network]
+// const yieldSwapNftChefPercent = initials.FEE_HANDLER_YIELD_SWAP_NFT_CHEF_PERCENT[env.network]
 
 async function main() {
     const [wallet] = await ethers.getSigners()
