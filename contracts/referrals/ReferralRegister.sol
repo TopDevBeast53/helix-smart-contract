@@ -123,7 +123,7 @@ contract ReferralRegister is
         __ReentrancyGuard_init();
         feeMinter = IFeeMinter(_feeMinter);
         _setFeeHandler(_feeHandler);
-        _setCollectorPercent(_collectorPercent);
+        _setCollectorPercentAndDecimals(_collectorPercent, 2); // Default to 2 decimals of precision
 
         helixToken = _helixToken;
         stakeRewardPercent = _stakeRewardPercent;
@@ -273,8 +273,11 @@ contract ReferralRegister is
     }
    
     /// Called by the owner to set the percent charged on withdrawals
-    function setCollectorPercent(uint256 _collectorPercent) external onlyTimelock {
-        _setCollectorPercent(_collectorPercent);
+    function setCollectorPercentAndDecimals(uint256 _collectorPercent, uint256 _decimals) 
+        external 
+        onlyTimelock 
+    {
+        _setCollectorPercentAndDecimals(_collectorPercent, _decimals);
     }
 
     /// Return the address of the recorder at _index

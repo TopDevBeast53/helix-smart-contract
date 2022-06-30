@@ -764,27 +764,27 @@ describe('Vault', () => {
 
     it('vault: set fee as non-owner fails', async () => {
         const fee = 0
-        await expect(vault1.setCollectorPercent(fee))
+        await expect(vault1.setCollectorPercentAndDecimals(fee, 0))
             .to.be.revertedWith("CallerIsNotTimelockOwner")
     })
 
     it('vault: set fee with invalid percent fails', async () => {
         const invalidFee = 101      // invalid because max percent == 100
-        await expect(vault.setCollectorPercent(invalidFee))
+        await expect(vault.setCollectorPercentAndDecimals(invalidFee, 0))
             .to.be.revertedWith("FeeCollector: percent exceeds max")
     })
 
     it('vault: set fee', async () => {
         const fee = 50
-        await vault.setCollectorPercent(fee)
+        await vault.setCollectorPercentAndDecimals(fee, 0)
         expect(await vault.collectorPercent()).to.eq(fee)
     });
 
     it('vault: set fee emits SetFee event', async () => {
         const fee = 50
-        await expect(vault.setCollectorPercent(fee))
-            .to.emit(vault, "SetCollectorPercent")
-            .withArgs(wallet0.address, fee)
+        await expect(vault.setCollectorPercentAndDecimals(fee, 0))
+            .to.emit(vault, "SetCollectorPercentAndDecimals")
+            .withArgs(wallet0.address, fee, 0)
     })
 
     async function getAccTokenPerShare(blockNumber) {

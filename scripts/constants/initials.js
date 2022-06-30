@@ -43,8 +43,8 @@ module.exports = {
     },
     REFERRAL_COLLECTOR_PERCENT: {
         1: 0,
-        3: 10,
-        4: 10,
+        3: 1000, // 10.00%
+        4: 1000,
     },
 
     // --------- MasterChef --------- //
@@ -105,8 +105,8 @@ module.exports = {
 
     HELIX_VAULT_COLLECTOR_PERCENT: {
         1: 0,
-        3: 10,
-        4: 10,
+        3: 1000, // 10.00%
+        4: 1000,
     },
 
 
@@ -277,7 +277,7 @@ module.exports = {
     // Sum:        100.00%
     FEE_MINTER_TO_MINT_PERCENTS: {
         3: [8333, 476, 1191],
-        4: [83, 5, 12],
+        4: [8333, 476, 1191],
     },
 
     // --------- Treasury MultiSig --------- //
@@ -376,15 +376,15 @@ module.exports = {
     },
 
     YIELD_SWAP_COLLECTOR_PERCENT: {
-        3: 10,
-        4: 10,
+        3: 1000, // 10.00%
+        4: 1000,
     },
 
     // --------- LpSwap --------- //
     
     LP_SWAP_COLLECTOR_PERCENT: {
-        3: 10, 
-        4: 10, 
+        3: 1000, // 10.00%
+        4: 1000, 
     },
 
     // --------- Bridge --------- //
