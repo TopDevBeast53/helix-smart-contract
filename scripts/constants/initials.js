@@ -15,7 +15,19 @@ module.exports = {
     // --------- FeeHandler --------- //
 
     FEE_HANDLER_DEFAULT_NFT_CHEF_PERCENT:{
-        1: 0,
+        1: 33,      // 33%
+        3: 33,
+        4: 33,
+    },
+
+    FEE_HANDLER_HELIX_VAULT_NFT_CHEF_PERCENT: {
+        1: 33,      // 33%
+        3: 33,
+        4: 33,
+    },
+
+    FEE_HANDLER_REFERRAL_REGISTER_NFT_CHEF_PERCENT: {
+        1: 50,      // 50%
         3: 50,
         4: 50,
     },
@@ -104,11 +116,10 @@ module.exports = {
     },
 
     HELIX_VAULT_COLLECTOR_PERCENT: {
-        1: 0,
+        1: 150,     // 1.50%
         3: 1000, // 10.00%
         4: 1000,
     },
-
 
     // --------- VIP Presale --------- //
 
@@ -376,15 +387,17 @@ module.exports = {
     },
 
     YIELD_SWAP_COLLECTOR_PERCENT: {
-        3: 1000, // 10.00%
-        4: 1000,
+        1: 50, // 0.50%
+        3: 50, // 0.50%
+        4: 50,
     },
 
     // --------- LpSwap --------- //
     
     LP_SWAP_COLLECTOR_PERCENT: {
-        3: 1000, // 10.00%
-        4: 1000, 
+        1: 50, // 0.50% 
+        3: 50, // 0.50%
+        4: 50, 
     },
 
     // --------- Bridge --------- //
