@@ -47,38 +47,32 @@ module.exports = {
     // --------- Referral Register --------- //
 
     REFERRAL_STAKE_REWARD_PERCENT: {
-        1: 0,
+        1: 5, // 5%
         3: 5,
         4: 5,
-        56: 5, // 5%
-        97: 5, // 5%
     },
     REFERRAL_SWAP_REWARD_PERCENT: {
-        1: 0,
+        1: 5, // 5%
         3: 5,
         4: 5,
-        56: 5, // 5%
-        97: 5, // 5%
     },
     REFERRAL_LAST_MINT_BLOCK: {
-        1: 0,
+        1: 0, // if 0, will be set with block.number when deploy
         3: 0,
         4: 0,
     },
     REFERRAL_COLLECTOR_PERCENT: {
-        1: 0,
-        3: 1000, // 10.00%
+        1: 1000, // 10.00%
+        3: 1000, 
         4: 1000,
     },
 
     // --------- MasterChef --------- //
 
     MASTERCHEF_START_BLOCK : {
-        1: 0,
+        1: 0, // if 0, will be set with block.number when deploy
         3: 0,
         4: 0,
-        56: 0,
-        97: 0,
     },
     MASTERCHEF_STAKING_PERCENT : {
         1: 714000,
@@ -111,27 +105,192 @@ module.exports = {
 
     // --------- Helix Vault --------- //
     HELIX_VAULT_START_BLOCK : {
-        1: 0,
+        1: 0, // if 0, will be set with block.number when deploy
         3: 0,
         4: 0,
-        56: 0, 
-        97: 0,
     },
 
     //block when rewards are no longer being given away
     HELIX_VAULT_LAST_REWARD_BLOCK : {
-        1: 1000000000,
-        3: 1000000000,
-        4: 1000000000,
-        56: 1000000000,
-        97: 1000000000,
+        1: 1972243972, // June 30, 2032
+        3: 1972243972,
+        4: 1972243972,
     },
 
     HELIX_VAULT_COLLECTOR_PERCENT: {
         1: 150,     // 1.50%
-        3: 1000, // 10.00%
+        3: 1000,    // 10.00%
         4: 1000,
     },
+
+    // --------- Fee Minter --------- //
+    
+    // Represents the sum of desired to mint per block rates * 10^18
+    // Farming Rewards: 62.5%
+    // Vault Rewards: 9.375%
+    // Referral Rewards: 3.125%
+    // Team Emissions: 25%
+    FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK: {
+        1: '8000000000000000000',
+        3: '10000000000000000000',
+        4: '10000000000000000000'
+    },
+
+    FEE_MINTER_MINTERS: {
+        1: [masterChefAddress, referralRegisterAddress, vaultAddress],
+        3: [masterChefAddress, referralRegisterAddress, vaultAddress],
+        4: [masterChefAddress, referralRegisterAddress, vaultAddress],
+    },
+
+    // Represents the percents of the to mint per block rate to delegate to each task
+    // Percents to each task with 2 decimals of precision
+    // Chef:        87.5%     (Stake: 62.5% + Dev Team: 25%)
+    // Referral:     3.13%
+    // Vault:        9.37%
+    // Sum:        100.00%
+ 
+    FEE_MINTER_TO_MINT_PERCENTS: {
+        1: [8750, 313, 937],
+        3: [8750, 313, 937],
+        4: [8750, 313, 937],
+    },
+
+    // --------- Treasury MultiSig --------- //
+    
+    TREASURY_MULTISIG_ADMINS: {
+        1: [],
+        3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+    },
+
+    TREASURY_MULTISIG_OWNERS: {
+        1: [],
+        3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+    },
+
+    TREASURY_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
+        1: 1,
+        3: 1,
+        4: 1,
+    },
+
+    TREASURY_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
+        1: 1,
+        3: 1,
+        4: 1,
+    },
+
+    // --------- Owner MultiSig --------- //
+    
+    OWNER_MULTISIG_ADMINS: {
+        1: [],
+        3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+    },
+
+    OWNER_MULTISIG_OWNERS: {
+        1: [],
+        3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+    },
+
+    OWNER_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
+        1: 1,
+        3: 1,
+        4: 1,
+    },
+
+    OWNER_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
+        1: 1,
+        3: 1,
+        4: 1,
+    },
+
+    // --------- Dev Team MultiSig --------- //
+    
+    DEV_TEAM_MULTISIG_ADMINS: {
+        1: [],
+        3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+    },
+
+    DEV_TEAM_MULTISIG_OWNERS: {
+        1: [],
+        3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+    },
+
+    DEV_TEAM_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
+        1: 0,
+        3: 1,
+        4: 1,
+    },
+
+    DEV_TEAM_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
+        1: 0,
+        3: 1,
+        4: 1,
+    },
+
+    // --------- Timelock --------- //
+    
+    TIMELOCK_MIN_DELAY: {
+        3: 21600,   // 6 hours 
+        4: 0,   // 6 hours 
+    },
+
+    TIMELOCK_PROPOSERS: {
+        3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+    },
+
+    TIMELOCK_EXECUTORS: {
+        3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+    },
+
+    // --------- YieldSwap --------- //
+    
+    YIELD_SWAP_MIN_LOCK_DURATION: {
+        1: 300, 
+        3: 300, 
+        4: 300, 
+    },
+    
+    YIELD_SWAP_MAX_LOCK_DURATION: {
+        1: 0,
+        3: 31536000,    // 1 year in seconds
+        4: 31536000,    // 1 year in seconds
+    },
+
+    YIELD_SWAP_COLLECTOR_PERCENT: {
+        1: 50, // 0.50%
+        3: 50, // 0.50%
+        4: 50,
+    },
+
+    // --------- LpSwap --------- //
+    
+    LP_SWAP_COLLECTOR_PERCENT: {
+        1: 50, // 0.50% 
+        3: 50, // 0.50%
+        4: 50, 
+    },
+
+    // --------- Bridge --------- //
+
+    BRIDGE_ADMIN_ADDRESS: {
+        3: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57', 
+        4: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57', 
+    },
+    
+    BRIDGE_FEE_ETH_AMOUNT: {
+        1: '1000000000000000', //0.001 ether  
+        3: '1000000000000000', //0.001 ether  
+        4: '1000000000000000', //0.001 ether 
+    },
+
 
     // --------- VIP Presale --------- //
 
@@ -272,156 +431,5 @@ module.exports = {
         4: 7862400,
         56: 0,
         97: 7862400,     // 91 days, 86400 == 1 day
-    },
-
-    // --------- Fee Minter --------- //
-    
-    // Represents the sum of desired to mint per block rates * 10^18
-    // To mint per block rates:
-    // Chef:        81.90   (Stake: 58.50 + Dev Team: 23.40)
-    // Referral :    4.68
-    // Vault:       11.70
-    // Sum:         98.28
-    FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK: {
-        3: '98280000000000000000',
-        4: '98280000000000000000'
-    },
-
-    FEE_MINTER_MINTERS: {
-        3: [masterChefAddress, referralRegisterAddress, vaultAddress],
-        4: [masterChefAddress, referralRegisterAddress, vaultAddress],
-    },
-
-    // Represents the percents of the to mint per block rate to delegate to each task
-    // Percents to each task with 2 decimals of precision
-    // Chef:        83.33%     (Stake: 59.52% + Dev Team: 23.81%)
-    // Referral:     4.76%
-    // Vault:       11.91%
-    // Sum:        100.00%
-    FEE_MINTER_TO_MINT_PERCENTS: {
-        3: [8333, 476, 1191],
-        4: [8333, 476, 1191],
-    },
-
-    // --------- Treasury MultiSig --------- //
-    
-    TREASURY_MULTISIG_ADMINS: {
-        3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-    },
-
-    TREASURY_MULTISIG_OWNERS: {
-        3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
-        4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
-    },
-
-    TREASURY_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
-        3: 1,
-        4: 1,
-    },
-
-    TREASURY_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
-        3: 1,
-        4: 1,
-    },
-
-    // --------- Owner MultiSig --------- //
-    
-    OWNER_MULTISIG_ADMINS: {
-        3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-    },
-
-    OWNER_MULTISIG_OWNERS: {
-        3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
-        4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
-    },
-
-    OWNER_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
-        3: 1,
-        4: 1,
-    },
-
-    OWNER_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
-        3: 1,
-        4: 1,
-    },
-
-    // --------- Dev Team MultiSig --------- //
-    
-    DEV_TEAM_MULTISIG_ADMINS: {
-        3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-    },
-
-    DEV_TEAM_MULTISIG_OWNERS: {
-        3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
-        4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
-    },
-
-    DEV_TEAM_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
-        3: 1,
-        4: 1,
-    },
-
-    DEV_TEAM_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
-        3: 1,
-        4: 1,
-    },
-
-    // --------- Timelock --------- //
-    
-    TIMELOCK_MIN_DELAY: {
-        3: 21600,   // 6 hours 
-        4: 0,   // 6 hours 
-    },
-
-    TIMELOCK_PROPOSERS: {
-        3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-    },
-
-    TIMELOCK_EXECUTORS: {
-        3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
-        4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
-    },
-
-    // --------- YieldSwap --------- //
-    
-    YIELD_SWAP_MIN_LOCK_DURATION: {
-        3: 300, 
-        4: 300, 
-    },
-    
-    YIELD_SWAP_MAX_LOCK_DURATION: {
-        3: 31536000,    // 1 year in seconds
-        4: 31536000,    // 1 year in seconds
-    },
-
-    YIELD_SWAP_COLLECTOR_PERCENT: {
-        1: 50, // 0.50%
-        3: 50, // 0.50%
-        4: 50,
-    },
-
-    // --------- LpSwap --------- //
-    
-    LP_SWAP_COLLECTOR_PERCENT: {
-        1: 50, // 0.50% 
-        3: 50, // 0.50%
-        4: 50, 
-    },
-
-    // --------- Bridge --------- //
-
-    BRIDGE_ADMIN_ADDRESS: {
-        3: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57', 
-        4: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57', 
-    },
-    
-    BRIDGE_FEE_ETH_AMOUNT: {
-        1: '1000000000000000', //0.001 ether  
-        3: '1000000000000000', //0.001 ether  
-        4: '1000000000000000', //0.001 ether 
     },
 }

@@ -198,10 +198,10 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
         helixToken = _HelixToken;
         devaddr = _devaddr;
         feeMinter = IFeeMinter(_feeMinter);
-        startBlock = _startBlock;
+        startBlock = _startBlock != 0 ? _startBlock : block.number;
         stakingPercent = _stakingPercent;
         devPercent = _devPercent;
-        lastBlockDevWithdraw = _startBlock;
+        lastBlockDevWithdraw = _startBlock != 0 ? _startBlock : block.number;
         refRegister = _referralRegister;
         
         // staking pool
