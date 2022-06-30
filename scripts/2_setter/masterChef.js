@@ -2,9 +2,7 @@
  * @dev Add LP token to MasterChef
  * 
  * Run on bsc-testnet: 
- *      npx hardhat run scripts/2_setter/AddLPTokentoMasterChefPools.js --network testnetBSC
- *      npx hardhat run scripts/2_setter/AddLPTokentoMasterChefPools.js --network rinkeby
- *      npx hardhat run scripts/2_setter/AddLPTokentoMasterChefPools.js --network ropsten
+ *      npx hardhat run scripts/2_setter/masterChef.js --network rinkeby
  */
 const { ethers, network } = require(`hardhat`);
 const contracts = require("../constants/contracts")
