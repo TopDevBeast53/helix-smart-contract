@@ -277,7 +277,7 @@ module.exports = {
     // Sum:        100.00%
     FEE_MINTER_TO_MINT_PERCENTS: {
         3: [8333, 476, 1191],
-        4: [8333, 476, 1191],
+        4: [83, 5, 12],
     },
 
     // --------- Treasury MultiSig --------- //
@@ -350,7 +350,7 @@ module.exports = {
     
     TIMELOCK_MIN_DELAY: {
         3: 21600,   // 6 hours 
-        4: 21600,   // 6 hours 
+        4: 0,   // 6 hours 
     },
 
     TIMELOCK_PROPOSERS: {
