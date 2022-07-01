@@ -99,6 +99,7 @@ module.exports = {
     },
     MASTERCHEF_ALLOC_POINTS:{
         //HELIX-WETH, DAI-USDC, USDC-WETH, DAI-WETH, USDT-USDC
+        1: [25000, 1000, 2500, 2500, 1000],
         3: [3500, 1500, 1500, 1500, 1500],
         4: [3500, 1500, 1500, 1500, 1500]
     },

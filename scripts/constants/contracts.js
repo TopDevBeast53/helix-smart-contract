@@ -42,7 +42,7 @@ module.exports = {
     helixNFTBridge: {
         1: '',
         3: '0xfE5C6695E4DD62ca97737823ef4BBB47D328C328',
-        4: '0xeE2c4840963DdF228C0F21bAAE55cbB6E9dAE3B0',
+        4: '0xCBe3FAA3EF5DfEC20Bb7DF4FeAdbb6A7a5A3E9Cb',
     },
     helixChefNFT: {
         1: '',
