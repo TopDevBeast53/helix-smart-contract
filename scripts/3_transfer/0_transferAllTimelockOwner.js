@@ -8,7 +8,8 @@
 const verbose = true
 
 const { ethers } = require("hardhat");
-const { print, loadContract, transferTimelockOwnership } = require("../shared/utilities")
+const { print, loadContract } = require("../shared/utilities")
+const { transferTimelockOwnership } = require("../shared/setters")
 
 const env = require("./../constants/env")
 const contracts = require("./../constants/contracts")

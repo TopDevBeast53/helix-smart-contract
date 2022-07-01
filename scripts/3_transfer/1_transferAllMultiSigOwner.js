@@ -8,7 +8,8 @@
 const verbose = true
 
 const { ethers } = require("hardhat");
-const { print, loadContract, transferOwnership } = require("../shared/utilities")
+const { print, loadContract } = require("../shared/utilities")
+const { transferOwnership } = require("../shared/setters")
 
 const env = require("./../constants/env")
 const contracts = require("./../constants/contracts")
@@ -91,8 +92,8 @@ async function main() {
     const lpSwap = await loadContract(lpSwapName, lpSwapAddress, wallet) 
     await transferOwnership(lpSwap, lpSwapName, multiSigAddress)
 
-    const yieldSwap = await loadContract(yieldSwapName, yieldSwapAddress, wallet) 
-    await transferOwnership(yieldSwap, yieldSwapName, multiSigAddress)
+    // const yieldSwap = await loadContract(yieldSwapName, yieldSwapAddress, wallet) 
+    // await transferOwnership(yieldSwap, yieldSwapName, multiSigAddress)
 
     print("done")
 }
