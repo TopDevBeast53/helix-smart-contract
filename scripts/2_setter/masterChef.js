@@ -2,9 +2,7 @@
  * @dev Add LP token to MasterChef
  * 
  * Run on bsc-testnet: 
- *      npx hardhat run scripts/2_setter/AddLPTokentoMasterChefPools.js --network testnetBSC
- *      npx hardhat run scripts/2_setter/AddLPTokentoMasterChefPools.js --network rinkeby
- *      npx hardhat run scripts/2_setter/AddLPTokentoMasterChefPools.js --network ropsten
+ *      npx hardhat run scripts/2_setter/masterChef.js --network rinkeby
  */
 const { ethers, network } = require(`hardhat`);
 const contracts = require("../constants/contracts")
@@ -30,7 +28,7 @@ function print(str) {
 
 async function addLiquidity(lpTokenAddress, allocPoint) {
     print(`add liquidity with LpToken:${lpTokenAddress}  AllocPoins:${allocPoint}`)
-    const tx = await contract.add(allocPoint, lpTokenAddress, true, {nonce: nonce++, gasLimit: 3000000})
+    const tx = await contract.add(allocPoint, lpTokenAddress, false, {nonce: nonce++, gasLimit: 3000000})
     await tx.wait()
 }
 

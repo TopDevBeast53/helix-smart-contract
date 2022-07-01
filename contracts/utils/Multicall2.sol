@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.0;
 
-/// Thrown when a call fails
-error CallFailed();
-
 contract Multicall2 {
     struct Call {
         address target;
@@ -17,10 +14,9 @@ contract Multicall2 {
     function aggregate(Call[] memory calls) external returns (uint256 blockNumber, bytes[] memory returnData) {
         blockNumber = block.number;
         returnData = new bytes[](calls.length);
-        uint256 length = calls.length;
-        for (uint256 i = 0; i < length; i++) {
+        for(uint256 i = 0; i < calls.length; i++) {
             (bool success, bytes memory ret) = calls[i].target.call(calls[i].callData);
-            if (!success) revert CallFailed();
+            require(success, "Multicall aggregate: call failed");
             returnData[i] = ret;
         }
     }
@@ -53,11 +49,12 @@ contract Multicall2 {
     }
     function tryAggregate(bool requireSuccess, Call[] memory calls) public returns (Result[] memory returnData) {
         returnData = new Result[](calls.length);
-        uint256 length = calls.length;
-        for (uint256 i = 0; i < length; i++) {
+        for(uint256 i = 0; i < calls.length; i++) {
             (bool success, bytes memory ret) = calls[i].target.call(calls[i].callData);
 
-            if (!requireSuccess) revert CallFailed();
+            if (requireSuccess) {
+                require(success, "Multicall2 aggregate: call failed");
+            }
 
             returnData[i] = Result(success, ret);
         }

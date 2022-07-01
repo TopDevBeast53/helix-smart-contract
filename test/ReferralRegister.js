@@ -65,7 +65,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
     it('referralRegister: record staking reward withdrawal with invalid user address fails', async () => {
         const invalidUser = constants.AddressZero
         await expect(referralRegister.rewardStake(invalidUser, stakeAmount))
-            .to.be.revertedWith("ZeroAddress()")
+            .to.be.revertedWith("ReferralRegister: zero address")
     })
 
     it('referralRegister: record staking reward withdrawal does nothing if user is not added', async () => {
@@ -105,7 +105,7 @@ describe('Referral Register: fee-on-transfer tokens', () => {
     it('referralRegister: record swap reward withdrawal with invalid user address fails', async () => {
         const invalidUser = constants.AddressZero
         await expect(referralRegister.rewardSwap(invalidUser, swapAmount))
-            .to.be.revertedWith("ZeroAddress()")
+            .to.be.revertedWith("ReferralRegister: zero address")
     })
 
     it('referralRegister: record swap reward does nothing if user is not added', async () => {
@@ -168,29 +168,30 @@ describe('Referral Register: fee-on-transfer tokens', () => {
     it("referralRegister: can't self refer", async () => {
         // the caller shouldn't be able to add themselves as a referrer
         await expect(referralRegister.addReferrer(referred))
-            .to.be.revertedWith("NoSelfReferral()")
+            .to.be.revertedWith("ReferralRegister: no self referral")
     })
 
     it("referralRegister: can't record without owner permission", async () => {
         await expect(referralRegister1.rewardStake(owner.address, 1000))
             .to
             .be
-            .revertedWith(`NotRecorder(\"${user.address}\")`)
+            .revertedWith("ReferralRegister: not a recorder")
 
         await expect(referralRegister1.rewardSwap(owner.address, 1000))
             .to
             .be
-            .revertedWith(`NotRecorder(\"${user.address}\")`)
+            .revertedWith("ReferralRegister: not a recorder")
     })
 
     it('referralRegister: withdraw with nothing to withdraw fails', async () => {
         await expect(referralRegister.withdraw())
-            .to.be.revertedWith("NoRewardBalance()")
+            .to.be.revertedWith("ReferralRegister: nothing to withdraw")
     })
 
     it('referralRegister: withdraw helix to referrer succeeds', async () => {
         // add a referrer
         await referralRegister.addReferrer(referrer)
+        await referralRegister.setCollectorPercentAndDecimals(0, 0)
     
         // confirm that the referrer is added
         expect(await referralRegister.referrers(owner.address)).to.eq(referrer)

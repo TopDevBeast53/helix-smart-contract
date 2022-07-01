@@ -6,12 +6,6 @@ import "../interfaces/IFeeHandler.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-/// Thrown when address(0) is encountered
-error ZeroAddress();
-
-/// Thrown when performing a transaction requiring a feeHandler but none is set
-error FeeHandlerNotSet();
-
 abstract contract FeeCollector {
     /// Handler that this collector transfers fees to
     IFeeHandler public feeHandler;
@@ -19,11 +13,18 @@ abstract contract FeeCollector {
     /// Determines the fee percent taken by this collector
     uint256 public collectorPercent;
 
+    /// Number of decimals of precision
+    uint256 public decimals;
+
     // Emitted when a new _feeHandler address is set by the owner
     event SetFeeHandler(address indexed setter, address feeHandler);
 
     // Emitted when a new collector percent is set by the owner
-    event SetCollectorPercent(address indexed setter, uint256 collectorPercent);
+    event SetCollectorPercentAndDecimals(
+        address indexed setter, 
+        uint256 collectorPercent,
+        uint256 decimals
+    );
 
     /// Return true if the feeHandler address is set and false otherwise
     function isFeeHandlerSet() public view returns (bool) {
@@ -32,7 +33,7 @@ abstract contract FeeCollector {
 
     /// Return the collector fee computed from the _amount and the collectorPercent
     function getCollectorFee(uint256 _amount) public view returns (uint256 collectorFee) {
-        collectorFee = Percent.getPercentage(_amount, collectorPercent);
+        collectorFee = Percent.getPercentage(_amount, collectorPercent, decimals);
     }
 
     /// Split _amount based on collectorPercent and return the collectorFee and the remainder
@@ -42,12 +43,12 @@ abstract contract FeeCollector {
         view 
         returns (uint256 collectorFee, uint256 remainder) 
     {
-        (collectorFee, remainder) = Percent.splitByPercent(_amount, collectorPercent);
+        (collectorFee, remainder) = Percent.splitByPercent(_amount, collectorPercent, decimals);
     }
 
     // Delegate feeHandler to transfer _fee amount of _token from _from
     function _delegateTransfer(IERC20 _token, address _from, uint256 _fee) internal virtual {
-        if (address(feeHandler) == address(0)) revert FeeHandlerNotSet();
+        require(address(feeHandler) != address(0), "FeeCollector: handler not set");
         if (_fee > 0) {
             _token.approve(address(feeHandler), _fee);
             feeHandler.transferFee(_token, _from, msg.sender, _fee);
@@ -56,15 +57,23 @@ abstract contract FeeCollector {
 
     /// Called by the owner to set a new _feeHandler address
     function _setFeeHandler(address _feeHandler) internal virtual { 
-        if (_feeHandler == address(0)) revert ZeroAddress();
+        require(_feeHandler != address(0), "FeeCollector: zero address");
         feeHandler = IFeeHandler(_feeHandler);
         emit SetFeeHandler(msg.sender, address(_feeHandler));
     }
 
-    // Called by the owner to set the _collectorPercent collected from transactions
-    function _setCollectorPercent(uint256 _collectorPercent) internal virtual {
-        if (!Percent.isValidPercent(_collectorPercent)) revert InvalidPercent(_collectorPercent, 0);
+    // Called by the owner to set the _collectorPercent and the number of _decimals of precision 
+    // used when calculating percents collected from transactions
+    function _setCollectorPercentAndDecimals(uint256 _collectorPercent, uint256 _decimals) 
+        internal 
+        virtual 
+    {
+        require(
+            Percent.isValidPercent(_collectorPercent, _decimals), 
+            "FeeCollector: percent exceeds max"
+        );
         collectorPercent = _collectorPercent;
-        emit SetCollectorPercent(msg.sender, _collectorPercent);
+        decimals = _decimals;
+        emit SetCollectorPercentAndDecimals(msg.sender, _collectorPercent, decimals);
     }
 }

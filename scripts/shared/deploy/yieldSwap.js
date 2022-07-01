@@ -8,6 +8,7 @@ const initials = require('../../constants/initials')
 const chefAddress = contracts.masterChef[env.network]
 const rewardTokenAddress = contracts.helixToken[env.network]
 const feeHandlerAddress = contracts.feeHandler[env.network]
+const collectorPercent = initials.YIELD_SWAP_COLLECTOR_PERCENT[env.network]
 const minLockDuration = initials.YIELD_SWAP_MIN_LOCK_DURATION[env.network]
 const maxLockDuration = initials.YIELD_SWAP_MAX_LOCK_DURATION[env.network]
 
@@ -16,6 +17,7 @@ const deployYieldSwap = async (deployer) => {
     print(`chefAddress: ${chefAddress}`)
     print(`rewardTokenAddress: ${rewardTokenAddress}`)
     print(`feeHandlerAddress: ${feeHandlerAddress}`)
+    print(`collectorPercent: ${collectorPercent}`)
     print(`minLockDuration: ${minLockDuration}`)
     print(`maxLockDuration: ${maxLockDuration}`)
 
@@ -26,6 +28,7 @@ const deployYieldSwap = async (deployer) => {
             chefAddress,               // stakes and earns yield on lp tokens
             rewardTokenAddress,
             feeHandlerAddress,
+            collectorPercent,
             minLockDuration,    // minimum duration for which lp tokens can be locked 
             maxLockDuration     // maximum duration for which lp tokens can be locked
         ]

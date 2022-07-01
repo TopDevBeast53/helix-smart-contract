@@ -55,7 +55,7 @@ describe('Fee Handler', () => {
     it("feeHandler: set treasury with invalid address fails", async () => {
         const treasuryAddress = constants.AddressZero
         await expect(feeHandler.setTreasury(treasuryAddress))
-            .to.be.revertedWith("ZeroAddress()")
+            .to.be.revertedWith("FeeHandler: zero address")
     })
 
     it("feeHandler: set treasury emits SetTreasury event", async () => {
@@ -80,7 +80,7 @@ describe('Fee Handler', () => {
     it("feeHandler: set nftChef with invalid address fails", async () => {
         const nftChefAddress = constants.AddressZero
         await expect(feeHandler.setNftChef(nftChefAddress))
-            .to.be.revertedWith("ZeroAddress()")
+            .to.be.revertedWith("FeeHandler: zero address")
     })
 
     it("feeHandler: set nft chef emits SetNftChef event", async () => {
@@ -105,7 +105,7 @@ describe('Fee Handler', () => {
     it("feeHandler: set default nft chef percent with invalid percent fails", async () => {
         const percent = 101     // Invalid since 100 is max
         await expect(feeHandler.setDefaultNftChefPercent(percent))
-            .to.be.revertedWith("InvalidPercent(101, 0)")
+            .to.be.revertedWith("FeeHandler: percent exceeds max")
     })
 
     it("feeHandler: set default nft chef percent emits SetDefaultNftChefPercent event", async () => {
@@ -130,7 +130,7 @@ describe('Fee Handler', () => {
     it("feeHandler: set nft chef percent with invalid percent fails", async () => {
         const percent = 101     // Invalid since 100 is max
         await expect(feeHandler.setNftChefPercent(alice.address, percent))
-            .to.be.revertedWith("InvalidPercent(101, 0)")
+            .to.be.revertedWith("FeeHandler: percent exceeds max")
     })
 
     it("feeHandler: set nft chef percent overrides default", async () => {
@@ -201,7 +201,7 @@ describe('Fee Handler', () => {
             alice.address,
             alice.address,
             0   // Fee can't equal 0
-        )).to.be.revertedWith("ZeroFee()")
+        )).to.be.revertedWith("FeeHandler: zero fee")
     })
 
     it("feeHandler: transfer fee when nft chef amount equals 0", async () => {

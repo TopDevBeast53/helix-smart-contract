@@ -14,19 +14,6 @@ import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeab
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-/// Thrown when caller is not a recorder
-error NotRecorder(address caller);
-
-/// Thrown when the caller has no reward balance
-error NoRewardBalance();
-
-/// Thrown when a user trys to add themselves as referrer
-error NoSelfReferral();
-
-/// Thrown when index exceeds array length
-error IndexOutOfBounds(uint256 index, uint256 length);
 
 /// Users (referrers) refer other users (referred) and referrers earn rewards when
 /// referred users perform stakes or swaps
@@ -113,12 +100,12 @@ contract ReferralRegister is
     event SetLastRewardBlock(address indexed setter, uint256 lastMintBlock);
 
     modifier onlyValidAddress(address _address) {
-        if (_address == address(0)) revert ZeroAddress();
+        require(_address != address(0), "ReferralRegister: zero address");
         _;
     }
 
     modifier onlyRecorder() {
-        if (!isRecorder(msg.sender)) revert NotRecorder(msg.sender);
+        require(isRecorder(msg.sender), "ReferralRegister: not a recorder");
         _;
     }
 
@@ -128,13 +115,15 @@ contract ReferralRegister is
         address _feeMinter,
         uint256 _stakeRewardPercent, 
         uint256 _swapRewardPercent,
-        uint256 _lastMintBlock
+        uint256 _lastMintBlock,
+        uint256 _collectorPercent
     ) external initializer {
         __Ownable_init();
         __OwnableTimelock_init();
         __ReentrancyGuard_init();
         feeMinter = IFeeMinter(_feeMinter);
         _setFeeHandler(_feeHandler);
+        _setCollectorPercentAndDecimals(_collectorPercent, 2); // Default to 2 decimals of precision
 
         helixToken = _helixToken;
         stakeRewardPercent = _stakeRewardPercent;
@@ -165,16 +154,15 @@ contract ReferralRegister is
     }
 
     /// Called by a referrer to withdraw their accrued rewards
-    /// Withdraw all available if there is insufficient reward token balance in the contract
     function withdraw() external whenNotPaused nonReentrant {
         uint256 reward = rewards[msg.sender];
-        if (reward == 0) revert NoRewardBalance();
+        require(reward > 0, "ReferralRegister: nothing to withdraw");
         
         _update();
 
         uint256 contractBalance = IERC20Upgradeable(helixToken).balanceOf(address(this));
-        if (contractBalance == 0) return;
-
+        require(contractBalance > 0, "ReferralRegister: no helix in contract");
+    
         // Prevent withdrawing more than the contract balance
         reward = reward < contractBalance ? reward : contractBalance;
 
@@ -212,8 +200,8 @@ contract ReferralRegister is
 
     /// Set the caller's (referred's) referrer
     function addReferrer(address _referrer) external {
-        if (referrers[msg.sender] != address(0)) return;
-        if (msg.sender == _referrer) revert NoSelfReferral();
+        require(referrers[msg.sender] == address(0), "ReferralRegister: referrer already set");
+        require(msg.sender != _referrer, "ReferralRegister: no self referral");
         referrers[msg.sender] = _referrer;
         referees[_referrer].push(msg.sender);
         emit AddReferrer(msg.sender, _referrer);
@@ -285,14 +273,16 @@ contract ReferralRegister is
     }
    
     /// Called by the owner to set the percent charged on withdrawals
-    function setCollectorPercent(uint256 _collectorPercent) external onlyTimelock {
-        _setCollectorPercent(_collectorPercent);
+    function setCollectorPercentAndDecimals(uint256 _collectorPercent, uint256 _decimals) 
+        external 
+        onlyTimelock 
+    {
+        _setCollectorPercentAndDecimals(_collectorPercent, _decimals);
     }
 
     /// Return the address of the recorder at _index
     function getRecorder(uint256 _index) external view returns (address) {
-        uint256 recorderLength = getRecorderLength() - 1;
-        if (_index > recorderLength) revert IndexOutOfBounds(_index, recorderLength);
+        require(_index <= getRecorderLength() - 1, "ReferralRegister: index out of bounds");
         return EnumerableSetUpgradeable.at(_recorders, _index);
     }
 
