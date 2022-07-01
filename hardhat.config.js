@@ -8,6 +8,7 @@ require("dotenv").config();
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
 const etherscanApiKey = process.env.ETHERSCANAPIKEY;
+const mainnetApiKey = process.env.MAINNETAPIKEY;
 const ropstenURL = process.env.ROPSTEN_URL;
 const rinkebyURL = process.env.RINKEBY_URL;
 const goerliURL = process.env.GOERLI_URL;
