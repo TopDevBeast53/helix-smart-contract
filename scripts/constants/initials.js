@@ -62,7 +62,7 @@ module.exports = {
         4: 0,
     },
     REFERRAL_COLLECTOR_PERCENT: {
-        1: 150, // 1.50%
+        1: 1000, // 10.00%
         3: 1000, 
         4: 1000,
     },
