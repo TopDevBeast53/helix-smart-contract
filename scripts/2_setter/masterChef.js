@@ -28,7 +28,7 @@ function print(str) {
 
 async function addLiquidity(lpTokenAddress, allocPoint) {
     print(`add liquidity with LpToken:${lpTokenAddress}  AllocPoins:${allocPoint}`)
-    const tx = await contract.add(allocPoint, lpTokenAddress, true, {nonce: nonce++, gasLimit: 3000000})
+    const tx = await contract.add(allocPoint, lpTokenAddress, false, {nonce: nonce++, gasLimit: 3000000})
     await tx.wait()
 }
 
