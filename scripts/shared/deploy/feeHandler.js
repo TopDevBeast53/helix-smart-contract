@@ -6,7 +6,7 @@ const addresses = require("../../constants/addresses")
 const contracts = require("../../constants/contracts")
 const initials = require("../../constants/initials")
 
-const treasuryAddress = addresses.TREASURY[env.network]
+const treasuryAddress = contracts.treasuryMultiSig[env.network]
 const nftChefAddress = contracts.helixChefNFT[env.network]
 const helixTokenAddress = contracts.helixToken[env.network]
 const defaultNftChefPercent = initials.FEE_HANDLER_DEFAULT_NFT_CHEF_PERCENT[env.network]

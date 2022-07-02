@@ -7,7 +7,7 @@ const addresses = require("../../constants/addresses")
 
 const helixTokenAddress = contracts.helixToken[env.network]
 const masterChefAddress = contracts.masterChef[env.network]
-const treasuryAddress = addresses.TREASURY[env.network]
+const treasuryAddress = contracts.treasuryMultiSig[env.network]
 
 const deployAutoHelix = async (deployer) => {
     print("deploy auto helix")
