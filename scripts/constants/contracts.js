@@ -1,21 +1,21 @@
 module.exports = {
     ownerMultiSig: {
-        1: '',
+        1: '0x1B60622021aC7702F21D66D6473befcab8F9b979',
         3: '0x461e3e7C700Ba1a2282e63F43f34F9F0a37D328b',
         4: '0x9E6902e54558B0A2017cE817921213c3E185C5B8',
     },
     treasuryMultiSig: {
-        1: '',
+        1: '0x14D9810e19bfF8d55D2180f8712DA939d9E9bc7f',
         3: '0x1Ed71D2D4ac77A5C0a9f2b4121A73C720D5feC73',
         4: '0xd3971D64143a39a711504B9540Dbc64555D851c9',
     },
     devTeamMultiSig: {
-        1: '',
+        1: '0xdf3036750F425C57612Fa294c7b16a2694De13d3',
         3: '0x202661dd1deE66f5f2A9e71fDC8d9706dd98E6fb',
         4: '0x2A06E8A9b9a3ED193A1A550a8F9cF988Ebfaf3EC',
     },
     timelock: {
-        1: '',
+        1: '0x1dd508e20b79e31c87c00b0e1ef9e1ce7f215d28',
         3: '0x202661dd1deE66f5f2A9e71fDC8d9706dd98E6fb',
         4: '0xA2fE90F9A04884e93936A0c8020f70Ac60D2832A',
     },
@@ -25,17 +25,17 @@ module.exports = {
         4: '0x79DD2dad8D04F9279F94580DBEd2306A0aE118Bd',
     },
     helixNFT: {
-        1: '',
+        1: '0x376cec95d38316577addf703f805b42110f06ec7',
         3: '0x24be493d0f3b9C9Dd1f702d0917Cdcb6CbFfF0a2',
         4: '0x3C947b6a4e6CDC2AB6e40870EA6e5587e3Ee0458',
     },
     helixNFTImplementation: {
-        1: '',
+        1: '0xfdcd573d6ca074b1718df70226dc1b5231bf8b7e',
         3: '0x13A54Ee2FDA40A26C9A11167c8304338821eDD7B',
         4: '0xd3EC4a703aC914a5777F2fd0bF434eAE1a19628D',
     },
     feeMinter: {
-        1: '',
+        1: '0x2a2254F78A287D742cA1cf5F24d423D50504c0bb',
         3: '0xaf18A1c4904F0fb15B0C95f19fCDAeFC86f8091E',
         4: '0xFe19cb3E3E97572FCd8dE6c81c3224f0B90452Bc',
     },

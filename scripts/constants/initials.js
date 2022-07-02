@@ -5,6 +5,7 @@ const contracts = require("./contracts")
 const masterChefAddress = contracts.masterChef[env.network]
 const referralRegisterAddress = contracts.referralRegister[env.network]
 const vaultAddress = contracts.helixVault[env.network]
+const ownerMultiSigAddress = contracts.ownerMultiSig[env.network]
 
 module.exports = {
     FACTORY_INIT_CODE_HASH: {
@@ -243,7 +244,7 @@ module.exports = {
     },
 
     TIMELOCK_PROPOSERS: {
-        1: [],
+        1: [ownerMultiSigAddress],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
         4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
     },
@@ -285,6 +286,7 @@ module.exports = {
     // --------- Bridge --------- //
 
     BRIDGE_ADMIN_ADDRESS: {
+        1: '0xB9aa17D9F114E35a0249Be020C2f10024b0D8705',
         3: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57', 
         4: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57', 
     },
