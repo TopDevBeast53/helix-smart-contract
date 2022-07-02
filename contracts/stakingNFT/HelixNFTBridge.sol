@@ -149,7 +149,7 @@ contract HelixNFTBridge is Ownable, Pausable {
       returns(bool) 
     {
         require(msg.value >= gasFeeETH, "Insufficient Gas FEE");
-        (bool success, ) = payable(admin).call{value: gasFeeETH, gas: 30000}("");
+        (bool success, ) = payable(admin).call{value: gasFeeETH}("");
         require(success, "receiver rejected ETH transfer");
 
         address _user = msg.sender;
