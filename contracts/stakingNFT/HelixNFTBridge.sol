@@ -187,6 +187,10 @@ contract HelixNFTBridge is Ownable, Pausable {
         return _bridgeFactories;
     }
 
+    function setGasFeeETH(uint256 _gasFeeETH) external onlyOwner {
+        gasFeeETH = _gasFeeETH;
+    }
+
     /**
      * @dev Whether the token is bridged or not.
      */
