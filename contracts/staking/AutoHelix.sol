@@ -24,7 +24,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
 
     IERC20Upgradeable public token; // Helix token
 
-    IMasterChef public masterchef;
+    IMasterChef public masterChef;
 
     uint256 public totalShares;
     uint256 public lastHarvestedTime;
@@ -76,6 +76,9 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
     // Emitted when the owner updates the withdraw fee period
     event SetWithdrawFeePeriod(address indexed setter, uint256 withdrawFeePeriod);
 
+    // Emittid when a new masterChef is set
+    event SetMasterChef(address indexed setter, address indexed masterChef);
+
     /**
      * @notice Checks if the msg.sender is a contract or a proxy
      */
@@ -87,23 +90,23 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
 
     /**
      * @param _token: Helix token contract
-     * @param _masterchef: MasterChef contract
+     * @param _masterChef: MasterChef contract
      * @param _treasury: address of the treasury (collects fees)
      */
     function initialize(
         address _token,
-        IMasterChef _masterchef,
+        IMasterChef _masterChef,
         address _treasury
     ) external initializer {
         __Ownable_init();
         __OwnableTimelock_init();
         __Pausable_init();
         token = IERC20Upgradeable(_token);
-        masterchef = _masterchef;
+        masterChef = _masterChef;
         treasury = _treasury;
 
         // Infinite approve
-        IERC20Upgradeable(_token).safeApprove(address(_masterchef), type(uint256).max);
+        IERC20Upgradeable(_token).safeApprove(address(_masterChef), type(uint256).max);
 
         performanceFee = 299; // 2.99%
         callFee = 25; // 0.25%
@@ -156,7 +159,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
      * @dev Only possible when contract not paused.
      */
     function harvest() external notContract whenNotPaused {
-        IMasterChef(masterchef).leaveStaking(0);
+        IMasterChef(masterChef).leaveStaking(0);
 
         lastHarvestedTime = block.timestamp;
 
@@ -230,7 +233,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
      * @dev EMERGENCY ONLY. Only callable by the contract owner.
      */
     function emergencyWithdraw() external onlyOwner {
-        IMasterChef(masterchef).emergencyWithdraw(0);
+        IMasterChef(masterChef).emergencyWithdraw(0);
     }
 
     /**
@@ -259,12 +262,18 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
         _unpause();
     }
 
+    function setMasterChef(address _masterChef) external onlyOwner {
+        require(_masterChef != address(0), "AutoHelix: zero address");
+        masterChef = IMasterChef(_masterChef);
+        emit SetMasterChef(msg.sender, _masterChef);
+    }
+
     /**
      * @notice Calculates the expected harvest reward from third party
      * @return Expected reward to collect in Helix
      */
     function calculateHarvestHelixRewards() external view returns (uint256) {
-        uint256 amount = IMasterChef(masterchef).pendingHelixToken(0, address(this));
+        uint256 amount = IMasterChef(masterChef).pendingHelixToken(0, address(this));
         amount = amount + available();
         uint256 currentCallFee = amount * callFee / 10000;
 
@@ -276,7 +285,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
      * @return Returns total pending Helix rewards
      */
     function calculateTotalPendingHelixRewards() external view returns (uint256) {
-        uint256 amount = IMasterChef(masterchef).pendingHelixToken(0, address(this));
+        uint256 amount = IMasterChef(masterChef).pendingHelixToken(0, address(this));
         amount = amount + available();
 
         return amount;
@@ -305,7 +314,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
         uint256 bal = available();
         if (bal < currentAmount) {
             uint256 balWithdraw = currentAmount - bal;
-            IMasterChef(masterchef).leaveStaking(balWithdraw);
+            IMasterChef(masterChef).leaveStaking(balWithdraw);
             uint256 balAfter = available();
             uint256 diff = balAfter - bal;
             if (diff < balWithdraw) {
@@ -349,7 +358,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
      * @dev It includes tokens held by the contract and held in MasterChef
      */
     function balanceOf() public view returns (uint256) {
-        (uint256 amount, ) = IMasterChef(masterchef).userInfo(0, address(this));
+        (uint256 amount, ) = IMasterChef(masterChef).userInfo(0, address(this));
         return token.balanceOf(address(this)) + amount;
     }
 
@@ -359,7 +368,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
     function _earn() internal {
         uint256 bal = available();
         if (bal > 0) {
-            IMasterChef(masterchef).enterStaking(bal);
+            IMasterChef(masterChef).enterStaking(bal);
         }
     }
 }
