@@ -89,6 +89,9 @@ contract HelixNFTBridge is Ownable, Pausable {
     
     // Emitted when a bridger is deleted
     event DelBridger(address indexed bridger);
+
+    // Emitted when a new HelixNFT address is set
+    event SetHelixNFT(address indexed setter, address indexed helixNFT);
     
     /**
      * @dev HelixNFT contract    
@@ -206,6 +209,13 @@ contract HelixNFTBridge is Ownable, Pausable {
     /// Called by the owner to unpause the contract
     function unpause() external onlyOwner {
         _unpause();
+    }
+
+    /// Called by the owner to set a new _helixNFT address
+    function setHelixNFT(address _helixNFT) external onlyOwner {
+        require(_helixNFT != address(0));
+        helixNFT = HelixNFT(_helixNFT);
+        emit SetHelixNFT(msg.sender, _helixNFT);
     }
 
     /**

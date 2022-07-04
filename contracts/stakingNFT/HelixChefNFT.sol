@@ -63,7 +63,8 @@ contract HelixChefNFT is
     // Emitted when reward tokens is withdrawn
     event WithdrawRewardToken(address indexed withdrawer, uint256 amount);
 
-    // 
+    // Emitted when a new helixNFT address is set
+    event SetHelixNFT(address indexed setter, address indexed helixNFT);
 
     modifier onlyAccruer {
         require(isAccruer(msg.sender), "HelixChefNFT: not an accruer");
@@ -159,6 +160,13 @@ contract HelixChefNFT is
     /// Called by the owner to unpause the contract
     function unpause() external onlyOwner {
         _unpause();
+    }
+
+    /// Called by the owner to set the _helixNFT address
+    function setHelixNFT(address _helixNFT) external onlyOwner {
+        require(_helixNFT != address(0), "HelixChefNFT: zero address");
+        helixNFT = IHelixNFT(_helixNFT);
+        emit SetHelixNFT(msg.sender, _helixNFT);
     }
 
     /// Return the accruer at _index
