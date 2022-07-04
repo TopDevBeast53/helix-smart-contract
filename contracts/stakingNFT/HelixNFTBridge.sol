@@ -105,15 +105,15 @@ contract HelixNFTBridge is Ownable, Pausable {
       external 
       onlyOwner
     {
-        require(_user != address(0), "Zero Array");
-        require(_externalIDs.length != 0, "Not Array");
-        require(_externalIDs.length == _nftIDs.length, "Invalid Array");
-        require(_externalIDs.length == _tokenURIs.length, "Invalid Array");
+        require(_user != address(0), "HelixNFTBridge:Zero Array");
+        require(_externalIDs.length != 0, "HelixNFTBridge:Not Array");
+        require(_externalIDs.length == _nftIDs.length, "HelixNFTBridge:Invalid Array");
+        require(_externalIDs.length == _tokenURIs.length, "HelixNFTBridge:Invalid Array");
         
         uint256 length = _externalIDs.length;
         for (uint256 i = 0; i < length; i++) {
             string memory _externalID = _externalIDs[i];
-            require(!_bridgedExternalTokenIDs[_externalID], "Already bridged token");
+            require(!_bridgedExternalTokenIDs[_externalID], "HelixNFTBridge:Already bridged token");
             _bridgedExternalTokenIDs[_externalID] = true;
         }
         string[] memory _newExternalIDs = new string[](length);
@@ -148,16 +148,16 @@ contract HelixNFTBridge is Ownable, Pausable {
       payable
       returns(bool) 
     {
-        require(msg.value >= gasFeeETH, "Insufficient Gas FEE");
+        require(msg.value >= gasFeeETH, "HelixNFTBridge:Insufficient Gas FEE");
         (bool success, ) = payable(admin).call{value: gasFeeETH}("");
-        require(success, "receiver rejected ETH transfer");
+        require(success, "HelixNFTBridge:receiver rejected ETH transfer");
 
         address _user = msg.sender;
         require(_countAddBridge[_user] > 0, "HelixNFTBridge: You are not a Bridger");
         BridgeFactory memory _bridgeFactory = bridgeFactories[_bridgeFactoryId];
 
-        require(_bridgeFactory.user == _user, "Not a bridger");
-        require(_bridgeFactory.bridgeStatus == BridgeStatus.Pendding, "Already bridged factory");
+        require(_bridgeFactory.user == _user, "HelixNFTBridge:Not a bridger");
+        require(_bridgeFactory.bridgeStatus == BridgeStatus.Pendding, "HelixNFTBridge:Already bridged factory");
 
         _countAddBridge[_user]--;
         bridgeFactories[_bridgeFactoryId].bridgeStatus = BridgeStatus.Bridged;
@@ -218,13 +218,12 @@ contract HelixNFTBridge is Ownable, Pausable {
     {
         uint256 bridgeFactoryId = helixNFT.getBridgeFactoryId(_tokenId);
         BridgeFactory storage _bridgeFactory = bridgeFactories[bridgeFactoryId];
-
+        require(_bridgeFactory.user == msg.sender, "HelixNFTBridge: Not owner");
         string[] memory externalTokenIDs = _bridgeFactory.externalIDs;
         uint256 length = externalTokenIDs.length;
         for (uint256 i = 0; i < length; i++) {
             string memory externalID = externalTokenIDs[i];
-            require(_bridgedExternalTokenIDs[externalID], "HelixNFT: already bridged to Solana");
-            // require(_bridgedExternalTokenIDsPickUp[externalID] == msg.sender, "HelixNFTBridge: Not owner");
+            require(_bridgedExternalTokenIDs[externalID], "HelixNFTBridge: already bridged to Solana");
             _bridgedExternalTokenIDs[externalID] = false;
         }
         _bridgedTokenIDs[_tokenId] = false;
