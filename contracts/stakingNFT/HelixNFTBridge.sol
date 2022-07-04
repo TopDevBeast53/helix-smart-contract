@@ -221,7 +221,6 @@ contract HelixNFTBridge is Ownable, Pausable {
     /**
      * @dev Mark token as unavailable on Ethereum.
      */
-    // TODO - check this thoroughly for correctness
     function bridgeToSolana(uint256 _tokenId, string calldata _externalRecipientAddr) 
        external 
        whenNotPaused
