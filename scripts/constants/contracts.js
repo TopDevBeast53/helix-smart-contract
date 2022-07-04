@@ -120,12 +120,12 @@ module.exports = {
         4: '0x035d18Db8265D0807196A845C4C7a46E5a0eF83D',
     },
     masterChef: {
-        1: '0xc84783ea4e1dE17BfC8B06d72d0257f750d73C43',    // deployed 7/1/2022
+        1: '0x212CC6ba467a3591904503A6b0dC58086657b980',    // deployed 7/4/2022
         3: '0x01ebA7647C33d27742e774aB9507B11A153cde39',
         4: '0xE58b6cB4f216e79b959C37CD681d8483a0B97DA0',
     },
     masterChefImplementation: {
-        1: '0x0Cb0C12881329558325472c8cf0aac057327948E',    // deployed 7/1/2022
+        1: '0x0Cb0C12881329558325472c8cf0aac057327948E',    // deployed 7/4/2022
         3: '0xaEaD56A540873130c5B973E1A64378aca343F6BC',
         4: '0x758272F60623949aD4e76D95203fEC550Ea6112F',
     },
