@@ -76,7 +76,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
     // Emitted when the owner updates the withdraw fee period
     event SetWithdrawFeePeriod(address indexed setter, uint256 withdrawFeePeriod);
 
-    // Emittid when a new masterChef is set
+    // Emitted when a new masterChef is set
     event SetMasterChef(address indexed setter, address indexed masterChef);
 
     /**
