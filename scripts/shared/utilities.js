@@ -1,5 +1,7 @@
 // Export functions used by scripts
 
+const { ethers } = require("hardhat")
+
 const verbose = true;
 
 const env = require("../constants/env")
@@ -23,11 +25,47 @@ const loadContract = async (address, wallet) => {
     return contract
 }
 
+// Return the encoded function data for calling the function with arguments
+const getEncodedFunctionData = (contract, functionName, arguments) => {
+    let contractName = isAddress(contract) ? getContractName(contract) : contract
+    const stringArgs = getCommaSeparatedString(arguments)
+    print(`get the encoded function data to call ${contractName}.${functionName}(${stringArgs})`)
+
+    const contractJson = require(`../../build/contracts/${contractName}.json`)
+    const contractAbi = contractJson.abi
+    const contractInterface = new ethers.utils.Interface(contractAbi)
+
+    return contractInterface.encodeFunctionData(functionName, arguments)
+}
+
+// Return true if the string is an address and false otherwise
+const isAddress = (str) => {
+    if (str.length != 42) {
+        return false
+    }
+    if (str.slice(0, 2) != "0x") {
+        return false
+    }
+    return true
+}
+
+// Return the array as a comma separated string
+const getCommaSeparatedString = (array) => {
+    str = ""
+    for (let i = 0; i < array.length; i++) {
+        if (i > 0) {
+            str += ", "
+        }
+        str += array[i]
+    }
+    return str
+}
+
 // Return the name of the contract at address
 const getContractName = (address) => {
     switch (address) {
         case contracts.ownerMultiSig[env.network]:
-           return "MultiSigWallet" 
+           return "MultiSigWallet"
         case contracts.treasuryMultiSig[env.network]:
             return "TokenMultiSigWallet"
         case contracts.devTeamMultiSig[env.network]:
@@ -106,4 +144,6 @@ module.exports = {
     print,
     loadContract,
     getContractName,
+    getCommaSeparatedString,
+    getEncodedFunctionData,
 }
