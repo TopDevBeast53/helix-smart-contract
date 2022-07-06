@@ -28,10 +28,13 @@ const loadContract = async (address, wallet) => {
 // Return the encoded function data for calling the function with arguments
 const getEncodedFunctionData = (contract, functionName, arguments) => {
     let contractName = isAddress(contract) ? getContractName(contract) : contract
+    let contractFolder = getContractEnclosingFolder(contractName)
     const stringArgs = getCommaSeparatedString(arguments)
     print(`get the encoded function data to call ${contractName}.${functionName}(${stringArgs})`)
 
-    const contractJson = require(`../../build/contracts/${contractName}.json`)
+    const contractJson = require(
+        `../../artifacts/contracts/${contractFolder}/${contractName}.sol/${contractName}.json`
+    )
     const contractAbi = contractJson.abi
     const contractInterface = new ethers.utils.Interface(contractAbi)
 
@@ -133,9 +136,70 @@ const getContractName = (address) => {
         case contracts.lpSwapImplementation[env.network]:
             return "LpSwap"
         default:
-            throw "Error: contract not found"
+            throw "Error: contract address not found"
             return
     }
+}
+
+const getContractEnclosingFolder = (name) => {
+    switch (name) {
+        case "FeeCollector":
+            return "fees"
+        case "FeeHandler:
+            return "fees"
+        case "FeeMinter":
+            return "fees"
+        case "HelixMigrator":
+            return "migrations"
+        case "MultiSigWallet":
+            return "multisig"
+        case "TokenMultiSigWallet":
+            return "multisig"
+        case "OracleFactory":
+            return "oracles"
+        case "LpSwap":
+            return "p2p"
+        case "YieldSwap":
+            return "p2p"
+        case "AirDrop":
+            return "presales"
+        case "PublicPresale":
+            return "presales"
+        case "VipPresale":
+            return "presales"
+        case "ReferralRegister":
+            return "referrals"
+        case "AutoHelix":
+            return "staking"
+        case "MasterChef":
+            return "staking"
+        case "HelixChefNFT":
+            return "stakingNFT"
+        case "HelixNFTBridge":
+            return "stakingNFT"
+        case "HelixFactory":
+            return "swaps"
+        case "HelixPair":
+            return "swaps"
+        case "HelixRouterV1":
+            return "swaps"
+        case "SwapRewards":
+            return "swaps"
+        case "TimelockController":
+            return "timelock"
+        case "HelixLP":
+            return "tokens"
+        case "HelixNFT":
+            return "tokens"
+        case "HelixToken":
+            return "tokens"
+        case "Multicall2":
+            return "utils"
+        case "HelixVault":
+            return "vaults"
+        default:
+            return "Error: contract name not found"
+    } 
 }
 
 module.exports = {
