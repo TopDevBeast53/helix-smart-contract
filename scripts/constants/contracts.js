@@ -30,7 +30,7 @@ module.exports = {
         4: '0xdD62271F8a54446032bfF3cEC93861D4F8100F4b',
     },
     helixNFTImplementation: {
-        1: '0xcE57b79CF01C9574d15ECA9A6eE9629140bE6589',    // deployed 7/6/2022
+        1: '0xFDcd573d6Ca074B1718DF70226DC1B5231bF8B7E',    // deployed 7/6/2022
         3: '0x13A54Ee2FDA40A26C9A11167c8304338821eDD7B',
         4: '0xd3EC4a703aC914a5777F2fd0bF434eAE1a19628D',
     },
@@ -40,7 +40,7 @@ module.exports = {
         4: '0xFe19cb3E3E97572FCd8dE6c81c3224f0B90452Bc',
     },
     helixNFTBridge: {
-        1: '0xd19Ee2f94C32Ee3A5E44F1eD44b9C754822A728D',    // deployed 7/6/2022
+        1: '0x6CF0a68367182F049BaE05151e3eB793AC78e13B',    // deployed 7/6/2022
         3: '0xfE5C6695E4DD62ca97737823ef4BBB47D328C328',
         4: '0x11238ec47E0a640d6388456E85f3bC24a59fA641',
     },
