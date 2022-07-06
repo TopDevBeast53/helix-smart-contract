@@ -1,5 +1,7 @@
 // Export functions used by scripts
 
+const { ethers } = require("hardhat")
+
 const verbose = true;
 
 const env = require("../constants/env")
@@ -23,11 +25,50 @@ const loadContract = async (address, wallet) => {
     return contract
 }
 
+// Return the encoded function data for calling the function with arguments
+const getEncodedFunctionData = (contract, functionName, arguments) => {
+    let contractName = isAddress(contract) ? getContractName(contract) : contract
+    let contractFolder = getContractEnclosingFolder(contractName)
+    const stringArgs = getCommaSeparatedString(arguments)
+    print(`get the encoded function data to call ${contractName}.${functionName}(${stringArgs})`)
+
+    const contractJson = require(
+        `../../artifacts/contracts/${contractFolder}/${contractName}.sol/${contractName}.json`
+    )
+    const contractAbi = contractJson.abi
+    const contractInterface = new ethers.utils.Interface(contractAbi)
+
+    return contractInterface.encodeFunctionData(functionName, arguments)
+}
+
+// Return true if the string is an address and false otherwise
+const isAddress = (str) => {
+    if (str.length != 42) {
+        return false
+    }
+    if (str.slice(0, 2) != "0x") {
+        return false
+    }
+    return true
+}
+
+// Return the array as a comma separated string
+const getCommaSeparatedString = (array) => {
+    str = ""
+    for (let i = 0; i < array.length; i++) {
+        if (i > 0) {
+            str += ", "
+        }
+        str += array[i]
+    }
+    return str
+}
+
 // Return the name of the contract at address
 const getContractName = (address) => {
     switch (address) {
         case contracts.ownerMultiSig[env.network]:
-           return "MultiSigWallet" 
+           return "MultiSigWallet"
         case contracts.treasuryMultiSig[env.network]:
             return "TokenMultiSigWallet"
         case contracts.devTeamMultiSig[env.network]:
@@ -95,9 +136,70 @@ const getContractName = (address) => {
         case contracts.lpSwapImplementation[env.network]:
             return "LpSwap"
         default:
-            throw "Error: contract not found"
+            throw "Error: contract address not found"
             return
     }
+}
+
+const getContractEnclosingFolder = (name) => {
+    switch (name) {
+        case "FeeCollector":
+            return "fees"
+        case "FeeHandler":
+            return "fees"
+        case "FeeMinter":
+            return "fees"
+        case "HelixMigrator":
+            return "migrations"
+        case "MultiSigWallet":
+            return "multisig"
+        case "TokenMultiSigWallet":
+            return "multisig"
+        case "OracleFactory":
+            return "oracles"
+        case "LpSwap":
+            return "p2p"
+        case "YieldSwap":
+            return "p2p"
+        case "AirDrop":
+            return "presales"
+        case "PublicPresale":
+            return "presales"
+        case "VipPresale":
+            return "presales"
+        case "ReferralRegister":
+            return "referrals"
+        case "AutoHelix":
+            return "staking"
+        case "MasterChef":
+            return "staking"
+        case "HelixChefNFT":
+            return "stakingNFT"
+        case "HelixNFTBridge":
+            return "stakingNFT"
+        case "HelixFactory":
+            return "swaps"
+        case "HelixPair":
+            return "swaps"
+        case "HelixRouterV1":
+            return "swaps"
+        case "SwapRewards":
+            return "swaps"
+        case "TimelockController":
+            return "timelock"
+        case "HelixLP":
+            return "tokens"
+        case "HelixNFT":
+            return "tokens"
+        case "HelixToken":
+            return "tokens"
+        case "Multicall2":
+            return "utils"
+        case "HelixVault":
+            return "vaults"
+        default:
+            return "Error: contract name not found"
+    } 
 }
 
 module.exports = {
@@ -106,4 +208,6 @@ module.exports = {
     print,
     loadContract,
     getContractName,
+    getCommaSeparatedString,
+    getEncodedFunctionData,
 }
