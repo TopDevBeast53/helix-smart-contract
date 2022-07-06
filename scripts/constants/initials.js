@@ -295,12 +295,6 @@ module.exports = {
         3: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57', 
         4: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57', 
     },
-    
-    BRIDGE_FEE_ETH_AMOUNT: {
-        1: '15000000000000000', //0.015 ether  
-        3: '15000000000000000', //0.015 ether  
-        4: '15000000000000000', //0.015 ether 
-    },
 
 
     // --------- VIP Presale --------- //

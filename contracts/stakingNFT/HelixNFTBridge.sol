@@ -30,8 +30,9 @@ contract HelixNFTBridge is Ownable, Pausable {
         address user;                   // owner of Ethereum NFT
         string[] externalIDs;           // mint tokenIDs on Solana
         string[] nftIDs;                // label IDs on Solana
-        string[] tokenURIs;             // tokenURIs on Solana : Ethereum NFT's TokenURI will be tokenURIs[0]
+        string tokenURI;                // tokenURIs on Solana : Ethereum NFT's TokenURI will be tokenURIs[0]
         BridgeStatus bridgeStatus;      // bridge status
+        uint256 consumeGas;             // consume Gas Fee to call factory function by admin, users should pay this gas fee
     }
 
     /// bridgeFactoryId => BridgeFactory
@@ -55,9 +56,6 @@ contract HelixNFTBridge is Ownable, Pausable {
     mapping(address => uint256) private _countAddBridge;
  
     address public admin;
-
-    /// user should send some ETH to admin wallet when doing bridgeToEthereum
-    uint256 public gasFeeETH;
 
     uint256 public bridgeFactoryLastId;  
     /**
@@ -92,26 +90,27 @@ contract HelixNFTBridge is Ownable, Pausable {
 
     // Emitted when a new HelixNFT address is set
     event SetHelixNFT(address indexed setter, address indexed helixNFT);
+
+    // Emitted when a new Admin address is set
+    event SetAdmin(address indexed setter, address indexed admin);
     
     /**
      * @dev HelixNFT contract    
      */
     HelixNFT helixNFT;
 
-    constructor(HelixNFT _helixNFT, address _admin, uint256 _gasFeeETH) {
+    constructor(HelixNFT _helixNFT, address _admin) {
         helixNFT = _helixNFT;
         admin = _admin;
-        gasFeeETH = _gasFeeETH;
     }
     
-    function addBridgeFactory(address _user, string[] calldata _externalIDs, string[] calldata _nftIDs, string[] calldata _tokenURIs)
+    function addBridgeFactory(address _user, string[] calldata _externalIDs, string[] calldata _nftIDs, string memory _tokenURI, uint256 _consumeGas)
       external 
       onlyOwner
     {
         require(_user != address(0), "HelixNFTBridge:Zero Array");
         require(_externalIDs.length != 0, "HelixNFTBridge:Not Array");
         require(_externalIDs.length == _nftIDs.length, "HelixNFTBridge:Invalid Array");
-        require(_externalIDs.length == _tokenURIs.length, "HelixNFTBridge:Invalid Array");
         
         uint256 length = _externalIDs.length;
         for (uint256 i = 0; i < length; i++) {
@@ -121,10 +120,8 @@ contract HelixNFTBridge is Ownable, Pausable {
         }
         string[] memory _newExternalIDs = new string[](length);
         string[] memory _newNftIDs = new string[](length);
-        string[] memory _newTokenURIs = new string[](length);
         _newExternalIDs = _externalIDs;
         _newNftIDs = _nftIDs;
-        _newTokenURIs = _tokenURIs;
         
         uint256 _bridgeFactoryId = bridgeFactoryLastId++;
         BridgeFactory storage _factory = bridgeFactories[_bridgeFactoryId];
@@ -132,8 +129,8 @@ contract HelixNFTBridge is Ownable, Pausable {
         _factory.bridgeStatus = BridgeStatus.Pendding;
         _factory.externalIDs = _newExternalIDs;
         _factory.nftIDs = _newNftIDs;
-        _factory.tokenURIs = _newTokenURIs;
-
+        _factory.tokenURI = _tokenURI;
+        _factory.consumeGas = _consumeGas;
         // Relay the bridge id to the user's account
         bridgeFactoryIDs[_user].push(_bridgeFactoryId);
 
@@ -151,10 +148,6 @@ contract HelixNFTBridge is Ownable, Pausable {
       payable
       returns(bool) 
     {
-        require(msg.value >= gasFeeETH, "HelixNFTBridge:Insufficient Gas FEE");
-        (bool success, ) = payable(admin).call{value: gasFeeETH}("");
-        require(success, "HelixNFTBridge:receiver rejected ETH transfer");
-
         address _user = msg.sender;
         require(_countAddBridge[_user] > 0, "HelixNFTBridge: You are not a Bridger");
         BridgeFactory memory _bridgeFactory = bridgeFactories[_bridgeFactoryId];
@@ -162,12 +155,17 @@ contract HelixNFTBridge is Ownable, Pausable {
         require(_bridgeFactory.user == _user, "HelixNFTBridge:Not a bridger");
         require(_bridgeFactory.bridgeStatus == BridgeStatus.Pendding, "HelixNFTBridge:Already bridged factory");
 
+        uint256 gasFeeETH = _bridgeFactory.consumeGas;
+        require(msg.value >= gasFeeETH, "HelixNFTBridge:Insufficient Gas FEE");
+        (bool success, ) = payable(admin).call{value: gasFeeETH}("");
+        require(success, "HelixNFTBridge:receiver rejected ETH transfer");
+
         _countAddBridge[_user]--;
         bridgeFactories[_bridgeFactoryId].bridgeStatus = BridgeStatus.Bridged;
         uint256 tokenId = helixNFT.getLastTokenId() + 1;
         _bridgedTokenIDs[tokenId] = true;
         // Ethereum NFT's TokenURI is first URI of wrapped geobots
-        string memory tokenURI = _bridgeFactory.tokenURIs[0];
+        string memory tokenURI = _bridgeFactory.tokenURI;
         helixNFT.mintExternal(_user, _bridgeFactory.externalIDs, _bridgeFactory.nftIDs, tokenURI, _bridgeFactoryId);
 
         if (_countAddBridge[_user] == 0) 
@@ -175,6 +173,10 @@ contract HelixNFTBridge is Ownable, Pausable {
 
         emit BridgeToEthereum(_user, _bridgeFactory.externalIDs, tokenURI);
         return true;
+    }
+
+    function getConsumeGas(uint256 _bridgeFactoryId) external view returns (uint256) {
+        return bridgeFactories[_bridgeFactoryId].consumeGas;
     }
 
     function getBridgeFactoryIDs(address _user) external view returns (uint[] memory) {
@@ -188,10 +190,6 @@ contract HelixNFTBridge is Ownable, Pausable {
             _bridgeFactories[i] = bridgeFactories[bridgeFactoryIDs[_user][i]];
         }
         return _bridgeFactories;
-    }
-
-    function setGasFeeETH(uint256 _gasFeeETH) external onlyOwner {
-        gasFeeETH = _gasFeeETH;
     }
 
     /**
@@ -216,6 +214,12 @@ contract HelixNFTBridge is Ownable, Pausable {
         require(_helixNFT != address(0));
         helixNFT = HelixNFT(_helixNFT);
         emit SetHelixNFT(msg.sender, _helixNFT);
+    }
+
+    function setAdmin(address _admin) external onlyOwner {
+        require(_admin != address(0));
+        admin = _admin;
+        emit SetAdmin(msg.sender, admin);
     }
 
     /**

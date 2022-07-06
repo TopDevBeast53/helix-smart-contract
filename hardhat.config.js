@@ -85,7 +85,7 @@ module.exports = {
     mainnetETH: {
       url: alchemyURL || "",
       chainId: 1,
-      gasPrice: 5000000000,
+      gasPrice: 15000000000,
       accounts: getAccounts(),
     }
   },
