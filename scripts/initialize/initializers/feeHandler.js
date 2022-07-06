@@ -1,16 +1,10 @@
-/**
- * @dev Run to set collector fee
- * 
- *      npx hardhat run scripts/2_setter/feeHandler.js --network ropsten
- */
+const { ethers } = require(`hardhat`)
+const { print, loadContract } = require("../../shared/utilities")
+const { setNftChefPercent } = require("../../setter/setters/setters")
 
-const { ethers } = require("hardhat")
-const { print, loadContract } = require("../shared/utilities")
-const { setNftChefPercent } = require("../shared/setters")
-
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
-const initials = require("../constants/initials")
+const env = require('../../../constants/env')
+const contracts = require('../../../constants/contracts')
+const initials = require("../../../constants/initials")
 
 const feeHandlerAddress = contracts.feeHandler[env.network]
 
@@ -26,24 +20,13 @@ const lpSwapNftChefPercent = initials.FEE_HANDLER_LP_SWAP_NFT_CHEF_PERCENT[env.n
 // const yieldSwapAddress = contracts.yieldSwap[env.network]
 // const yieldSwapNftChefPercent = initials.FEE_HANDLER_YIELD_SWAP_NFT_CHEF_PERCENT[env.network]
 
-async function main() {
-    const [wallet] = await ethers.getSigners()
-    print(`load wallet: ${wallet.address}`)
-
+const initializeFeeHandler = async (wallet) => {
+    print(`(re)initialize the feeHandler to it's default state`)
     const feeHandler = await loadContract(feeHandlerAddress, wallet)
-
     await setNftChefPercent(feeHandler, vaultAddress, vaultNftChefPercent)
     await setNftChefPercent(feeHandler, referralRegisterAddress, referralRegisterNftChefPercent)
     await setNftChefPercent(feeHandler, lpSwapAddress, lpSwapNftChefPercent)
     // await setNftChefPercent(feeHandler, yieldSwapAddress, yielSwapNftChefPercent)
+}
 
-    print("done")
-}    
-
-main()
-    .then(() => process.exit(0))
-    .catch((error) => {
-        console.error(error)
-        process.exit(1)
-    })
- 
+module.exports = { initializeFeeHandler }

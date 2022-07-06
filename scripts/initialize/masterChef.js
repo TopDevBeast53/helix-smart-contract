@@ -7,11 +7,12 @@
 
 const { ethers } = require(`hardhat`);
 const { print } = require("../shared/utilities")
-const { connectMasterChef } = require("./connectors/connectors")
+const { connectMasterChef, initializeMasterChef } = require("./connectors/connectors")
 
 async function main() {
     const [wallet] = await ethers.getSigners()
     await connectMasterChef(wallet)
+    await initializeMasterChef(wallet)
     print("done")
 }
 

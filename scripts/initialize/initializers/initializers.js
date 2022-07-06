@@ -9,6 +9,7 @@ const { connectMasterChef } = require("./masterChef")
 const { connectReferralRegister } = require("./referralRegister")
 const { connectRouter } = require("./router")
 const { initFeeMinter } = require("./feeMinter")
+const { initializeFeeHandler } = require("./feeHandler")
 
 module.exports = {
     connectFactory,
@@ -19,4 +20,5 @@ module.exports = {
     connectReferralRegister,
     connectRouter,
     initFeeMinter,
+    initializeFeeHandler,
 }
