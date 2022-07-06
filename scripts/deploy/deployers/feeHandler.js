@@ -1,10 +1,10 @@
 const { ethers, upgrades } = require("hardhat")
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const env = require("../../constants/env")
-const addresses = require("../../constants/addresses")
-const contracts = require("../../constants/contracts")
-const initials = require("../../constants/initials")
+const env = require("../../../constants/env")
+const addresses = require("../../../constants/addresses")
+const contracts = require("../../../constants/contracts")
+const initials = require("../../../constants/initials")
 
 const treasuryAddress = contracts.treasuryMultiSig[env.network]
 const nftChefAddress = contracts.helixChefNFT[env.network]

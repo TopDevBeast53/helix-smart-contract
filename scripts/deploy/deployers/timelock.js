@@ -1,8 +1,8 @@
 const { ethers } = require(`hardhat`)
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const env = require("../../constants/env")
-const initials = require("../../constants/initials")
+const env = require("../../../constants/env")
+const initials = require("../../../constants/initials")
 
 const minDelay = initials.TIMELOCK_MIN_DELAY[env.network]
 const proposers = initials.TIMELOCK_PROPOSERS[env.network]

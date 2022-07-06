@@ -1,9 +1,9 @@
 const { ethers } = require(`hardhat`)
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const env = require('../../constants/env')
-const contracts = require('../../constants/contracts')
-const initials = require('../../constants/initials')
+const env = require('../../../constants/env')
+const contracts = require('../../../constants/contracts')
+const initials = require('../../../constants/initials')
 
 const tokenAddress = initials.AIRDROP_TOKEN[env.network]               // HELIX / tokenB
 const name = initials.AIRDROP_NAME[env.network]

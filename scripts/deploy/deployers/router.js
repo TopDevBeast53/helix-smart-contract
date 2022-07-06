@@ -1,9 +1,9 @@
 const { ethers } = require("hardhat")
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const env = require("../../constants/env")
-const contracts = require("../../constants/contracts")
-const addresses = require("../../constants/addresses")
+const env = require("../../../constants/env")
+const contracts = require("../../../constants/contracts")
+const addresses = require("../../../constants/addresses")
 
 const factoryAddress = contracts.factory[env.network]
 const wethAddress = addresses.WETH[env.network]

@@ -1,8 +1,8 @@
 const { ethers } = require(`hardhat`)
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const env = require("../../constants/env")
-const initials = require("../../constants/initials")
+const env = require("../../../constants/env")
+const initials = require("../../../constants/initials")
 
 const admins = initials.DEV_TEAM_MULTISIG_ADMINS[env.network]
 const owners = initials.DEV_TEAM_MULTISIG_OWNERS[env.network]

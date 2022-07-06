@@ -2,12 +2,11 @@
  * deploy Referral Register
  *
  * run from root: 
- *      npx hardhat run scripts/0_deploy/10_deployReferralRegister.js --network rinkeby
- *      npx hardhat run scripts/0_deploy/10_deployReferralRegister.js --network ropsten
+ *      npx hardhat run scripts/deploy/10_deployReferralRegister.js --network
  */
 
 const { ethers } = require(`hardhat`)
-const { deployReferralRegister } = require("../shared/deploy/deployers")
+const { deployReferralRegister } = require("./deployers/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners()

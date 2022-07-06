@@ -1,9 +1,9 @@
 const { ethers } = require(`hardhat`)
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const env = require("../../constants/env")
-const contracts = require("../../constants/contracts")
-const initials = require("../../constants/initials")
+const env = require("../../../constants/env")
+const contracts = require("../../../constants/contracts")
+const initials = require("../../../constants/initials")
 
 const helixNftAddress = contracts.helixNFT[env.network]
 const adminAddress = initials.BRIDGE_ADMIN_ADDRESS[env.network]

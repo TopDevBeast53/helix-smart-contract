@@ -1,5 +1,5 @@
 const { ethers } = require(`hardhat`)
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
 const deployHelixToken = async (deployer) => {
     print("deploy helix token")

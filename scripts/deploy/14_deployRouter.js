@@ -2,12 +2,11 @@
  * deploy Router
  * 
  * run from root:
- *      npx hardhat run scripts/0_deploy/14_deployRouter.js --network rinkeby
- *      npx hardhat run scripts/0_deploy/14_deployRouter.js --network ropsten
+ *      npx hardhat run scripts/deploy/14_deployRouter.js --network
  */
 
 const { ethers } = require("hardhat")
-const { deployRouter } = require("../shared/deploy/deployers")
+const { deployRouter } = require("./deployers/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners()

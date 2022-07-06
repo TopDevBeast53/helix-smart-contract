@@ -2,12 +2,11 @@
  * deploy Helix Migrator
  * 
  * run from root: 
- *      npx hardhat run scripts/0_deploy/15_deployMigrator.js --network rinkeby
- *      npx hardhat run scripts/0_deploy/15_deployMigrator.js --network ropsten
+ *      npx hardhat run scripts/deploy/15_deployMigrator.js --network
  */
 
 const { ethers } = require('hardhat');
-const { deployMigrator } = require("../shared/deploy/deployers")
+const { deployMigrator } = require("./deployers/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners();

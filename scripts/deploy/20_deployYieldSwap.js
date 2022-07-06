@@ -2,13 +2,12 @@
  * @dev Deployment script for Yield Swap contract.
  *
  * Run from project root using:
- *     npx hardhat run scripts/0_deploy/20_deployYieldSwap.js --network rinkeby
- *     npx hardhat run scripts/0_deploy/20_deployYieldSwap.js --network ropsten
+ *     npx hardhat run scripts/deploy/20_deployYieldSwap.js --network
  */
 
 // Define script parameters
 const { ethers } = require(`hardhat`)
-const { deployYieldSwap } = require("../shared/deploy/deployers")
+const { deployYieldSwap } = require("./deployers/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners();

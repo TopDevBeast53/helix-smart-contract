@@ -2,12 +2,11 @@
  * deploy Swap Rewards
  * 
  * run from root: 
- *      npx hardhat run scripts/0_deploy/16_deploySwapRewards.js --network rinkeby
- *      npx hardhat run scripts/0_deploy/16_deploySwapRewards.js --network ropsten
+ *      npx hardhat run scripts/deploy/16_deploySwapRewards.js --network
  */
 
 const { ethers } = require('hardhat')
-const { deploySwapRewards } = require("../shared/deploy/deployers")
+const { deploySwapRewards } = require("./deployers/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners()

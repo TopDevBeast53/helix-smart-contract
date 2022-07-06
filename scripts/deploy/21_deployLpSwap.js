@@ -2,12 +2,11 @@
  * @dev Deployment script for LP Swap contract.
  *
  * Run from project root using:
- *     npx hardhat run scripts/0_deploy/21_deployLpSwap.js --network rinkeby
- *     npx hardhat run scripts/0_deploy/21_deployLpSwap.js --network ropsten
+ *     npx hardhat run scripts/deploy/21_deployLpSwap.js --network
  */
 
 const { ethers } = require(`hardhat`)
-const { deployLpSwap } = require("../shared/deploy/deployers")
+const { deployLpSwap } = require("./deployers/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners()

@@ -2,12 +2,11 @@
  * @dev Deployment script devTeam multisig contract
  *
  * Run from project root using:
- *     npx hardhat run scripts/0_deploy/2_deployDevTeamMultiSig.js --network rinkeby
- *     npx hardhat run scripts/0_deploy/2_deployDevTeamMultiSig.js --network ropsten
+ *     npx hardhat run scripts/deploy/2_deployDevTeamMultiSig.js --network
  */
 
 const { ethers } = require(`hardhat`)
-const { deployDevTeamMultiSig } = require("../shared/deploy/deployers")
+const { deployDevTeamMultiSig } = require("./deployers/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners()

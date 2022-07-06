@@ -1,8 +1,8 @@
 const { ethers, upgrades } = require(`hardhat`)
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const env = require('../../constants/env')
-const contracts = require('../../constants/contracts')
+const env = require('../../../constants/env')
+const contracts = require('../../../constants/contracts')
 
 const factoryAddress = contracts.factory[env.network]
 

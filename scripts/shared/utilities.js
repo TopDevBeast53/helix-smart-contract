@@ -4,8 +4,8 @@ const { ethers } = require("hardhat")
 
 const verbose = true;
 
-const env = require("../constants/env")
-const contracts  = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts  = require("../../constants/contracts")
 
 const overrides = {
     gasLimit: 9999999

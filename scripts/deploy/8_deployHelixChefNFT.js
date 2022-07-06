@@ -2,12 +2,11 @@
  * deply Helix NFT
  *
  * run from root: 
- *      npx hardhat run scripts/0_deploy/8_deployHelixChefNFT.js --network rinkeby
- *      npx hardhat run scripts/0_deploy/8_deployHelixChefNFT.js --network ropsten
+ *      npx hardhat run scripts/deploy/8_deployHelixChefNFT.js --network
  */
 
 const { ethers } = require(`hardhat`)
-const { deployHelixChefNft } = require("../shared/deploy/deployers")
+const { deployHelixChefNft } = require("./deployers/deployers")
  
 async function main() {
     const [deployer] = await ethers.getSigners()

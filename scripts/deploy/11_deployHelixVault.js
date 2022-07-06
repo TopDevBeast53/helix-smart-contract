@@ -2,12 +2,11 @@
  * deploy Helix Vault
  *
  * run from root: 
- *     npx hardhat run scripts/0_deploy/11_deployHelixVault.js --network rinkeby
- *     npx hardhat run scripts/0_deploy/11_deployHelixVault.js --network ropsten
+ *     npx hardhat run scripts/deploy/11_deployHelixVault.js --network
  */
 
 const { ethers } = require(`hardhat`)
-const { deployHelixVault } = require("../shared/deploy/deployers")
+const { deployHelixVault } = require("./deployers/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners();

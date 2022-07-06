@@ -1,8 +1,8 @@
 const { ethers, upgrades } = require("hardhat")
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const env = require("../../constants/env")
-const addresses = require("../../constants/addresses")
+const env = require("../../../constants/env")
+const addresses = require("../../../constants/addresses")
 
 const setterFeeOnPairSwaps = addresses.setterFeeOnPairSwaps[env.network]
 const poolReceiveTradeFee = addresses.poolReceiveTradeFee[env.network]

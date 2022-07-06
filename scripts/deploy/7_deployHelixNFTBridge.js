@@ -2,12 +2,11 @@
  * deploy HelixNFT Bridge
  * 
  * run from root:
- *      npx hardhat run scripts/0_deploy/7_deployHelixNFTBridge.js --network rinkeby
- *      npx hardhat run scripts/0_deploy/7_deployHelixNFTBridge.js --network ropsten
+ *      npx hardhat run scripts/deploy/7_deployHelixNFTBridge.js --network
  */
 
 const { ethers, network } = require(`hardhat`);
-const { deployHelixNftBridge } = require("../shared/deploy/deployers")
+const { deployHelixNftBridge } = require("./deployers/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners();

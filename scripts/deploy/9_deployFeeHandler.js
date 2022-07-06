@@ -2,12 +2,11 @@
  * deploy FeeHandler
  * 
  * run from root:
- *      npx hardhat run scripts/0_deploy/9_deployFeeHandler.js --network rinkeby
- *      npx hardhat run scripts/0_deploy/9_deployFeeHandler.js --network ropsten
+ *      npx hardhat run scripts/deploy/9_deployFeeHandler.js --network
  */
 
 const { ethers } = require("hardhat")
-const { deployFeeHandler } = require("../shared/deploy/deployers")
+const { deployFeeHandler } = require("./deployers/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners()

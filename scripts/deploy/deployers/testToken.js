@@ -1,5 +1,5 @@
 const { ethers } = require(`hardhat`);
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
 const name = 'Test Token B'
 const symbol = 'TTB'

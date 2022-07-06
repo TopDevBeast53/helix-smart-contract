@@ -1,5 +1,5 @@
 const { ethers, network, upgrades } = require(`hardhat`)
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
 const deployHelixNft = async (deployer) => {
     print(`deploy upgradeable Helix NFT`)

@@ -1,9 +1,9 @@
 const { ethers, upgrades } = require(`hardhat`)
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const env = require("../../constants/env")
-const contracts = require("../../constants/contracts")
-const addresses = require("../../constants/addresses")
+const env = require("../../../constants/env")
+const contracts = require("../../../constants/contracts")
+const addresses = require("../../../constants/addresses")
 
 const helixTokenAddress = contracts.helixToken[env.network]
 const masterChefAddress = contracts.masterChef[env.network]

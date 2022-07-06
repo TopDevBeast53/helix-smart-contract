@@ -1,8 +1,8 @@
 const { ethers, upgrades } = require("hardhat")
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const env = require("../../constants/env")
-const initials = require("../../constants/initials")
+const env = require("../../../constants/env")
+const initials = require("../../../constants/initials")
 
 const totalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
 

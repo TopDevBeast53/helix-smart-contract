@@ -2,12 +2,11 @@
  * @dev Deployment script timelock contract
  *
  * Run from project root using:
- *     npx hardhat run scripts/0_deploy/3_deployTimelock.js --network rinkeby
- *     npx hardhat run scripts/0_deploy/3_deployTimelock.js --network ropsten
+ *     npx hardhat run scripts/deploy/3_deployTimelock.js --network ropsten
  */
 
 const { ethers } = require(`hardhat`)
-const { deployTimelock } = require("../shared/deploy/deployers")
+const { deployTimelock } = require("./deployers/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners()

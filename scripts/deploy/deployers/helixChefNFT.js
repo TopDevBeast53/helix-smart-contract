@@ -1,8 +1,8 @@
 const { ethers, upgrades } = require(`hardhat`)
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const contracts = require("../../constants/contracts")
-const env = require("../../constants/env")
+const contracts = require("../../../constants/contracts")
+const env = require("../../../constants/env")
 
 const rewardToken = contracts.helixToken[env.network];
 const helixNftAddress = contracts.helixNFT[env.network];
