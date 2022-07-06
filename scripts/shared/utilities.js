@@ -145,7 +145,7 @@ const getContractEnclosingFolder = (name) => {
     switch (name) {
         case "FeeCollector":
             return "fees"
-        case "FeeHandler:
+        case "FeeHandler":
             return "fees"
         case "FeeMinter":
             return "fees"
