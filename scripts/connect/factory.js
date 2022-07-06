@@ -2,12 +2,12 @@
  * @dev Used to (re)build all required references for Helix Factory
  * 
  * Run from project root using:
- *     npx hardhat run scripts/1_connect/factory.js --network ropsten
+ *     npx hardhat run scripts/connect/factory.js --network
  */
 
 const { ethers } = require(`hardhat`)
 const { print } = require("../shared/utilities")
-const { connectFactory } = require("../shared/connect")
+const { connectFactory } = require("./connectors/connectors")
 
 async function main() {
     const [wallet] = await ethers.getSigners()

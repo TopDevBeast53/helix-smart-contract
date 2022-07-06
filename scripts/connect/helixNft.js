@@ -2,12 +2,12 @@
  * @dev Used to (re)build all required references for Helix Nft
  * 
  * Run from project root using:
- *     npx hardhat run scripts/1_connect/helixNft.js --network ropsten
+ *     npx hardhat run scripts/connect/helixNft.js --network
  */
 
 const { ethers } = require(`hardhat`);
 const { print } = require("../shared/utilities")
-const { connectHelixNft } = require("../shared/connect")
+const { connectHelixNft } = require("./connectors/connectors")
 
 async function main() {
     const [wallet] = await ethers.getSigners()

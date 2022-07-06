@@ -2,14 +2,14 @@
  * @dev Used to (re)initialize Helix Chef Nft
  * 
  * Run from project root using:
- *     npx hardhat run scripts/1_connect/helixChefNft.js --network ropsten
+ *     npx hardhat run scripts/connect/helixChefNft.js --network
  */
 
 const verbose = true
 
 const { ethers } = require(`hardhat`);
 const { print } = require("../shared/utilities")
-const { connectHelixChefNft } = require("../shared/connect")
+const { connectHelixChefNft } = require("./connectors/connectors")
 
 async function main() {
     const [wallet] = await ethers.getSigners()

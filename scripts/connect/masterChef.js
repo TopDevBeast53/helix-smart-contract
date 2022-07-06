@@ -2,12 +2,12 @@
  * @dev Used to (re)build all required references for Master Chef
  * 
  * Run from project root using:
- *     npx hardhat run scripts/1_connect/masterChef.js --network ropsten
+ *     npx hardhat run scripts/connect/masterChef.js --network
  */
 
 const { ethers } = require(`hardhat`);
 const { print } = require("../shared/utilities")
-const { connectMasterChef } = require("../shared/connect")
+const { connectMasterChef } = require("./connectors/connectors")
 
 async function main() {
     const [wallet] = await ethers.getSigners()
