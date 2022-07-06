@@ -48,7 +48,7 @@ async function main() {
     )     
     await vipPresale.deployTransaction.wait()
     console.log(`Vip Presale deployed to ${vipPresale.address}`)
-    console.log(`Remember to save this address to ./scripts/constants/contracts.js\n`)
+    console.log(`Remember to save this address to ./constants/contracts.js\n`)
 
     // Transfer initial balance (20,000,000) of HELIX-P to VIP Presale 
     console.log(`Transfer ${initialBalance} HELIX-P to VIP Presale`)
