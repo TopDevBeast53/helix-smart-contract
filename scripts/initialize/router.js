@@ -1,17 +1,16 @@
 /* 
  * @dev Used to (re)build all required references for Router
  * 
- * Run from project root using:
- *     npx hardhat run scripts/connect/router.js --network
+ *     npx hardhat run scripts/initialize/router.js --network
  */
 
 const { ethers } = require(`hardhat`);
 const { print } = require("../shared/utilities")
-const { connectRouter } = require("./connectors/connectors")
+const { initializeRouter } = require("./initializers/initializers")
 
 async function main() {
     const [wallet] = await ethers.getSigners()
-    await connectRouter(wallet)
+    await initializeRouter(wallet)
     print("done")
 }
 

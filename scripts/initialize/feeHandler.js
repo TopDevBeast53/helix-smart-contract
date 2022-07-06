@@ -10,7 +10,7 @@ const { initializeFeeHandler } = require("../initializers/initializers")
 
 async function main() {
     const [wallet] = await ethers.getSigners()
-    initializeFeeHandler(wallet)
+    await initializeFeeHandler(wallet)
     print("done")
 }    
 

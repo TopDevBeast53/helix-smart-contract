@@ -1,17 +1,16 @@
 /* 
  * @dev Used to (re)build all required references for Referral Register
  * 
- * Run from project root using:
- *     npx hardhat run scripts/connect/referralRegister.js --network
+ *     npx hardhat run scripts/initialize/referralRegister.js --network
  */
 
 const { ethers } = require(`hardhat`);
 const { print } = require("../shared/utilities")
-const { connectReferralRegister } = require("./connectors/connectors")
+const { initializeReferralRegister } = require("./initializers/initializers")
 
 async function main() {
     const [wallet] = await ethers.getSigners()
-    await connectReferralRegister(wallet)
+    await initializeReferralRegister(wallet)
     print("done")
 }
 

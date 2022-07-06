@@ -21,7 +21,7 @@ const lpSwapNftChefPercent = initials.FEE_HANDLER_LP_SWAP_NFT_CHEF_PERCENT[env.n
 // const yieldSwapNftChefPercent = initials.FEE_HANDLER_YIELD_SWAP_NFT_CHEF_PERCENT[env.network]
 
 const initializeFeeHandler = async (wallet) => {
-    print(`(re)initialize the feeHandler to it's default state`)
+    print("initialize the feeHandler contract")
     const feeHandler = await loadContract(feeHandlerAddress, wallet)
     await setNftChefPercent(feeHandler, vaultAddress, vaultNftChefPercent)
     await setNftChefPercent(feeHandler, referralRegisterAddress, referralRegisterNftChefPercent)

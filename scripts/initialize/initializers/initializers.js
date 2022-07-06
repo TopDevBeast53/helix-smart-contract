@@ -1,24 +1,24 @@
-// This script exports the "connect" functions which are used to (re)build the connections between
-// contracts
+// This script exports the "initialize" functions with restore the contracts to their 
+// default states
 
-const { connectFactory } = require("./factory")
-const { connectHelixChefNft } = require("./helixChefNft")
-const { connectHelixNft } = require("./helixNft")
-const { connectHelixToken } = require("./helixToken")
-const { connectMasterChef } = require("./masterChef")
-const { connectReferralRegister } = require("./referralRegister")
-const { connectRouter } = require("./router")
+const { initializeFactory } = require("./factory")
+const { initializeHelixChefNft } = require("./helixChefNft")
+const { initializeHelixNft } = require("./helixNft")
+const { initializeHelixToken } = require("./helixToken")
+const { initializeMasterChef } = require("./masterChef")
+const { initializeReferralRegister } = require("./referralRegister")
+const { initializeRouter } = require("./router")
 const { initFeeMinter } = require("./feeMinter")
 const { initializeFeeHandler } = require("./feeHandler")
 
 module.exports = {
-    connectFactory,
-    connectHelixChefNft,
-    connectHelixNft,
-    connectHelixToken,
-    connectMasterChef,
-    connectReferralRegister,
-    connectRouter,
-    initFeeMinter,
+    initializeFactory,
+    initializeHelixChefNft,
+    initializeHelixNft,
+    initializeHelixToken,
+    initializeMasterChef,
+    initializeReferralRegister,
+    initializeRouter,
+    initializeFeeMinter,
     initializeFeeHandler,
 }

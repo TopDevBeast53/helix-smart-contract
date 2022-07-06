@@ -9,9 +9,10 @@ const initials = require("../../../constants/initials")
 const helixChefNftAddress = contracts.helixChefNFT[env.network]
 const feeHandlerAddress = contracts.feeHandler[env.network]
 
-const connectHelixChefNft = async (wallet) => {
+const initializeHelixChefNft = async (wallet) => {
+    print("initialize the helix chef nft contract")
     const helixChefNft = await loadContract(helixChefNftAddress, wallet)
     await addAccruer(helixChefNft, feeHandlerAddress)
 }
 
-module.exports = { connectHelixChefNft }
+module.exports = { initializeHelixChefNft }

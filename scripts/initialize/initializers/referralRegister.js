@@ -9,7 +9,8 @@ const masterChefAddress = contracts.masterChef[env.network]
 const referralRegisterAddress = contracts.referralRegister[env.network]
 const swapRewardsAddress = contracts.swapRewards[env.network]
 
-const connectReferralRegister = async (wallet) => {
+const initializeReferralRegister = async (wallet) => {
+    print("initialize the referral register contract")
     const referralRegister = await loadContract(
         referralRegisterAddress,
         wallet
@@ -18,4 +19,4 @@ const connectReferralRegister = async (wallet) => {
     await addRecorder(referralRegister, masterChefAddress)
 }
 
-module.exports = { connectReferralRegister }
+module.exports = { initializeReferralRegister }

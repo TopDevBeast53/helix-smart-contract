@@ -10,11 +10,12 @@ const referralRegisterAddress = contracts.referralRegister[env.network]
 const helixVaultAddress = contracts.helixVault[env.network]
 const helixTokenAddress = contracts.helixToken[env.network]
 
-const connectHelixToken = async (wallet) => {
+const initializeHelixToken = async (wallet) => {
+    print("initialize the helix token contract") 
     const helixToken = await loadContract(helixTokenAddress, wallet)
     await addMinter(helixToken, referralRegisterAddress)
     await addMinter(helixToken, vaultAddress)
     await addMinter(helixToken, masterChefAddress)
 }
 
-module.exports = { connectHelixToken }
+module.exports = { initializeHelixToken }
