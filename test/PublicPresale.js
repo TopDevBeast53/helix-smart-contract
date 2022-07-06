@@ -10,9 +10,9 @@ const { constants } = require("@openzeppelin/test-helpers")
                                                                                                    
 const verbose = true  
 
-const addresses = require('../scripts/constants/addresses')
-const initials = require('../scripts/constants/initials')
-const env = require('../scripts/constants/env')
+const addresses = require('../constants/addresses')
+const initials = require('../constants/initials')
+const env = require('../constants/env')
 
 const treasuryAddress = addresses.TREASURY[env.network]
 const inputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.network]

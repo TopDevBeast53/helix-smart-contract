@@ -1,8 +1,8 @@
 const { expandTo18Decimals } = require("./utilities")
 
-const env = require("../../scripts/constants/env")
-const addresses = require("../../scripts/constants/addresses")
-const initials = require("../../scripts/constants/initials")
+const env = require("../../constants/env")
+const addresses = require("../../constants/addresses")
+const initials = require("../../constants/initials")
 
 const treasuryAddress = addresses.TREASURY[env.network]
 
@@ -26,8 +26,6 @@ const publicPresaleOutputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.network]
 const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHASE_DURATION[env.network]
 
 const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.network]
-
-const helixNftBridgeGasFeeEth = initials.BRIDGE_FEE_ETH_AMOUNT[env.network]
 
 const billion = 1000000000
 
@@ -141,8 +139,7 @@ module.exports.fullExchangeFixture = async () => {
     // 3. deploy helix nft bridge
     const helixNftBridge = await helixNftBridgeContractFactory.deploy(
         helixNft.address,
-        alice.address,
-        helixNftBridgeGasFeeEth
+        alice.address
     )
 
     // 4. deploy helix chef nft

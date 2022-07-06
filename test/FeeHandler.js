@@ -9,8 +9,8 @@ const { MaxUint256 } = require("legacy-ethers/constants")
 const { expandTo18Decimals } = require("./shared/utilities")
 const { fullExchangeFixture } = require("./shared/fixtures")
 
-const env = require('../scripts/constants/env')
-const addresses = require('../scripts/constants/addresses')
+const env = require('../constants/env')
+const addresses = require('../constants/addresses')
 const treasuryAddress = addresses.TREASURY[env.network]
 
 const verbose = true
