@@ -7,19 +7,20 @@ const initials = require("../../constants/initials")
 
 const helixNftAddress = contracts.helixNFT[env.network]
 const adminAddress = initials.BRIDGE_ADMIN_ADDRESS[env.network]
-const fee_eth = initials.BRIDGE_FEE_ETH_AMOUNT[env.network]
 
 const deployHelixNftBridge = async (deployer) => {
     print("deploy helix nft bridge")
     print(`helixNftAddress: ${helixNftAddress}`)
     print(`adminAddress: ${adminAddress}`)
-    print(`fee_eth: ${fee_eth}`)
+
+    // const rpc =  new ethers.providers.JsonRpcProvider(env.rpcURL) ;
+    // const admin = new ethers.Wallet( process.env.PRIVATE_KEY, rpc);
+    // nonce = await network.provider.send(`eth_getTransactionCount`, [admin.address, "latest"]);
 
     const HelixNftBridge = await ethers.getContractFactory(`HelixNFTBridge`)
     bridge = await HelixNftBridge.deploy(
        helixNftAddress, 
-       adminAddress,
-       fee_eth
+       adminAddress
     )
     await bridge.deployTransaction.wait()
     print(`HelixNftBridge deployed to ${bridge.address}`)

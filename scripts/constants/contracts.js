@@ -25,12 +25,12 @@ module.exports = {
         4: '0x79DD2dad8D04F9279F94580DBEd2306A0aE118Bd',
     },
     helixNFT: {
-        1: '0x8940A899E969cBD90C9678f4C28c53ca8FE47FE2',    // deployed 7/4/2022
+        1: '0xFA5B5Efa9Ac19a2E22B0f9736C3fc83FEe933BeA',    // deployed 7/6/2022
         3: '0x24be493d0f3b9C9Dd1f702d0917Cdcb6CbFfF0a2',
-        4: '0x3C947b6a4e6CDC2AB6e40870EA6e5587e3Ee0458',
+        4: '0xdD62271F8a54446032bfF3cEC93861D4F8100F4b',
     },
     helixNFTImplementation: {
-        1: '0xFDcd573d6Ca074B1718DF70226DC1B5231bF8B7E',    // deployed 7/4/2022
+        1: '0xcE57b79CF01C9574d15ECA9A6eE9629140bE6589',    // deployed 7/6/2022
         3: '0x13A54Ee2FDA40A26C9A11167c8304338821eDD7B',
         4: '0xd3EC4a703aC914a5777F2fd0bF434eAE1a19628D',
     },
@@ -40,9 +40,9 @@ module.exports = {
         4: '0xFe19cb3E3E97572FCd8dE6c81c3224f0B90452Bc',
     },
     helixNFTBridge: {
-        1: '0xC28d0CE9cb6CA636De865ed42027140117734Ba5',    // deployed 7/4/2022
+        1: '0xd19Ee2f94C32Ee3A5E44F1eD44b9C754822A728D',    // deployed 7/6/2022
         3: '0xfE5C6695E4DD62ca97737823ef4BBB47D328C328',
-        4: '0xCBe3FAA3EF5DfEC20Bb7DF4FeAdbb6A7a5A3E9Cb',
+        4: '0x11238ec47E0a640d6388456E85f3bC24a59fA641',
     },
     helixChefNFT: {
         1: '0xbFF5672d78E7Ef1eBE7F6B2EBD8Be7A7BbD4E9E1',    // deployed 7/4/2022
