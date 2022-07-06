@@ -1,6 +1,6 @@
 const { ethers } = require(`hardhat`)
 const { print, loadContract } = require("../../shared/utilities")
-const { addRecorder } = require("../../setter/setters/setters")
+const { addRecorder } = require("../../shared/setters/setters")
 
 const env = require('../../../constants/env')
 const contracts = require('../../../constants/contracts')

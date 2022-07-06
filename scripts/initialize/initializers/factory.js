@@ -1,9 +1,9 @@
 const { ethers } = require(`hardhat`)
 const { print, loadContract } = require("../../shared/utilities")
-const { setOracleFactory } = require("../../setter/setters/setters")
+const { setOracleFactory } = require("../../shared/setters/setters")
 
 const env = require('../../../constants/env')
-const contracts = require('../../...constants/contracts')
+const contracts = require('../../../constants/contracts')
 const initials = require("../../../constants/initials")
 
 const factoryAddress = contracts.factory[env.network]

@@ -8,7 +8,7 @@ const { initializeHelixToken } = require("./helixToken")
 const { initializeMasterChef } = require("./masterChef")
 const { initializeReferralRegister } = require("./referralRegister")
 const { initializeRouter } = require("./router")
-const { initFeeMinter } = require("./feeMinter")
+const { initializeFeeMinter } = require("./feeMinter")
 const { initializeFeeHandler } = require("./feeHandler")
 
 module.exports = {

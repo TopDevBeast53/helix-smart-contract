@@ -1,9 +1,8 @@
 // This script exports javascript versions of contract setters
 
-const { print, getContractName } = require("./utilities")
+const { print, getContractName } = require("../utilities")
 
-const env = require("../constants/env")
-const names = require("../constants/names")
+const env = require("../../../constants/env")
 
 // Set the fee collector percent on the contract
 const setCollectorPercent = async (contract, percent) => {
@@ -135,4 +134,6 @@ module.exports = {
     addRecorder,
     setSwapRewards,
     add,
+    transferOwnership,
+    transferTimelockOwnership
 }

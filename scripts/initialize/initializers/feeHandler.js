@@ -1,6 +1,6 @@
 const { ethers } = require(`hardhat`)
 const { print, loadContract } = require("../../shared/utilities")
-const { setNftChefPercent } = require("../../setter/setters/setters")
+const { setNftChefPercent } = require("../../shared/setters/setters")
 
 const env = require('../../../constants/env')
 const contracts = require('../../../constants/contracts')
