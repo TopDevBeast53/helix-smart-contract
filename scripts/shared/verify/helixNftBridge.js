@@ -9,21 +9,25 @@ const helixNftBridgeAddress = contracts.helixNFTBridge[env.network]
 
 const helixNftAddress = contracts.helixNFT[env.network]
 const adminAddress = initials.BRIDGE_ADMIN_ADDRESS[env.network]
+const gasFeeEth = initials.BRIDGE_FEE_ETH_AMOUNT[env.network]
 
 const verifyHelixNftBridge = async () => {
     print("verify helix nft bridge")
     print(`helixNftAddress: ${helixNftAddress}`)
     print(`adminAddress: ${adminAddress}`)
+    print(`gasFeeEth: ${gasFeeEth}`)
 
     await run(
         "verify:verify", {
             address: helixNftBridgeAddress,
             constructorArguments: [
                 helixNftAddress,
-                adminAddress
+                adminAddress,
+                gasFeeEth
             ]
         }
     )
 }
 
 module.exports = { verifyHelixNftBridge } 
+
