@@ -40,7 +40,7 @@ module.exports = {
         4: '0xFe19cb3E3E97572FCd8dE6c81c3224f0B90452Bc',
     },
     helixNFTBridge: {
-        1: '0x6CF0a68367182F049BaE05151e3eB793AC78e13B',    // deployed 7/6/2022
+        1: '0x8951C5324391985D25002E799FB43F55295a1028',    // deployed 7/7/2022
         3: '0xfE5C6695E4DD62ca97737823ef4BBB47D328C328',
         4: '0xCd26C2B001846A690846434BC21efb3C5640f052',
     },
