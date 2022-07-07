@@ -41,11 +41,7 @@ contract HelixNFTBridge is Ownable, Pausable {
     /// user -> bridgeFactoryIDs[]
     mapping(address => uint256[]) public bridgeFactoryIDs;
     
-    /**
-     * @dev If the NFT is available on the Ethereum, then this map stores true
-     * for the externalID, false otherwise.
-     */
-    mapping(string => bool) private _bridgedExternalTokenIDs;
+    mapping(string => bool) private _wrappedNftIDs;
 
     /// for counting whenever add bridge once approve on solana 
     /// if it's down to 0, will call to remove bridger
@@ -121,8 +117,8 @@ contract HelixNFTBridge is Ownable, Pausable {
         uint256 length = _nftIDs.length;
         for (uint256 i = 0; i < length; i++) {
             string memory _nftID = _nftIDs[i];
-            require(!_bridgedExternalTokenIDs[_nftID], "HelixNFTBridge:Already bridged token");
-            _bridgedExternalTokenIDs[_nftID] = true;
+            require(!_wrappedNftIDs[_nftID], "HelixNFTBridge:Already Wrapped token");
+            _wrappedNftIDs[_nftID] = true;
         }
         string[] memory _newNftIDs = new string[](length);
         _newNftIDs = _nftIDs;
@@ -165,7 +161,7 @@ contract HelixNFTBridge is Ownable, Pausable {
       onlyOwner
       whenNotPaused
     {
-        BridgeFactory memory _bridgeFactory = bridgeFactories[_bridgeFactoryId];
+        BridgeFactory storage _bridgeFactory = bridgeFactories[_bridgeFactoryId];
         _bridgeFactory.bridgeStatus = BridgeStatus.Pendding;
         address _user = _bridgeFactory.user;
         _countAddBridge[_user]++;
@@ -221,7 +217,7 @@ contract HelixNFTBridge is Ownable, Pausable {
      * @dev Whether the token is bridged or not.
      */
     function isBridged(string calldata _externalTokenID) external view returns (bool) {
-        return _bridgedExternalTokenIDs[_externalTokenID];
+        return _wrappedNftIDs[_externalTokenID];
     }
 
     /// Called by the owner to pause the contract
@@ -265,8 +261,8 @@ contract HelixNFTBridge is Ownable, Pausable {
         uint256 length = _nftIDs.length;
         for (uint256 i = 0; i < length; i++) {
             string memory _nftID = _nftIDs[i];
-            require(_bridgedExternalTokenIDs[_nftID], "HelixNFTBridge: already bridged to Solana");
-            _bridgedExternalTokenIDs[_nftID] = false;
+            require(_wrappedNftIDs[_nftID], "HelixNFTBridge: already bridged to Solana");
+            _wrappedNftIDs[_nftID] = false;
         }
         _bridgeFactory.bridgeStatus = BridgeStatus.Burned;
 
