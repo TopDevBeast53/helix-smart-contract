@@ -40,8 +40,6 @@ contract HelixNFTBridge is Ownable, Pausable {
 
     /// user -> bridgeFactoryIDs[]
     mapping(address => uint256[]) public bridgeFactoryIDs;
-    
-    mapping(string => bool) private _wrappedNftIDs;
 
     /// for counting whenever add bridge once approve on solana 
     /// if it's down to 0, will call to remove bridger
@@ -49,6 +47,8 @@ contract HelixNFTBridge is Ownable, Pausable {
     mapping(address => uint256) private _countAddBridge;
  
     address public admin;
+
+    uint8 public limitWrapPerFactory;
 
     uint256 public gasFeeToAdmin;
 
@@ -108,18 +108,13 @@ contract HelixNFTBridge is Ownable, Pausable {
       payable
     {
         address _user = msg.sender;
-        require(_nftIDs.length != 0, "HelixNFTBridge:Not Array");
+        uint256 length = _nftIDs.length;
+        require(length != 0 && length <= limitWrapPerFactory, "HelixNFTBridge:Invalid array length");
         
         require(msg.value >= gasFeeToAdmin, "HelixNFTBridge:Insufficient Amount to send Fee to Admin");
         (bool success, ) = payable(admin).call{value: gasFeeToAdmin}("");
         require(success, "HelixNFTBridge:receiver rejected ETH transfer");
 
-        uint256 length = _nftIDs.length;
-        for (uint256 i = 0; i < length; i++) {
-            string memory _nftID = _nftIDs[i];
-            require(!_wrappedNftIDs[_nftID], "HelixNFTBridge:Already Wrapped token");
-            _wrappedNftIDs[_nftID] = true;
-        }
         string[] memory _newNftIDs = new string[](length);
         _newNftIDs = _nftIDs;
         
@@ -213,13 +208,6 @@ contract HelixNFTBridge is Ownable, Pausable {
         return _bridgeFactories;
     }
 
-    /**
-     * @dev Whether the token is bridged or not.
-     */
-    function isBridged(string calldata _externalTokenID) external view returns (bool) {
-        return _wrappedNftIDs[_externalTokenID];
-    }
-
     /// Called by the owner to pause the contract
     function pause() external onlyOwner {
         _pause();
@@ -243,6 +231,10 @@ contract HelixNFTBridge is Ownable, Pausable {
         emit SetAdmin(msg.sender, admin);
     }
 
+    function setLimitWrapPerFactory(uint8 _limitWrapPerFactory) external onlyOwner {
+        limitWrapPerFactory = _limitWrapPerFactory;
+    }
+
     function setGasFeeToAdmin(uint256 _gasFeeToAdmin) external onlyOwner {
         gasFeeToAdmin = _gasFeeToAdmin;
     }
@@ -257,15 +249,9 @@ contract HelixNFTBridge is Ownable, Pausable {
         uint256 bridgeFactoryId = helixNFT.getBridgeFactoryId(_tokenId);
         BridgeFactory storage _bridgeFactory = bridgeFactories[bridgeFactoryId];
         require(_bridgeFactory.user == msg.sender, "HelixNFTBridge: Not owner");
-        string[] memory _nftIDs = _bridgeFactory.nftIDs;
-        uint256 length = _nftIDs.length;
-        for (uint256 i = 0; i < length; i++) {
-            string memory _nftID = _nftIDs[i];
-            require(_wrappedNftIDs[_nftID], "HelixNFTBridge: already bridged to Solana");
-            _wrappedNftIDs[_nftID] = false;
-        }
-        _bridgeFactory.bridgeStatus = BridgeStatus.Burned;
+        require(_bridgeFactory.bridgeStatus == BridgeStatus.Bridged, "HelixNFTBridge: Invalid to bridgeToSolana");
 
+        _bridgeFactory.bridgeStatus = BridgeStatus.Burned;
         helixNFT.burn(_tokenId);
         emit BridgeToSolana(_externalRecipientAddr, _bridgeFactory.encryptExternalID);
     }
