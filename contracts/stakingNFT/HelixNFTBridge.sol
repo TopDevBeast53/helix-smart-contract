@@ -96,10 +96,11 @@ contract HelixNFTBridge is Ownable, Pausable {
      */
     HelixNFT helixNFT;
 
-    constructor(HelixNFT _helixNFT, address _admin, uint256 _gasFeeToAdmin) {
+    constructor(HelixNFT _helixNFT, address _admin, uint256 _gasFeeToAdmin, uint8 _limitWrapPerFactory) {
         helixNFT = _helixNFT;
         admin = _admin;
         gasFeeToAdmin = _gasFeeToAdmin;
+        limitWrapPerFactory = _limitWrapPerFactory;
     }
     
     function wrap(string memory _encryptExternalID, string[] calldata _nftIDs, string memory _tokenURI) 
