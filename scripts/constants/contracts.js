@@ -40,9 +40,9 @@ module.exports = {
         4: '0xFe19cb3E3E97572FCd8dE6c81c3224f0B90452Bc',
     },
     helixNFTBridge: {
-        1: '0x8951C5324391985D25002E799FB43F55295a1028',    // deployed 7/7/2022
+        1: '0x265F2DDE01d9989a3C3d78338f59c543a2CB13Ad',    // deployed 7/8/2022
         3: '0xfE5C6695E4DD62ca97737823ef4BBB47D328C328',
-        4: '0x37232f45dE2943351Bc4d3Ac5d5373877330228C',
+        4: '0xCd26C2B001846A690846434BC21efb3C5640f052',
     },
     helixChefNFT: {
         1: '0xbFF5672d78E7Ef1eBE7F6B2EBD8Be7A7BbD4E9E1',    // deployed 7/4/2022
