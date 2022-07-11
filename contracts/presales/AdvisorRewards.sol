@@ -137,12 +137,12 @@ contract AdvisorRewards is Ownable {
     }
 
     /// Called by the owner to manually set the withdraw phase
-    /// Must be called to set withdrawPhase0
+    /// Must be called to transition from NoWithdraw to Withdraw0
     function setWithdrawPhase(WithdrawPhase _withdrawPhase) external onlyOwner {
         _setWithdrawPhase(_withdrawPhase);
     }
 
-    /// Return true if _by can withdraw _amount and false otherwise
+    /// Return true if _by can withdraw _amount and revert otherwise
     function canWithdraw(address _by, uint256 _amount) external view returns (bool) {
         _requireValidWithdraw(_by, _amount);
         return true;
