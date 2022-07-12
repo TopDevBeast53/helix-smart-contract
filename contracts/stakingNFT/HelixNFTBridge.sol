@@ -152,13 +152,15 @@ contract HelixNFTBridge is Ownable, Pausable {
         return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
     }
 
-    function addBridgeFactory(uint256 _bridgeFactoryId)
+    function addBridgeFactory(uint256 _bridgeFactoryId, string memory _updatedTokenURI)
       external 
       onlyOwner
       whenNotPaused
     {
+        require(_bridgeFactoryId > 0, "HelixNFTBridge: Invalid factoryId");
         BridgeFactory storage _bridgeFactory = bridgeFactories[_bridgeFactoryId];
         _bridgeFactory.bridgeStatus = BridgeStatus.Pendding;
+        _bridgeFactory.tokenURI = _updatedTokenURI;
         address _user = _bridgeFactory.user;
         _countAddBridge[_user]++;
         EnumerableSet.add(_bridgers, _user);
@@ -173,6 +175,7 @@ contract HelixNFTBridge is Ownable, Pausable {
       whenNotPaused
     {
         address _user = msg.sender;
+        require(_bridgeFactoryId > 0, "HelixNFTBridge: Invalid factoryId");
         require(_countAddBridge[_user] > 0, "HelixNFTBridge: You are not a Bridger");
         BridgeFactory memory _bridgeFactory = bridgeFactories[_bridgeFactoryId];
 
@@ -198,6 +201,10 @@ contract HelixNFTBridge is Ownable, Pausable {
     
     function getBridgeFactoryIDs(address _user) external view returns (uint256[] memory) {
         return bridgeFactoryIDs[_user];
+    }
+
+    function getNftIDsByFactoryID(uint256 _factoryId) external view returns (string[] memory) {
+        return bridgeFactories[_factoryId].nftIDs;
     }
 
     function getBridgeFactories(address _user) external view returns (BridgeFactory[] memory) {
