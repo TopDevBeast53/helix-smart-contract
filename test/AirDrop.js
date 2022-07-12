@@ -13,7 +13,7 @@ const verbose = true
 const initials = require('../scripts/constants/initials')
 const env = require('../scripts/constants/env')
 
-const initialBalance = initials.AIRDROP_INITIAL_BALANCE[env.network]
+const initialBalance = initials.AIRDROP_INITIAL_BALANCE[env.testNetwork]
 
 const SECONDS_PER_DAY = 86400
 const wallet1InitialBalance = 1000

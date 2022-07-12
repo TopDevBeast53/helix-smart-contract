@@ -4,30 +4,32 @@ const env = require("../../scripts/constants/env")
 const addresses = require("../../scripts/constants/addresses")
 const initials = require("../../scripts/constants/initials")
 
-const treasuryAddress = addresses.TREASURY[env.network]
+const treasuryAddress = addresses.TREASURY[env.testNetwork]
 
-const feeMinterTotalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
-const feeMinterToMintPercents = initials.FEE_MINTER_TO_MINT_PERCENTS[env.network]
+const feeMinterTotalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.testNetwork]
+const feeMinterToMintPercents = initials.FEE_MINTER_TO_MINT_PERCENTS[env.testNetwork]
 
-const refRegStakeRewardPercent = initials.REFERRAL_STAKE_REWARD_PERCENT[env.network]
-const refRegSwapRewardPercent = initials.REFERRAL_SWAP_REWARD_PERCENT[env.network]
-const refRegCollectorPercent = initials.REFERRAL_COLLECTOR_PERCENT[env.network]
+const feeHandlerDefaultNftChefPercent = initials.FEE_HANDLER_DEFAULT_NFT_CHEF_PERCENT[env.testNetwork]
 
-const vaultStartBlock = initials.HELIX_VAULT_START_BLOCK[env.network]                         
-const vaultLastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.network]
-const vaultCollectorPercent = initials.HELIX_VAULT_COLLECTOR_PERCENT[env.network]
+const refRegStakeRewardPercent = initials.REFERRAL_STAKE_REWARD_PERCENT[env.testNetwork]
+const refRegSwapRewardPercent = initials.REFERRAL_SWAP_REWARD_PERCENT[env.testNetwork]
+const refRegCollectorPercent = initials.REFERRAL_COLLECTOR_PERCENT[env.testNetwork]
 
-const chefStartBlock = initials.MASTERCHEF_START_BLOCK[env.network]
-const chefStakingPercent = initials.MASTERCHEF_STAKING_PERCENT[env.network]
-const chefDevPercent = initials.MASTERCHEF_DEV_PERCENT[env.network]
+const vaultStartBlock = initials.HELIX_VAULT_START_BLOCK[env.testNetwork]                         
+const vaultLastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.testNetwork]
+const vaultCollectorPercent = initials.HELIX_VAULT_COLLECTOR_PERCENT[env.testNetwork]
 
-const publicPresaleInputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.network]                       
-const publicPresaleOutputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.network]                     
-const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHASE_DURATION[env.network]
+const chefStartBlock = initials.MASTERCHEF_START_BLOCK[env.testNetwork]
+const chefStakingPercent = initials.MASTERCHEF_STAKING_PERCENT[env.testNetwork]
+const chefDevPercent = initials.MASTERCHEF_DEV_PERCENT[env.testNetwork]
 
-const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.network]
+const publicPresaleInputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.testNetwork]                       
+const publicPresaleOutputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.testNetwork]                     
+const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHASE_DURATION[env.testNetwork]
 
-const helixNftBridgeGasFeeEth = initials.BRIDGE_FEE_ETH_AMOUNT[env.network]
+const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.testNetwork]
+
+const helixNftBridgeGasFeeEth = initials.BRIDGE_FEE_ETH_AMOUNT[env.testNetwork]
 
 const billion = 1000000000
 
@@ -142,7 +144,8 @@ module.exports.fullExchangeFixture = async () => {
     const helixNftBridge = await helixNftBridgeContractFactory.deploy(
         helixNft.address,
         alice.address,
-        helixNftBridgeGasFeeEth
+        helixNftBridgeGasFeeEth,
+        12   // TODO - replace with real value
     )
 
     // 4. deploy helix chef nft
@@ -156,7 +159,7 @@ module.exports.fullExchangeFixture = async () => {
         treasuryAddress, 
         helixChefNft.address, 
         helixToken.address, 
-        defaultNftChefPercent
+        feeHandlerDefaultNftChefPercent
     )
 
     // 6. deploy referral register

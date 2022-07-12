@@ -11,7 +11,7 @@ const { fullExchangeFixture } = require("./shared/fixtures")
 
 const env = require("../scripts/constants/env")
 const initials = require("../scripts/constants/initials")
-const totalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
+const totalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.testNetwork]
 
 const verbose = true
 

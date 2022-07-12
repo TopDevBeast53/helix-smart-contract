@@ -11,7 +11,7 @@ const { fullExchangeFixture } = require("./shared/fixtures")
 
 const env = require('../scripts/constants/env')
 const addresses = require('../scripts/constants/addresses')
-const treasuryAddress = addresses.TREASURY[env.network]
+const treasuryAddress = addresses.TREASURY[env.testNetwork]
 
 const verbose = true
 

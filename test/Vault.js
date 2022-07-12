@@ -13,9 +13,9 @@ const env = require("../scripts/constants/env")
 const initials = require("../scripts/constants/initials")
 const addresses = require("../scripts/constants/addresses")
 
-const startBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
-const lastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.network]
-const treasuryAddress = addresses.TREASURY[env.network]
+const startBlock = initials.HELIX_VAULT_START_BLOCK[env.testNetwork]
+const lastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.testNetwork]
+const treasuryAddress = addresses.TREASURY[env.testNetwork]
 
 const SECONDS_PER_DAY = 86400
 const rewardPerBlock = '11705148000000000000'
