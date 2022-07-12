@@ -152,11 +152,6 @@ module.exports.fullExchangeFixture = async () => {
     const helixChefNft = await helixChefNftContractFactory.deploy()
     await helixChefNft.initialize(helixNft.address, helixToken.address)
 
-    console.log(`treasury addr ${treasuryAddress}`)
-    console.log(`helix chef ${helixChefNft.address}`)
-    console.log(`helix token ${helixToken.address}`)
-    console.log(`defaultNftChefPercent ${feeHandlerDefaultNftChefPercent}`)
-
     // 5. deploy fee handler
     const feeHandler = await feeHandlerContractFactory.deploy()
     const defaultNftChefPercent = 0
