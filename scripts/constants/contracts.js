@@ -25,12 +25,12 @@ module.exports = {
         4: '0x79DD2dad8D04F9279F94580DBEd2306A0aE118Bd',
     },
     helixNFT: {
-        1: '0xC0663d87c82e4eC8093fE7AFd899Ba1244C49984',    // deployed 7/12/2022
+        1: '0x8940A899E969cBD90C9678f4C28c53ca8FE47FE2',    // deployed 7/4/2022
         3: '0x24be493d0f3b9C9Dd1f702d0917Cdcb6CbFfF0a2',
         4: '0xdD62271F8a54446032bfF3cEC93861D4F8100F4b',
     },
     helixNFTImplementation: {
-        1: '0xFDcd573d6Ca074B1718DF70226DC1B5231bF8B7E',    // deployed 7/4/2022
+        1: '0xC0663d87c82e4eC8093fE7AFd899Ba1244C49984',    // deployed 7/12/2022
         3: '0x13A54Ee2FDA40A26C9A11167c8304338821eDD7B',
         4: '0xd3EC4a703aC914a5777F2fd0bF434eAE1a19628D',
     },

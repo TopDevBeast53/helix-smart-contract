@@ -8,6 +8,7 @@ const helixNftAddress = contracts.helixNFTImplementation[env.network]
 
 const verifyHelixNft = async () => {
     print(`verify upgradeable Helix NFT`)
+    print(`helixNftAddress: ${helixNftAddress}`)
 
     await run(
         "verify:verify", {
