@@ -31,22 +31,16 @@ contract MultiSigWallet {
         uint256 adminConfirmations,
         uint256 ownerConfirmations
     );
-    event ExecuteTransaction(address indexed owner, uint256 indexed txIndex);
+    event ExecuteTransaction(uint256 indexed txIndex);
 
-    event AddAdmin(address indexed caller, address indexed admin);
-    event AddOwner(address indexed caller, address indexed owner);
+    event AddAdmin(address indexed admin, address[] indexed admins);
+    event AddOwner(address indexed owner, address[] indexed owners);
     
-    event RemoveAdmin(address indexed caller, address indexed admin);
-    event RemoveOwner(address indexed caller, address indexed owner);
+    event RemoveAdmin(address indexed admin, address[] indexed admins);
+    event RemoveOwner(address indexed owner, address[] indexed owners);
 
-    event SetAdminConfirmationsRequired(
-        address indexed caller, 
-        uint256 indexed adminConfirmationsRequired
-    );
-    event SetOwnerConfirmationsRequired(
-        address indexed caller, 
-        uint256 indexed ownerConfirmationsRequired
-    );
+    event SetAdminConfirmationsRequired(uint256 indexed adminConfirmationsRequired);
+    event SetOwnerConfirmationsRequired(uint256 indexed ownerConfirmationsRequired);
 
     event Transfer(address indexed token, address indexed to, uint256 indexed amount);
 
@@ -186,6 +180,107 @@ contract MultiSigWallet {
         emit Deposit(msg.sender, msg.value, address(this).balance);
     }
 
+    /// Submit a transaction to transfer _amount of _token to _to
+    function submitTransfer(address _token, address _to, uint256 _amount) external {
+        bytes memory data = abi.encodeWithSignature(
+            "_transfer(address,address,uint256)", 
+            _token,
+            _to,
+            _amount
+        );
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Submit a transaction to add a new _admin
+    function submitAddAdmin(address _admin) external {
+        bytes memory data = abi.encodeWithSignature("_addAdmin(address)", _admin);
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Submit a transaction to add a new _owner
+    function submitAddOwner(address _owner) external {
+        bytes memory data = abi.encodeWithSignature("_addOwner(address)", _owner);
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Submit a transaction to remove _admin
+    function submitRemoveAdmin(address _admin) external {
+        bytes memory data = abi.encodeWithSignature("_removeAdmin(address)", _admin);
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Submit a transaction to remove _owner
+    function submitRemoveOwner(address _owner) external {
+        bytes memory data = abi.encodeWithSignature("_removeOwner(address)", _owner);
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Submit a transaction to set the number of admin confirmations required to execute 
+    /// transactions
+    function submitSetAdminConfirmationsRequired(uint256 _adminConfirmationsRequired) external {
+        bytes memory data = abi.encodeWithSignature(
+            "_setAdminConfirmationsRequired(uint256)", 
+            _adminConfirmationsRequired
+        );
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Submit a transaction to set the number of owner confirmations required to execute
+    /// transactions
+    function submitSetOwnerConfirmationsRequired(uint256 _ownerConfirmationsRequired) external {
+        bytes memory data = abi.encodeWithSignature(
+            "_setOwnerConfirmationsRequired(uint256)", 
+            _ownerConfirmationsRequired
+        );
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Return the array of admins
+    function getAdmins() external view returns (address[] memory) {
+        return admins;
+    }
+
+    /// Return the array of owners
+    function getOwners() external view returns (address[] memory) {
+        return owners;
+    }
+
+    /// Return the number of transactions that have been submitted
+    function getTransactionCount() external view returns (uint) {
+        return transactions.length;
+    }
+
+    /// Return the transaction with _txIndex
+    function getTransaction(uint256 _txIndex)
+        external  
+        view
+        returns (
+            address to,
+            uint256 value,
+            bytes memory data,
+            bool executed,
+            uint256 ownerConfirmations,
+            uint256 adminConfirmations
+        )
+    {
+        Transaction memory transaction = transactions[_txIndex];
+
+        return (
+            transaction.to,
+            transaction.value,
+            transaction.data,
+            transaction.executed,
+            transaction.ownerConfirmations,
+            transaction.adminConfirmations
+        );
+    }
+
+    /// Return this contract's _token balance
+    function getBalance(address _token) external view returns (uint256) {
+        if (_token == address(0)) revert ZeroAddress();
+        return IERC20(_token).balanceOf(address(this));
+    }
+
     /// Submit a new transaction for admin and owner confirmation
     function submitTransaction(
         address _to,
@@ -294,114 +389,14 @@ contract MultiSigWallet {
         );
         if (!success) revert TxFailed(_txIndex);
 
-        emit ExecuteTransaction(msg.sender, _txIndex);
+        emit ExecuteTransaction(_txIndex);
     }
 
-    /// Return the array of admins
-    function getAdmins() public view returns (address[] memory) {
-        return admins;
-    }
-
-    /// Return the array of owners
-    function getOwners() public view returns (address[] memory) {
-        return owners;
-    }
-
-    /// Return the number of transactions that have been submitted
-    function getTransactionCount() public view returns (uint) {
-        return transactions.length;
-    }
-
-    /// Return the transaction with _txIndex
-    function getTransaction(uint256 _txIndex)
-        public
-        view
-        returns (
-            address to,
-            uint256 value,
-            bytes memory data,
-            bool executed,
-            uint256 ownerConfirmations,
-            uint256 adminConfirmations
-        )
-    {
-        Transaction memory transaction = transactions[_txIndex];
-
-        return (
-            transaction.to,
-            transaction.value,
-            transaction.data,
-            transaction.executed,
-            transaction.ownerConfirmations,
-            transaction.adminConfirmations
-        );
-    }
-
-    /// Return this contract's _token balance
-    function getBalance(address _token) public view returns (uint256) {
-        if (_token == address(0)) revert ZeroAddress();
-        return IERC20(_token).balanceOf(address(this));
-    }
-
-    /// Submit a transaction to transfer _amount of _token to _to
-    function submitTransfer(address _token, address _to, uint256 _amount) public onlyAdmin {
-        bytes memory data = abi.encodeWithSignature(
-            "_transfer(address,address,uint256)", 
-            _token,
-            _to,
-            _amount
-        );
-        submitTransaction(address(this), 0, data);
-    }
-
-    /// Submit a transaction to add a new _admin
-    function submitAddAdmin(address _admin) public onlyAdmin {
-        bytes memory data = abi.encodeWithSignature("_addAdmin(address)", _admin);
-        submitTransaction(address(this), 0, data);
-    }
-
-    /// Submit a transaction to add a new _owner
-    function submitAddOwner(address _owner) public onlyAdmin {
-        bytes memory data = abi.encodeWithSignature("_addOwner(address)", _owner);
-        submitTransaction(address(this), 0, data);
-    }
-
-    /// Submit a transaction to remove _admin
-    function submitRemoveAdmin(address _admin) public onlyAdmin {
-        bytes memory data = abi.encodeWithSignature("_removeAdmin(address)", _admin);
-        submitTransaction(address(this), 0, data);
-    }
-
-    /// Submit a transaction to remove _owner
-    function submitRemoveOwner(address _owner) public onlyAdmin {
-        bytes memory data = abi.encodeWithSignature("_removeOwner(address)", _owner);
-        submitTransaction(address(this), 0, data);
-    }
-
-    /// Submit a transaction to set the number of admin confirmations required to execute 
-    /// transactions
-    function submitSetAdminConfirmationsRequired(uint256 _adminConfirmationsRequired) 
-        public 
-        onlyAdmin 
-    {
-        bytes memory data = abi.encodeWithSignature(
-            "_setAdminConfirmationsRequired(uint256)", 
-            _adminConfirmationsRequired
-        );
-        submitTransaction(address(this), 0, data);
-    }
-
-    /// Submit a transaction to set the number of owner confirmations required to execute
-    /// transactions
-    function submitSetOwnerConfirmationsRequired(uint256 _ownerConfirmationsRequired) 
-        public 
-        onlyAdmin 
-    {
-        bytes memory data = abi.encodeWithSignature(
-            "_setOwnerConfirmationsRequired(uint256)", 
-            _ownerConfirmationsRequired
-        );
-        submitTransaction(address(this), 0, data);
+    /// Not externally callable
+    /// Transfer _amount of _token to _to
+    function _transfer(address _token, address _to, uint256 _amount) public onlyThis {
+        IERC20(_token).safeTransfer(_to, _amount);
+        emit Transfer(_token, _to, _amount);
     }
 
     /// Not externally callable
@@ -411,7 +406,7 @@ contract MultiSigWallet {
         if (isOwner[_admin]) revert AdminCantBeOwner(_admin);
         isAdmin[_admin] = true;
         admins.push(_admin);
-        emit AddAdmin(msg.sender, _admin);
+        emit AddAdmin(_admin, admins);
     }
 
     /// Not externally callable
@@ -421,17 +416,17 @@ contract MultiSigWallet {
         if (isAdmin[_owner]) revert OwnerCantBeAdmin(_owner);
         isOwner[_owner] = true;
         owners.push(_owner);
-        emit AddOwner(msg.sender, _owner);
+        emit AddOwner(_owner, owners);
     }
 
     /// Not externally callable
     /// Remove _admin from being an admin
     function _removeAdmin(address _admin) public onlyThis {
         if (!isAdmin[_admin]) revert NotAnAdmin(_admin);
-        uint256 adminsLength;
+        uint256 adminsLength = admins.length;
         if (adminsLength - 1 < adminConfirmationsRequired) {
             revert ArrayLengthBelowMinLength(
-                adminsLength, 
+                adminsLength - 1, 
                 adminConfirmationsRequired
             );
         }
@@ -442,8 +437,7 @@ contract MultiSigWallet {
                 admins[i] = admins[adminsLength - 1];
                 admins.pop();
 
-                emit RemoveAdmin(msg.sender, _admin);
-
+                emit RemoveAdmin(_admin, admins);
                 return;
             }
         }
@@ -453,10 +447,10 @@ contract MultiSigWallet {
     /// Remove _owner from being an owner
     function _removeOwner(address _owner) public onlyThis {
         if (!isOwner[_owner]) revert NotAnOwner(_owner);
-        uint256 ownersLength;
+        uint256 ownersLength = owners.length;
         if (ownersLength - 1 < ownerConfirmationsRequired) {
             revert ArrayLengthBelowMinLength(
-                ownersLength, 
+                ownersLength - 1, 
                 ownerConfirmationsRequired
             );
         }
@@ -467,8 +461,7 @@ contract MultiSigWallet {
                 owners[i] = owners[ownersLength - 1];
                 owners.pop();
 
-                emit RemoveOwner(msg.sender, _owner);
-
+                emit RemoveOwner(_owner, owners);
                 return;
             }
         }
@@ -482,7 +475,7 @@ contract MultiSigWallet {
         }
  
         adminConfirmationsRequired = _adminConfirmationsRequired;
-        emit SetAdminConfirmationsRequired(msg.sender, _adminConfirmationsRequired);
+        emit SetAdminConfirmationsRequired(_adminConfirmationsRequired);
     }
 
     /// Not externally callable
@@ -494,13 +487,6 @@ contract MultiSigWallet {
         }
 
         ownerConfirmationsRequired = _ownerConfirmationsRequired;
-        emit SetOwnerConfirmationsRequired(msg.sender, _ownerConfirmationsRequired);
-    }
-    
-    /// Not externally callable
-    /// Transfer _amount of _token to _to
-    function _transfer(address _token, address _to, uint256 _amount) public onlyThis {
-        IERC20(_token).safeTransfer(_to, _amount);
-        emit Transfer(_token, _to, _amount);
+        emit SetOwnerConfirmationsRequired(_ownerConfirmationsRequired);
     }
 }
