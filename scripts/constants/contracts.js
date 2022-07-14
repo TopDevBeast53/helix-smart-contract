@@ -169,5 +169,8 @@ module.exports = {
         1: '0x005a80F4E7FCDE5e881a99048d5fc9b22BE4ab00',    // deployed 7/4/2022
         3: '0xa8C743768D29cBD0e94737276ED0d97468bB4970',
         4: '0x5Fc5AA59529210175ff2dB5b63AEcec5D23555F1',
+    },
+    advisorRewards: {
+       4: '0xB7BA378455C3aC78dcc024f0cBcdea8ee0c4cbBB',
     }
 }

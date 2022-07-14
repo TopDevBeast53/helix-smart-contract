@@ -22,6 +22,7 @@ const { verifyAutoHelix } = require("./autoHelix")
 const { verifyMulticall } = require("./multicall")
 const { verifyAirDrop } = require("./airDrop")
 const { verifyTestToken } = require("./testToken")
+const { verifyAdvisorRewards } = require("./advisorRewards")
 
 module.exports = {
     verifyOwnerMultiSig,
@@ -46,4 +47,5 @@ module.exports = {
     verifyMulticall,
     verifyAirDrop,
     verifyTestToken,
+    verifyAdvisorRewards,
 }
