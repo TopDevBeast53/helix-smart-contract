@@ -14,7 +14,7 @@ contract AdvisorRewards is Ownable {
 
     struct Advisor {
         uint256 initialBalance;
-        uint256 balance;
+        uint256 withdrawn;
     }
 
     /**
@@ -89,7 +89,6 @@ contract AdvisorRewards is Ownable {
 
         WITHDRAW_PHASE_DURATION = _WITHDRAW_PHASE_DURATION;
 
-        withdrawPhasePercent[1] = 0;        // 0%
         withdrawPhasePercent[2] = 50;       // 50%
         withdrawPhasePercent[3] = 100;      // 100%
     }
@@ -99,13 +98,12 @@ contract AdvisorRewards is Ownable {
         external 
         onlyOwner 
     {
-        if (_advisors.length != _balances.length) {
-            revert ArrayLengthMismatch(_advisors.length, _balances.length);
+        uint256 advisorsLength = _advisors.length;
+        if (advisorsLength != _balances.length) {
+            revert ArrayLengthMismatch(advisorsLength, _balances.length);
         }
 
-        uint256 advisorsLength = _advisors.length;
         uint256 balanceSum;
-
         for (uint256 i = 0; i < advisorsLength; i++) {
             address advisor = _advisors[i];
             if (advisor == address(0)) revert ZeroAddress();
@@ -118,7 +116,6 @@ contract AdvisorRewards is Ownable {
             }
 
             advisors[advisor].initialBalance = balance;
-            advisors[advisor].balance = balance;
         }
 
         emit AddAdvisors(msg.sender, _advisors, _balances);
@@ -130,16 +127,22 @@ contract AdvisorRewards is Ownable {
 
         _requireValidWithdraw(msg.sender, _amount);
 
-        advisors[msg.sender].balance -= _amount;
+        advisors[msg.sender].withdrawn += _amount;
         IERC20(helixToken).safeTransfer(msg.sender, _amount);
 
-        emit Withdraw(msg.sender, _amount, advisors[msg.sender].balance);
+        emit Withdraw(msg.sender, _amount, getBalance(msg.sender));
     }
 
     /// Called by the owner to manually set the withdraw phase
     /// Must be called to transition from NoWithdraw to Withdraw0
     function setWithdrawPhase(WithdrawPhase _withdrawPhase) external onlyOwner {
         _setWithdrawPhase(_withdrawPhase);
+    }
+
+    /// Withdraw the contract helix token balance to the caller
+    function emergencyWithdraw() external onlyOwner {
+        uint256 amount = helixTokenBalance();
+        IERC20(helixToken).safeTransfer(msg.sender, amount);
     }
 
     /// Return true if _by can withdraw _amount and revert otherwise
@@ -178,10 +181,19 @@ contract AdvisorRewards is Ownable {
         );
 
         // Reduce the max by the amount already withdrawn
-        maxAmount -= advisors[_by].initialBalance - advisors[_by].balance;
+        maxAmount -= advisors[_by].withdrawn;
 
         // Limit maxAmount by the advisor's balance
-        maxAmount = Math.min(advisors[_by].balance, maxAmount);
+        maxAmount = Math.min(getBalance(_by), maxAmount);
+    }
+
+    /// Return _advisor un-withdrawn balance
+    function getBalance(address _advisor) public view returns(uint256) {
+        if (advisors[_advisor].initialBalance != 0) {
+            return advisors[_advisor].initialBalance - advisors[_advisor].withdrawn;
+        } else {
+            return 0;
+        }
     }
 
     /// Return this contract's helixToken balance
