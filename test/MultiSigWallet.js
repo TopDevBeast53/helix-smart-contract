@@ -65,7 +65,7 @@ describe("MultiSigWallet", () => {
             tokenA.address, 
             bobby.address,
             amount)
-        ).to.be.revertedWith("NotAnOwner")
+        ).to.be.revertedWith("NotAnAdminOrOwner")
     })
 
     it("multiSigWallet: submit transfer creates transaction object", async () => {
@@ -478,7 +478,7 @@ describe("MultiSigWallet", () => {
         // confirm the transfer as a non-admin/owner
         const multiSigEdith = multiSig.connect(edith)
         await expect(multiSigEdith.confirmTransaction(txIndex))
-            .to.be.revertedWith("NotAnOwner")
+            .to.be.revertedWith("NotAnAdminOrOwner")
     })
 
     it("multiSigWallet: confirm transaction when transaction does not exist fails", async () => {
@@ -612,7 +612,7 @@ describe("MultiSigWallet", () => {
     
         const multiSigEdith = multiSig.connect(edith)
         await expect(multiSigEdith.executeTransaction(txIndex))
-            .to.be.revertedWith("NotAnOwner")
+            .to.be.revertedWith("NotAnAdminOrOwner")
     })
 
     it("multiSigWallet: execute transfer when transaction does not exist fails", async () => {
@@ -735,11 +735,11 @@ describe("MultiSigWallet", () => {
             .withArgs(txIndex)
     })
 
-    it("multiSigWallet: revoke confirmation as non-owner fails", async () => {
+    it("multiSigWallet: revoke confirmation as non-admin/owner fails", async () => {
         const multiSigEdith = multiSig.connect(edith)
         let txIndex = 0
         await expect(multiSigEdith.revokeConfirmation(txIndex))
-            .to.be.revertedWith("NotAnOwner")
+            .to.be.revertedWith("NotAnAdminOrOwner")
     })
 
     it("multiSigWallet: revoke confirmation when transaction does not exist faisl", async () => {
@@ -910,5 +910,23 @@ describe("MultiSigWallet", () => {
             .to.be.revertedWith("MsgSenderIsNotThis")
         await expect(multiSig._setOwnerConfirmationsRequired(2))
             .to.be.revertedWith("MsgSenderIsNotThis")
+    })
+
+    it("multiSigWallet: calls to submit functions by non-admin/owner fail", async () => {
+        const multiSigEdith = multiSig.connect(edith)
+        await expect(multiSigEdith.submitTransfer(helixToken.address, bobby.address, expandTo18Decimals(100)))
+            .to.be.revertedWith("NotAnAdminOrOwner")
+        await expect(multiSigEdith.submitAddAdmin(edith.address))
+            .to.be.revertedWith("NotAnAdminOrOwner")
+        await expect(multiSigEdith.submitAddOwner(edith.address))
+            .to.be.revertedWith("NotAnAdminOrOwner")
+        await expect(multiSigEdith.submitRemoveAdmin(alice.address))
+            .to.be.revertedWith("NotAnAdminOrOwner")
+        await expect(multiSigEdith.submitRemoveOwner(bobby.address))
+            .to.be.revertedWith("NotAnAdminOrOwner")
+        await expect(multiSigEdith.submitSetAdminConfirmationsRequired(0))
+            .to.be.revertedWith("NotAnAdminOrOwner")
+        await expect(multiSigEdith.submitSetOwnerConfirmationsRequired(2))
+            .to.be.revertedWith("NotAnAdminOrOwner")
     })
 })

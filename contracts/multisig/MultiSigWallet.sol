@@ -49,7 +49,7 @@ contract MultiSigWallet {
 
     error NotAnAdmin(address caller);
     error NotAnOwner(address caller);
-    error NotAnOwnerOrAdmin(address caller);
+    error NotAnAdminOrOwner(address caller);
 
     error OwnersAreRequired();
     error ConfirmationsRequiredCantBeZero();
@@ -92,18 +92,8 @@ contract MultiSigWallet {
     // mapping from tx index => admin/owner => true if admin/owner has confirmed and false otherwise
     mapping(uint256 => mapping(address => bool)) public isConfirmed;
 
-    modifier onlyOwner() {
-        if (!isOwner[msg.sender]) revert NotAnOwner(msg.sender);
-        _;
-    }
-
-    modifier onlyAdmin() {
-        if (!isAdmin[msg.sender]) revert NotAnAdmin(msg.sender);
-        _;
-    }
-
     modifier onlyAdminOrOwner() {
-        if (!isOwner[msg.sender] && !isAdmin[msg.sender]) revert NotAnOwnerOrAdmin(msg.sender);
+        if (!isOwner[msg.sender] && !isAdmin[msg.sender]) revert NotAnAdminOrOwner(msg.sender);
         _;
     }
 
