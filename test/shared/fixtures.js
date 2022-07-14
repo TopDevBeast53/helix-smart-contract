@@ -66,6 +66,7 @@ module.exports.fullExchangeFixture = async () => {
     const publicPresaleContractFactory = await ethers.getContractFactory("PublicPresale")
     const airdropContractFactory = await ethers.getContractFactory("AirDrop")
     const multiSigWalletContractFactory = await ethers.getContractFactory("MultiSigWallet")
+    const advisorRewardsContractFactory = await ethers.getContractFactory("AdvisorRewards")
 
     // 
     // Deploy misc token contracts
@@ -234,6 +235,11 @@ module.exports.fullExchangeFixture = async () => {
         airdropWithdrawPhaseDuration
     )
 
+    const advisorRewards = await advisorRewardsContractFactory.deploy(
+        helixToken.address,
+        100   // TODO - replace with real value
+    )
+
     // 
     // Initialize external DEX contracts
     //
@@ -307,6 +313,7 @@ module.exports.fullExchangeFixture = async () => {
         swapRewards,
         masterChef,
         publicPresale,
-        airdrop
+        airdrop,
+        advisorRewards
     }
 }
