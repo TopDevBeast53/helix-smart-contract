@@ -119,9 +119,10 @@ contract AirDrop is Pausable, ReentrancyGuard {
     }
 
     /// Called to withdraw tokens
-    function emergencyWithdraw(uint256 _amount) external onlyOwner {
-        IERC20(token).safeTransfer(msg.sender, _amount);
-        emit Withdraw(msg.sender, _amount);
+    function emergencyWithdraw() external onlyOwner {
+        uint256 amount = getContractTokenBalance();
+        IERC20(token).safeTransfer(msg.sender, amount);
+        emit Withdraw(msg.sender, amount);
     }
 
     /// Called to destroy _amount of token

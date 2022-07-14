@@ -362,7 +362,7 @@ describe('AirDrop Presale', () => {
         const expectedOwnerBalance = (await helixToken.balanceOf(wallet0.address)).add(airdropBalance)
        
         // Remove all tokens and tickets
-        await airDrop.emergencyWithdraw(airdropBalance)
+        await airDrop.emergencyWithdraw()
 
         expect(await helixToken.balanceOf(airDrop.address)).to.eq(expectedAirdropBalance)
         expect(await helixToken.balanceOf(wallet0.address)).to.eq(expectedOwnerBalance)
@@ -377,7 +377,7 @@ describe('AirDrop Presale', () => {
     it("airDrop: emergency withdraw when not owner fails", async () => {
         expect(await airDrop.isOwner(wallet2.address)).to.be.false
         const airDropWallet2 = airDrop.connect(wallet2)
-        await expect(airDropWallet2.emergencyWithdraw(10))
+        await expect(airDropWallet2.emergencyWithdraw())
             .to.be.revertedWith("AirDrop: not owner")
     })
 
