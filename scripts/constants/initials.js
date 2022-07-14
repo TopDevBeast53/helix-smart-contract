@@ -454,8 +454,8 @@ module.exports = {
     // Length of time between withdraw phases
     ADVISOR_REWARDS_WITHDRAW_PHASE_DURATION: {
         1: 7862400,
-        3: 7862400,
-        4: 7862400,
+        3: 120,
+        4: 120,
         56: 0,
         97: 7862400,     // 91 days, 86400 == 1 day
     },
