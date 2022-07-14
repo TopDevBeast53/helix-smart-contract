@@ -125,6 +125,18 @@ describe('AirDrop Presale', () => {
             .to.be.revertedWith("AirDrop: insufficient tokens available")
     })
 
+    it('airDrop: airdrop add when amount sum exceeds contract balance fails', async () => {
+        const contractBalance = await airDrop.getContractTokenBalance()
+
+        const users = [wallet1.address, wallet2.address]
+        const wallet1Amount = contractBalance.div(2)
+        const wallet2Amount = contractBalance.div(2).add(1)
+        const amounts = [wallet1Amount, wallet2Amount]
+        
+        await expect(airDrop.airdropAdd(users, amounts))
+            .to.be.revertedWith("AirDrop: insufficient tokens available")
+    })
+
     it('airDrop: airdrop remove', async () => {
         // first airdrop funds
         const users = [wallet1.address, wallet2.address]
