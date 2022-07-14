@@ -65,8 +65,7 @@ module.exports.fullExchangeFixture = async () => {
     const masterChefContractFactory = await ethers.getContractFactory("MasterChef")
     const publicPresaleContractFactory = await ethers.getContractFactory("PublicPresale")
     const airdropContractFactory = await ethers.getContractFactory("AirDrop")
-    const tokenMultiSigWalletContractFactory = await ethers.getContractFactory("TokenMultiSigWallet")
-    const subMultiSigWalletContractFactory = await ethers.getContractFactory("MultiSigWallet")
+    const multiSigWalletContractFactory = await ethers.getContractFactory("MultiSigWallet")
 
     // 
     // Deploy misc token contracts
@@ -92,21 +91,13 @@ module.exports.fullExchangeFixture = async () => {
     //
     const [alice, bobby, carol, david, edith] = await ethers.getSigners()
 
-    const tokenMultiSigWallet = await tokenMultiSigWalletContractFactory
+    // Require that 1 admin (alice) and 1 owner (bobby or carol) confirm all txs
+    const multiSigWallet = await multiSigWalletContractFactory
         .deploy(
             [alice.address],
-            [bobby.address, carol.address, david.address],
-            0,
-            2,
-            "TokenMultiSigWallet"
-        )
-
-    const subMultiSigWallet = await subMultiSigWalletContractFactory
-        .deploy(
-            [],
-            [alice.address, bobby.address, carol.address],
-            0,
-            2,
+            [bobby.address, carol.address],
+            1,
+            1,
         )
 
     //
@@ -294,8 +285,7 @@ module.exports.fullExchangeFixture = async () => {
         tokenC,
         weth,
         // Multisig wallets
-        tokenMultiSigWallet,
-        subMultiSigWallet,
+        multiSigWallet,
         // External contracts
         externalFactory,
         externalOracleFactory,
