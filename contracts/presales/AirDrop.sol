@@ -8,15 +8,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-/**
- * AirDrop user addresses a token balance
- * 
- * Withdrawing tokens occurs over 4 phases:
- *  1: withrawals are limited to 25% of tokens purchased
- *  2: withrawals are limited to 50% of tokens purchased
- *  3: withrawals are limited to 75% of tokens purchased
- *  4: withrawals are unlimited
- */
 contract AirDrop is Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
