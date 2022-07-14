@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.10;
 
-/// Adapted from https://solidity-by-example.org/app/multi-sig-wallet
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// Multisig controlled by 2 groups: admins and owners. 
 /// Admins can add and remove admins and owners and set the confirmations required from each.
 /// Some number of confirmations are required from both admins and owners for transactions
 /// to be executed.
 contract MultiSigWallet {
+    using SafeERC20 for IERC20;
+    
     event Deposit(address indexed sender, uint256 amount, uint256 balance);
     event SubmitTransaction(
         address indexed owner,
@@ -16,34 +19,41 @@ contract MultiSigWallet {
         uint256 value,
         bytes data
     );
-    event ConfirmTransaction(address indexed admin, uint256 indexed txIndex);
-    event RevokeConfirmation(address indexed owner, uint256 indexed txIndex);
-    event ExecuteTransaction(address indexed owner, uint256 indexed txIndex);
+    event ConfirmTransaction(
+        address indexed admin, 
+        uint256 indexed txIndex,
+        uint256 adminConfirmations,
+        uint256 ownerConfirmations
+    );
+    event RevokeConfirmation(
+        address indexed owner, 
+        uint256 indexed txIndex,
+        uint256 adminConfirmations,
+        uint256 ownerConfirmations
+    );
+    event ExecuteTransaction(uint256 indexed txIndex);
 
-    event AddAdmin(address indexed caller, address indexed admin);
-    event AddOwner(address indexed caller, address indexed owner);
+    event AddAdmin(address indexed admin, address[] indexed admins);
+    event AddOwner(address indexed owner, address[] indexed owners);
     
-    event RemoveAdmin(address indexed caller, address indexed admin);
-    event RemoveOwner(address indexed caller, address indexed owner);
+    event RemoveAdmin(address indexed admin, address[] indexed admins);
+    event RemoveOwner(address indexed owner, address[] indexed owners);
 
-    event SetAdminConfirmationsRequired(
-        address indexed caller, 
-        uint256 indexed adminConfirmationsRequired
-    );
-    event SetOwnerConfirmationsRequired(
-        address indexed caller, 
-        uint256 indexed ownerConfirmationsRequired
-    );
+    event SetAdminConfirmationsRequired(uint256 indexed adminConfirmationsRequired);
+    event SetOwnerConfirmationsRequired(uint256 indexed ownerConfirmationsRequired);
+
+    event Transfer(address indexed token, address indexed to, uint256 indexed amount);
 
     error AlreadyAnOwner(address owner);
     error AlreadyAnAdmin(address admin);
 
     error NotAnAdmin(address caller);
     error NotAnOwner(address caller);
-    error NotAnOwnerOrAdmin(address caller);
+    error NotAnAdminOrOwner(address caller);
 
     error OwnersAreRequired();
     error ConfirmationsRequiredCantBeZero();
+    error MsgSenderIsNotThis(address msgSender);
     error ZeroAddress();
 
     error OwnerCantBeAdmin(address owner);
@@ -55,7 +65,8 @@ contract MultiSigWallet {
     error TxFailed(uint256 txIndex);
     error TxNotConfirmed(uint256 txIndex);
 
-    error InsufficientConfirmations(uint256 numConfirmations, uint256 numRequired);
+    error InsufficientAdminConfirmations(uint256 numConfirmations, uint256 numRequired);
+    error InsufficientOwnerConfirmations(uint256 numConfirmations, uint256 numRequired);
     error ConfirmationsRequiredAboveMax(uint256 confirmationsRequired, uint256 max);
     error ArrayLengthBelowMinLength(uint256 length, uint256 minLength);
 
@@ -81,18 +92,8 @@ contract MultiSigWallet {
     // mapping from tx index => admin/owner => true if admin/owner has confirmed and false otherwise
     mapping(uint256 => mapping(address => bool)) public isConfirmed;
 
-    modifier onlyOwner() {
-        if (!isOwner[msg.sender]) revert NotAnOwner(msg.sender);
-        _;
-    }
-
-    modifier onlyAdmin() {
-        if (!isAdmin[msg.sender]) revert NotAnAdmin(msg.sender);
-        _;
-    }
-
     modifier onlyAdminOrOwner() {
-        if (!isOwner[msg.sender] && !isAdmin[msg.sender]) revert NotAnOwnerOrAdmin(msg.sender);
+        if (!isOwner[msg.sender] && !isAdmin[msg.sender]) revert NotAnAdminOrOwner(msg.sender);
         _;
     }
 
@@ -116,7 +117,12 @@ contract MultiSigWallet {
         _;
     }
 
-    /// If _admins is empty the setters in this contract will not be callable
+    modifier onlyThis() {
+        if (msg.sender != address(this)) revert MsgSenderIsNotThis(msg.sender);
+        _;
+    }
+
+    /// WARNING: If _admins is empty the setters in this contract will not be callable
     constructor(
         address[] memory _admins,
         address[] memory _owners,
@@ -164,6 +170,107 @@ contract MultiSigWallet {
         emit Deposit(msg.sender, msg.value, address(this).balance);
     }
 
+    /// Submit a transaction to transfer _amount of _token to _to
+    function submitTransfer(address _token, address _to, uint256 _amount) external {
+        bytes memory data = abi.encodeWithSignature(
+            "_transfer(address,address,uint256)", 
+            _token,
+            _to,
+            _amount
+        );
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Submit a transaction to add a new _admin
+    function submitAddAdmin(address _admin) external {
+        bytes memory data = abi.encodeWithSignature("_addAdmin(address)", _admin);
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Submit a transaction to add a new _owner
+    function submitAddOwner(address _owner) external {
+        bytes memory data = abi.encodeWithSignature("_addOwner(address)", _owner);
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Submit a transaction to remove _admin
+    function submitRemoveAdmin(address _admin) external {
+        bytes memory data = abi.encodeWithSignature("_removeAdmin(address)", _admin);
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Submit a transaction to remove _owner
+    function submitRemoveOwner(address _owner) external {
+        bytes memory data = abi.encodeWithSignature("_removeOwner(address)", _owner);
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Submit a transaction to set the number of admin confirmations required to execute 
+    /// transactions
+    function submitSetAdminConfirmationsRequired(uint256 _adminConfirmationsRequired) external {
+        bytes memory data = abi.encodeWithSignature(
+            "_setAdminConfirmationsRequired(uint256)", 
+            _adminConfirmationsRequired
+        );
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Submit a transaction to set the number of owner confirmations required to execute
+    /// transactions
+    function submitSetOwnerConfirmationsRequired(uint256 _ownerConfirmationsRequired) external {
+        bytes memory data = abi.encodeWithSignature(
+            "_setOwnerConfirmationsRequired(uint256)", 
+            _ownerConfirmationsRequired
+        );
+        submitTransaction(address(this), 0, data);
+    }
+
+    /// Return the array of admins
+    function getAdmins() external view returns (address[] memory) {
+        return admins;
+    }
+
+    /// Return the array of owners
+    function getOwners() external view returns (address[] memory) {
+        return owners;
+    }
+
+    /// Return the number of transactions that have been submitted
+    function getTransactionCount() external view returns (uint) {
+        return transactions.length;
+    }
+
+    /// Return the transaction with _txIndex
+    function getTransaction(uint256 _txIndex)
+        external  
+        view
+        returns (
+            address to,
+            uint256 value,
+            bytes memory data,
+            bool executed,
+            uint256 ownerConfirmations,
+            uint256 adminConfirmations
+        )
+    {
+        Transaction memory transaction = transactions[_txIndex];
+
+        return (
+            transaction.to,
+            transaction.value,
+            transaction.data,
+            transaction.executed,
+            transaction.ownerConfirmations,
+            transaction.adminConfirmations
+        );
+    }
+
+    /// Return this contract's _token balance
+    function getBalance(address _token) external view returns (uint256) {
+        if (_token == address(0)) revert ZeroAddress();
+        return IERC20(_token).balanceOf(address(this));
+    }
+
     /// Submit a new transaction for admin and owner confirmation
     function submitTransaction(
         address _to,
@@ -206,7 +313,12 @@ contract MultiSigWallet {
             transaction.ownerConfirmations += 1;
         }
 
-        emit ConfirmTransaction(msg.sender, _txIndex);
+        emit ConfirmTransaction(
+            msg.sender, 
+            _txIndex, 
+            transaction.adminConfirmations, 
+            transaction.ownerConfirmations
+        );
     }
 
     /// Revoke confirmation for transaction with _txIndex
@@ -226,7 +338,12 @@ contract MultiSigWallet {
             transaction.ownerConfirmations -= 1;
         }
 
-        emit RevokeConfirmation(msg.sender, _txIndex);
+        emit RevokeConfirmation(
+            msg.sender, 
+            _txIndex,
+            transaction.adminConfirmations,
+            transaction.ownerConfirmations
+        );
     }
 
     /// Execute the transaction with _txIndex
@@ -241,7 +358,7 @@ contract MultiSigWallet {
 
         uint256 adminConfirmations = transaction.adminConfirmations;
         if (adminConfirmations < adminConfirmationsRequired) {
-            revert InsufficientConfirmations(
+            revert InsufficientAdminConfirmations(
                 adminConfirmations, 
                 adminConfirmationsRequired
             );
@@ -249,7 +366,7 @@ contract MultiSigWallet {
 
         uint256 ownerConfirmations = transaction.ownerConfirmations;
         if (ownerConfirmations < ownerConfirmationsRequired) {
-            revert InsufficientConfirmations(
+            revert InsufficientOwnerConfirmations(
                 ownerConfirmations, 
                 ownerConfirmationsRequired
             );
@@ -262,124 +379,44 @@ contract MultiSigWallet {
         );
         if (!success) revert TxFailed(_txIndex);
 
-        emit ExecuteTransaction(msg.sender, _txIndex);
+        emit ExecuteTransaction(_txIndex);
     }
 
-    /// Return the array of admins
-    function getAdmins() public view returns (address[] memory) {
-        return admins;
+    /// Not externally callable
+    /// Transfer _amount of _token to _to
+    function _transfer(address _token, address _to, uint256 _amount) public onlyThis {
+        IERC20(_token).safeTransfer(_to, _amount);
+        emit Transfer(_token, _to, _amount);
     }
 
-    /// Return the array of owners
-    function getOwners() public view returns (address[] memory) {
-        return owners;
-    }
-
-    /// Return the number of transactions that have been submitted
-    function getTransactionCount() public view returns (uint) {
-        return transactions.length;
-    }
-
-    /// Return the transaction with _txIndex
-    function getTransaction(uint256 _txIndex)
-        public
-        view
-        returns (
-            address to,
-            uint256 value,
-            bytes memory data,
-            bool executed,
-            uint256 ownerConfirmations,
-            uint256 adminConfirmations
-        )
-    {
-        Transaction memory transaction = transactions[_txIndex];
-
-        return (
-            transaction.to,
-            transaction.value,
-            transaction.data,
-            transaction.executed,
-            transaction.ownerConfirmations,
-            transaction.adminConfirmations
-        );
-    }
-
-    /// Submit a transaction to add a new _admin
-    function addAdmin(address _admin) public onlyAdmin {
-        bytes memory data = abi.encodeWithSignature("_addAdmin(address)", _admin);
-        submitTransaction(address(this), 0, data);
-    }
-
-    /// Submit a transaction to add a new _owner
-    function addOwner(address _owner) public onlyAdmin {
-        bytes memory data = abi.encodeWithSignature("_addOwner(address)", _owner);
-        submitTransaction(address(this), 0, data);
-    }
-
-    /// Submit a transaction to remove _admin
-    function removeAdmin(address _admin) public onlyAdmin {
-        bytes memory data = abi.encodeWithSignature("_removeAdmin(address)", _admin);
-        submitTransaction(address(this), 0, data);
-    }
-
-    /// Submit a transaction to remove _owner
-    function removeOwner(address _owner) public onlyAdmin {
-        bytes memory data = abi.encodeWithSignature("_removeOwner(address)", _owner);
-        submitTransaction(address(this), 0, data);
-    }
-
-    /// Submit a transaction to set the number of admin confirmations required to execute 
-    /// transactions
-    function setAdminConfirmationsRequired(uint256 _adminConfirmationsRequired) 
-        public 
-        onlyAdmin 
-    {
-        bytes memory data = abi.encodeWithSignature(
-            "_setAdminConfirmationsRequired(uint256)", 
-            _adminConfirmationsRequired
-        );
-        submitTransaction(address(this), 0, data);
-    }
-
-    /// Submit a transaction to set the number of owner confirmations required to execute
-    /// transactions
-    function setOwnerConfirmationsRequired(uint256 _ownerConfirmationsRequired) 
-        public 
-        onlyAdmin 
-    {
-        bytes memory data = abi.encodeWithSignature(
-            "_setOwnerConfirmationsRequired(uint256)", 
-            _ownerConfirmationsRequired
-        );
-        submitTransaction(address(this), 0, data);
-    }
-
-    // Add _admin as an admin 
-    function _addAdmin(address _admin) private {
+    /// Not externally callable
+    /// Add _admin as an admin
+    function _addAdmin(address _admin) public onlyThis {
         if (isAdmin[_admin]) revert AlreadyAnAdmin(_admin);
         if (isOwner[_admin]) revert AdminCantBeOwner(_admin);
         isAdmin[_admin] = true;
         admins.push(_admin);
-        emit AddAdmin(msg.sender, _admin);
+        emit AddAdmin(_admin, admins);
     }
 
-    // Add _owner as an owner
-    function _addOwner(address _owner) private {
+    /// Not externally callable
+    /// Add _owner as an owner
+    function _addOwner(address _owner) public onlyThis {
         if (isOwner[_owner]) revert AlreadyAnOwner(_owner);
         if (isAdmin[_owner]) revert OwnerCantBeAdmin(_owner);
         isOwner[_owner] = true;
         owners.push(_owner);
-        emit AddOwner(msg.sender, _owner);
+        emit AddOwner(_owner, owners);
     }
 
-    // Remove _admin from being an admin 
-    function _removeAdmin(address _admin) private {
+    /// Not externally callable
+    /// Remove _admin from being an admin
+    function _removeAdmin(address _admin) public onlyThis {
         if (!isAdmin[_admin]) revert NotAnAdmin(_admin);
-        uint256 adminsLength;
+        uint256 adminsLength = admins.length;
         if (adminsLength - 1 < adminConfirmationsRequired) {
             revert ArrayLengthBelowMinLength(
-                adminsLength, 
+                adminsLength - 1, 
                 adminConfirmationsRequired
             );
         }
@@ -390,20 +427,20 @@ contract MultiSigWallet {
                 admins[i] = admins[adminsLength - 1];
                 admins.pop();
 
-                emit RemoveAdmin(msg.sender, _admin);
-
+                emit RemoveAdmin(_admin, admins);
                 return;
             }
         }
     }
 
-    // Remove _owner from being an owner
-    function _removeOwner(address _owner) private {
+    /// Not externally callable
+    /// Remove _owner from being an owner
+    function _removeOwner(address _owner) public onlyThis {
         if (!isOwner[_owner]) revert NotAnOwner(_owner);
-        uint256 ownersLength;
+        uint256 ownersLength = owners.length;
         if (ownersLength - 1 < ownerConfirmationsRequired) {
             revert ArrayLengthBelowMinLength(
-                ownersLength, 
+                ownersLength - 1, 
                 ownerConfirmationsRequired
             );
         }
@@ -414,31 +451,32 @@ contract MultiSigWallet {
                 owners[i] = owners[ownersLength - 1];
                 owners.pop();
 
-                emit RemoveOwner(msg.sender, _owner);
-
+                emit RemoveOwner(_owner, owners);
                 return;
             }
         }
     }
 
-    // Set the _ownerConfirmationsRequired for transactions be be executed
-    function _setAdminConfirmationsRequired(uint256 _adminConfirmationsRequired) private {
+    /// Not externally callable
+    /// Set the _ownerConfirmationsRequired for transactions be be executed
+    function _setAdminConfirmationsRequired(uint256 _adminConfirmationsRequired) public onlyThis {
         if (_adminConfirmationsRequired > admins.length) {
             revert ConfirmationsRequiredAboveMax(_adminConfirmationsRequired, admins.length);
         }
  
         adminConfirmationsRequired = _adminConfirmationsRequired;
-        emit SetAdminConfirmationsRequired(msg.sender, _adminConfirmationsRequired);
+        emit SetAdminConfirmationsRequired(_adminConfirmationsRequired);
     }
 
-    // Set the _ownerConfirmationsRequired for transactions be be executed
-    function _setOwnerConfirmationsRequired(uint256 _ownerConfirmationsRequired) private {
+    /// Not externally callable
+    /// Set the _ownerConfirmationsRequired for transactions be be executed
+    function _setOwnerConfirmationsRequired(uint256 _ownerConfirmationsRequired) public onlyThis {
         if (_ownerConfirmationsRequired == 0) revert ConfirmationsRequiredCantBeZero();
         if (_ownerConfirmationsRequired > owners.length) {
             revert ConfirmationsRequiredAboveMax(_ownerConfirmationsRequired, owners.length);
         }
 
         ownerConfirmationsRequired = _ownerConfirmationsRequired;
-        emit SetOwnerConfirmationsRequired(msg.sender, _ownerConfirmationsRequired);
+        emit SetOwnerConfirmationsRequired(_ownerConfirmationsRequired);
     }
 }
