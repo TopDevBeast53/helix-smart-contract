@@ -152,6 +152,16 @@ contract AdvisorRewards is Ownable {
         return true;
     }
 
+    /// Return the _advisor
+    function getAdvisor(address _advisor) 
+        external 
+        view 
+        returns (uint256 initialBalance, uint256 withdrawn) 
+    {
+        Advisor memory advisor = advisors[_advisor];
+        return (advisor.initialBalance, advisor.withdrawn);
+    }
+
     /// Called periodically and, if enough time has elapsed, update the withdrawPhase
     function updateWithdrawPhase() public {
         if (block.timestamp >= withdrawPhaseEndTimestamp) {

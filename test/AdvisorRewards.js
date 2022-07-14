@@ -62,6 +62,27 @@ describe("Advisor Rewards", () => {
         expect(await advisorRewards.helixTokenBalance()).to.eq(await helixToken.balanceOf(advisorRewards.address))
     })
 
+    it("advisorRewards: get advisor", async () => {
+        const advisors = [bobby.address, carol.address]
+        const bobbyAmount = 50
+        const carolAmount = 100
+        const amounts = [bobbyAmount, carolAmount]
+        
+        await advisorRewards.addAdvisors(advisors, amounts)
+
+        const advisorBobby = await advisorRewards.getAdvisor(bobby.address)
+        const advisorCarol = await advisorRewards.getAdvisor(carol.address)
+
+        print(`advisorBobby ${advisorBobby}`)
+
+        expect(advisorBobby.initialBalance).to.eq(bobbyAmount)
+        expect(advisorCarol.initialBalance).to.eq(carolAmount)
+
+        expect(advisorBobby.withdrawn).to.eq(0)
+        expect(advisorCarol.withdrawn).to.eq(0)
+
+    })
+
     it('advisorRewards: add advisors', async () => {
         const advisors = [bobby.address, carol.address]
         const bobbyAmount = 50
