@@ -143,6 +143,7 @@ contract AdvisorRewards is Ownable {
     function emergencyWithdraw() external onlyOwner {
         uint256 amount = helixTokenBalance();
         IERC20(helixToken).safeTransfer(msg.sender, amount);
+        emit Withdraw(msg.sender, amount, helixTokenBalance());
     }
 
     /// Return true if _by can withdraw _amount and revert otherwise
