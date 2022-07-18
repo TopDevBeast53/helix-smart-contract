@@ -1,49 +1,47 @@
 /* 
- * @dev Used to (re)connect all contract references to other contracts
+ * @dev Used to (re)initialize all contract references to other contracts
  * 
  * Run from project root using:
- *     npx hardhat run scripts/1_connect/0_connectAll.js --network rinkeby
- *     npx hardhat run scripts/1_connect/0_connectAll.js --network ropsten
+ *     npx hardhat run scripts/1_initialize/0_initializeAll.js --network rinkeby
+ *     npx hardhat run scripts/1_initialize/0_initializeAll.js --network ropsten
  */
 
 const { ethers } = require("hardhat");
 const { print } = require("../shared/utilities")
-const {
-    connectFactory,
-    initFeeMinter,
-    connectHelixChefNft,
-    connectHelixNft,
-    connectHelixToken,
-    connectMasterChef,
-    connectReferralRegister,
-    connectRouter,
-} = require("../shared/connect")
+const { initializeFactory } = require("./initializers/factory")
+const { initializeFeeMinter } = require("./initializers/feeMinter")
+const { initializeHelixChefNft } = require("./initializers/helixChefNft")
+const { initializeHelixNft } = require("./initializers/helixNft")
+const { initializeHelixToken } = require("./initializers/helixToken")
+const { initializeMasterChef } = require("./initializers/masterChef")
+const { initializeReferralRegister } = require("./initializers/referralRegister")
+const { initializeRouter } = require("./initializers/router")
 
 async function main() {
     const [wallet] = await ethers.getSigners()
 
-    await connectFactory(wallet)
+    await initializeFactory(wallet)
     print("\n")
 
     await initFeeMinter(wallet)
     print("\n")
 
-    await connectHelixChefNft(wallet)
+    await initializeHelixChefNft(wallet)
     print("\n")
 
-    await connectHelixNft(wallet)
+    await initializeHelixNft(wallet)
     print("\n")
 
-    await connectHelixToken(wallet)
+    await initializeHelixToken(wallet)
     print("\n")
 
-    await connectMasterChef(wallet)
+    await initializeMasterChef(wallet)
     print("\n")
 
-    await connectReferralRegister(wallet)
+    await initializeReferralRegister(wallet)
     print("\n")
 
-    await connectRouter(wallet)
+    await initializeRouter(wallet)
     print("\n")
 
     print("done")
