@@ -2,7 +2,7 @@ module.exports = {
     ownerMultiSig: {
         1: '0x362fEB150e2163B4684d0deCA4087293e4492762',    // deployed 7/4/2022
         3: '0x461e3e7C700Ba1a2282e63F43f34F9F0a37D328b',
-        4: '0x9E6902e54558B0A2017cE817921213c3E185C5B8',
+        4: '0x7F78f346C073A2f07d0139e99850c62D1314D889',
     },
     treasuryMultiSig: {
         1: '0x01427Fedd20D89dFdf52CA37d20b2943271fB462',    // deployed 7/4/2022
