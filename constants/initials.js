@@ -6,6 +6,7 @@ const masterChefAddress = contracts.masterChef[env.network]
 const referralRegisterAddress = contracts.referralRegister[env.network]
 const vaultAddress = contracts.helixVault[env.network]
 const ownerMultiSigAddress = contracts.ownerMultiSig[env.network]
+const helixTokenAddress = contracts.helixToken[env.network]
 
 module.exports = {
     FACTORY_INIT_CODE_HASH: {
@@ -418,7 +419,7 @@ module.exports = {
     // contract name
     AIRDROP_NAME: {
         1: '',
-        4: '',
+        4: 'HODL AIRDROP',
         56: '',
         97: 'HODL AIRDROP'
     },
@@ -426,7 +427,7 @@ module.exports = {
     // token address
     AIRDROP_TOKEN: {
         1: '',
-        4: '',
+        4: helixTokenAddress,
         56: '', // Expect HELIX for mainnet
         97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
     },

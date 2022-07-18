@@ -149,7 +149,8 @@ module.exports = {
         4: '0x296d49dDAf208e5049153FB57371f08Be1Df1cEd',
     },
     airDrop: {
-        3: ''
+        3: '',
+        4: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
     },
     testToken: {
         3: ''

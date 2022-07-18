@@ -1,8 +1,8 @@
 const { run } = require(`hardhat`)
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const env = require("../../constants/env")
-const contracts = require("../../constants/contracts")
+const env = require("../../../constants/env")
+const contracts = require("../../../constants/contracts")
 
 const multicallAddress = contracts.multicall[env.network]
 

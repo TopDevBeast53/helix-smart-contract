@@ -1,9 +1,9 @@
 const { run } = require("hardhat")
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const env = require("../../constants/env")
-const initials = require("../../constants/initials")
-const contracts = require("../../constants/contracts")
+const env = require("../../../constants/env")
+const initials = require("../../../constants/initials")
+const contracts = require("../../../constants/contracts")
 
 const treasuryMultiSigAddress = contracts.treasuryMultiSig[env.network]
 

@@ -8,7 +8,7 @@
 
 // Define script parameters
 const { ethers } = require(`hardhat`)
-const { deployAirDrop } = require("../shared/deploy/deployers")
+const { deployAirDrop } = require("./deployers/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners()

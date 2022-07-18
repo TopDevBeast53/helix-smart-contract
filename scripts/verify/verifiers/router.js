@@ -1,9 +1,9 @@
 const { run } = require("hardhat")
-const { print } = require("../utilities")
+const { print } = require("../../shared/utilities")
 
-const env = require("../../constants/env")
-const contracts = require("../../constants/contracts")
-const addresses = require("../../constants/addresses")
+const env = require("../../../constants/env")
+const contracts = require("../../../constants/contracts")
+const addresses = require("../../../constants/addresses")
 
 const routerAddress = contracts.router[env.network]
 

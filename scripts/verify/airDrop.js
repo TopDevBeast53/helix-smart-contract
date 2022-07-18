@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/airDrop.js --network ropsten
  */
 
-const { verifyAirDrop } = require("../shared/verify/verifiers")
+const { verifyAirDrop } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyAirDrop()
