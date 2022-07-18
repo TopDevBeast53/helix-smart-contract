@@ -16,6 +16,7 @@ const initialBalance = initials.AIRDROP_INITIAL_BALANCE[env.network]
 
 const verifyAirDrop = async () => {
     print(`verify Air Drop`)
+    print(`airDropAddress ${airDropAddress}`)
     print(`tokenAddress: ${tokenAddress}`)
     print(`name: ${name}`)
     print(`withdrawPhaseDuration: ${withdrawPhaseDuration}`)

@@ -445,7 +445,7 @@ module.exports = {
     AIRDROP_WITHDRAW_PHASE_DURATION: {
         1: 0,
         3: 7862400,
-        4: 7862400,
+        4: 60,
         56: 0,
         97: 7862400,     // 91 days, 86400 == 1 day
     },
