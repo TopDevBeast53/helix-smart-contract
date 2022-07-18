@@ -13,7 +13,7 @@ const verbose = true
 const initials = require('../constants/initials')
 const env = require('../constants/env')
 
-const initialBalance = initials.AIRDROP_INITIAL_BALANCE[env.network]
+const initialBalance = initials.AIRDROP_INITIAL_BALANCE[env.testNetwork]
 
 const SECONDS_PER_DAY = 86400
 const wallet1InitialBalance = 1000
@@ -48,11 +48,14 @@ describe('AirDrop Presale', () => {
         helixToken1 = helixToken.connect(wallet1)
     })
 
-    /*
     it('airDrop: initialized with expected values', async () => {
         expect(await airDrop.token()).to.eq(helixToken.address)
         expect(await helixToken.balanceOf(airDrop.address))
             .to.eq(expandTo18Decimals(initialBalance))
+    })
+
+    it("airDrop: get contract token balance", async () => {
+        expect(await airDrop.getContractTokenBalance()).to.eq(await helixToken.balanceOf(airDrop.address))
     })
 
     it('airDrop: get owners', async () => {
@@ -73,7 +76,7 @@ describe('AirDrop Presale', () => {
 
     it('airDrop: add owner as non-owner fails', async () => {
         await expect(airDrop1.addOwner(wallet2.address))
-            .to.be.revertedWith('NotAnOwner')
+            .to.be.revertedWith('AirDrop: not owner')
     })
 
     it('airDrop: airdrop add', async () => {
@@ -89,8 +92,8 @@ describe('AirDrop Presale', () => {
         expect((await airDrop.users(wallet2.address)).airdropped).to.eq(wallet2Amount)
 
         // and have a balance
-        expect((await airDrop.users(wallet1.address)).balance).to.eq(wallet1Amount)
-        expect((await airDrop.users(wallet2.address)).balance).to.eq(wallet2Amount)
+        expect(await airDrop.getBalance(wallet1.address)).to.eq(wallet1Amount)
+        expect(await airDrop.getBalance(wallet2.address)).to.eq(wallet2Amount)
     })
 
     it('airDrop: airdrop add as non-owner fails', async () => {
@@ -100,7 +103,7 @@ describe('AirDrop Presale', () => {
         const amounts = [wallet1Amount, wallet2Amount]
         
         await expect(airDrop1.airdropAdd(users, amounts))
-            .to.be.revertedWith('NotAnOwner')
+            .to.be.revertedWith('AirDrop: not owner')
     })
 
     it('airDrop: airdrop add with unequal argument arrays fails', async () => {
@@ -109,7 +112,7 @@ describe('AirDrop Presale', () => {
         const amounts = [wallet1Amount]
         
         await expect(airDrop.airdropAdd(users, amounts))
-            .to.be.revertedWith('ArrayLengthMismatch')
+            .to.be.revertedWith('AirDrop: users and amounts must be same length')
     })
 
     it('airDrop: airdrop add user with too many tokens fails', async () => {
@@ -119,7 +122,19 @@ describe('AirDrop Presale', () => {
         const amounts = [wallet1Amount, wallet2Amount]
         
         await expect(airDrop.airdropAdd(users, amounts))
-            .to.be.revertedWith("InsufficientBalance")
+            .to.be.revertedWith("AirDrop: insufficient tokens available")
+    })
+
+    it('airDrop: airdrop add when amount sum exceeds contract balance fails', async () => {
+        const contractBalance = await airDrop.getContractTokenBalance()
+
+        const users = [wallet1.address, wallet2.address]
+        const wallet1Amount = contractBalance.div(2)
+        const wallet2Amount = contractBalance.div(2).add(1)
+        const amounts = [wallet1Amount, wallet2Amount]
+        
+        await expect(airDrop.airdropAdd(users, amounts))
+            .to.be.revertedWith("AirDrop: insufficient tokens available")
     })
 
     it('airDrop: airdrop remove', async () => {
@@ -133,14 +148,14 @@ describe('AirDrop Presale', () => {
 
         // remove wallet 1
         await airDrop.airdropRemove(wallet1.address, wallet1Amount)
-        expect((await airDrop.users(wallet1.address)).balance).to.eq(0)
+        expect(await airDrop.getBalance(wallet1.address)).to.eq(0)
         // make sure that wallet 2 isn't removed too
-        expect((await airDrop.users(wallet2.address)).balance).to.eq(wallet2Amount)
+        expect(await airDrop.getBalance(wallet2.address)).to.eq(wallet2Amount)
 
         // remove wallet 2
         await airDrop.airdropRemove(wallet2.address, wallet2Amount)
-        expect((await airDrop.users(wallet1.address)).balance).to.eq(0)
-        expect((await airDrop.users(wallet2.address)).balance).to.eq(0)
+        expect(await airDrop.getBalance(wallet1.address)).to.eq(0)
+        expect(await airDrop.getBalance(wallet2.address)).to.eq(0)
     })
 
     it('airDrop: airdrop remove as non-owner fails', async () => {
@@ -154,7 +169,7 @@ describe('AirDrop Presale', () => {
     
         // then expect to fail
         await expect(airDrop1.airdropRemove(wallet1.address, wallet1Amount))
-            .to.be.revertedWith('NotAnOwner')
+            .to.be.revertedWith('AirDrop: not owner')
     })
 
     it('airDrop: set withdraw phase', async () => {
@@ -180,7 +195,7 @@ describe('AirDrop Presale', () => {
     it('airDrop: set withdraw phase as non-owner fails', async () => {
         const phase = 0
         await expect(airDrop1.setWithdrawPhase(phase))
-            .to.be.revertedWith('NotAnOwner')
+            .to.be.revertedWith('AirDrop: not owner')
     })
 
     it('airDrop: set withdraw phase with invalid phase fails', async () => {
@@ -196,26 +211,6 @@ describe('AirDrop Presale', () => {
             .to.emit(airDrop, "SetWithdrawPhase")
     })
 
-    it('airDrop: max removable by owner when unpaused', async () => {
-        const owner = wallet0.address
-
-        const unpaused = 1
-        await airDrop.setWithdrawPhase(unpaused)
-            
-        const expectedAmount = 0
-        expect(await airDrop.maxRemovable(owner)).to.eq(expectedAmount)
-    })
-
-    it('airDrop: max removable by owner when paused', async () => {
-        const owner = wallet0.address
-
-        const paused = 0
-        await airDrop.setWithdrawPhase(paused)
-
-        const expectedAmount = await airDrop.tokenBalance()
-        expect(await airDrop.maxRemovable(owner)).to.eq(expectedAmount)
-    })
-
     it('airDrop: max removable by user when paused', async () => {
         const user = wallet1.address
 
@@ -223,7 +218,7 @@ describe('AirDrop Presale', () => {
         await airDrop.setWithdrawPhase(paused)
 
         const expectedAmount = 0
-        expect(await airDrop.maxRemovable(user)).to.eq(expectedAmount)
+        expect(await airDrop.getMaxAmount(user)).to.eq(expectedAmount)
     })
 
     it('airDrop: withdraw 25% of airdrop in phase 2', async () => {
@@ -342,7 +337,7 @@ describe('AirDrop Presale', () => {
         expect(userBalance).to.eq(expectedUserBalance)
     })
 
-    it('airDrop: burn all tokens while paused as owner', async () => {
+    it('airDrop: burn all tokens as owner', async () => {
         const expectedTokenBalance = 0
        
         // Must be paused to burn
@@ -350,28 +345,41 @@ describe('AirDrop Presale', () => {
         await airDrop.setWithdrawPhase(paused)
 
         // Remove all tokens
-        await airDrop.burn(await airDrop.tokenBalance())
+        await airDrop.burn(await airDrop.getContractTokenBalance())
 
         expect(await helixToken.balanceOf(airDrop.address)).to.eq(expectedTokenBalance)
     })
 
-    it('airDrop: withdraw all tokens while paused as owner', async () => {
-        // Must be paused to withdraw as owner
-        // must pause before getting maxTokens or else maxTokens == 0
-        const paused = 0
-        await airDrop.setWithdrawPhase(paused)
+    it("airDrop: burn as non-owner fails", async () => {
+        const airDropWallet2 = airDrop.connect(wallet2)
+        await expect(airDropWallet2.burn(1))
+            .to.be.revertedWith("AirDrop: not owner")
+    })
 
-        const airdropBalance = await airDrop.tokenBalance()
+    it('airDrop: emergency withdraw all tokens', async () => {
+        const airdropBalance = await airDrop.getContractTokenBalance()
         const expectedAirdropBalance = 0
         const expectedOwnerBalance = (await helixToken.balanceOf(wallet0.address)).add(airdropBalance)
        
         // Remove all tokens and tickets
-        await airDrop.withdraw(airdropBalance)
+        await airDrop.emergencyWithdraw()
 
         expect(await helixToken.balanceOf(airDrop.address)).to.eq(expectedAirdropBalance)
         expect(await helixToken.balanceOf(wallet0.address)).to.eq(expectedOwnerBalance)
     })
-    */
+
+    it("airDrop: withdraw when paused fails", async () => {
+        await airDrop.pause();
+        await expect(airDrop.withdraw(10))
+            .to.be.revertedWith("Pausable: paused")
+    })
+
+    it("airDrop: emergency withdraw when not owner fails", async () => {
+        expect(await airDrop.isOwner(wallet2.address)).to.be.false
+        const airDropWallet2 = airDrop.connect(wallet2)
+        await expect(airDropWallet2.emergencyWithdraw())
+            .to.be.revertedWith("AirDrop: not owner")
+    })
 
     function print(str) {
         if (verbose) console.log(str)

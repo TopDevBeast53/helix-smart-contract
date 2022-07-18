@@ -16,13 +16,12 @@ const deployTreasuryMultiSig = async (deployer) => {
     print(`adminConfirmationsRequired: ${adminConfirmationsRequired}`)
     print(`ownerConfirmationsRequired: ${ownerConfirmationsRequired}`)
 
-    const ContractFactory = await ethers.getContractFactory('TokenMultiSigWallet')
+    const ContractFactory = await ethers.getContractFactory('MultiSigWallet')
     const contract = await ContractFactory.deploy(
         admins,
         owners,
         adminConfirmationsRequired,
         ownerConfirmationsRequired,
-        "ht"    // helix treasury
     )
     await contract.deployTransaction.wait()
     print(`treasury multisig deployed to ${contract.address}`)

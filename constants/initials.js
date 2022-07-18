@@ -167,7 +167,7 @@ module.exports = {
     TREASURY_MULTISIG_ADMINS: {
         1: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
     },
 
     TREASURY_MULTISIG_OWNERS: {
@@ -193,7 +193,7 @@ module.exports = {
     OWNER_MULTISIG_ADMINS: {
         1: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
     },
 
     OWNER_MULTISIG_OWNERS: {
@@ -296,6 +296,17 @@ module.exports = {
         4: '0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57', 
     },
 
+    BRIDGE_FEE_ETH_AMOUNT: {
+        1: '15000000000000000',
+        3: '15000000000000000',
+        4: '15000000000000000',
+    },
+
+    BRIDGE_LIMIT_WRAP: {
+        1: 12,
+        3: 12,
+        4: 12,
+    },
 
     // --------- VIP Presale --------- //
 
@@ -437,4 +448,16 @@ module.exports = {
         56: 0,
         97: 7862400,     // 91 days, 86400 == 1 day
     },
+
+    // --------- Advisor Rewards --------- //
+
+    // Length of time between withdraw phases
+    ADVISOR_REWARDS_WITHDRAW_PHASE_DURATION: {
+        1: 7862400,
+        3: 120,
+        4: 120,
+        56: 0,
+        97: 7862400,     // 91 days, 86400 == 1 day
+    },
+
 }

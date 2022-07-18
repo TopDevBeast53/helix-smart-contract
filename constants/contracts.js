@@ -2,7 +2,7 @@ module.exports = {
     ownerMultiSig: {
         1: '0x362fEB150e2163B4684d0deCA4087293e4492762',    // deployed 7/4/2022
         3: '0x461e3e7C700Ba1a2282e63F43f34F9F0a37D328b',
-        4: '0x9E6902e54558B0A2017cE817921213c3E185C5B8',
+        4: '0x7F78f346C073A2f07d0139e99850c62D1314D889',
     },
     treasuryMultiSig: {
         1: '0x01427Fedd20D89dFdf52CA37d20b2943271fB462',    // deployed 7/4/2022
@@ -25,12 +25,12 @@ module.exports = {
         4: '0x79DD2dad8D04F9279F94580DBEd2306A0aE118Bd',
     },
     helixNFT: {
-        1: '0x8940A899E969cBD90C9678f4C28c53ca8FE47FE2',    // deployed 7/4/2022
+        1: '0x6D90915AFcd1577DfF311d9c20d5aCD959fC7C8a',    // deployed 7/12/2022
         3: '0x24be493d0f3b9C9Dd1f702d0917Cdcb6CbFfF0a2',
         4: '0xdD62271F8a54446032bfF3cEC93861D4F8100F4b',
     },
     helixNFTImplementation: {
-        1: '0xFDcd573d6Ca074B1718DF70226DC1B5231bF8B7E',    // deployed 7/4/2022
+        1: '0xC0663d87c82e4eC8093fE7AFd899Ba1244C49984',    // deployed 7/12/2022
         3: '0x13A54Ee2FDA40A26C9A11167c8304338821eDD7B',
         4: '0xd3EC4a703aC914a5777F2fd0bF434eAE1a19628D',
     },
@@ -40,9 +40,9 @@ module.exports = {
         4: '0xFe19cb3E3E97572FCd8dE6c81c3224f0B90452Bc',
     },
     helixNFTBridge: {
-        1: '0x6CF0a68367182F049BaE05151e3eB793AC78e13B',    // deployed 7/6/2022
+        1: '0x5389226de5308830b13d634438df5c9c6810ad40',    // deployed 7/12/2022
         3: '0xfE5C6695E4DD62ca97737823ef4BBB47D328C328',
-        4: '0x11238ec47E0a640d6388456E85f3bC24a59fA641',
+        4: '0x3024763fbf44041E97f14e88B8b7b5ad9eF1f1eB',
     },
     helixChefNFT: {
         1: '0xbFF5672d78E7Ef1eBE7F6B2EBD8Be7A7BbD4E9E1',    // deployed 7/4/2022
@@ -169,5 +169,9 @@ module.exports = {
         1: '0x005a80F4E7FCDE5e881a99048d5fc9b22BE4ab00',    // deployed 7/4/2022
         3: '0xa8C743768D29cBD0e94737276ED0d97468bB4970',
         4: '0x5Fc5AA59529210175ff2dB5b63AEcec5D23555F1',
+    },
+    advisorRewards: {
+       1: '0x42055b02f0A55B400A3FD970D865CE2DeE76fae1',     // deployed 7/14/2022
+       4: '0xB7BA378455C3aC78dcc024f0cBcdea8ee0c4cbBB',
     }
 }

@@ -14,4 +14,6 @@ module.exports = {
     // Ropsten: https://ropsten.infura.io/v3/ae4fd86582354ff0b957e9c8a0915658
     // Goerli: https://goerli.infura.io/v3/ae4fd86582354ff0b957e9c8a0915658
     rpcURL: 'https://eth-rinkeby.alchemyapi.io/v2/AZlNuxGblwVelxMo_E0rMTvVpl5H02XF',
+
+    testNetwork: 4,
 }

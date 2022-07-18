@@ -97,7 +97,7 @@ contract HelixNFT is Initializable, ERC721EnumerableUpgradeable, ReentrancyGuard
     ) external initializer {
         _owner = msg.sender;
 
-        __ERC721_init("Helix NFT", "HELIX-NFT");
+        __ERC721_init("Geobots", "GEOBOTS");
         __ERC721Enumerable_init();
         __ReentrancyGuard_init();
 

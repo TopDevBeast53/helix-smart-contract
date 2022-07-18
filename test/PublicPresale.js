@@ -14,10 +14,10 @@ const addresses = require('../constants/addresses')
 const initials = require('../constants/initials')
 const env = require('../constants/env')
 
-const treasuryAddress = addresses.TREASURY[env.network]
-const inputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.network]
-const outputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.network]
-const initialBalance = initials.PUBLIC_PRESALE_INITIAL_BALANCE[env.network]
+const treasuryAddress = addresses.TREASURY[env.testNetwork]
+const inputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.testNetwork]
+const outputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.testNetwork]
+const initialBalance = initials.PUBLIC_PRESALE_INITIAL_BALANCE[env.testNetwork]
 
 const SECONDS_PER_DAY = 86400
 const wallet1InitialBalance = 10000

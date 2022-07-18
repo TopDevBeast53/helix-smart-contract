@@ -4,29 +4,36 @@ const env = require("../../constants/env")
 const addresses = require("../../constants/addresses")
 const initials = require("../../constants/initials")
 
-const treasuryAddress = addresses.TREASURY[env.network]
+const treasuryAddress = addresses.TREASURY[env.testNetwork]
 
-const feeMinterTotalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
-const feeMinterToMintPercents = initials.FEE_MINTER_TO_MINT_PERCENTS[env.network]
+const feeMinterTotalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.testNetwork]
+const feeMinterToMintPercents = initials.FEE_MINTER_TO_MINT_PERCENTS[env.testNetwork]
 
-const refRegStakeRewardPercent = initials.REFERRAL_STAKE_REWARD_PERCENT[env.network]
-const refRegSwapRewardPercent = initials.REFERRAL_SWAP_REWARD_PERCENT[env.network]
-const refRegCollectorPercent = initials.REFERRAL_COLLECTOR_PERCENT[env.network]
+const feeHandlerDefaultNftChefPercent = initials.FEE_HANDLER_DEFAULT_NFT_CHEF_PERCENT[env.testNetwork]
 
-const vaultStartBlock = initials.HELIX_VAULT_START_BLOCK[env.network]                         
-const vaultLastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.network]
-const vaultCollectorPercent = initials.HELIX_VAULT_COLLECTOR_PERCENT[env.network]
+const refRegStakeRewardPercent = initials.REFERRAL_STAKE_REWARD_PERCENT[env.testNetwork]
+const refRegSwapRewardPercent = initials.REFERRAL_SWAP_REWARD_PERCENT[env.testNetwork]
+const refRegCollectorPercent = initials.REFERRAL_COLLECTOR_PERCENT[env.testNetwork]
 
-const chefStartBlock = initials.MASTERCHEF_START_BLOCK[env.network]
-const chefStakingPercent = initials.MASTERCHEF_STAKING_PERCENT[env.network]
-const chefDevPercent = initials.MASTERCHEF_DEV_PERCENT[env.network]
+const vaultStartBlock = initials.HELIX_VAULT_START_BLOCK[env.testNetwork]                         
+const vaultLastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.testNetwork]
+const vaultCollectorPercent = initials.HELIX_VAULT_COLLECTOR_PERCENT[env.testNetwork]
 
-const publicPresaleInputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.network]                       
-const publicPresaleOutputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.network]                     
-const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHASE_DURATION[env.network]
+const chefStartBlock = initials.MASTERCHEF_START_BLOCK[env.testNetwork]
+const chefStakingPercent = initials.MASTERCHEF_STAKING_PERCENT[env.testNetwork]
+const chefDevPercent = initials.MASTERCHEF_DEV_PERCENT[env.testNetwork]
 
-const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.network]
+const publicPresaleInputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.testNetwork]                       
+const publicPresaleOutputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.testNetwork]                     
+const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHASE_DURATION[env.testNetwork]
 
+<<<<<<< HEAD
+=======
+const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.testNetwork]
+
+const helixNftBridgeGasFeeEth = initials.BRIDGE_FEE_ETH_AMOUNT[env.testNetwork]
+
+>>>>>>> master
 const billion = 1000000000
 
 // 
@@ -61,8 +68,8 @@ module.exports.fullExchangeFixture = async () => {
     const masterChefContractFactory = await ethers.getContractFactory("MasterChef")
     const publicPresaleContractFactory = await ethers.getContractFactory("PublicPresale")
     const airdropContractFactory = await ethers.getContractFactory("AirDrop")
-    const tokenMultiSigWalletContractFactory = await ethers.getContractFactory("TokenMultiSigWallet")
-    const subMultiSigWalletContractFactory = await ethers.getContractFactory("MultiSigWallet")
+    const multiSigWalletContractFactory = await ethers.getContractFactory("MultiSigWallet")
+    const advisorRewardsContractFactory = await ethers.getContractFactory("AdvisorRewards")
 
     // 
     // Deploy misc token contracts
@@ -88,21 +95,13 @@ module.exports.fullExchangeFixture = async () => {
     //
     const [alice, bobby, carol, david, edith] = await ethers.getSigners()
 
-    const tokenMultiSigWallet = await tokenMultiSigWalletContractFactory
+    // Require that 1 admin (alice) and 1 owner (bobby or carol) confirm all txs
+    const multiSigWallet = await multiSigWalletContractFactory
         .deploy(
             [alice.address],
-            [bobby.address, carol.address, david.address],
-            0,
-            2,
-            "TokenMultiSigWallet"
-        )
-
-    const subMultiSigWallet = await subMultiSigWalletContractFactory
-        .deploy(
-            [],
-            [alice.address, bobby.address, carol.address],
-            0,
-            2,
+            [bobby.address, carol.address],
+            1,
+            1,
         )
 
     //
@@ -139,7 +138,13 @@ module.exports.fullExchangeFixture = async () => {
     // 3. deploy helix nft bridge
     const helixNftBridge = await helixNftBridgeContractFactory.deploy(
         helixNft.address,
+<<<<<<< HEAD
         alice.address
+=======
+        alice.address,
+        helixNftBridgeGasFeeEth,
+        12   // TODO - replace with real value
+>>>>>>> master
     )
 
     // 4. deploy helix chef nft
@@ -153,7 +158,7 @@ module.exports.fullExchangeFixture = async () => {
         treasuryAddress, 
         helixChefNft.address, 
         helixToken.address, 
-        defaultNftChefPercent
+        feeHandlerDefaultNftChefPercent
     )
 
     // 6. deploy referral register
@@ -237,6 +242,11 @@ module.exports.fullExchangeFixture = async () => {
         airdropWithdrawPhaseDuration
     )
 
+    const advisorRewards = await advisorRewardsContractFactory.deploy(
+        helixToken.address,
+        100   // TODO - replace with real value
+    )
+
     // 
     // Initialize external DEX contracts
     //
@@ -288,8 +298,7 @@ module.exports.fullExchangeFixture = async () => {
         tokenC,
         weth,
         // Multisig wallets
-        tokenMultiSigWallet,
-        subMultiSigWallet,
+        multiSigWallet,
         // External contracts
         externalFactory,
         externalOracleFactory,
@@ -311,6 +320,7 @@ module.exports.fullExchangeFixture = async () => {
         swapRewards,
         masterChef,
         publicPresale,
-        airdrop
+        airdrop,
+        advisorRewards
     }
 }

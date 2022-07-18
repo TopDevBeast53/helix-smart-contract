@@ -2,7 +2,7 @@
  * @dev Verify the deployed HelixNftBridge
  *
  * command for verify on testnet: 
- *      npx hardhat run scripts/5_verify/helixNftBridge.js --network ropsten
+ *      npx hardhat run scripts/5_verify/helixNftBridge.js --network rinkeby
  */
 
 const { verifyHelixNftBridge } = require("../shared/verify/verifiers")

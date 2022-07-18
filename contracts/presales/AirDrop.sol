@@ -8,21 +8,12 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-/**
- * AirDrop user addresses a token balance
- * 
- * Withdrawing tokens occurs over 4 phases:
- *  1: withrawals are limited to 25% of tokens purchased
- *  2: withrawals are limited to 50% of tokens purchased
- *  3: withrawals are limited to 75% of tokens purchased
- *  4: withrawals are unlimited
- */
 contract AirDrop is Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     struct User {
-        uint256 airdropped;         // total tokens airdropped to the user
-        uint256 balance;            // airdropped tokens remaining after withdrawls
+        uint256 airdropped;         // tokens airdropped to the user
+        uint256 withdrawn;          // tokens withdrawn by the user
     }
 
     /**
@@ -50,7 +41,7 @@ contract AirDrop is Pausable, ReentrancyGuard {
     string public name; 
     
     /// Token being airdropped, i.e. HelixToken
-    IERC20 public token;
+    address public token;
 
     /// Current withdraw phase, dictates what percentage of tickets may be withdrawn
     WithdrawPhase public withdrawPhase;
@@ -74,13 +65,13 @@ contract AirDrop is Pausable, ReentrancyGuard {
     mapping (uint256 => uint256) public withdrawPhasePercent;
 
     // Emitted when an owner burns amount of tickets
-    event Burned(uint256 amount);
+    event Burn(uint256 amount);
 
     // Emitted when tickets are withdrawn
-    event Withdrawn(address indexed user, uint256 amount);
+    event Withdraw(address indexed user, uint256 amount);
 
     // Emitted when an existing owner adds a new owner
-    event OwnerAdded(address indexed owner, address indexed newOwner);
+    event AddOwner(address indexed owner, address indexed newOwner);
 
     // Emitted when the purchase phase is set
     event SetWithdrawPhase(WithdrawPhase withdrawPhase, uint256 startTimestamp, uint256 endTimestamp);
@@ -97,9 +88,9 @@ contract AirDrop is Pausable, ReentrancyGuard {
 
     constructor(
         string memory _name, 
-        IERC20 _token, 
+        address _token, 
         uint256 _WITHDRAW_PHASE_DURATION
-    ) onlyValidAddress(address(_token)) {
+    ) onlyValidAddress(_token) {
         name = _name;
         token = _token;
 
@@ -119,27 +110,25 @@ contract AirDrop is Pausable, ReentrancyGuard {
         // Want to be in the latest phase
         updateWithdrawPhase();
 
-        _requireValidRemoval(msg.sender, _amount);
+        _requireValidWithdraw(msg.sender, _amount);
 
-        if (!isOwner[msg.sender]) {
-            users[msg.sender].balance -= _amount;
-        }
-        token.safeTransfer(msg.sender, _amount);
+        users[msg.sender].withdrawn += _amount;
+        IERC20(token).safeTransfer(msg.sender, _amount);
 
-        emit Withdrawn(msg.sender, _amount);
+        emit Withdraw(msg.sender, _amount);
     }
 
-    /// Return true if `amount` is removable by address `by`
-    function isRemovable(address _by, uint256 _amount) external view returns (bool) {
-        _requireValidRemoval(_by, _amount);
-        return true;
+    /// Called to withdraw tokens
+    function emergencyWithdraw() external onlyOwner {
+        uint256 amount = getContractTokenBalance();
+        IERC20(token).safeTransfer(msg.sender, amount);
+        emit Withdraw(msg.sender, amount);
     }
 
-    /// Called to destroy `amount` of token
+    /// Called to destroy _amount of token
     function burn(uint256 _amount) external onlyOwner { 
-        _requireValidRemoval(msg.sender, _amount);
-        token.burn(address(this), _amount);
-        emit Burned(_amount);
+        IERC20(token).burn(address(this), _amount);
+        emit Burn(_amount);
     }
 
     /// Called externally by owner to manually set the _withdrawPhase
@@ -150,56 +139,25 @@ contract AirDrop is Pausable, ReentrancyGuard {
     /// Called externally to airdrop multiple _users tokens
     /// each _users[i] receives amounts[i] many tokens for i in range _users.length
     function airdropAdd(address[] calldata _users, uint256[] calldata _amounts) external onlyOwner {
-        uint256 length = _users.length;
-        require(length == _amounts.length, "AirDrop: users and amounts must be same length");
+        uint256 usersLength = _users.length;
+        require(usersLength == _amounts.length, "AirDrop: users and amounts must be same length");
 
-        for (uint256 i = 0; i < length; i++) {
+        uint256 amountSum;
+        for (uint256 i = 0; i < usersLength; i++) {
             uint256 amount = _amounts[i];
-            require(amount <= tokenBalance(), "AirDrop: amount exceeds tokens available");
+            amountSum += amount;
+            require(amountSum <= getContractTokenBalance(), "AirDrop: insufficient tokens available");
 
-            address user = _users[i];
-            users[user].airdropped += amount;
-            users[user].balance += amount;
+            users[_users[i]].airdropped += amount;
         }
     }
 
     /// Called externally to reduce a _user's airdrop balance by _amount
     function airdropRemove(address _user, uint256 _amount) external onlyOwner {
-        if (users[_user].balance < _amount) {
-            users[_user].balance = 0;
+        if (users[_user].withdrawn > _amount) {
+            users[_user].withdrawn = users[_user].airdropped;
         } else {
-            users[_user].balance -= _amount;
-        }
-    }
-
-    /// Return maxAmount removable by address _by
-    function maxRemovable(address _by) public view returns (uint256 maxAmount) {
-        if (isOwner[_by]) {
-            // Owner can withdraw up to the token balance if the contract
-            // is in the NoWithdraw state (paused)
-            if (withdrawPhase == WithdrawPhase.NoWithdraw) {
-                maxAmount = tokenBalance();
-            }
-        } else {
-            // Number of tickets already withdrawn
-            uint256 withdrawn = users[_by].airdropped - users[_by].balance;
-
-            // Use the next withdrawPhase if update hasn't been called
-            uint256 _withdrawPhase = uint(withdrawPhase);
-            if (withdrawPhase != WithdrawPhase.Withdraw100 && block.timestamp >= withdrawPhaseEndTimestamp) {
-                _withdrawPhase++;
-            }
-
-            // Max number of tokens user can withdraw based on current withdrawPhase, 
-            // number of tokens airdropped, and number of tokens already withdrawn
-            uint256 phaseMax = Percent.getPercentage(users[_by].airdropped, withdrawPhasePercent[_withdrawPhase]);
-            uint256 allowed =  phaseMax - withdrawn;
-
-            // Number of tokens remaining in their balance
-            uint256 balance = users[_by].balance;
-    
-            // Max amount will be the minimum between balance remaining and amount allowed
-            maxAmount = Math.min(balance, allowed);
+            users[_user].withdrawn += _amount;
         }
     }
 
@@ -218,7 +176,7 @@ contract AirDrop is Pausable, ReentrancyGuard {
         require(!isOwner[_owner], "AirDrop: already owner");
         isOwner[_owner] = true;
         owners.push(_owner);
-        emit OwnerAdded(msg.sender, _owner);
+        emit AddOwner(msg.sender, _owner);
     }
 
     /// Remove an existing _owner from the contract, only callable by an owner
@@ -234,6 +192,12 @@ contract AirDrop is Pausable, ReentrancyGuard {
                 owners.pop();
             }
         }
+    }
+
+    /// Return true if `amount` is removable by address `by`
+    function isRemovable(address _by, uint256 _amount) external view returns (bool) {
+        _requireValidWithdraw(_by, _amount);
+        return true;
     }
 
     /// Return the address array of registered owners
@@ -259,9 +223,37 @@ contract AirDrop is Pausable, ReentrancyGuard {
         }
     }
 
+    /// Return maxAmount removable by address _by
+    function getMaxAmount(address _by) public view returns (uint256 maxAmount) {
+        // Use the next withdrawPhase if update hasn't been called
+        uint256 _withdrawPhase = uint(withdrawPhase);
+        if (block.timestamp >= withdrawPhaseEndTimestamp && withdrawPhase != WithdrawPhase.Withdraw100) {
+            _withdrawPhase++;
+        }
+
+        // Max number of tokens user can withdraw based on current withdrawPhase, 
+        // number of tokens airdropped, and number of tokens already withdrawn
+        maxAmount = Percent.getPercentage(users[_by].airdropped, withdrawPhasePercent[_withdrawPhase]);
+
+        // Reduce the maxAmount by the number of tokens already withdrawn
+        maxAmount -= users[_by].withdrawn;
+
+        // Max amount will be the lesser of the maxAmount allowed and the remaining balance
+        maxAmount = Math.min(maxAmount, getBalance(_by));
+    }
+
+    /// Return _user balance
+    function getBalance(address _user) public view returns(uint256) {
+        if (users[_user].airdropped != 0) {
+            return users[_user].airdropped - users[_user].withdrawn;
+        } else {
+            return 0;
+        }
+    }
+
     /// Return this contract's token balance
-    function tokenBalance() public view returns(uint256 balance) {
-        balance = token.balanceOf(address(this));
+    function getContractTokenBalance() public view returns(uint256 balance) {
+        balance = IERC20(token).balanceOf(address(this));
     }
 
     // Called privately to set the _withdrawPhase
@@ -272,9 +264,9 @@ contract AirDrop is Pausable, ReentrancyGuard {
     }
 
     // Require that _amount of tokens are removable by address _by
-    function _requireValidRemoval(address _by, uint256 _amount) private view {
+    function _requireValidWithdraw(address _by, uint256 _amount) private view {
         require(_amount > 0, "AirDrop: zero amount");
-        require(_amount <= tokenBalance(), "AirDrop: insufficient contract balance");
-        require(_amount <= maxRemovable(_by), "AirDrop: exceeds max amount");
+        require(_amount <= getContractTokenBalance(), "AirDrop: insufficient contract balance");
+        require(_amount <= getMaxAmount(_by), "AirDrop: exceeds max amount");
     }
 } 
