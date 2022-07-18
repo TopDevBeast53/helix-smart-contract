@@ -9,9 +9,9 @@ const { MaxUint256 } = require("legacy-ethers/constants")
 const { expandTo18Decimals } = require("./shared/utilities")
 const { fullExchangeFixture } = require("./shared/fixtures")
 
-const env = require("../scripts/constants/env")
-const initials = require("../scripts/constants/initials")
-const addresses = require("../scripts/constants/addresses")
+const env = require("../constants/env")
+const initials = require("../constants/initials")
+const addresses = require("../constants/addresses")
 
 const startBlock = initials.HELIX_VAULT_START_BLOCK[env.testNetwork]
 const lastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.testNetwork]

@@ -9,9 +9,15 @@ const { MaxUint256 } = require("legacy-ethers/constants")
 const { expandTo18Decimals } = require("./shared/utilities")
 const { fullExchangeFixture } = require("./shared/fixtures")
 
+<<<<<<< HEAD
+const env = require("../constants/env")
+const initials = require("../constants/initials")
+const totalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
+=======
 const env = require("../scripts/constants/env")
 const initials = require("../scripts/constants/initials")
 const totalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.testNetwork]
+>>>>>>> master
 
 const verbose = true
 
