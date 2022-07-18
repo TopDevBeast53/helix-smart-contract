@@ -3,6 +3,7 @@ pragma solidity >= 0.8.0;
 
 import "../interfaces/IHelixNFT.sol";
 import "../interfaces/IFeeMinter.sol";
+import "../tokens/HelixToken.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -49,6 +50,12 @@ contract HelixChefNFT is
     /// Called to get rewardToken to mint per block
     IFeeMinter public feeMinter;
 
+    /// TODO
+    uint256 public accTokenPerShare;
+
+    /// Last block number when rewards were reward
+    uint256 public lastRewardBlock;
+
     // Emitted when an NFTs are staked
     event Stake(address indexed user, uint256[] tokenIds);
 
@@ -73,6 +80,13 @@ contract HelixChefNFT is
     // Emitted when a new feeMinter is set
     event SetFeeMinter(address indexed setter, address indexed feeMinter);
 
+    // Emitted when the pool is updated
+    event UpdatePool(
+        uint256 indexed accTokenPerShare, 
+        uint256 indexed lastRewardBlock, 
+        uint256 indexed toMint
+    );
+
     modifier onlyAccruer {
         require(isAccruer(msg.sender), "HelixChefNFT: not an accruer");
         _;
@@ -93,6 +107,7 @@ contract HelixChefNFT is
         helixNFT = _helixNFT;
         rewardToken = _rewardToken;
         feeMinter = IFeeMinter(_feeMinter);
+        lastRewardBlock = block.number;
     }
 
     /// Stake the tokens with _tokenIds in the pool
@@ -209,6 +224,28 @@ contract HelixChefNFT is
         return users[_user].pendingReward;
     }
 
+    
+
+    /// Update the pool
+    function updatePool() public {
+        if (block.number <= lastRewardBlock) {
+            return;
+        }
+
+        uint256 rewardTokenBalance = _getContractRewardTokenBalance();
+        if (rewardTokenBalance <= 0) {
+            lastRewardBlock = block.number;
+            return;
+        }
+
+        uint256 toMint = _getToMint();
+        accTokenPerShare = _getAccTokenPerShare(toMint, rewardTokenBalance);
+        lastRewardBlock = block.number;
+
+        HelixToken(address(rewardToken)).mint(address(this), toMint);
+        emit UpdatePool(accTokenPerShare, lastRewardBlock, toMint);
+    }
+    
     /// Return the number of added _accruers
     function getNumAccruers() public view returns (uint256) {
         return EnumerableSetUpgradeable.length(_accruers);
@@ -257,5 +294,28 @@ contract HelixChefNFT is
     function _getToMintPerBlock() private view returns (uint256) {
         require(address(feeMinter) != address(0), "HelixChefNFT: fee minter unassigned");
         return feeMinter.getToMintPerBlock(address(this));
+    }
+
+    // Return this contract's rewardToken balance
+    function _getContractRewardTokenBalance() private view returns (uint256) {
+        return rewardToken.balanceOf(address(this));
+    }
+
+    // Return the amount reward token to reward
+    function _getToMint() private view returns (uint256) {
+        if (block.number <= lastRewardBlock || _getContractRewardTokenBalance() <= 0) {
+            return 0;
+        }
+        return _getBlockDelta(lastRewardBlock, block.number) * _getToMintPerBlock();
+    }
+
+    // Return the accumulated reward token per share since the last block reward
+    function _getAccTokenPerShare(uint256 _amount, uint256 _balance) private view returns (uint256) {
+        return accTokenPerShare + (_amount * 1e12 / _balance);
+    }
+
+    // Return the delta between _from and _to blocks
+    function _getBlockDelta(uint256 _from, uint256 _to) private pure returns (uint256) {
+        return _to - _from;
     }
 }
