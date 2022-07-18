@@ -2,6 +2,7 @@
 pragma solidity >= 0.8.0;
 
 import "../interfaces/IHelixNFT.sol";
+import "../interfaces/IFeeMinter.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -45,6 +46,9 @@ contract HelixChefNFT is
     /// Maps a user's address to the number of NFTs they've staked
     mapping(address => uint256) public usersStakedWrappedNfts;
 
+    /// Called to get rewardToken to mint per block
+    IFeeMinter public feeMinter;
+
     // Emitted when an NFTs are staked
     event Stake(address indexed user, uint256[] tokenIds);
 
@@ -66,6 +70,9 @@ contract HelixChefNFT is
     // Emitted when a new helixNFT address is set
     event SetHelixNFT(address indexed setter, address indexed helixNFT);
 
+    // Emitted when a new feeMinter is set
+    event SetFeeMinter(address indexed setter, address indexed feeMinter);
+
     modifier onlyAccruer {
         require(isAccruer(msg.sender), "HelixChefNFT: not an accruer");
         _;
@@ -76,11 +83,16 @@ contract HelixChefNFT is
         _;
     }
 
-    function initialize(IHelixNFT _helixNFT, IERC20Upgradeable _rewardToken) external initializer {
+    function initialize(
+        IHelixNFT _helixNFT, 
+        IERC20Upgradeable _rewardToken,
+        address _feeMinter
+    ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
         helixNFT = _helixNFT;
         rewardToken = _rewardToken;
+        feeMinter = IFeeMinter(_feeMinter);
     }
 
     /// Stake the tokens with _tokenIds in the pool
@@ -169,6 +181,13 @@ contract HelixChefNFT is
         emit SetHelixNFT(msg.sender, _helixNFT);
     }
 
+    /// Called by the owner to set the _feeMinter address
+    function setFeeMinter(address _feeMinter) external onlyOwner {
+        require(_feeMinter != address(0), "HelixChefNFT: zero address");
+        feeMinter = IFeeMinter(_feeMinter);
+        emit SetFeeMinter(msg.sender, _feeMinter);
+    }
+
     /// Return the accruer at _index
     function getAccruer(uint256 _index) external view returns (address) {
         require(_index <= getNumAccruers() - 1, "HelixChefNFT: index out of bounds");
@@ -178,6 +197,11 @@ contract HelixChefNFT is
     /// Return the number of NFTs the _user has staked
     function getUsersStakedWrappedNfts(address _user) external view returns(uint256) {
         return usersStakedWrappedNfts[_user];
+    }
+
+    // Return the toMintPerBlock rate assigned to this contract by the feeMinter
+    function getToMintPerBlock() external view returns (uint256) {
+        return _getToMintPerBlock();
     }
 
     /// Return the _user's pending reward
@@ -227,5 +251,11 @@ contract HelixChefNFT is
     // Require that _caller is _tokenOwner
     function _requireIsTokenOwner(address _caller, address _tokenOwner) private pure {
             require(_caller == _tokenOwner, "HelixChefNFT: not token owner");
+    }
+
+    // Return the toMintPerBlockRate assigned to this contract by the feeMinter
+    function _getToMintPerBlock() private view returns (uint256) {
+        require(address(feeMinter) != address(0), "HelixChefNFT: fee minter unassigned");
+        return feeMinter.getToMintPerBlock(address(this));
     }
 }
