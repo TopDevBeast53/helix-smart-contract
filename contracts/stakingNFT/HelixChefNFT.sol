@@ -27,6 +27,7 @@ contract HelixChefNFT is
     struct UserInfo {
         uint256[] stakedNFTsId;        // Ids of the NFTs this user has staked
         uint256 pendingReward;         // Amount of unwithdrawn rewardToken
+        uint256 rewardDebt;
     }
 
     /// Owner approved contracts which can accrue user rewards
@@ -221,10 +222,15 @@ contract HelixChefNFT is
 
     /// Return the _user's pending reward
     function pendingReward(address _user) external view returns (uint256) {
-        return users[_user].pendingReward;
-    }
+        UserInfo memory user = users[_user];
 
-    
+        uint256 rewardTokenBalance = _getContractRewardTokenBalance();
+        uint256 toMint = _getToMint();
+        uint256 _accTokenPerShare = _getAccTokenPerShare(toMint, rewardTokenBalance);
+
+        // TODO - check if .length correctly relates to user.amount in masterChef
+        return user.stakedNFTsId.length * _accTokenPerShare / 1e12 - user.rewardDebt;
+    }
 
     /// Update the pool
     function updatePool() public {
