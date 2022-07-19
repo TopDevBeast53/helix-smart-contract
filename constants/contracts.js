@@ -1,21 +1,21 @@
 module.exports = {
     ownerMultiSig: {
-        1: '0x362fEB150e2163B4684d0deCA4087293e4492762',    // deployed 7/4/2022
+        1: '0x8E4e45b24a9F003C99B92e62B100E3Ea2D878Ee1',    // deployed 7/18/2022
         3: '0x461e3e7C700Ba1a2282e63F43f34F9F0a37D328b',
         4: '0x7F78f346C073A2f07d0139e99850c62D1314D889',
     },
     treasuryMultiSig: {
-        1: '0x01427Fedd20D89dFdf52CA37d20b2943271fB462',    // deployed 7/4/2022
+        1: '0xcBa9E41B8A0fDdF3977250e7826908D0E4024A4B',    // deployed 7/18/2022
         3: '0x1Ed71D2D4ac77A5C0a9f2b4121A73C720D5feC73',
         4: '0xd3971D64143a39a711504B9540Dbc64555D851c9',
     },
     devTeamMultiSig: {
-        1: '0xf862411f1b56ec4Db746758Ac452C271d226Dec3',    // deployed 7/4/2022
+        1: '0xfcD1CEC3Ec7154858Cab4E930F565Db528b1f9f1',    // deployed 7/18/2022
         3: '0x202661dd1deE66f5f2A9e71fDC8d9706dd98E6fb',
         4: '0x2A06E8A9b9a3ED193A1A550a8F9cF988Ebfaf3EC',
     },
     timelock: {
-        1: '0xc258C79eAa64c073517119708524DD753f2E034a',    // deployed 7/4/2022
+        1: '0x2527A0F4F7F7056F42B25A7bEEda7419c2FB287D',    // deployed 7/18/2022
         3: '0x202661dd1deE66f5f2A9e71fDC8d9706dd98E6fb',
         4: '0xA2fE90F9A04884e93936A0c8020f70Ac60D2832A',
     },
@@ -150,7 +150,7 @@ module.exports = {
     },
     airDrop: {
         3: '',
-        4: '0x78BF3fae658779aB69EEaa06Ed84B6af3584d34f',
+        4: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
     },
     testToken: {
         3: ''
