@@ -26,8 +26,7 @@ const verifyTreasuryMultiSig = async () => {
                 admins,
                 owners,
                 adminConfirmationsRequired,
-                ownerConfirmationsRequired,
-                "ht"    // helix treasury
+                ownerConfirmationsRequired
             ]
         }
     )

@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/devTeamMultiSig.js --network ropsten
  */
 
-const { verifyDevTeamMultiSig } = require("../shared/verify/verifiers")
+const { verifyDevTeamMultiSig } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyDevTeamMultiSig()

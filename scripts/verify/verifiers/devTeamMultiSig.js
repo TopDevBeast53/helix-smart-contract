@@ -26,8 +26,7 @@ const verifyDevTeamMultiSig = async () => {
                 admins,
                 owners,
                 adminConfirmationsRequired,
-                ownerConfirmationsRequired,
-                'dtp'   // dev token payments
+                ownerConfirmationsRequired
             ]
         }
     )

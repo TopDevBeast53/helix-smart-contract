@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/verifyMigrator.js --network ropsten
  */
 
-const { verifyOwnerMultiSig } = require("../shared/verify/verifiers")
+const { verifyOwnerMultiSig } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyOwnerMultiSig()

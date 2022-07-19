@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/timelock.js --network ropsten
  */
 
-const { verifyTimelock } = require("../shared/verify/verifiers")
+const { verifyTimelock } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyTimelock()
