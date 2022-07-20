@@ -23,6 +23,7 @@ const { verifyMulticall } = require("./multicall")
 const { verifyAirDrop } = require("./airDrop")
 const { verifyTestToken } = require("./testToken")
 const { verifyAdvisorRewards } = require("./advisorRewards")
+const { verifyPaymentSplitter } = require("./paymentSplitter")
 
 module.exports = {
     verifyOwnerMultiSig,
@@ -48,4 +49,5 @@ module.exports = {
     verifyAirDrop,
     verifyTestToken,
     verifyAdvisorRewards,
+    verifyPaymentSplitter,
 }

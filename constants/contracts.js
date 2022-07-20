@@ -12,7 +12,7 @@ module.exports = {
     devTeamMultiSig: {
         1: '0xfcD1CEC3Ec7154858Cab4E930F565Db528b1f9f1',    // deployed 7/18/2022
         3: '0x202661dd1deE66f5f2A9e71fDC8d9706dd98E6fb',
-        4: '0x2A06E8A9b9a3ED193A1A550a8F9cF988Ebfaf3EC',
+        4: '0xeefACfc4555ba8a4C0FE2b0eCd3ccfe3c27bEa8D',
     },
     timelock: {
         1: '0x2527A0F4F7F7056F42B25A7bEEda7419c2FB287D',    // deployed 7/18/2022
@@ -174,5 +174,8 @@ module.exports = {
     advisorRewards: {
        1: '0x42055b02f0A55B400A3FD970D865CE2DeE76fae1',     // deployed 7/14/2022
        4: '0xB7BA378455C3aC78dcc024f0cBcdea8ee0c4cbBB',
+    },
+    paymentSplitter: {
+        4: '0x82b7F02BCF9426BAE10fB93A5F44937BB4279bd5',
     }
 }
