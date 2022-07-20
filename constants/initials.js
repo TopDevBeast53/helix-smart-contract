@@ -220,7 +220,7 @@ module.exports = {
     DEV_TEAM_MULTISIG_ADMINS: {
         1: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
     },
 
     DEV_TEAM_MULTISIG_OWNERS: {
@@ -461,4 +461,27 @@ module.exports = {
         97: 7862400,     // 91 days, 86400 == 1 day
     },
 
+    // --------- Payment Splitter --------- //
+
+    // Addresses to recieve funds when payment splitter receives funds
+    // Error will be thrown if array is empty
+    PAYMENT_SPLITTER_PAYEES: {
+        1: [],
+        4: [
+            '0x59201fb8cb2D61118B280c8542127331DD141654',
+            '0x51606cadd699fa80b8bfc3375103259e5ed7c195',
+            '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'
+        ],
+    },
+
+    // Amount of shares each payee receives
+    // Error will be thrown if array is empty
+    PAYMENT_SPLITTER_SHARES: {
+        1: [],
+        4: [
+            5, 
+            10,
+            20
+        ],
+    },
 }
