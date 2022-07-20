@@ -26,7 +26,7 @@ contract HelixChefNFT is
     // Info on each user who has NFTs staked in this contract
     struct UserInfo {
         uint256[] stakedNFTsId;        // Ids of the NFTs this user has staked
-        uint256 pendingReward;         // Amount of unwithdrawn rewardToken
+        uint256 accruedReward;         // Amount of unwithdrawn rewardToken
         uint256 rewardDebt;
     }
 
@@ -55,7 +55,7 @@ contract HelixChefNFT is
     uint256 public accTokenPerShare;
 
     /// Last block number when rewards were reward
-    uint256 public lastRewardBlock;
+    uint256 public lastUpdateBlock;
 
     // Emitted when an NFTs are staked
     event Stake(address indexed user, uint256[] tokenIds);
@@ -84,7 +84,7 @@ contract HelixChefNFT is
     // Emitted when the pool is updated
     event UpdatePool(
         uint256 indexed accTokenPerShare, 
-        uint256 indexed lastRewardBlock, 
+        uint256 indexed lastUpdateBlock, 
         uint256 indexed toMint
     );
 
@@ -108,18 +108,20 @@ contract HelixChefNFT is
         helixNFT = _helixNFT;
         rewardToken = _rewardToken;
         feeMinter = IFeeMinter(_feeMinter);
-        lastRewardBlock = block.number;
+        lastUpdateBlock = block.number;
     }
 
     /// Stake the tokens with _tokenIds in the pool
     function stake(uint256[] memory _tokenIds) external whenNotPaused nonReentrant {
-        _withdrawRewardToken();
+        updatePool();
         
         UserInfo storage user = users[msg.sender];
-    
+        uint256 pendingReward = getPendingReward(msg.sender);
+   
         uint256 length = _tokenIds.length; 
         for (uint256 i = 0; i < length; i++){
-            (address tokenOwner, bool isStaked, uint256 wrappedNFTs) = helixNFT.getInfoForStaking(_tokenIds[i]);
+            (address tokenOwner, bool isStaked, uint256 wrappedNFTs) = 
+                helixNFT.getInfoForStaking(_tokenIds[i]);
             _requireIsTokenOwner(msg.sender, tokenOwner);
             require(!isStaked, "HelixChefNFT: already staked");
 
@@ -130,16 +132,25 @@ contract HelixChefNFT is
             totalStakedWrappedNfts += wrappedNFTs;
         }
 
+        user.rewardDebt = _getRewardDebt(msg.sender);
+        if (pendingReward > 0) {
+            rewardToken.transfer(msg.sender, pendingReward);
+        }
+
         emit Stake(msg.sender, _tokenIds);
     }
 
     /// Unstake the tokens with _tokenIds in the pool
     function unstake(uint256[] memory _tokenIds) external whenNotPaused nonReentrant {
-        _withdrawRewardToken();
+        updatePool();
+
+        UserInfo storage user = users[msg.sender];
+        uint256 pendingReward = getPendingReward(msg.sender);
 
         uint256 length = _tokenIds.length; 
         for (uint256 i = 0; i < length; i++){
-            (address tokenOwner, bool isStaked, uint256 wrappedNFTs) = helixNFT.getInfoForStaking(_tokenIds[i]);
+            (address tokenOwner, bool isStaked, uint256 wrappedNFTs) = 
+                helixNFT.getInfoForStaking(_tokenIds[i]);
             _requireIsTokenOwner(msg.sender, tokenOwner);
             require(isStaked, "HelixChefNFT: already unstaked");
 
@@ -149,7 +160,12 @@ contract HelixChefNFT is
             usersStakedWrappedNfts[msg.sender] -= wrappedNFTs;
             totalStakedWrappedNfts -= wrappedNFTs;
         }
-        
+
+        user.rewardDebt = _getRewardDebt(msg.sender);
+        if (pendingReward > 0) {
+            rewardToken.transfer(msg.sender, pendingReward);
+        }
+
         emit Unstake(msg.sender, _tokenIds);
     }
 
@@ -157,14 +173,24 @@ contract HelixChefNFT is
     function accrueReward(address _user, uint256 _fee) external onlyAccruer {
         uint256 reward = getAccruedReward(_user, _fee);
         if (reward > 0) {
-            users[_user].pendingReward += reward;
+            users[_user].accruedReward += reward;
             emit AccrueReward(_user, reward);
         }
     }
 
     /// Withdraw accrued reward token
     function withdrawRewardToken() external nonReentrant {
-        _withdrawRewardToken();
+        updatePool();
+
+        uint256 pendingReward = getPendingReward(msg.sender);
+
+        users[msg.sender].accruedReward = 0;
+        users[msg.sender].rewardDebt = _getRewardDebt(msg.sender);
+    
+        if (pendingReward > 0) {
+            rewardToken.safeTransfer(msg.sender, pendingReward);
+        }
+        emit WithdrawRewardToken(msg.sender, pendingReward);
     }
 
     /// Called by the owner to add an accruer
@@ -221,35 +247,35 @@ contract HelixChefNFT is
     }
 
     /// Return the _user's pending reward
-    function pendingReward(address _user) external view returns (uint256) {
+    function getPendingReward(address _user) public view returns (uint256) {
         UserInfo memory user = users[_user];
 
         uint256 rewardTokenBalance = _getContractRewardTokenBalance();
         uint256 toMint = _getToMint();
         uint256 _accTokenPerShare = _getAccTokenPerShare(toMint, rewardTokenBalance);
 
-        // TODO - check if .length correctly relates to user.amount in masterChef
-        return user.stakedNFTsId.length * _accTokenPerShare / 1e12 - user.rewardDebt;
+        return usersStakedWrappedNfts[_user] * _accTokenPerShare / 1e12 - 
+            user.rewardDebt + user.accruedReward;
     }
 
     /// Update the pool
     function updatePool() public {
-        if (block.number <= lastRewardBlock) {
+        if (block.number <= lastUpdateBlock) {
             return;
         }
 
         uint256 rewardTokenBalance = _getContractRewardTokenBalance();
         if (rewardTokenBalance <= 0) {
-            lastRewardBlock = block.number;
+            lastUpdateBlock = block.number;
             return;
         }
 
         uint256 toMint = _getToMint();
         accTokenPerShare = _getAccTokenPerShare(toMint, rewardTokenBalance);
-        lastRewardBlock = block.number;
+        lastUpdateBlock = block.number;
 
         HelixToken(address(rewardToken)).mint(address(this), toMint);
-        emit UpdatePool(accTokenPerShare, lastRewardBlock, toMint);
+        emit UpdatePool(accTokenPerShare, lastUpdateBlock, toMint);
     }
     
     /// Return the number of added _accruers
@@ -270,14 +296,6 @@ contract HelixChefNFT is
         return EnumerableSetUpgradeable.contains(_accruers, _address);
     }
 
-    // Withdraw accrued reward token
-    function _withdrawRewardToken() private {
-        uint256 _amount = users[msg.sender].pendingReward;
-        users[msg.sender].pendingReward = 0;
-        rewardToken.safeTransfer(address(msg.sender), _amount);
-        emit WithdrawRewardToken(msg.sender, _amount);
-    }
-
     // Remove _tokenId from _user's account
     function _removeTokenIdFromUser(address _user, uint256 _tokenId) private {
         uint256[] storage tokenIds = users[_user].stakedNFTsId;
@@ -293,7 +311,7 @@ contract HelixChefNFT is
 
     // Require that _caller is _tokenOwner
     function _requireIsTokenOwner(address _caller, address _tokenOwner) private pure {
-            require(_caller == _tokenOwner, "HelixChefNFT: not token owner");
+        require(_caller == _tokenOwner, "HelixChefNFT: not token owner");
     }
 
     // Return the toMintPerBlockRate assigned to this contract by the feeMinter
@@ -309,15 +327,20 @@ contract HelixChefNFT is
 
     // Return the amount reward token to reward
     function _getToMint() private view returns (uint256) {
-        if (block.number <= lastRewardBlock || _getContractRewardTokenBalance() <= 0) {
+        if (block.number <= lastUpdateBlock || _getContractRewardTokenBalance() <= 0) {
             return 0;
         }
-        return _getBlockDelta(lastRewardBlock, block.number) * _getToMintPerBlock();
+        return _getBlockDelta(lastUpdateBlock, block.number) * _getToMintPerBlock();
     }
 
     // Return the accumulated reward token per share since the last block reward
     function _getAccTokenPerShare(uint256 _amount, uint256 _balance) private view returns (uint256) {
         return accTokenPerShare + (_amount * 1e12 / _balance);
+    }
+
+    // Return the _user's reward debt
+    function _getRewardDebt(address _user) private view returns (uint256) {
+        return usersStakedWrappedNfts[_user] * accTokenPerShare / 1e12;
     }
 
     // Return the delta between _from and _to blocks
