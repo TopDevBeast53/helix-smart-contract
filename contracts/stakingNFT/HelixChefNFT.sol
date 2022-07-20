@@ -172,10 +172,8 @@ contract HelixChefNFT is
     /// Accrue reward to the _user's account based on the transaction _fee
     function accrueReward(address _user, uint256 _fee) external onlyAccruer {
         uint256 reward = getAccruedReward(_user, _fee);
-        if (reward > 0) {
-            users[_user].accruedReward += reward;
-            emit AccrueReward(_user, reward);
-        }
+        users[_user].accruedReward += reward;
+        emit AccrueReward(_user, reward);
     }
 
     /// Withdraw accrued reward token
@@ -246,18 +244,6 @@ contract HelixChefNFT is
         return _getToMintPerBlock();
     }
 
-    /// Return the _user's pending reward
-    function getPendingReward(address _user) public view returns (uint256) {
-        UserInfo memory user = users[_user];
-
-        uint256 rewardTokenBalance = _getContractRewardTokenBalance();
-        uint256 toMint = _getToMint();
-        uint256 _accTokenPerShare = _getAccTokenPerShare(toMint, rewardTokenBalance);
-
-        return usersStakedWrappedNfts[_user] * _accTokenPerShare / 1e12 - 
-            user.rewardDebt + user.accruedReward;
-    }
-
     /// Update the pool
     function updatePool() public {
         if (block.number <= lastUpdateBlock) {
@@ -277,7 +263,19 @@ contract HelixChefNFT is
         HelixToken(address(rewardToken)).mint(address(this), toMint);
         emit UpdatePool(accTokenPerShare, lastUpdateBlock, toMint);
     }
-    
+
+    /// Return the _user's pending reward
+    function getPendingReward(address _user) public view returns (uint256) {
+        UserInfo memory user = users[_user];
+
+        uint256 rewardTokenBalance = _getContractRewardTokenBalance();
+        uint256 toMint = _getToMint();
+        uint256 _accTokenPerShare = _getAccTokenPerShare(toMint, rewardTokenBalance);
+
+        return usersStakedWrappedNfts[_user] * _accTokenPerShare / 1e12 - 
+            user.rewardDebt + user.accruedReward;
+    }
+
     /// Return the number of added _accruers
     function getNumAccruers() public view returns (uint256) {
         return EnumerableSetUpgradeable.length(_accruers);
