@@ -105,7 +105,7 @@ contract PaymentSplitter is Context, Ownable {
     /**
      * @dev Getter for the total amount of Ether already released.
      */
-    function totalReleased() public view returns (uint256) {
+    function totalReleasedEther() public view returns (uint256) {
         return _totalReleased;
     }
 
@@ -113,7 +113,7 @@ contract PaymentSplitter is Context, Ownable {
      * @dev Getter for the total amount of `token` already released. `token` should be the address of an IERC20
      * contract.
      */
-    function totalReleased(IERC20 token) public view returns (uint256) {
+    function totalReleasedErc20(IERC20 token) public view returns (uint256) {
         return _erc20TotalReleased[_IERC20Key(token)];
     }
 
@@ -127,7 +127,7 @@ contract PaymentSplitter is Context, Ownable {
     /**
      * @dev Getter for the amount of Ether already released to a payee.
      */
-    function released(address account) public view returns (uint256) {
+    function releasedEther(address account) public view returns (uint256) {
         return _released[_addressKey(account)];
     }
 
@@ -135,7 +135,7 @@ contract PaymentSplitter is Context, Ownable {
      * @dev Getter for the amount of `token` tokens already released to a payee. `token` should be the address of an
      * IERC20 contract.
      */
-    function released(IERC20 token, address account) public view returns (uint256) {
+    function releasedErc20(IERC20 token, address account) public view returns (uint256) {
         return _erc20Released[_IERC20Key(token)][_addressKey(account)];
     }
 
@@ -149,7 +149,7 @@ contract PaymentSplitter is Context, Ownable {
     /**
      * @dev Getter for the amount of payee's releasable Ether.
      */
-    function releasable(address account) public view returns (uint256) {
+    function releasableEther(address account) public view returns (uint256) {
         uint256 totalReceived = address(this).balance + totalReleased();
         return _pendingPayment(account, totalReceived, released(account));
     }
@@ -158,7 +158,7 @@ contract PaymentSplitter is Context, Ownable {
      * @dev Getter for the amount of payee's releasable `token` tokens. `token` should be the address of an
      * IERC20 contract.
      */
-    function releasable(IERC20 token, address account) public view returns (uint256) {
+    function releasableErc20(IERC20 token, address account) public view returns (uint256) {
         uint256 totalReceived = token.balanceOf(address(this)) + totalReleased(token);
         return _pendingPayment(account, totalReceived, released(token, account));
     }
@@ -167,7 +167,7 @@ contract PaymentSplitter is Context, Ownable {
      * @dev Triggers a transfer to `account` of the amount of Ether they are owed, according to their percentage of the
      * total shares and their previous withdrawals.
      */
-    function release(address payable account) public virtual {
+    function releaseEther(address payable account) public virtual {
         require(_shares[_addressKey(account)] > 0, "PaymentSplitter: account has no shares");
 
         uint256 payment = releasable(account);
@@ -190,7 +190,7 @@ contract PaymentSplitter is Context, Ownable {
      * percentage of the total shares and their previous withdrawals. `token` must be the address of an IERC20
      * contract.
      */
-    function release(IERC20 token, address account) public virtual {
+    function releaseErc20(IERC20 token, address account) public virtual {
         require(_shares[_addressKey(account)] > 0, "PaymentSplitter: account has no shares");
 
         uint256 payment = releasable(token, account);
@@ -212,7 +212,7 @@ contract PaymentSplitter is Context, Ownable {
     /**
      * @dev Triggers a release of release-able Ether to each account.
      */
-    function releaseAll() public virtual {
+    function releaseAllEther() public virtual {
         uint256 payeesLength = _payees.length;
         for (uint256 i = 0; i < payeesLength; i++) {
             address payable account = payable(_payees[i]);
@@ -240,7 +240,7 @@ contract PaymentSplitter is Context, Ownable {
     /**
      * @dev Triggers a release of release-able token to each account.
      */
-    function releaseAll(IERC20 token) public virtual {
+    function releaseAllErc20(IERC20 token) public virtual {
         uint256 payeesLength = _payees.length;
         for (uint256 i = 0; i < payeesLength; i++) {
             address account = _payees[i];
