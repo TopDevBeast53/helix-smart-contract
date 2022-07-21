@@ -3,6 +3,7 @@
 
 pragma solidity >=0.8.0;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
@@ -25,21 +26,23 @@ import "@openzeppelin/contracts/utils/Context.sol";
  * tokens that apply fees during transfers, are likely to not be supported as expected. If in doubt, we encourage you
  * to run tests before sending real value to this contract.
  */
-contract PaymentSplitter is Context {
+contract PaymentSplitter is Context, Ownable {
     event PayeeAdded(address account, uint256 shares);
     event PaymentReleased(address to, uint256 amount);
     event ERC20PaymentReleased(IERC20 indexed token, address to, uint256 amount);
     event PaymentReceived(address from, uint256 amount);
+    event Reset(address[] payees, uint256[] shares);
 
     uint256 private _totalShares;
     uint256 private _totalReleased;
+    uint256 private _version;
 
-    mapping(address => uint256) private _shares;
-    mapping(address => uint256) private _released;
+    mapping(bytes32 => uint256) private _shares;
+    mapping(bytes32 => uint256) private _released;
     address[] private _payees;
 
-    mapping(IERC20 => uint256) private _erc20TotalReleased;
-    mapping(IERC20 => mapping(address => uint256)) private _erc20Released;
+    mapping(bytes32 => uint256) private _erc20TotalReleased;
+    mapping(bytes32 => mapping(bytes32 => uint256)) private _erc20Released;
 
     /**
      * @dev Creates an instance of `PaymentSplitter` where each account in `payees` is assigned the number of shares at
@@ -71,6 +74,28 @@ contract PaymentSplitter is Context {
     }
 
     /**
+     * @dev Reset the contract to a fresh state, equivalent to re-running the constructor.
+     *      WARNING: Ensure that all existing funds have been released to payees, accumulated funds 
+     *               will be lost otherwise.
+     */
+    function reset(address[] memory payees, uint256[] memory shares_) external onlyOwner {
+        _version++;
+
+        delete _totalShares;
+        delete _totalReleased;
+        delete _payees;
+
+        require(payees.length == shares_.length, "PaymentSplitter: payees and shares length mismatch");
+        require(payees.length > 0, "PaymentSplitter: no payees");
+
+        for (uint256 i = 0; i < payees.length; i++) {
+            _addPayee(payees[i], shares_[i]);
+        }
+
+        emit Reset(payees, shares_);
+    } 
+
+    /**
      * @dev Getter for the total shares held by payees.
      */
     function totalShares() public view returns (uint256) {
@@ -89,21 +114,21 @@ contract PaymentSplitter is Context {
      * contract.
      */
     function totalReleased(IERC20 token) public view returns (uint256) {
-        return _erc20TotalReleased[token];
+        return _erc20TotalReleased[_IERC20Key(token)];
     }
 
     /**
      * @dev Getter for the amount of shares held by an account.
      */
     function shares(address account) public view returns (uint256) {
-        return _shares[account];
+        return _shares[_addressKey(account)];
     }
 
     /**
      * @dev Getter for the amount of Ether already released to a payee.
      */
     function released(address account) public view returns (uint256) {
-        return _released[account];
+        return _released[_addressKey(account)];
     }
 
     /**
@@ -111,7 +136,7 @@ contract PaymentSplitter is Context {
      * IERC20 contract.
      */
     function released(IERC20 token, address account) public view returns (uint256) {
-        return _erc20Released[token][account];
+        return _erc20Released[_IERC20Key(token)][_addressKey(account)];
     }
 
     /**
@@ -143,17 +168,17 @@ contract PaymentSplitter is Context {
      * total shares and their previous withdrawals.
      */
     function release(address payable account) public virtual {
-        require(_shares[account] > 0, "PaymentSplitter: account has no shares");
+        require(_shares[_addressKey(account)] > 0, "PaymentSplitter: account has no shares");
 
         uint256 payment = releasable(account);
 
         require(payment != 0, "PaymentSplitter: account is not due payment");
 
         // _totalReleased is the sum of all values in _released.
-        // If "_totalReleased += payment" does not overflow, then "_released[account] += payment" cannot overflow.
+        // If "_totalReleased += payment" does not overflow, then "_released[_addressKey(account)] += payment" cannot overflow.
         _totalReleased += payment;
         unchecked {
-            _released[account] += payment;
+            _released[_addressKey(account)] += payment;
         }
 
         Address.sendValue(account, payment);
@@ -166,18 +191,18 @@ contract PaymentSplitter is Context {
      * contract.
      */
     function release(IERC20 token, address account) public virtual {
-        require(_shares[account] > 0, "PaymentSplitter: account has no shares");
+        require(_shares[_addressKey(account)] > 0, "PaymentSplitter: account has no shares");
 
         uint256 payment = releasable(token, account);
 
         require(payment != 0, "PaymentSplitter: account is not due payment");
 
-        // _erc20TotalReleased[token] is the sum of all values in _erc20Released[token].
-        // If "_erc20TotalReleased[token] += payment" does not overflow, then "_erc20Released[token][account] += payment"
-        // cannot overflow.
-        _erc20TotalReleased[token] += payment;
+        // _erc20TotalReleased[_IERC20Key(token)] is the sum of all values in _erc20Released[_IERC20Key(token)].
+        // If "_erc20TotalReleased[_IERC20Key(token)] += payment" does not overflow, 
+        // then "_erc20Released[_IERC20Key(token)][_addressKey(account)] += payment" cannot overflow.
+        _erc20TotalReleased[_IERC20Key(token)] += payment;
         unchecked {
-            _erc20Released[token][account] += payment;
+            _erc20Released[_IERC20Key(token)][_addressKey(account)] += payment;
         }
 
         SafeERC20.safeTransfer(token, account, payment);
@@ -192,15 +217,17 @@ contract PaymentSplitter is Context {
         for (uint256 i = 0; i < payeesLength; i++) {
             address payable account = payable(_payees[i]);
 
-            // Does not rely on existing release function to avoid failing if _shares[account] == 0
-            if (_shares[account] > 0) {
+            // Does not rely on existing release function to avoid failing 
+            // if _shares[_addressKey(account)] == 0 or payment == 0
+            if (_shares[_addressKey(account)] > 0) {
                 uint256 payment = releasable(account);
                 if (payment != 0) {
                     // _totalReleased is the sum of all values in _released.
-                    // If "_totalReleased += payment" does not overflow, then "_released[account] += payment" cannot overflow.
+                    // If "_totalReleased += payment" does not overflow, then 
+                    // "_released[_addressKey(account)] += payment" cannot overflow.
                     _totalReleased += payment;
                     unchecked {
-                        _released[account] += payment;
+                        _released[_addressKey(account)] += payment;
                     }
 
                     Address.sendValue(account, payment);
@@ -218,16 +245,18 @@ contract PaymentSplitter is Context {
         for (uint256 i = 0; i < payeesLength; i++) {
             address account = _payees[i];
 
-            // Does not rely on existing release function to avoid failing if _shares[account] == 0
-            if (_shares[account] > 0) {
+            // Does not rely on existing release function to avoid failing 
+            // if _shares[_addressKey(account)] == 0 or payment == 0
+            if (_shares[_addressKey(account)] > 0) {
                 uint256 payment = releasable(token, account);
                 if (payment != 0) {
-                    // _erc20TotalReleased[token] is the sum of all values in _erc20Released[token].
-                    // If "_erc20TotalReleased[token] += payment" does not overflow, then "_erc20Released[token][account] += payment"
+                    // _erc20TotalReleased[_IERC20Key(token)] is the sum of all values in _erc20Released[_IERC20Key(token)].
+                    // If "_erc20TotalReleased[_IERC20Key(token)] += payment" does not overflow, 
+                    // then "_erc20Released[_IERC20Key(token)][_addressKey(account)] += payment"
                     // cannot overflow.
-                    _erc20TotalReleased[token] += payment;
+                    _erc20TotalReleased[_IERC20Key(token)] += payment;
                     unchecked {
-                        _erc20Released[token][account] += payment;
+                        _erc20Released[_IERC20Key(token)][_addressKey(account)] += payment;
                     }
 
                     SafeERC20.safeTransfer(token, account, payment);
@@ -246,7 +275,7 @@ contract PaymentSplitter is Context {
         uint256 totalReceived,
         uint256 alreadyReleased
     ) private view returns (uint256) {
-        return (totalReceived * _shares[account]) / _totalShares - alreadyReleased;
+        return (totalReceived * _shares[_addressKey(account)]) / _totalShares - alreadyReleased;
     }
 
     /**
@@ -257,11 +286,25 @@ contract PaymentSplitter is Context {
     function _addPayee(address account, uint256 shares_) private {
         require(account != address(0), "PaymentSplitter: account is the zero address");
         require(shares_ > 0, "PaymentSplitter: shares are 0");
-        require(_shares[account] == 0, "PaymentSplitter: account already has shares");
+        require(_shares[_addressKey(account)] == 0, "PaymentSplitter: account already has shares");
 
         _payees.push(account);
-        _shares[account] = shares_;
+        _shares[_addressKey(account)] = shares_;
         _totalShares = _totalShares + shares_;
         emit PayeeAdded(account, shares_);
+    }
+
+    /**
+     * @dev Return the key for the address indexed mappings based on the current version
+     */
+    function _addressKey(address _address) private view returns (bytes32) {
+        return keccak256(abi.encodePacked(_version, _address));
+    }
+
+    /**
+     * @dev Return the key for the IERC20 indexed mappings based on the current version
+     */
+    function _IERC20Key(IERC20 _IERC20) private view returns (bytes32) {
+        return keccak256(abi.encodePacked(_version, _IERC20));
     }
 }
