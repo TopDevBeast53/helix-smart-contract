@@ -466,7 +466,21 @@ module.exports = {
     // Addresses to recieve funds when payment splitter receives funds
     // Error will be thrown if array is empty
     PAYMENT_SPLITTER_PAYEES: {
-        1: [],
+        1: [
+            '0x3EC0F3e8b587E21dac6f776780A56F475C16A4b2',
+            '0x1FDbAe6036D0bD2Daf267C809fC45C7Ab6Ec67BB',
+            '0x8d3D07e15317efC76D31Dc12281A970B00bADBB7',
+            '0x9BE663907af30984F3e18B8337742806237A6a5E',
+            '0x6B399E1eEe3b97afBfD33e94900636AaFD1A001c',
+            '0x36d68E8b6a46F1a4538AF4Ba29d91D78fD6A4182',
+            '0xAAb2eACC08690BDbE4A11F43498cA0b9D37D16c2',
+            '0x2A3c3b05bA102d9F0B3B2a635ba73e1996d488d0',
+            '0xED2bcda237e32DC9183f58205C6054f83AD1F1e0',
+            '0x616C5bA33E28659F7Dc5DF009Df85ff0BBb405Cb',
+            '0x2Dbdce62Ef743c196E667B0ABAE988887c805Fc8',
+            '0xE0141093451baC286b497cD6aef4952FA8AE6796',
+            '0x969232E08b2F5Ac75E9e2ad4377D452819bb5d16'
+        ],
         4: [
             '0x59201fb8cb2D61118B280c8542127331DD141654',
             '0x51606cadd699fa80b8bfc3375103259e5ed7c195',
@@ -477,7 +491,21 @@ module.exports = {
     // Amount of shares each payee receives
     // Error will be thrown if array is empty
     PAYMENT_SPLITTER_SHARES: {
-        1: [],
+        1: [
+            10000, 
+            2000, 
+            2000, 
+            2000, 
+            300, 
+            300, 
+            200, 
+            200, 
+            200, 
+            200, 
+            200, 
+            625, 
+            1775
+        ],
         4: [
             5, 
             10,
