@@ -176,6 +176,7 @@ module.exports = {
        4: '0xB7BA378455C3aC78dcc024f0cBcdea8ee0c4cbBB',
     },
     paymentSplitter: {
-        4: '0x184E77a802aDbf7C585f7042Ecb433eF41AB2D2e',
+        1: '0x62e40647b33B40195db58c5409Ccd646f85CB515',
+        4: '0xc7F71738dC57B2A5AD49e72a3CE3f98E29e3560e',
     }
 }
