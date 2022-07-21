@@ -150,8 +150,8 @@ contract PaymentSplitter is Context, Ownable {
      * @dev Getter for the amount of payee's releasable Ether.
      */
     function releasableEther(address account) public view returns (uint256) {
-        uint256 totalReceived = address(this).balance + totalReleased();
-        return _pendingPayment(account, totalReceived, released(account));
+        uint256 totalReceived = address(this).balance + totalReleasedEther();
+        return _pendingPayment(account, totalReceived, releasedEther(account));
     }
 
     /**
@@ -159,8 +159,8 @@ contract PaymentSplitter is Context, Ownable {
      * IERC20 contract.
      */
     function releasableErc20(IERC20 token, address account) public view returns (uint256) {
-        uint256 totalReceived = token.balanceOf(address(this)) + totalReleased(token);
-        return _pendingPayment(account, totalReceived, released(token, account));
+        uint256 totalReceived = token.balanceOf(address(this)) + totalReleasedErc20(token);
+        return _pendingPayment(account, totalReceived, releasedErc20(token, account));
     }
 
     /**
@@ -170,7 +170,7 @@ contract PaymentSplitter is Context, Ownable {
     function releaseEther(address payable account) public virtual {
         require(_shares[_addressKey(account)] > 0, "PaymentSplitter: account has no shares");
 
-        uint256 payment = releasable(account);
+        uint256 payment = releasableEther(account);
 
         require(payment != 0, "PaymentSplitter: account is not due payment");
 
@@ -193,7 +193,7 @@ contract PaymentSplitter is Context, Ownable {
     function releaseErc20(IERC20 token, address account) public virtual {
         require(_shares[_addressKey(account)] > 0, "PaymentSplitter: account has no shares");
 
-        uint256 payment = releasable(token, account);
+        uint256 payment = releasableErc20(token, account);
 
         require(payment != 0, "PaymentSplitter: account is not due payment");
 
@@ -220,7 +220,7 @@ contract PaymentSplitter is Context, Ownable {
             // Does not rely on existing release function to avoid failing 
             // if _shares[_addressKey(account)] == 0 or payment == 0
             if (_shares[_addressKey(account)] > 0) {
-                uint256 payment = releasable(account);
+                uint256 payment = releasableEther(account);
                 if (payment != 0) {
                     // _totalReleased is the sum of all values in _released.
                     // If "_totalReleased += payment" does not overflow, then 
@@ -248,7 +248,7 @@ contract PaymentSplitter is Context, Ownable {
             // Does not rely on existing release function to avoid failing 
             // if _shares[_addressKey(account)] == 0 or payment == 0
             if (_shares[_addressKey(account)] > 0) {
-                uint256 payment = releasable(token, account);
+                uint256 payment = releasableErc20(token, account);
                 if (payment != 0) {
                     // _erc20TotalReleased[_IERC20Key(token)] is the sum of all values in _erc20Released[_IERC20Key(token)].
                     // If "_erc20TotalReleased[_IERC20Key(token)] += payment" does not overflow, 
