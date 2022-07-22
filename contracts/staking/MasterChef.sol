@@ -174,8 +174,6 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
         uint256 indexed poolId
     );
 
-    event SetDevAndStakingPercents(uint256 stakingPercent, uint256 devPercent);
-
     modifier isNotHelixPoolId(uint256 poolId) {
         require(poolId != 0, "MasterChef: invalid pool id");
         _;
@@ -651,13 +649,6 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
         emit SetFeeMinter(msg.sender, _feeMinter);
     }
 
-    function setDevAndStakingPercents(uint256 _devPercent, uint256 _stakingPercent) external onlyOwner {
-        require(_stakingPercent + _devPercent == 1000000, "MasterChef: invalid percents");
-        stakingPercent = _stakingPercent;
-        devPercent = _devPercent;
-        emit SetDevAndStakingPercents(_stakingPercent, _devPercent);
-    }
-
     // Return the portion of toMintPerBlock assigned to staking and farms
     function _getStakeToMintPerBlock() private view returns (uint256) {
         return _getToMintPerBlock() * stakingPercent / percentDec;
@@ -672,5 +663,11 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
     function _getToMintPerBlock() private view returns (uint256) {
         require(address(feeMinter) != address(0), "MasterChef: fee minter unassigned");
         return feeMinter.getToMintPerBlock(address(this));
+    }
+
+    function setDevAndStakingPercents(uint256 _devPercent, uint256 _stakingPercent) external onlyOwner {
+        require(_stakingPercent + _devPercent == 1000000, "MasterChef: invalid percents");
+        stakingPercent = _stakingPercent;
+        devPercent = _devPercent;
     }
 }

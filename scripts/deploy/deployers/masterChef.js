@@ -37,23 +37,24 @@ const deployMasterChef = async (deployer) => {
     print(`devPercent: ${devPercent}`)
 
     const MasterChef = await ethers.getContractFactory(`MasterChef`)
-    const chef = await upgrades.deployProxy(MasterChef, [
-        helixTokenAddress,
-        developerAddress,
-        feeMinterAddress,
-        startBlock,
-        stakingPercent,
-        devPercent,
-        referralRegisterAddress
-    ])
+    // const chef = await upgrades.deployProxy(MasterChef, [
+    //     helixTokenAddress,
+    //     developerAddress,
+    //     feeMinterAddress,
+    //     startBlock,
+    //     stakingPercent,
+    //     devPercent,
+    //     referralRegisterAddress
+    // ])
+    
+    // await chef.deployTransaction.wait()
+    // print(`Master Chef deployed to ${chef.address}`)
 
-    await chef.deployTransaction.wait()
-    print(`Master Chef deployed to ${chef.address}`)
-
-    const implementationAddress = await upgrades.erc1967.getImplementationAddress(
-        chef.address
-    )
-    print(`Implementation address: ${implementationAddress}`)
+    // const implementationAddress = await upgrades.erc1967.getImplementationAddress(
+    //     chef.address
+    // )
+    // print(`Implementation address: ${implementationAddress}`)
+    await upgrades.upgradeProxy('0x826c6b006Fb183dE41B8f0d16549505569083A14', MasterChef);
 }
 
 module.exports = { deployMasterChef }
