@@ -416,19 +416,11 @@ module.exports = {
 
     // --------- Airdrop Presale --------- //
 
-    // contract name
-    AIRDROP_NAME: {
-        1: '',
-        4: 'HODL AIRDROP',
-        56: '',
-        97: 'HODL AIRDROP'
-    },
-
     // token address
     AIRDROP_TOKEN: {
         1: '',
         4: helixTokenAddress,
-        56: '', // Expect HELIX for mainnet
+        56: '0x67e02A2A1e7527eB18A703a19778f8ACd9972808', // HELIX-P
         97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
     },
 
@@ -446,7 +438,7 @@ module.exports = {
         1: 0,
         3: 7862400,
         4: 60,
-        56: 0,
+        56: 7862400,
         97: 7862400,     // 91 days, 86400 == 1 day
     },
 
@@ -457,8 +449,6 @@ module.exports = {
         1: 7862400,
         3: 120,
         4: 120,
-        56: 0,
-        97: 7862400,     // 91 days, 86400 == 1 day
     },
 
     // --------- Payment Splitter --------- //

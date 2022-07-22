@@ -37,9 +37,6 @@ contract AirDrop is Pausable, ReentrancyGuard {
         Withdraw100
     }
     
-    /// Name of this airdrop contract
-    string public name; 
-    
     /// Token being airdropped, i.e. HelixToken
     address public token;
 
@@ -87,11 +84,9 @@ contract AirDrop is Pausable, ReentrancyGuard {
     }
 
     constructor(
-        string memory _name, 
         address _token, 
         uint256 _WITHDRAW_PHASE_DURATION
     ) onlyValidAddress(_token) {
-        name = _name;
         token = _token;
 
         isOwner[msg.sender] = true;
