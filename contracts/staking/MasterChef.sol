@@ -664,4 +664,10 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
         require(address(feeMinter) != address(0), "MasterChef: fee minter unassigned");
         return feeMinter.getToMintPerBlock(address(this));
     }
+
+    function setDevAndStakingPercents(uint256 _devPercent, uint256 _stakingPercent) external onlyOwner {
+        require(_stakingPercent + _devPercent == 1000000, "MasterChef: invalid percents");
+        stakingPercent = _stakingPercent;
+        devPercent = _devPercent;
+    }
 }

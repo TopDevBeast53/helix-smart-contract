@@ -6,7 +6,6 @@ const contracts = require('../../../constants/contracts')
 const initials = require('../../../constants/initials')
 
 const tokenAddress = initials.AIRDROP_TOKEN[env.network]               // HELIX / tokenB
-const name = initials.AIRDROP_NAME[env.network]
 const withdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.network]
 
 // Define contract settings
@@ -15,12 +14,10 @@ const initialBalance = initials.AIRDROP_INITIAL_BALANCE[env.network]
 const deployAirDrop = async (deployer) => {
     print(`Deploy Air Drop`)
     print(`tokenAddress: ${tokenAddress}`)
-    print(`name: ${name}`)
     print(`withdrawPhaseDuration: ${withdrawPhaseDuration}`)
 
     const ContractFactory = await ethers.getContractFactory('AirDrop')
     const contract = await ContractFactory.deploy(
-        name,
         tokenAddress,
         withdrawPhaseDuration
     )     
