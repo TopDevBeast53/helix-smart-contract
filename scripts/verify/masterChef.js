@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/masterChef.js --network ropsten
  */
 
-const { verifyMasterChef } = require("../shared/verify/verifiers")
+const { verifyMasterChef } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyMasterChef()

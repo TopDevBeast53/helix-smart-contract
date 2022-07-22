@@ -122,12 +122,12 @@ module.exports = {
     masterChef: {
         1: '0xa4c1135f0C0123f6683F98A8177F4c51F3179107',    // deployed 7/4/2022
         3: '0x01ebA7647C33d27742e774aB9507B11A153cde39',
-        4: '0xE58b6cB4f216e79b959C37CD681d8483a0B97DA0',
+        4: '0x826c6b006Fb183dE41B8f0d16549505569083A14',
     },
     masterChefImplementation: {
         1: '0x0Cb0C12881329558325472c8cf0aac057327948E',    // deployed 7/4/2022
         3: '0xaEaD56A540873130c5B973E1A64378aca343F6BC',
-        4: '0x758272F60623949aD4e76D95203fEC550Ea6112F',
+        4: '0x8ac3fe1241fee5458514d08caef9576f24a2b2d1',
     },
     autoHelix: {
         1: '0xabc7303d27658a277830a1F64B3CA77dFFA10483',    // deployed 7/4/2022
