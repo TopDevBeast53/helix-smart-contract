@@ -152,7 +152,6 @@ module.exports = {
         3: '',
         4: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
         56: '0x362fEB150e2163B4684d0deCA4087293e4492762',
-        // 56: '0x13cD387658DE41474569d8a74AfCF4d7cba0e4Cc',
     },
     testToken: {
         3: ''
