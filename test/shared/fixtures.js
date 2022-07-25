@@ -27,13 +27,10 @@ const publicPresaleInputRate = initials.PUBLIC_PRESALE_INPUT_RATE[env.testNetwor
 const publicPresaleOutputRate = initials.PUBLIC_PRESALE_OUTPUT_RATE[env.testNetwork]                     
 const publicPresalePurchasePhaseDuration = initials.PUBLIC_PRESALE_PURCHASE_PHASE_DURATION[env.testNetwork]
 
-<<<<<<< HEAD
-=======
 const airdropWithdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.testNetwork]
 
 const helixNftBridgeGasFeeEth = initials.BRIDGE_FEE_ETH_AMOUNT[env.testNetwork]
 
->>>>>>> master
 const billion = 1000000000
 
 // 
@@ -125,6 +122,7 @@ module.exports.fullExchangeFixture = async () => {
     // 0. deploy helix token
     const helixToken = await helixTokenContractFactory.deploy()  
 
+
     // 1. deploy helix nft
     const helixNft = await helixNftContractFactory.deploy()
     await helixNft.initialize('BASEURI') // TODO replace
@@ -138,13 +136,9 @@ module.exports.fullExchangeFixture = async () => {
     // 3. deploy helix nft bridge
     const helixNftBridge = await helixNftBridgeContractFactory.deploy(
         helixNft.address,
-<<<<<<< HEAD
-        alice.address
-=======
         alice.address,
         helixNftBridgeGasFeeEth,
         12   // TODO - replace with real value
->>>>>>> master
     )
 
     // 4. deploy helix chef nft
@@ -237,7 +231,6 @@ module.exports.fullExchangeFixture = async () => {
 
     // deploy airdrop presale
     const airdrop = await airdropContractFactory.deploy(
-        "Airdrop",
         helixToken.address,
         airdropWithdrawPhaseDuration
     )

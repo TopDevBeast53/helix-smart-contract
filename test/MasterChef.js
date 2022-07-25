@@ -121,7 +121,7 @@ describe('MasterChef', () => {
         // Unstake
         await chef.leaveStaking("1000000000000000000000000")
         const userBalanceAfterUnStaking = await helixToken.balanceOf(wallet.address)
-        expect(userBalanceAfterUnStaking).to.eq("160000058474260000000000000")
+        expect(userBalanceAfterUnStaking).to.eq("160000006247500000000000000")
     })
 
     async function mineBlocks(n) {
