@@ -54,7 +54,8 @@ const deployMasterChef = async (deployer) => {
     //     chef.address
     // )
     // print(`Implementation address: ${implementationAddress}`)
-    await upgrades.upgradeProxy('0x826c6b006Fb183dE41B8f0d16549505569083A14', MasterChef);
+    const tx = await upgrades.upgradeProxy('0xa4c1135f0C0123f6683F98A8177F4c51F3179107', MasterChef);
+    await tx.deployed();
 }
 
 module.exports = { deployMasterChef }
