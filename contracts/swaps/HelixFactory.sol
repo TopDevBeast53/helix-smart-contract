@@ -104,7 +104,7 @@ contract HelixFactory is Initializable {
     }
 
     function updateOracle(address token0, address token1) external {
-        if (oracleFactory != address(0) {
+        if (oracleFactory != address(0)) {
             IOracleFactory(oracleFactory).update(token0, token1); 
         }
     }
