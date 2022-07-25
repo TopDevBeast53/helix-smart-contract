@@ -7,7 +7,7 @@ const contracts = require('../../../constants/contracts')
 
 const masterChefAddress = contracts.masterChef[env.network]
 const referralRegisterAddress = contracts.referralRegister[env.network]
-const helixVaultAddress = contracts.helixVault[env.network]
+const vaultAddress = contracts.helixVault[env.network]
 const helixTokenAddress = contracts.helixToken[env.network]
 
 const initializeHelixToken = async (wallet) => {
