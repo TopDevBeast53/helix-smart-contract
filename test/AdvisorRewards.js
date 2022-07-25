@@ -10,8 +10,8 @@ const { constants } = require("@openzeppelin/test-helpers")
                                                                                                    
 const verbose = true      
 
-const initials = require('../scripts/constants/initials')
-const env = require('../scripts/constants/env')
+const initials = require('../constants/initials')
+const env = require('../constants/env')
 
 const initialBalance = expandTo18Decimals(10000)
 

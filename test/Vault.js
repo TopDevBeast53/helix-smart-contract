@@ -15,10 +15,11 @@ const addresses = require("../constants/addresses")
 
 const startBlock = initials.HELIX_VAULT_START_BLOCK[env.testNetwork]
 const lastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.testNetwork]
+
 const treasuryAddress = addresses.TREASURY[env.testNetwork]
 
 const SECONDS_PER_DAY = 86400
-const rewardPerBlock = '11705148000000000000'
+const rewardPerBlock = "937000000000000000"
 
 const verbose = true
 

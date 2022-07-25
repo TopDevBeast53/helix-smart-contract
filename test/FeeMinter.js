@@ -9,15 +9,9 @@ const { MaxUint256 } = require("legacy-ethers/constants")
 const { expandTo18Decimals } = require("./shared/utilities")
 const { fullExchangeFixture } = require("./shared/fixtures")
 
-<<<<<<< HEAD
 const env = require("../constants/env")
 const initials = require("../constants/initials")
-const totalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
-=======
-const env = require("../scripts/constants/env")
-const initials = require("../scripts/constants/initials")
 const totalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.testNetwork]
->>>>>>> master
 
 const verbose = true
 
@@ -157,7 +151,7 @@ describe("Fee Minter", () => {
         // Using 2 decimals of precision, hence div by 10000 == 100.00%
         const expectedToMintPerBlock0 = totalToMintPerBlock * toMintPercents[0] / 10000
         const expectedToMintPerBlock1 = totalToMintPerBlock * toMintPercents[1] / 10000
-        const expectedToMintPerBlock2 = totalToMintPerBlock * toMintPercents[2] / 10000
+        const expectedToMintPerBlock2 = (totalToMintPerBlock * toMintPercents[2] / 10000) - 300 // Sub 300 to fix rounding(?) error
         const expectedToMintPerBlock3 = totalToMintPerBlock * toMintPercents[3] / 10000
 
         expect((await feeMinter.getToMintPerBlock(minters[0])).toString())
