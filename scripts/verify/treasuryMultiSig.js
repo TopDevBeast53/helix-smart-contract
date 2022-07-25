@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/treasuryMultiSig.js --network ropsten
  */
 
-const { verifyTreasuryMultiSig } = require("../shared/verify/verifiers")
+const { verifyTreasuryMultiSig } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyTreasuryMultiSig()

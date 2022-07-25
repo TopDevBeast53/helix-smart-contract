@@ -25,6 +25,7 @@ const { deployLpSwap } = require("./lpSwap")
 const { deployAirDrop } = require("./airDrop")
 const { deployTestToken } = require("./testToken")
 const { deployAdvisorRewards } = require("./advisorRewards")
+const { deployPaymentSplitter } = require("./paymentSplitter")
 
 module.exports = {
     deployOwnerMultiSig,
@@ -52,4 +53,5 @@ module.exports = {
     deployAirDrop,
     deployTestToken,
     deployAdvisorRewards,
+    deployPaymentSplitter,
 }

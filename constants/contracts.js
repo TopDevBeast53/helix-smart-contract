@@ -1,21 +1,21 @@
 module.exports = {
     ownerMultiSig: {
-        1: '0x362fEB150e2163B4684d0deCA4087293e4492762',    // deployed 7/4/2022
+        1: '0x8E4e45b24a9F003C99B92e62B100E3Ea2D878Ee1',    // deployed 7/18/2022
         3: '0x461e3e7C700Ba1a2282e63F43f34F9F0a37D328b',
         4: '0x7F78f346C073A2f07d0139e99850c62D1314D889',
     },
     treasuryMultiSig: {
-        1: '0x01427Fedd20D89dFdf52CA37d20b2943271fB462',    // deployed 7/4/2022
+        1: '0xcBa9E41B8A0fDdF3977250e7826908D0E4024A4B',    // deployed 7/18/2022
         3: '0x1Ed71D2D4ac77A5C0a9f2b4121A73C720D5feC73',
         4: '0xd3971D64143a39a711504B9540Dbc64555D851c9',
     },
     devTeamMultiSig: {
-        1: '0xf862411f1b56ec4Db746758Ac452C271d226Dec3',    // deployed 7/4/2022
+        1: '0xfcD1CEC3Ec7154858Cab4E930F565Db528b1f9f1',    // deployed 7/18/2022
         3: '0x202661dd1deE66f5f2A9e71fDC8d9706dd98E6fb',
-        4: '0x2A06E8A9b9a3ED193A1A550a8F9cF988Ebfaf3EC',
+        4: '0xeefACfc4555ba8a4C0FE2b0eCd3ccfe3c27bEa8D',
     },
     timelock: {
-        1: '0xc258C79eAa64c073517119708524DD753f2E034a',    // deployed 7/4/2022
+        1: '0x2527A0F4F7F7056F42B25A7bEEda7419c2FB287D',    // deployed 7/18/2022
         3: '0x202661dd1deE66f5f2A9e71fDC8d9706dd98E6fb',
         4: '0xA2fE90F9A04884e93936A0c8020f70Ac60D2832A',
     },
@@ -122,12 +122,12 @@ module.exports = {
     masterChef: {
         1: '0xa4c1135f0C0123f6683F98A8177F4c51F3179107',    // deployed 7/4/2022
         3: '0x01ebA7647C33d27742e774aB9507B11A153cde39',
-        4: '0xE58b6cB4f216e79b959C37CD681d8483a0B97DA0',
+        4: '0x826c6b006Fb183dE41B8f0d16549505569083A14',
     },
     masterChefImplementation: {
-        1: '0x0Cb0C12881329558325472c8cf0aac057327948E',    // deployed 7/4/2022
+        1: '0x01e4ca54a35e09419791eb0a54a38aec8f656dce',    // deployed 7/22/2022
         3: '0xaEaD56A540873130c5B973E1A64378aca343F6BC',
-        4: '0x758272F60623949aD4e76D95203fEC550Ea6112F',
+        4: '0x8ac3fe1241fee5458514d08caef9576f24a2b2d1',
     },
     autoHelix: {
         1: '0xabc7303d27658a277830a1F64B3CA77dFFA10483',    // deployed 7/4/2022
@@ -174,5 +174,9 @@ module.exports = {
     advisorRewards: {
        1: '0x42055b02f0A55B400A3FD970D865CE2DeE76fae1',     // deployed 7/14/2022
        4: '0xB7BA378455C3aC78dcc024f0cBcdea8ee0c4cbBB',
+    },
+    paymentSplitter: {
+        1: '0x62e40647b33B40195db58c5409Ccd646f85CB515',    // deployed 7/21/2022
+        4: '0xc7F71738dC57B2A5AD49e72a3CE3f98E29e3560e',
     }
 }

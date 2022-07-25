@@ -21,7 +21,7 @@ const deployTimelock = async (deployer) => {
         executors
     )
     await contract.deployTransaction.wait()
-    print(`owner multisig deployed to ${contract.address}`)
+    print(`timelock deployed to ${contract.address}`)
 }
 
 module.exports = { deployTimelock }

@@ -1,14 +1,14 @@
 /**
- * @dev Verify the deployed DevTeamMultiSig
+ * @dev Verify the deployed paymentSplitter
  *
  * command for verify on testnet: 
- *      npx hardhat run scripts/5_verify/devTeamMultiSig.js --network ropsten
+ *      npx hardhat run scripts/verify/paymentSplitter.js --network
  */
 
-const { verifyDevTeamMultiSig } = require("./verifiers/verifiers")
+const { verifyPaymentSplitter } = require("./verifiers/verifiers")
 
 async function main() {
-    await verifyDevTeamMultiSig()
+    await verifyPaymentSplitter()
     console.log("done")
 }
 

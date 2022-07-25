@@ -54,6 +54,7 @@ const deployMasterChef = async (deployer) => {
         chef.address
     )
     print(`Implementation address: ${implementationAddress}`)
+    await tx.deployed();
 }
 
 module.exports = { deployMasterChef }

@@ -220,7 +220,7 @@ module.exports = {
     DEV_TEAM_MULTISIG_ADMINS: {
         1: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
     },
 
     DEV_TEAM_MULTISIG_OWNERS: {
@@ -416,19 +416,11 @@ module.exports = {
 
     // --------- Airdrop Presale --------- //
 
-    // contract name
-    AIRDROP_NAME: {
-        1: '',
-        4: 'HODL AIRDROP',
-        56: '',
-        97: 'HODL AIRDROP'
-    },
-
     // token address
     AIRDROP_TOKEN: {
         1: '',
         4: helixTokenAddress,
-        56: '', // Expect HELIX for mainnet
+        56: '0x67e02A2A1e7527eB18A703a19778f8ACd9972808', // HELIX-P
         97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
     },
 
@@ -445,8 +437,8 @@ module.exports = {
     AIRDROP_WITHDRAW_PHASE_DURATION: {
         1: 0,
         3: 7862400,
-        4: 7862400,
-        56: 0,
+        4: 60,
+        56: 7862400,
         97: 7862400,     // 91 days, 86400 == 1 day
     },
 
@@ -457,8 +449,57 @@ module.exports = {
         1: 7862400,
         3: 120,
         4: 120,
-        56: 0,
-        97: 7862400,     // 91 days, 86400 == 1 day
     },
 
+    // --------- Payment Splitter --------- //
+
+    // Addresses to recieve funds when payment splitter receives funds
+    // Error will be thrown if array is empty
+    PAYMENT_SPLITTER_PAYEES: {
+        1: [
+            '0x3EC0F3e8b587E21dac6f776780A56F475C16A4b2',
+            '0x1FDbAe6036D0bD2Daf267C809fC45C7Ab6Ec67BB',
+            '0x8d3D07e15317efC76D31Dc12281A970B00bADBB7',
+            '0x9BE663907af30984F3e18B8337742806237A6a5E',
+            '0x6B399E1eEe3b97afBfD33e94900636AaFD1A001c',
+            '0x36d68E8b6a46F1a4538AF4Ba29d91D78fD6A4182',
+            '0xAAb2eACC08690BDbE4A11F43498cA0b9D37D16c2',
+            '0x2A3c3b05bA102d9F0B3B2a635ba73e1996d488d0',
+            '0xED2bcda237e32DC9183f58205C6054f83AD1F1e0',
+            '0x616C5bA33E28659F7Dc5DF009Df85ff0BBb405Cb',
+            '0x2Dbdce62Ef743c196E667B0ABAE988887c805Fc8',
+            '0xE0141093451baC286b497cD6aef4952FA8AE6796',
+            '0x969232E08b2F5Ac75E9e2ad4377D452819bb5d16'
+        ],
+        4: [
+            '0x59201fb8cb2D61118B280c8542127331DD141654',
+            '0x51606cadd699fa80b8bfc3375103259e5ed7c195',
+            '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'
+        ],
+    },
+
+    // Amount of shares each payee receives
+    // Error will be thrown if array is empty
+    PAYMENT_SPLITTER_SHARES: {
+        1: [
+            10000, 
+            2000, 
+            2000, 
+            2000, 
+            300, 
+            300, 
+            200, 
+            200, 
+            200, 
+            200, 
+            200, 
+            625, 
+            1775
+        ],
+        4: [
+            5, 
+            10,
+            20
+        ],
+    },
 }
