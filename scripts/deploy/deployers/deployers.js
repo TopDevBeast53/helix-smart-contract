@@ -26,6 +26,7 @@ const { deployAirDrop } = require("./airDrop")
 const { deployTestToken } = require("./testToken")
 const { deployAdvisorRewards } = require("./advisorRewards")
 const { deployPaymentSplitter } = require("./paymentSplitter")
+const { deployAirdropPaymentSplitter } = require("./airdropPaymentSplitter")
 
 module.exports = {
     deployOwnerMultiSig,
@@ -54,4 +55,5 @@ module.exports = {
     deployTestToken,
     deployAdvisorRewards,
     deployPaymentSplitter,
+    deployAirdropPaymentSplitter,
 }

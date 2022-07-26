@@ -178,5 +178,8 @@ module.exports = {
     paymentSplitter: {
         1: '0x62e40647b33B40195db58c5409Ccd646f85CB515',    // deployed 7/21/2022
         4: '0xc7F71738dC57B2A5AD49e72a3CE3f98E29e3560e',
-    }
+    },
+    airdropPaymentSplitter: {
+        1: '',
+    },
 }
