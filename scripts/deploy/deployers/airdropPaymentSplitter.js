@@ -24,6 +24,7 @@ const deployAirdropPaymentSplitter = async (deployer) => {
     for (let i = 0; i < length; i++) {
         print(`${payees[i]}: ${shares[i]}`) 
     }
+    print(`length: ${payees.length}`)
 
     const ContractFactory = await ethers.getContractFactory('AirdropPaymentSplitter')
     const contract = await ContractFactory.deploy(payees, shares)
