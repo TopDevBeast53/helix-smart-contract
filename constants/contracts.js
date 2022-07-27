@@ -27,6 +27,7 @@ module.exports = {
         1: '0x231CC03E6d8b7368eC2aBfAfb5f73D216c8af980',    // deployed 5/19/2022
         3: '0xB3F97C4DbBEf56f3220e9ceFf80b93eB483D0Ef7',
         4: '0x79DD2dad8D04F9279F94580DBEd2306A0aE118Bd',
+        30: '0x3D2441Fa9Aab621e72121fb1c620FDAE59eAe812',   // deployed 7/27/2022
         31: '0x08626CF6A212a44C877D9740f86252dBD6292364',
     },
     helixNFT: {
