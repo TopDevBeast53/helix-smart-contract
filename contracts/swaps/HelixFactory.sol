@@ -70,7 +70,9 @@ contract HelixFactory is Initializable {
         getPair[token1][token0] = pair; // populate mapping in the reverse direction
         allPairs.push(pair);
 
-        IOracleFactory(oracleFactory).create(token0, token1);
+        if (oracleFactory != address(0)) {
+            IOracleFactory(oracleFactory).create(token0, token1);
+        }
 
         emit CreatePair(token0, token1, pair, allPairs.length);
     }
@@ -102,7 +104,9 @@ contract HelixFactory is Initializable {
     }
 
     function updateOracle(address token0, address token1) external {
-        IOracleFactory(oracleFactory).update(token0, token1); 
+        if (oracleFactory != address(0)) {
+            IOracleFactory(oracleFactory).update(token0, token1); 
+        }
     }
 
     function setDefaultSwapFee(uint32 _defaultSwapFee) external onlyFeeToSetter {
