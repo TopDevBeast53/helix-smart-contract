@@ -6,7 +6,7 @@
  */
 
 const { ethers } = require(`hardhat`)
-const { deployTestToken } = require("../shared/deploy/deployers")
+const { deployTestToken } = require("./deployers/deployers")
 
 async function main() {
     const [deployer] = await ethers.getSigners()

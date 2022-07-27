@@ -6,7 +6,7 @@
 
 const { ethers } = require("hardhat")
 const { print } = require("../shared/utilities")
-const { initializeFeeHandler } = require("../initializers/initializers")
+const { initializeFeeHandler } = require("./initializers/initializers")
 
 async function main() {
     const [wallet] = await ethers.getSigners()

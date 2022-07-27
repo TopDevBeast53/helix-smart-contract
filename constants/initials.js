@@ -12,6 +12,7 @@ module.exports = {
     FACTORY_INIT_CODE_HASH: {
         1: '',
         4: '0xc28107fd87760cfb4e1668f5cb7a07b1049eaedf62697db36fb894567a372da6',
+        31: '0xc28107fd87760cfb4e1668f5cb7a07b1049eaedf62697db36fb894567a372da6',
     },
     
     // --------- FeeHandler --------- //
@@ -20,30 +21,35 @@ module.exports = {
         1: 33,      // 33%
         3: 33,
         4: 33,
+        31: 33,
     },
 
     FEE_HANDLER_HELIX_VAULT_NFT_CHEF_PERCENT: {
         1: 33,      // 33%
         3: 33,
         4: 33,
+        31: 33,
     },
 
     FEE_HANDLER_REFERRAL_REGISTER_NFT_CHEF_PERCENT: {
         1: 50,      // 50%
         3: 50,
         4: 50,
+        31: 50,
     },
 
     FEE_HANDLER_LP_SWAP_NFT_CHEF_PERCENT: {
         1: 33,      // 33%
         3: 33,
         4: 33,
+        31: 33,
     },
 
     FEE_HANDLER_YIELD_SWAP_NFT_CHEF_PERCENT: {
         1: 33,      // 33%
         3: 33,
         4: 33,
+        31: 33,
     },
 
     // --------- Referral Register --------- //
@@ -52,21 +58,25 @@ module.exports = {
         1: 5, // 5%
         3: 5,
         4: 5,
+        31: 5,
     },
     REFERRAL_SWAP_REWARD_PERCENT: {
         1: 5, // 5%
         3: 5,
         4: 5,
+        31: 5,
     },
     REFERRAL_LAST_MINT_BLOCK: {
         1: 0, // if 0, will be set with block.number when deploy
         3: 0,
         4: 0,
+        31: 0,
     },
     REFERRAL_COLLECTOR_PERCENT: {
         1: 1000, // 10.00%
         3: 1000, 
         4: 1000,
+        31: 1000,
     },
 
     // --------- MasterChef --------- //
@@ -75,16 +85,19 @@ module.exports = {
         1: 0, // if 0, will be set with block.number when deploy
         3: 0,
         4: 0,
+        31: 0,
     },
     MASTERCHEF_STAKING_PERCENT : {
         1: 714000,
         3: 714000,
         4: 714000,
+        31: 714000,
     },
     MASTERCHEF_DEV_PERCENT : {
         1: 286000,
         3: 286000,
         4: 286000,
+        31: 286000,
     },
     MASTERCHEF_LPTOKEN_ADDRESSES: {
         //HELIX-WETH, DAI-USDC, USDC-WETH, DAI-WETH, USDT-USDC
@@ -108,7 +121,8 @@ module.exports = {
         //HELIX-WETH, DAI-USDC, USDC-WETH, DAI-WETH, USDT-USDC
         1: [25000, 1000, 2500, 2500, 1000],
         3: [3500, 1500, 1500, 1500, 1500],
-        4: [3500, 1500, 1500, 1500, 1500]
+        4: [3500, 1500, 1500, 1500, 1500],
+        31: [3500, 1500, 1500, 1500, 1500],
     },
 
     // --------- Helix Vault --------- //
@@ -116,6 +130,7 @@ module.exports = {
         1: 0, // if 0, will be set with block.number when deploy
         3: 0,
         4: 0,
+        31: 0,
     },
 
     //block when rewards are no longer being given away
@@ -123,12 +138,14 @@ module.exports = {
         1: 1972243972, // June 30, 2032
         3: 1972243972,
         4: 1972243972,
+        31: 1972243972,
     },
 
     HELIX_VAULT_COLLECTOR_PERCENT: {
         1: 150,     // 1.50%
         3: 1000,    // 10.00%
         4: 1000,
+        31: 1000,
     },
 
     // --------- Fee Minter --------- //
@@ -141,13 +158,15 @@ module.exports = {
     FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK: {
         1: '8000000000000000000',
         3: '10000000000000000000',
-        4: '10000000000000000000'
+        4: '10000000000000000000',
+        31: '10000000000000000000',
     },
 
     FEE_MINTER_MINTERS: {
         1: [masterChefAddress, referralRegisterAddress, vaultAddress],
         3: [masterChefAddress, referralRegisterAddress, vaultAddress],
         4: [masterChefAddress, referralRegisterAddress, vaultAddress],
+        31: [masterChefAddress, referralRegisterAddress, vaultAddress],
     },
 
     // Represents the percents of the to mint per block rate to delegate to each task
@@ -161,6 +180,7 @@ module.exports = {
         1: [8750, 313, 937],
         3: [8750, 313, 937],
         4: [8750, 313, 937],
+        31: [8750, 313, 937],
     },
 
     // --------- Treasury MultiSig --------- //
@@ -169,24 +189,28 @@ module.exports = {
         1: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
         4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
+        31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
     },
 
     TREASURY_MULTISIG_OWNERS: {
         1: ['0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c'],
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
         4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        31: ['0x22745897d49C1e15A562aa9F965aE087F2Fb89AA', '0xd4f46c6342229221d4EC3536627E9E76813f6071'],
     },
 
     TREASURY_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
         1: 1,
         3: 1,
         4: 1,
+        31: 1,
     },
 
     TREASURY_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
         1: 1,
         3: 1,
         4: 1,
+        31: 1,
     },
 
     // --------- Owner MultiSig --------- //
@@ -195,24 +219,28 @@ module.exports = {
         1: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
         4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
+        31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
     },
 
     OWNER_MULTISIG_OWNERS: {
         1: ['0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c'],
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
         4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        31: ['0x22745897d49C1e15A562aa9F965aE087F2Fb89AA', '0xd4f46c6342229221d4EC3536627E9E76813f6071'],
     },
 
     OWNER_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
         1: 1,
         3: 1,
         4: 1,
+        31: 1,
     },
 
     OWNER_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
         1: 1,
         3: 1,
         4: 1,
+        31: 1,
     },
 
     // --------- Dev Team MultiSig --------- //
@@ -221,24 +249,28 @@ module.exports = {
         1: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
         4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
+        31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
     },
 
     DEV_TEAM_MULTISIG_OWNERS: {
         1: ['0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c'],
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
         4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        31: ['0x22745897d49C1e15A562aa9F965aE087F2Fb89AA', '0xd4f46c6342229221d4EC3536627E9E76813f6071'],
     },
 
     DEV_TEAM_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
         1: 1,
         3: 1,
         4: 1,
+        31: 1,
     },
 
     DEV_TEAM_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
         1: 1,
         3: 1,
         4: 1,
+        31: 1,
     },
 
     // --------- Timelock --------- //
@@ -247,18 +279,21 @@ module.exports = {
         1: 21600,   // 6 hours 
         3: 21600,   // 6 hours 
         4: 0,   // 6 hours 
+        31: 120,   // 2 minutes
     },
 
     TIMELOCK_PROPOSERS: {
         1: [ownerMultiSigAddress],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
         4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        31: [ownerMultiSigAddress],
     },
 
     TIMELOCK_EXECUTORS: {
         1: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
         4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        31: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
     },
 
     // --------- YieldSwap --------- //
@@ -287,6 +322,7 @@ module.exports = {
         1: 50, // 0.50% 
         3: 50, // 0.50%
         4: 50, 
+        31: 50, 
     },
 
     // --------- Bridge --------- //
@@ -475,6 +511,11 @@ module.exports = {
             '0x59201fb8cb2D61118B280c8542127331DD141654',
             '0x51606cadd699fa80b8bfc3375103259e5ed7c195',
             '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'
+        ],   
+        31:[
+            '0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8',
+            '0x22745897d49C1e15A562aa9F965aE087F2Fb89AA',
+            '0xd4f46c6342229221d4EC3536627E9E76813f6071',
         ],
     },
 
@@ -501,6 +542,12 @@ module.exports = {
             10,
             20
         ],
+        31: [
+            5, 
+            10,
+            20
+        ],
+
     },
 
     // --------- Airdrop Payment Splitter --------- //
