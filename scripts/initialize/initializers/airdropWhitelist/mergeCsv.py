@@ -1,72 +1,65 @@
+import os
 import csv
+
 from itertools import chain
 
-gxgList = []
-with open('gxgFinal.csv', newline='') as csvfile:
-    reader = csv.reader(csvfile, delimiter=',')
-    for row in reader:
-        gxgList.append(row)
+# Load the directory as a list with each file in the directory appended as a sub-list
+def loadDirectory(directoryName):
+    directory = []
+    for file in os.listdir(directoryName):
+        fileList = []
+        with open(os.path.join(directoryName, file), newline='') as f:
+            reader = csv.reader(f, delimiter=',')
+            for row in reader:
+                fileList.append(row)
+        directory.append(fileList)
+    return directory
 
-diamondList = []
-with open('diamondFinal.csv', newline='') as csvfile:
-    reader = csv.reader(csvfile, delimiter=',')
-    for row in reader:
-        diamondList.append(row)
-
-whaleList = []
-with open('whaleFinal.csv', newline='') as csvfile:
-    reader = csv.reader(csvfile, delimiter=',')
-    for row in reader:
-        whaleList.append(row)
-
-holderList = []
-with open('holderFinal.csv', newline='') as csvfile:
-    reader = csv.reader(csvfile, delimiter=',')
-    for row in reader:
-        holderList.append(row)
-
-# Convert a list to a dictionary
-def listToDict(_list): 
-    _dict = {_list[i]: _list[i + 1] for i in range(0, len(_list), 2)}
-    return _dict
-
-# Flatten list of list in to single list
+# Flatten list of lists into single list
 def flatten(_list):
     flatList = list()
     for subList in _list:
         flatList += subList
     return flatList
 
-# Merge 2 dicts into a single dict summing the values of each individual dict
-def mergeDicts(x, y):
-    _res = {k: int(x.get(k, 0)) + int(y.get(k, 0)) for k in set(x) | set(y)}
-    return _res
+# Convert a dictionary to a list of lists
+def dictToList(dict):
+    result = []
+    for key, value in iter(dict.items()):
+        result.append([key, value])
+    return result
 
-# Merge the 4 imported dicts into a single dict
-def main():
-    gxgDict = listToDict(flatten(gxgList))
-    diamondDict = listToDict(flatten(diamondList))
-    whaleDict = listToDict(flatten(whaleList))
-    holderDict = listToDict(flatten(holderList))
+# Given a list of lists, group by the first entry in each sub-list and sum the second entry for
+# each
+def groupSum(input):
+    tempDict = {}  
+    for entry in input:
+        if (str(entry[0]) == "" or str(entry[1]) == ""):
+            continue
+        if entry[0] in tempDict:
+            tempDict[entry[0]] += int(entry[1])
+        else:
+            tempDict[entry[0]] = int(entry[1])
 
-    # Merge the first 2 dicts
-    masterDict = mergeDicts(gxgDict, diamondDict)
+    output = dictToList(tempDict)
+    return output
 
-    # Merge the third dict into the first 2
-    masterDict = mergeDicts(masterDict, whaleDict)
+# Group-sum the files in directoryName and save the results to outputName
+def main(directoryName, outputName):
+    # Load the directory as a list of lists of lists
+    directory = loadDirectory(directoryName)
 
-    # Merge the fourth dict into the first 3
-    masterDict = mergeDicts(masterDict, holderDict)
+    # Flatten the directory into a list of lists
+    # where each sub-list is of the form [address, count]
+    flatDirectory = flatten(directory)
 
-    # Transform the dict into a list of lists
-    masterList = []
-    for key, value in iter(masterDict.items()):
-        masterList.append([key, value])
+    # Group by address and sum the count for each
+    resultList = groupSum(flatDirectory)
 
     # output the result to file
-    with open("airdropMaster.csv", "w", newline="") as f:
+    with open(outputName, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerows(masterList)
+        writer.writerows(resultList)
 
 # run the script
-main()
+main("airdropPaymentSplitter", "airdropPaymentSplitterMaster.csv")

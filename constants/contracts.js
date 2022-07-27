@@ -205,5 +205,9 @@ module.exports = {
         1: '0x62e40647b33B40195db58c5409Ccd646f85CB515',    // deployed 7/21/2022
         4: '0xc7F71738dC57B2A5AD49e72a3CE3f98E29e3560e',
         31: '0x402E563c15D52fBF47A24621ABee72212C2a0022',
-    }
+    },
+    airdropPaymentSplitter: {
+        1: '0x048098beb3746945c2fecb14431bb273121d6c36',    // deployed 7/26/2022
+        4: '0x26e3BD7Fd18b236B6f766E8CD6A95a6999e2b569',    // deployed 7/26/2022
+    },    
 }
