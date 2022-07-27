@@ -5,6 +5,10 @@ require("hardhat-gas-reporter")
 require('@openzeppelin/hardhat-upgrades');
 require("dotenv").config();
 
+require("./tasks/helixToken")
+require("./tasks/feeMinter")
+require("./tasks/referralRegister")
+
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
 const etherscanApiKey = process.env.ETHERSCANAPIKEY;
