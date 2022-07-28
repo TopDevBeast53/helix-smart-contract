@@ -171,13 +171,30 @@ subtask("referralRegister.addReferrer")
         const result = await (await contract()).addReferrer(args.arg0)
     })
 
-// initialize
+subtask("referralRegister.initialize")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .addPositionalParam("arg3")
+    .addPositionalParam("arg4")
+    .addPositionalParam("arg5")
+    .addPositionalParam("arg6")
+    .setAction(async (args) => {
+        const result = await (await contract()).initialize(
+            args.arg0, 
+            args.arg1,
+            args.arg2,
+            args.arg3,
+            args.arg4,
+            args.arg5,
+            args.arg6
+        )
+    })
 
 subtask("referralRegister.pause")
     .setAction(async () => {
         const result = await (await contract()).pause()
     })
-
 
 subtask("referralRegister.removeRecorder")
     .addPositionalParam("arg0")
@@ -185,16 +202,20 @@ subtask("referralRegister.removeRecorder")
         const result = await (await contract()).removeRecorder(args.arg0)
     })
 
-
 subtask("referralRegister.removeReferrer")
     .setAction(async () => {
         const result = await (await contract()).removeReferrer()
     })
 
+subtask("referralRegister.renounceOwnership")
+    .setAction(async () => {
+        const result = await (await contract()).renounceOwnership()
+    })
 
-// renounceOwnership
-
-// renounceTimelockOwnership
+subtask("referralRegister.renounceTimelockOwnership")
+    .setAction(async () => {
+        const result = await (await contract()).renounceTimelockOwnership()
+    })
 
 subtask("referralRegister.rewardStake")
     .addPositionalParam("arg0")
@@ -232,7 +253,6 @@ subtask("referralRegister.setFeeMinter")
         const result = await (await contract()).setFeeHandler(args.arg0)
     })
 
-
 subtask("referralRegister.setLastRewardBlock")
     .addPositionalParam("arg0")
     .setAction(async (args) => {
@@ -251,9 +271,17 @@ subtask("referralRegister.setSwapRewardPercent")
         const result = await (await contract()).setSwapRewardPercent(args.arg0)
     })
 
-// transferOwnership
+subtask("referralRegister.transferOwnership")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).transferOwnership(args.arg0)
+    })
 
-// transferTimelockOwnership
+subtask("referralRegister.transferTimelockOwnership")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).transferTimelockOwnership(args.arg0)
+    })
 
 subtask("referralRegister.unpause")
     .setAction(async () => {

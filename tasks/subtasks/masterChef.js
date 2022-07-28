@@ -12,23 +12,66 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 // READ
 
 
-// BONUS_MULTIPLIER
+subtask("masterChef.BONUS_MULTIPLIER")
+    .setAction(async () => {
+        const result = await (await contract()).BONUS_MULTIPLIER()
+        console.log(result.toString())
+    })
 
-// bucketInfo
+subtask("masterChef.bucketInfo")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .setAction(async (args) => {
+        const result = await (await contract()).bucketInfo(
+            args.arg0,
+            args.arg1,
+            args.arg2,
+        )
+        console.log(result.toString())
+    })
 
-// depositedHelix
+subtask("masterChef.depositedHelix")
+    .setAction(async () => {
+        const result = await (await contract()).depositedHelix()
+        console.log(result.toString())
+    })
 
-// devPercent
+subtask("masterChef.devPercent")
+    .setAction(async () => {
+        const result = await (await contract()).devPercent()
+        console.log(result.toString())
+    })
 
-// devaddr
+subtask("masterChef.devaddr")
+    .setAction(async () => {
+        const result = await (await contract()).devaddr()
+        console.log(result.toString())
+    })
 
-// feeMinter
+subtask("masterChef.feeMinter")
+    .setAction(async () => {
+        const result = await (await contract()).feeMinter()
+        console.log(result.toString())
+    })
 
-// getBucketYield
+subtask("masterChef.getBucketYield")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).getBucketYield(
+            args.arg0,
+            args.arg1,
+        )
+        console.log(result.toString())
+    })
 
-// getDevToMintPerBlock
+subtask("masterChef.getDevToMintPerBlock")
+    .setAction(async () => {
+        const result = await (await contract()).getDevToMintPerBlock()
+        console.log(result.toString())
+    })
 
-// getLpToken
 subtask("masterChef.getLpToken")
     .addPositionalParam("arg0")
     .setAction(async (args) => {
@@ -36,10 +79,17 @@ subtask("masterChef.getLpToken")
         console.log(result.toString())
     })
 
+subtask("masterChef.getMultiplier")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).getMultiplier(
+            args.arg0,
+            args.arg1,
+        )
+        console.log(result.toString())
+    })
 
-// getMultiplier
-
-// getPoolId
 subtask("masterChef.getPoolId")
     .addPositionalParam("arg0")
     .setAction(async (args) => {
@@ -47,25 +97,42 @@ subtask("masterChef.getPoolId")
         console.log(result.toString())
     })
 
+subtask("masterChef.getStakeToMintPerBlock")
+    .setAction(async () => {
+        const result = await (await contract()).getStakeToMintPerBlock()
+        console.log(result.toString())
+    })
 
-// getStakeToMintPerBlock
+subtask("masterChef.getToMintPerBlock")
+    .setAction(async () => {
+        const result = await (await contract()).getToMintPerBlock()
+        console.log(result.toString())
+    })
 
-// getToMintPerBlock
+subtask("masterChef.helixToken")
+    .setAction(async () => {
+        const result = await (await contract()).helixToken()
+        console.log(result.toString())
+    })
 
-// helixToken
-
-// lastBlockDevWithdraw
 subtask("masterChef.lastBlockDevWithdraw")
     .setAction(async () => {
         const result = await (await contract()).lastBlockDevWithdraw()
         console.log(result.toString())
     })
 
-// owner
+subtask("masterChef.owner")
+    .setAction(async () => {
+        const result = await (await contract()).owner()
+        console.log(result.toString())
+    })
 
-// paused
+subtask("masterChef.paused")
+    .setAction(async () => {
+        const result = await (await contract()).paused()
+        console.log(result.toString())
+    })
 
-// pendingHelixToken
 subtask("masterChef.pendingHelixToken")
     .addPositionalParam("arg0")
     .addPositionalParam("arg1")
@@ -74,25 +141,77 @@ subtask("masterChef.pendingHelixToken")
         console.log(result.toString())
     })
 
-// percentDec
+subtask("masterChef.percentDec")
+    .setAction(async () => {
+        const result = await (await contract()).percentDec()
+        console.log(result.toString())
+    })
 
-// poolIds
+subtask("masterChef.poolIds")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).poolIds(
+            args.arg0, 
+        )
+        console.log(result.toString())
+    })
 
-// poolInfo
+subtask("masterChef.poolInfo")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).poolInfo(
+            args.arg0, 
+        )
+        console.log(result.toString())
+    })
 
-// poolLength
+subtask("masterChef.poolLength")
+    .setAction(async () => {
+        const result = await (await contract()).poolLength()
+        console.log(result.toString())
+    })
 
-// refRegister
+subtask("masterChef.refRegister")
+    .setAction(async () => {
+        const result = await (await contract()).refRegister()
+        console.log(result.toString())
+    })
 
-// stakingPercent
+subtask("masterChef.stakingPercent")
+    .setAction(async () => {
+        const result = await (await contract()).stakingPercent()
+        console.log(result.toString())
+    })
 
-// startBlock
+subtask("masterChef.startBlock")
+    .setAction(async () => {
+        const result = await (await contract()).startBlock()
+        console.log(result.toString())
+    })
 
-// timelockOwner
+subtask("masterChef.timelockOwner")
+    .setAction(async () => {
+        const result = await (await contract()).timelockOwner()
+        console.log(result.toString())
+    })
 
-// totalAllocPoint
+subtask("masterChef.totalAllocPoint")
+    .setAction(async () => {
+        const result = await (await contract()).totalAllocPoint()
+        console.log(result.toString())
+    })
 
-// userInfo
+subtask("masterChef.userInfo")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).userInfo(
+            args.arg0, 
+            args.arg1
+        )
+        console.log(result.toString())
+    })
+
 
 
 // WRITE
@@ -110,15 +229,67 @@ subtask("masterChef.add")
         )
     })
 
-// bucketDeposit
+subtask("masterChef.bucketDeposit")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .setAction(async (args) => {
+        const result = await (await contract()).bucketDeposit(
+            args.arg0,
+            args.arg1,
+            args.arg2
+        )
+    })
 
-// bucketWithdraw
+subtask("masterChef.bucketWithdraw")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .setAction(async (args) => {
+        const result = await (await contract()).bucketWithdraw(
+            args.arg0,
+            args.arg1,
+            args.arg2
+        )
+    })
 
-// bucketWithdrawAmountTo
+subtask("masterChef.bucketWithdrawAmountTo")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .addPositionalParam("arg3")
+    .setAction(async (args) => {
+        const result = await (await contract()).bucketWithdrawAmountTo(
+            args.arg0,
+            args.arg1,
+            args.arg2,
+            args.arg3
+        )
+    })
 
-// bucketWithdrawYieldTo
+subtask("masterChef.bucketWithdrawYieldTo")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .addPositionalParam("arg3")
+    .setAction(async (args) => {
+        const result = await (await contract()).bucketWithdrawYieldTo(
+            args.arg0,
+            args.arg1,
+            args.arg2,
+            args.arg3
+        )
+    })
 
-// deposit
+subtask("masterChef.deposit")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).deposit(
+            args.arg0,
+            args.arg1,
+        )
+    })
 
 subtask("masterChef.emergencyWithdraw")
     .addPositionalParam("arg0")
@@ -126,19 +297,61 @@ subtask("masterChef.emergencyWithdraw")
         const result = await (await contract()).emergencyWithdraw(args.arg0)
     })
 
-// enterStaking
+subtask("masterChef.enterStaking")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).enterStaking(
+            args.arg0,
+        )
+    })
 
-// initialize
+subtask("masterChef.initialize")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .addPositionalParam("arg3")
+    .addPositionalParam("arg4")
+    .addPositionalParam("arg5")
+    .addPositionalParam("arg6")
+    .setAction(async (args) => {
+        const result = await (await contract()).initialize(
+            args.arg0,
+            args.arg1,
+            args.arg2,
+            args.arg3,
+            args.arg4,
+            args.arg5,
+            args.arg5,
+        )
+    })
 
-// leaveStaking
+subtask("masterChef.leaveStaking")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).leaveStaking(
+            args.arg0,
+        )
+    })
 
-// massUpdatePools
+subtask("masterChef.massUpdatePools")
+    .setAction(async () => {
+        const result = await (await contract()).massUpdatePools()
+    })
 
-// pause
+subtask("masterChef.pause")
+    .setAction(async () => {
+        const result = await (await contract()).pause()
+    })
 
-// renounceOwnership
+subtask("masterChef.renounceOwnership")
+    .setAction(async () => {
+        const result = await (await contract()).renounceOwnership()
+    })
 
-// renounceTimelockOwnership
+subtask("masterChef.renounceTimelockOwnership")
+    .setAction(async () => {
+        const result = await (await contract()).renounceTimelockOwnership()
+    })
 
 subtask("masterChef.set")
     .addPositionalParam("arg0")
@@ -152,26 +365,99 @@ subtask("masterChef.set")
         )
     })
 
-// setDevAddress
+subtask("masterChef.setDevAddress")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).setDevAddress(
+            args.arg0,
+        )
+    })
 
-// setDevAndStakingPercents
+subtask("masterChef.setDevAndStakingPercents")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).setDevAndStakingPercents(
+            args.arg0,
+            args.arg1,
+        )
+    })
 
-// setFeeMinter
+subtask("masterChef.setFeeMinter")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).setFeeMinter(
+            args.arg0,
+        )
+    })
 
-// setReferralRegister
+subtask("masterChef.setReferralRegister")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).setReferralRegister(
+            args.arg0,
+        )
+    })
 
-// transferOwnership
+subtask("masterChef.transferOwnership")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).transferOwnership(
+            args.arg0,
+        )
+    })
 
-// transferTimelockOwnership
+subtask("masterChef.transferTimelockOwnership")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).transferTimelockOwnership(
+            args.arg0,
+        )
+    })
 
-// unpause
+subtask("masterChef.unpause")
+    .setAction(async () => {
+        const result = await (await contract()).unpause()
+    })
 
-// updateBucket
+subtask("masterChef.updateBucket")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).updateBucket(
+            args.arg0,
+            args.arg1,
+        )
+    })
 
-// updateMultiplier
+subtask("masterChef.updateMultiplier")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).updateMultiplier(
+            args.arg0,
+        )
+    })
 
-// updatePool
+subtask("masterChef.updatePool")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).updatePool(
+            args.arg0,
+        )
+    })
 
-// withdraw
+subtask("masterChef.withdraw")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).withdraw(
+            args.arg0,
+            args.arg1,
+        )
+    })
 
-// withdrawDevAndRefFee
+subtask("masterChef.withdrawDevAndRefFee")
+    .setAction(async () => {
+        const result = await (await contract()).withdrawDevAndRefFee()
+    })
+

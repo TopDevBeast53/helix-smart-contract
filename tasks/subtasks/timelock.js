@@ -12,23 +12,65 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 // READ
 
 
-// CANCELLOR_ROLE
+subtask("timelock.CANCELLOR_ROLE")
+    .setAction(async () => {
+        const result = await (await contract()).CANCELLOR_ROLE()
+        console.log(result.toString())
+    })
 
-// DEFAULT_ADMIN_ROLE
+subtask("timelock.DEFAULT_ADMIN_ROLE")
+    .setAction(async () => {
+        const result = await (await contract()).DEFAULT_ADMIN_ROLE()
+        console.log(result.toString())
+    })
 
-// EXECUTOR_ROLE
+subtask("timelock.EXECUTOR_ROLE")
+    .setAction(async () => {
+        const result = await (await contract()).EXECUTOR_ROLE()
+        console.log(result.toString())
+    })
 
-// PROPOSER_ROLE
+subtask("timelock.PROPOSER_ROLE")
+    .setAction(async () => {
+        const result = await (await contract()).PROPOSER_ROLE()
+        console.log(result.toString())
+    })
 
-// TIMELOCK_ADMIN_ROLE
+subtask("timelock.TIMELOCK_ADMIN_ROLE")
+    .setAction(async () => {
+        const result = await (await contract()).TIMELOCK_ADMIN_ROLE()
+        console.log(result.toString())
+    })
 
-// getMinDelay
+subtask("timelock.getMinDelay")
+    .setAction(async () => {
+        const result = await (await contract()).getMinDelay()
+        console.log(result.toString())
+    })
 
-// getRoleAdmin
+subtask("timelock.getRoleAdmin")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).getRoleAdmin(args.arg0)
+        console.log(result.toString())
+    })
 
-// getTimestamp
+subtask("timelock.getTimestamp")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).getTimestamp(args.arg0)
+        console.log(result.toString())
+    })
 
-// hasRole
+/*
+subtask("timelock.supportsInterface")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).supportsInterface(args.arg0, args.arg1)
+        console.log(result.toString())
+    })
+*/
 
 subtask("timelock.hashOperation")
     .addPositionalParam("arg0")
@@ -47,7 +89,22 @@ subtask("timelock.hashOperation")
         console.log(result.toString())
     })
 
-// hashOperationBatch
+subtask("timelock.hashOperationBatch")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .addPositionalParam("arg3")
+    .addPositionalParam("arg4")
+    .setAction(async (args) => {
+        const result = await (await contract()).hashOperationBatch(
+            args.arg0,
+            args.arg1,
+            args.arg2,
+            args.arg3,
+            args.arg4
+        )
+        console.log(result.toString())
+    })
 
 subtask("timelock.isOperation")
     .addPositionalParam("arg0")
@@ -77,14 +134,23 @@ subtask("timelock.isOperationReady")
         console.log(result.toString())
     })
 
+subtask("timelock.supportsInterface")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).supportsInterface(args.arg0)
+        console.log(result.toString())
+    })
 
-// supportsInterface
 
 
 // WRITE
 
 
-// cancel
+subtask("timelock.cancel")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).cancel(args.arg0)
+    })
 
 subtask("timelock.execute")
     .addPositionalParam("arg0")
@@ -104,21 +170,7 @@ subtask("timelock.execute")
         )
     })
 
-
-// executeBatch
-
-// grantRole
-
-// onERC1155BatchReceived
-
-// onERC1155Received
-
-// onERC721Received
-
-// renounceRole
-
-// schedule
-subtask("timelock.schedule")
+subtask("timelock.executeBatch")
     .addPositionalParam("arg0")
     .addPositionalParam("arg1")
     .addPositionalParam("arg2")
@@ -126,7 +178,7 @@ subtask("timelock.schedule")
     .addPositionalParam("arg4")
     .addPositionalParam("arg5")
     .setAction(async (args) => {
-        const result = await (await contract()).execute(
+        const result = await (await contract()).executeBatch(
             args.arg0,
             args.arg1,
             args.arg2,
@@ -136,7 +188,104 @@ subtask("timelock.schedule")
         )
     })
 
+subtask("timelock.grantRole")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).grantRole(args.arg0, args.arg1)
+    })
 
-// scheduleBatch
+subtask("timelock.onERC1155BatchReceived")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .addPositionalParam("arg3")
+    .addPositionalParam("arg4")
+    .setAction(async (args) => {
+        const result = await (await contract()).onERC1155BatchReceived(
+            args.arg0,
+            args.arg1,
+            args.arg2,
+            args.arg3,
+            args.arg4
+        )
+    })
 
-// updateDelay
+subtask("timelock.onERC1155Received")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .addPositionalParam("arg3")
+    .addPositionalParam("arg4")
+    .setAction(async (args) => {
+        const result = await (await contract()).onERC1155Received(
+            args.arg0,
+            args.arg1,
+            args.arg2,
+            args.arg3,
+            args.arg4
+        )
+    })
+
+subtask("timelock.onERC721Received")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .addPositionalParam("arg3")
+    .setAction(async (args) => {
+        const result = await (await contract()).onERC721Received(
+            args.arg0,
+            args.arg1,
+            args.arg2,
+            args.arg3
+        )
+    })
+
+subtask("timelock.renounceRole")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).renounceRole(args.arg0, args.arg1)
+    })
+
+subtask("timelock.schedule")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .addPositionalParam("arg3")
+    .addPositionalParam("arg4")
+    .addPositionalParam("arg5")
+    .setAction(async (args) => {
+        const result = await (await contract()).schedule(
+            args.arg0,
+            args.arg1,
+            args.arg2,
+            args.arg3,
+            args.arg4,
+            args.arg5
+        )
+    })
+
+subtask("timelock.scheduleBatch")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .addPositionalParam("arg3")
+    .addPositionalParam("arg4")
+    .addPositionalParam("arg5")
+    .setAction(async (args) => {
+        const result = await (await contract()).scheduleBatch(
+            args.arg0,
+            args.arg1,
+            args.arg2,
+            args.arg3,
+            args.arg4,
+            args.arg5
+        )
+    })
+
+subtask("timelock.updateDelay")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).updateDelay(args.arg0)
+    })

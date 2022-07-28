@@ -39,9 +39,19 @@ subtask("helixToken.balanceOf")
         console.log(result.toString())
     })
 
-// checkpoints
+subtask("helixToken.checkpoints")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).checkpoints(args.arg0, args.arg1)
+        console.log(result.toString())
+    })
 
-// decimals
+subtask("helixToken.decimals")
+    .setAction(async () => {
+        const result = await (await contract()).decimals()
+        console.log(result.toString())
+    })
 
 subtask("helixToken.delegates")
     .addPositionalParam("arg0")
@@ -50,7 +60,12 @@ subtask("helixToken.delegates")
         console.log(result.toString())
     })
 
-// getCurrentVotes
+subtask("helixToken.getCurrentVotes")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).getCurrentVotes(args.arg0)
+        console.log(result.toString())
+    })
 
 subtask("helixToken.getMinter")
     .addPositionalParam("arg0")
@@ -71,7 +86,13 @@ subtask("helixToken.getOwner")
         console.log(result.toString())
     })
 
-// getPriorVotes
+subtask("helixToken.getPriorVotes")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).getPriorVotes(args.arg0, args.arg1)
+        console.log(result.toString())
+    })
 
 subtask("helixToken.isMinter")
     .addPositionalParam("arg0")
@@ -80,18 +101,31 @@ subtask("helixToken.isMinter")
         console.log(result.toString())
     })
 
-// maxSupply
 subtask("helixToken.maxSupply")
     .setAction(async () => {
         const result = await (await contract()).maxSupply()
         console.log(result.toString())
     })
 
-// name
+subtask("helixToken.name")
+    .setAction(async () => {
+        const result = await (await contract()).name()
+        console.log(result.toString())
+    })
 
-// nonces
+subtask("helixToken.nonces")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).nonces(args.arg0)
+        console.log(result.toString())
+    })
 
-// numCheckpoints
+subtask("helixToken.numCheckpoints")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).numCheckpoints(args.arg0)
+        console.log(result.toString())
+    })
 
 subtask("helixToken.owner")
     .setAction(async () => {
@@ -134,17 +168,56 @@ subtask("helixToken.approve")
         const result = await (await contract()).approve(args.arg0, args.arg1)
     })
 
-// burn
+subtask("helixToken.burn")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).burn(args.arg0, args.arg1)
+    })
 
-// decreaseAllowance
+subtask("helixToken.decreaseAllowance")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).decreaseAllowance(args.arg0, args.arg1)
+    })
 
-// delMinter
+subtask("helixToken.delMinter")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).delMinter(args.arg0)
+    })
 
-// delegate
+subtask("helixToken.delegate")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).delegate(args.arg0)
+    })
 
-// delegateBySig
+subtask("helixToken.delegateBySig")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .addPositionalParam("arg3")
+    .addPositionalParam("arg4")
+    .addPositionalParam("arg5")
+    .setAction(async (args) => {
+        const result = await (await contract()).delegateBySig(
+            args.arg0,
+            args.arg1,
+            args.arg2,
+            args.arg3,
+            args.arg4,
+            args.arg5,
+        )
+    })
 
-// increaseAllowance
+subtask("helixToken.increaseAllowance")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).increaseAllowance(args.arg0, args.arg1)
+    })
 
 subtask("helixToken.mint")
     .addPositionalParam("arg0")
@@ -153,9 +226,11 @@ subtask("helixToken.mint")
         const result = await (await contract()).mint(args.arg0, args.arg1)
     })
 
-// renounce ownership
+subtask("helixToken.renounceOwnership")
+    .setAction(async () => {
+        const result = await (await contract()).renounceOwnership()
+    })
 
-// transfer
 subtask("helixToken.transfer")
     .addPositionalParam("arg0")
     .addPositionalParam("arg1")
@@ -163,9 +238,20 @@ subtask("helixToken.transfer")
         const result = await (await contract()).transfer(args.arg0, args.arg1)
     })
 
-// transferFrom
+subtask("helixToken.transferFrom")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .setAction(async (args) => {
+        const result = await (await contract()).transferFrom(
+            args.arg0, 
+            args.arg1,
+            args.arg2
+        )
+    })
 
-// transferOwnership
-
-
-
+subtask("helixToken.transferOwnership")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).transferOwnership(args.arg0)
+    })

@@ -12,7 +12,11 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 // READ
 
 
-// owner
+subtask("paymentSplitter.owner")
+    .setAction(async () => {
+        const result = await (await contract()).owner()
+        console.log(result.toString())
+    })
 
 subtask("paymentSplitter.payee")
     .addPositionalParam("arg0")
@@ -23,16 +27,43 @@ subtask("paymentSplitter.payee")
 
 subtask("paymentSplitter.releaseableErc20")
     .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).releasableErc20(args.arg0)
+        const result = await (await contract()).releasableErc20(
+            args.arg0,
+            args.arg1,
+        )
         console.log(result.toString())
     })
 
-// releaseableEther
+subtask("paymentSplitter.releaseableEther")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).releaseableEther(
+            args.arg0,
+        )
+        console.log(result.toString())
+    })
 
-// releasedErc20
+subtask("paymentSplitter.releasedErc20")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).releasedErc20(
+            args.arg0,
+            args.arg1,
+        )
+        console.log(result.toString())
+    })
 
-// releasedEther
+subtask("paymentSplitter.releasedEther")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).releasedEther(
+            args.arg0,
+        )
+        console.log(result.toString())
+    })
 
 subtask("paymentSplitter.shares")
     .addPositionalParam("arg0")
@@ -41,9 +72,21 @@ subtask("paymentSplitter.shares")
         console.log(result.toString())
     })
 
-// totalReleasedErc20
+subtask("paymentSplitter.totalReleasedErc20")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).totalReleasedErc20(
+            args.arg0,
+        )
+        console.log(result.toString())
+    })
 
-// totalReleasedEther
+subtask("paymentSplitter.totalReleasedEther")
+    .setAction(async () => {
+        const result = await (await contract()).totalReleasedEther()
+        console.log(result.toString())
+    })
+
 
 subtask("paymentSplitter.totalShares")
     .setAction(async () => {
@@ -52,32 +95,58 @@ subtask("paymentSplitter.totalShares")
     })
 
 
-
 // WRITE
 
 
-// releaseAllErc20
 subtask("paymentSplitter.releaseAllErc20")
     .addPositionalParam("arg0")
     .setAction(async (args) => {
         const result = await (await contract()).releaseAllErc20(args.arg0)
     })
 
-
-// releaseAllEther
+subtask("paymentSplitter.releaseAllEther")
+    .setAction(async () => {
+        const result = await (await contract()).releaseAllEther()
+    })
 
 subtask("paymentSplitter.releaseErc20")
     .addPositionalParam("arg0")
     .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).releaseErc20(args.arg0, args.arg1)
+        const result = await (await contract()).releaseErc20(
+            args.arg0, 
+            args.arg1
+        )
     })
 
-// releaseEther
+subtask("paymentSplitter.releaseEther")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).releaseEther(
+            args.arg0, 
+        )
+    })
 
-// renounceOwnership
+subtask("paymentSplitter.renounceOwnership")
+    .setAction(async () => {
+        const result = await (await contract()).renounceOwnership()
+    })
 
-// reset
+subtask("paymentSplitter.reset")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).reset(
+            args.arg0, 
+            args.arg1
+        )
+    })
 
-// transferOwnership
+subtask("paymentSplitter.transferOwnership")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).transferOwnership(
+            args.arg0, 
+        )
+    })
 

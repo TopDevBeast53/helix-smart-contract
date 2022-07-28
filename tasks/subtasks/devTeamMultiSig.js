@@ -12,11 +12,25 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 // READ
 
 
-// adminConfirmationsRequired
+subtask("devTeamMultiSig.adminConfirmationsRequired")
+    .setAction(async () => {
+        const result = await (await contract()).adminConfirmationsRequied()
+        console.log(result.toString())
+    })
 
-// admins
+subtask("devTeamMultiSig.admins")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).admins(args.arg0)
+        console.log(result.toString())
+    })
 
-// getAdmins
+subtask("devTeamMultiSig.getAdmins")
+    .setAction(async () => {
+        const result = await (await contract()).getAdmins()
+        console.log(result.toString())
+    })
+
 
 subtask("devTeamMultiSig.getBalance")
     .addPositionalParam("arg0")
@@ -25,8 +39,11 @@ subtask("devTeamMultiSig.getBalance")
         console.log(result.toString())
     })
 
-
-// getOwners
+subtask("devTeamMultiSig.getOwners")
+    .setAction(async () => {
+        const result = await (await contract()).getOwners()
+        console.log(result.toString())
+    })
 
 subtask("devTeamMultiSig.getTransaction")
     .addPositionalParam("arg0")
@@ -43,8 +60,12 @@ subtask("devTeamMultiSig.getTransactionCount")
         console.log(result.toString())
     })
 
-
-// isAdmin
+subtask("devTeamMultiSig.isAdmin")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).isAdmin(args.arg0)
+        console.log(result.toString())
+    })
 
 subtask("devTeamMultiSig.isConfirmed")
     .addPositionalParam("arg0")
@@ -54,13 +75,33 @@ subtask("devTeamMultiSig.isConfirmed")
         console.log(result.toString())
     })
 
-// isOwner
+subtask("devTeamMultiSig.isOwner")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).isOwner(args.arg0)
+        console.log(result.toString())
+    })
 
-// ownerConfirmationsRequired
+subtask("devTeamMultiSig.ownerConfirmationsRequired")
+    .setAction(async () => {
+        const result = await (await contract()).ownerConfirmationsRequired()
+        console.log(result.toString())
+    })
 
-// owners
+subtask("devTeamMultiSig.owners")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).owners(args.arg0)
+        console.log(result.toString())
+    })
 
-// transactions
+subtask("devTeamMultiSig.transactions")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).transactions(args.arg0)
+        console.log(result.toString())
+    })
+
 
 
 // WRITE
@@ -92,20 +133,47 @@ subtask("devTeamMultiSig.executeTransaction")
         const result = await (await contract()).executeTransaction(args.arg0)
     })
 
+subtask("devTeamMultiSig.revokeConfirmation")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).revokeConfirmation(args.arg0)
+    })
 
-// revokeConfirmation
+subtask("devTeamMultiSig.submitAddAdmin")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).submitAddAdmin(args.arg0)
+    })
 
-// submitAddAdmin
+subtask("devTeamMultiSig.submitAddOwner")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).submitAddOwner(args.arg0)
+    })
 
-// submitAddOwner
+subtask("devTeamMultiSig.submitRemoveAdmin")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).submitRemoveAdmin(arg0)
+    })
 
-// submitRemoveAdmin
+subtask("devTeamMultiSig.submitRemoveOwner")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).submitRemoveOwner(args.arg0)
+    })
 
-// submitRemoveOwner
+subtask("devTeamMultiSig.submitSetAdminConfirmationsRequired")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).submitSetAdminConfirmationsRequired(args.arg0)
+    })
 
-// submitSetAdminConfirmationsRequired
-
-// submitSetOwnerConfirmationsRequired
+subtask("devTeamMultiSig.submitSetOwnerConfirmationsRequired")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).submitSetOwnerConfirmationsRequired(args.arg0)
+    })
 
 subtask("devTeamMultiSig.submitTransaction")
     .addPositionalParam("arg0")
