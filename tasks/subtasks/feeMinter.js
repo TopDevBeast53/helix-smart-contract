@@ -70,9 +70,15 @@ subtask("feeMinter.totalToMintPerBlock")
 // WRITE
 
 
-// renounceOwnership
+subtask("feeMinter.renounceOwnership")
+    .setAction(async () => {
+        const result = await (await contract()).renounceOwnership()
+    })
 
-// renounceTimelockOwnership
+subtask("feeMinter.renounceTimelockOwnership")
+    .setAction(async () => {
+        const result = await (await contract()).renounceTimelockOwnership()
+    })
 
 subtask("feeMinter.setDecimals")
     .addPositionalParam("arg0")
@@ -95,7 +101,14 @@ subtask("feeMinter.setTotalToMintPerBlock")
         const result = await (await contract()).setTotalToMintPerBlock(args.arg0)
     })
 
-// transferOwnership
+subtask("feeMinter.transferOwnership")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).transferOwnership(args.arg0)
+    })
 
-// transferTimelockOwnership
-
+subtask("feeMinter.transferTimelockOwnership")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).transferTimelockOwnership(args.arg0)
+    })
