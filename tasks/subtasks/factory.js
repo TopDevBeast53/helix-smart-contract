@@ -31,12 +31,23 @@ subtask("factory.allPairsLength")
         console.log(result.toString())
     })
 
+subtask("factory.defaultSwapFee")
+    .setAction(async () => {
+        const result = await (await contract()).defaultSwapFee()
+        console.log(result.toString())
+    })
 
-// defaultSwapFee
+subtask("factory.feeTo")
+    .setAction(async () => {
+        const result = await (await contract()).feeTo()
+        console.log(result.toString())
+    })
 
-// feeTo
-
-// feeToSetter
+subtask("factory.feeToSetter")
+    .setAction(async () => {
+        const result = await (await contract()).feeToSetter()
+        console.log(result.toString())
+    })
 
 subtask("factory.getPair")
     .addPositionalParam("arg0")
@@ -46,8 +57,12 @@ subtask("factory.getPair")
         console.log(result.toString())
     })
 
+subtask("factory.oracleFactory")
+    .setAction(async () => {
+        const result = await (await contract()).oracleFactory()
+        console.log(result.toString())
+    })
 
-// oracleFactory
 
 
 // WRITE
@@ -58,23 +73,72 @@ subtask("factory.createPair")
     .addPositionalParam("arg1")
     .setAction(async (args) => {
         const result = await (await contract()).createPair(args.arg0, args.arg1)
-        console.log(result.toString())
     })
 
-// initialize
+subtask("factory.initialize")
+    .setAction(async () => {
+        const result = await (await contract()).initialize()
+    })
 
-// setDefaultSwapFee
+subtask("factory.setDefaultSwapFee")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).setDefaultSwapFee(
+            args.arg0
+        )
+    })
 
-// setDevFee
+subtask("factory.setDevFee")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).setDevFee(
+            args.arg0,
+            args.arg1
+        )
+    })
 
-// setFeeTo
+subtask("factory.setFeeTo")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).setFeeTo(
+            args.arg0
+        )
+    })
 
-// setFeeToSetter
+subtask("factory.setFeeToSetter")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).setFeeToSetter(
+            args.arg0
+        )
+    })
 
-// setOracleFactory
+subtask("factory.setOracleFactory")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).setOracleFactory(
+            args.arg0
+        )
+    })
 
-// setSwapFee
+subtask("factory.setSwapFee")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).setSwapFee(
+            args.arg0,
+            args.arg1
+        )
+    })
 
-// updateOracle
-
-
+subtask("factory.updateOracle")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .setAction(async (args) => {
+        const result = await (await contract()).updateOracle
+            args.arg0,
+            args.arg1
+        )
+    })
+ 
