@@ -1,7 +1,7 @@
 const { loadContract } = require("./utilities")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
 
 const name = "FeeMinter"
 const address = contracts.feeMinter[env.network]
@@ -12,13 +12,13 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 // READ
 
 
-task("feeMinter.decimals")
+subtask("feeMinter.decimals")
     .setAction(async () => {
         const result = await (await contract()).decimals()
         console.log(result.toString())
     })
 
-task("feeMinter.getMinters")
+subtask("feeMinter.getMinters")
     .setAction(async () => {
         const result = await (await contract()).getMinters()
         for (let i = 0; i < result.length; i++) {
@@ -26,40 +26,40 @@ task("feeMinter.getMinters")
         }
     })
 
-task("feeMinter.getToMintPerBlock")
-    .addPositionalParam("minter")
+subtask("feeMinter.getToMintPerBlock")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getToMintPerBlock(args.minter)
+        const result = await (await contract()).getToMintPerBlock(args.arg0)
         console.log(result.toString())
     })
 
-task("feeMinter.getToMintPercent")
-    .addPositionalParam("minter")
+subtask("feeMinter.getToMintPercent")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getToMintPercent(args.minter)
+        const result = await (await contract()).getToMintPercent(args.arg0)
         console.log(result.toString())
     })
 
-task("feeMinter.minters")
-    .addPositionalParam("index")
+subtask("feeMinter.minters")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).minters(args.index)
+        const result = await (await contract()).minters(args.arg0)
         console.log(result.toString())
     })
 
-task("feeMinter.owner")
+subtask("feeMinter.owner")
     .setAction(async () => {
         const result = await (await contract()).owner()
         console.log(result.toString())
     })
 
-task("feeMinter.timelockOwner")
+subtask("feeMinter.timelockOwner")
     .setAction(async () => {
         const result = await (await contract()).timelockOwner()
         console.log(result.toString())
     })
 
-task("feeMinter.totalToMintPerBlock")
+subtask("feeMinter.totalToMintPerBlock")
     .setAction(async () => {
         const result = await (await contract()).totalToMintPerBlock()
         console.log(result.toString())
@@ -74,25 +74,25 @@ task("feeMinter.totalToMintPerBlock")
 
 // renounceTimelockOwnership
 
-task("feeMinter.setDecimals")
-    .addPositionalParam("decimals")
+subtask("feeMinter.setDecimals")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).setDecimals(args.decimals)
+        const result = await (await contract()).setDecimals(args.arg0)
     })
 
-task("feeMinter.setToMintPercents")
-    .addPositionalParam("minters")
-    .addPositionalParam("toMintPercents")
+subtask("feeMinter.setToMintPercents")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
         const result = await (await contract()).setToMintPercents(
-            args.minters, args.toMintPercents
+            args.arg0, args.arg1
         )
     })
 
-task("feeMinter.setTotalToMintPerBlock")
-    .addPositionalParam("totalToMintPerBlock")
+subtask("feeMinter.setTotalToMintPerBlock")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).setTotalToMintPerBlock(args.totalToMintPerBlock)
+        const result = await (await contract()).setTotalToMintPerBlock(args.arg0)
     })
 
 // transferOwnership

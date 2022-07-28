@@ -1,7 +1,7 @@
 const { loadContract } = require("./utilities")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
 
 const name = "AutoHelix"
 const address = contracts.autoHelix[env.network]
@@ -22,7 +22,7 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 
 // available
 
-task("autoHelix.balanceOf")
+subtask("autoHelix.balanceOf")
     .setAction(async () => {
         const result = await (await contract()).balanceOf()
         console.log(result.toString())

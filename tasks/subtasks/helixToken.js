@@ -1,7 +1,7 @@
 const { loadContract } = require("./utilities")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
 
 const name = "HelixToken"
 const address = contracts.helixToken[env.network]
@@ -12,30 +12,30 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 // READ
 
 
-task("helixToken.DELEGATION_TYPEHASH")
+subtask("helixToken.DELEGATION_TYPEHASH")
     .setAction(async () => {
         const result = await (await contract()).DELEGATION_TYPEHASH()
         console.log(result.toString())
     })
 
-task("helixToken.DOMAIN_TYPEHASH")
+subtask("helixToken.DOMAIN_TYPEHASH")
     .setAction(async () => {
         const result = await (await contract()).DOMAIN_TYPEHASH()
         console.log(result.toString())
     })
 
-task("helixToken.allowance")
-    .addPositionalParam("owner")
-    .addPositionalParam("spender")
+subtask("helixToken.allowance")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).allowance(args.owner, args.spender)
+        const result = await (await contract()).allowance(args.arg0, args.arg1)
         console.log(result.toString())
     })
 
-task("helixToken.balanceOf")
-    .addPositionalParam("account")
+subtask("helixToken.balanceOf")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).balanceOf(args.account)
+        const result = await (await contract()).balanceOf(args.arg0)
         console.log(result.toString())
     })
 
@@ -43,29 +43,29 @@ task("helixToken.balanceOf")
 
 // decimals
 
-task("helixToken.delegates")
-    .addPositionalParam("delegator")
+subtask("helixToken.delegates")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).delegates(args.delegator)
+        const result = await (await contract()).delegates(args.arg0)
         console.log(result.toString())
     })
 
 // getCurrentVotes
 
-task("helixToken.getMinter")
-    .addPositionalParam("index")
+subtask("helixToken.getMinter")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getMinter(args.index)
+        const result = await (await contract()).getMinter(args.arg0)
         console.log(result.toString())
     })
 
-task("helixToken.getMinterLength")
+subtask("helixToken.getMinterLength")
     .setAction(async () => {
         const result = await (await contract()).getMinterLength()
         console.log(result.toString())
     })
 
-task("helixToken.getOwner")
+subtask("helixToken.getOwner")
     .setAction(async () => {
         const result = await (await contract()).getOwner()
         console.log(result.toString())
@@ -73,15 +73,15 @@ task("helixToken.getOwner")
 
 // getPriorVotes
 
-task("helixToken.isMinter")
-    .addPositionalParam("account")
+subtask("helixToken.isMinter")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).isMinter(args.account)
+        const result = await (await contract()).isMinter(args.arg0)
         console.log(result.toString())
     })
 
 // maxSupply
-task("helixToken.maxSupply")
+subtask("helixToken.maxSupply")
     .setAction(async () => {
         const result = await (await contract()).maxSupply()
         console.log(result.toString())
@@ -93,25 +93,25 @@ task("helixToken.maxSupply")
 
 // numCheckpoints
 
-task("helixToken.owner")
+subtask("helixToken.owner")
     .setAction(async () => {
         const result = await (await contract()).owner()
         console.log(result.toString())
     })
 
-task("helixToken.preMineSupply")
+subtask("helixToken.preMineSupply")
     .setAction(async () => {
         const result = await (await contract()).preMineSupply()
         console.log(result.toString())
     })
 
-task("helixToken.symbol")
+subtask("helixToken.symbol")
     .setAction(async () => {
         const result = await (await contract()).symbol()
         console.log(result.toString())
     })
 
-task("helixToken.totalSupply")
+subtask("helixToken.totalSupply")
     .setAction(async () => {
         const result = await (await contract()).totalSupply()
         console.log(result.toString())
@@ -121,17 +121,17 @@ task("helixToken.totalSupply")
 // WRITE
 
 
-task("helixToken.addMinter")
-    .addPositionalParam("addMinter")
+subtask("helixToken.addMinter")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).addMinter(args.addMinter)
+        const result = await (await contract()).addMinter(args.arg0)
     })
 
-task("helixToken.approve")
-    .addPositionalParam("spender")
-    .addPositionalParam("amount")
+subtask("helixToken.approve")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).approve(args.spender, args.amount)
+        const result = await (await contract()).approve(args.arg0, args.arg1)
     })
 
 // burn
@@ -146,24 +146,22 @@ task("helixToken.approve")
 
 // increaseAllowance
 
-task("helixToken.mint")
-    .addPositionalParam("to")
-    .addPositionalParam("amount")
+subtask("helixToken.mint")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).mint(args.to, args.amount)
+        const result = await (await contract()).mint(args.arg0, args.arg1)
     })
 
 // renounce ownership
 
 // transfer
-task("helixToken.transfer")
-    .addPositionalParam("recipient")
-    .addPositionalParam("amount")
+subtask("helixToken.transfer")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).transfer(args.recipient, args.amount)
+        const result = await (await contract()).transfer(args.arg0, args.arg1)
     })
-
-
 
 // transferFrom
 

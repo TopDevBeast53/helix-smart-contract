@@ -1,10 +1,10 @@
 const { loadContract } = require("./utilities")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
 
 const name = "MultiSigWallet"
-const address = contracts.ownerMultiSig[env.network]
+const address= contracts.ownerMultiSig[env.network]
 
 const contract = async () => await hre.run("loadContract", { name: name, address: address })
 
@@ -18,24 +18,24 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 
 // getAdmins
 
-task("ownerMultiSig.getBalance")
-    .addPositionalParam("token")
+subtask("ownerMultiSig.getBalance")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getBalance(args.token)
+        const result = await (await contract()).getBalance(args.arg0)
         console.log(result.toString())
     })
 
 
 // getOwners
 
-task("ownerMultiSig.getTransaction")
-    .addPositionalParam("txIndex")
+subtask("ownerMultiSig.getTransaction")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getTransaction(args.txIndex)
+        const result = await (await contract()).getTransaction(args.arg0)
         console.log(result.toString())
     })
 
-task("ownerMultiSig.getTransactionCount")
+subtask("ownerMultiSig.getTransactionCount")
     .setAction(async () => {
         const result = await (await contract()).getTransactionCount()
         console.log(result.toString())
@@ -44,11 +44,11 @@ task("ownerMultiSig.getTransactionCount")
 
 // isAdmin
 
-task("ownerMultiSig.isConfirmed")
-    .addPositionalParam("uint256")
-    .addPositionalParam("address")
+subtask("ownerMultiSig.isConfirmed")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).isConfirmed(args.uint256, args.address)
+        const result = await (await contract()).isConfirmed(args.arg0, args.arg1)
         console.log(result.toString())
     })
 
@@ -78,16 +78,16 @@ task("ownerMultiSig.isConfirmed")
 
 // _transfer
 
-task("ownerMultiSig.confirmTransaction")
-    .addPositionalParam("txIndex")
+subtask("ownerMultiSig.confirmTransaction")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).confirmTransaction(args.txIndex)
+        const result = await (await contract()).confirmTransaction(args.arg0)
     })
 
-task("ownerMultiSig.executeTransaction")
-    .addPositionalParam("txIndex")
+subtask("ownerMultiSig.executeTransaction")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).executeTransaction(args.txIndex)
+        const result = await (await contract()).executeTransaction(args.arg0)
     })
 
 
@@ -105,26 +105,26 @@ task("ownerMultiSig.executeTransaction")
 
 // submitSetOwnerConfirmationsRequired
 
-task("ownerMultiSig.submitTransaction")
-    .addPositionalParam("to")
-    .addPositionalParam("value")
-    .addPositionalParam("data")
+subtask("ownerMultiSig.submitTransaction")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
     .setAction(async (args) => {
         const result = await (await contract()).submitTransaction(
-            args.to,
-            args.value,
-            args.data
+            args.arg0,
+            args.arg1,
+            args.arg2
         )
     })
 
-task("ownerMultiSig.submitTransfer")
-    .addPositionalParam("token")
-    .addPositionalParam("to")
-    .addPositionalParam("amount")
+subtask("ownerMultiSig.submitTransfer")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
     .setAction(async (args) => {
         const result = await (await contract()).submitTransfer(
-            args.token,
-            args.to,
-            args.amount
+            args.arg0,
+            args.arg1,
+            args.arg2
         )
     })

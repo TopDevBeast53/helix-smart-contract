@@ -1,7 +1,7 @@
 const { loadContract } = require("./utilities")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
 
 const name = "ReferralRegister"
 const address = contracts.referralRegister[env.network]
@@ -12,143 +12,143 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 // READ
 
 
-task("referralRegister.collectorPercent")
+subtask("referralRegister.collectorPercent")
     .setAction(async () => {
         const result = await (await contract()).collectorPercent()
         console.log(result.toString())
     })
 
-task("referralRegister.decimals")
+subtask("referralRegister.decimals")
     .setAction(async () => {
         const result = await (await contract()).decimals()
         console.log(result.toString())
     })
 
-task("referralRegister.feeHandler")
+subtask("referralRegister.feeHandler")
     .setAction(async () => {
         const result = await (await contract()).feeHandler()
         console.log(result.toString())
     })
 
-task("referralRegister.feeMinter")
+subtask("referralRegister.feeMinter")
     .setAction(async () => {
         const result = await (await contract()).feeMinter()
         console.log(result.toString())
     })
 
-task("referralRegister.getCollectorPercent")
-    .addPositionalParam("amount")
+subtask("referralRegister.getCollectorPercent")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getCollectorPercent(args.amount)
+        const result = await (await contract()).getCollectorPercent(args.arg0)
         console.log(result.toString())
     })
 
-task("referralRegister.getCollectorFeeSplit")
-    .addPositionalParam("amount")
+subtask("referralRegister.getCollectorFeeSplit")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getCollectorFeeSplit(args.amount)
+        const result = await (await contract()).getCollectorFeeSplit(args.arg0)
         console.log(result.toString())
     })
 
-task("referralRegister.getRecorder")
-    .addPositionalParam("index")
+subtask("referralRegister.getRecorder")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getRecorder(args.index)
+        const result = await (await contract()).getRecorder(args.arg0)
         console.log(result.toString())
     })
 
-task("referralRegister.getRecorderLength")
+subtask("referralRegister.getRecorderLength")
     .setAction(async () => {
         const result = await (await contract()).getRecorderLength()
         console.log(result.toString())
     })
 
 
-task("referralRegister.getReferees")
-    .addPositionalParam("referrer")
+subtask("referralRegister.getReferees")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getReferees(args.referrer)
+        const result = await (await contract()).getReferees(args.arg0)
         console.log(result.toString())
     })
 
-task("referralRegister.getToMintPerBlock")
+subtask("referralRegister.getToMintPerBlock")
     .setAction(async () => {
         const result = await (await contract()).getToMintPerBlock()
         console.log(result.toString())
     })
 
-task("referralRegister.helixToken")
+subtask("referralRegister.helixToken")
     .setAction(async () => {
         const result = await (await contract()).helixToken()
         console.log(result.toString())
     })
 
-task("referralRegister.isFeeHandlerSet")
+subtask("referralRegister.isFeeHandlerSet")
     .setAction(async () => {
         const result = await (await contract()).isFeeHandlerSet()
         console.log(result.toString())
     })
 
-task("referralRegister.isRecorder")
-    .addPositionalParam("address")
+subtask("referralRegister.isRecorder")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).isRecorder(args.address)
+        const result = await (await contract()).isRecorder(args.arg0)
         console.log(result.toString())
     })
 
-task("referralRegister.lastMintBlock")
+subtask("referralRegister.lastMintBlock")
     .setAction(async () => {
         const result = await (await contract()).lastMintBlock()
         console.log(result.toString())
     })
 
-task("referralRegister.owner")
+subtask("referralRegister.owner")
     .setAction(async () => {
         const result = await (await contract()).owner()
         console.log(result.toString())
     })
 
-task("referralRegister.paused")
+subtask("referralRegister.paused")
     .setAction(async () => {
         const result = await (await contract()).paused()
         console.log(result.toString())
     })
 
-task("referralRegister.referees")
-    .addPositionalParam("address")
-    .addPositionalParam("uint256")
+subtask("referralRegister.referees")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).referees(args.address, args.uint256)
+        const result = await (await contract()).referees(args.arg0, args.arg1)
         console.log(result.toString())
     })
 
-task("referralRegister.referrers")
-    .addPositionalParam("address")
+subtask("referralRegister.referrers")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).referrers(args.address)
+        const result = await (await contract()).referrers(args.arg0)
         console.log(result.toString())
     })
 
-task("referralRegister.rewards")
-    .addPositionalParam("address")
+subtask("referralRegister.rewards")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).rewards(args.address)
+        const result = await (await contract()).rewards(args.arg0)
         console.log(result.toString())
     })
 
-task("referralRegister.stakeRewardPercent")
+subtask("referralRegister.stakeRewardPercent")
     .setAction(async () => {
         const result = await (await contract()).stakeRewardPercent()
         console.log(result.toString())
     })
 
-task("referralRegister.swapRewardPercent")
+subtask("referralRegister.swapRewardPercent")
     .setAction(async () => {
         const result = await (await contract()).swapRewardPercent()
         console.log(result.toString())
     })
 
-task("referralRegister.timelockOwner")
+subtask("referralRegister.timelockOwner")
     .setAction(async () => {
         const result = await (await contract()).timelockOwner()
         console.log(result.toString())
@@ -159,34 +159,34 @@ task("referralRegister.timelockOwner")
 // WRITE
 
 
-task("referralRegister.addRecorder")
-    .addPositionalParam("recorder")
+subtask("referralRegister.addRecorder")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).addRecorder(args.recorder)
+        const result = await (await contract()).addRecorder(args.arg0)
     })
 
-task("referralRegister.addReferrer")
-    .addPositionalParam("referrer")
+subtask("referralRegister.addReferrer")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).addReferrer(args.referrer)
+        const result = await (await contract()).addReferrer(args.arg0)
     })
 
 // initialize
 
-task("referralRegister.pause")
+subtask("referralRegister.pause")
     .setAction(async () => {
         const result = await (await contract()).pause()
     })
 
 
-task("referralRegister.removeRecorder")
-    .addPositionalParam("recorder")
+subtask("referralRegister.removeRecorder")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).removeRecorder(args.recorder)
+        const result = await (await contract()).removeRecorder(args.arg0)
     })
 
 
-task("referralRegister.removeReferrer")
+subtask("referralRegister.removeReferrer")
     .setAction(async () => {
         const result = await (await contract()).removeReferrer()
     })
@@ -196,76 +196,76 @@ task("referralRegister.removeReferrer")
 
 // renounceTimelockOwnership
 
-task("referralRegister.rewardStake")
-    .addPositionalParam("referred")
-    .addPositionalParam("amount")
+subtask("referralRegister.rewardStake")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).rewardStake(args.referred, args.amount)
+        const result = await (await contract()).rewardStake(args.arg0, args.arg1)
     })
 
-task("referralRegister.rewardSwap")
-    .addPositionalParam("referred")
-    .addPositionalParam("amount")
+subtask("referralRegister.rewardSwap")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).rewardSwap(args.referred, args.amount)
+        const result = await (await contract()).rewardSwap(args.arg0, args.arg1)
     })
 
-task("referralRegister.setCollectorPercentAndDecimals")
-    .addPositionalParam("collectorPercent")
-    .addPositionalParam("decimals")
+subtask("referralRegister.setCollectorPercentAndDecimals")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
         const result = await (await contract()).setCollectorPercentAndDecimals(
-            args.collectorPercent, 
-            args.decimals
+            args.arg0, 
+            args.arg1
         )
     })
 
-task("referralRegister.setFeeHandler")
-    .addPositionalParam("feeHandler")
+subtask("referralRegister.setFeeHandler")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).setFeeHandler(args.feeHandler)
+        const result = await (await contract()).setFeeHandler(args.arg0)
     })
 
-task("referralRegister.setFeeMinter")
-    .addPositionalParam("feeMinter")
+subtask("referralRegister.setFeeMinter")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).setFeeHandler(args.feeMinter)
+        const result = await (await contract()).setFeeHandler(args.arg0)
     })
 
 
-task("referralRegister.setLastRewardBlock")
-    .addPositionalParam("lastMintBlock")
+subtask("referralRegister.setLastRewardBlock")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).setLastRewardBlock(args.lastMintBlock)
+        const result = await (await contract()).setLastRewardBlock(args.arg0)
     })
 
-task("referralRegister.setStakeRewardPercent")
-    .addPositionalParam("stakeRewardPercent")
+subtask("referralRegister.setStakeRewardPercent")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).setStakeRewardPercent(args.stakeRewardPercent)
+        const result = await (await contract()).setStakeRewardPercent(args.arg0)
     })
 
-task("referralRegister.setSwapRewardPercent")
-    .addPositionalParam("swapRewardPercent")
+subtask("referralRegister.setSwapRewardPercent")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).setSwapRewardPercent(args.swapRewardPercent)
+        const result = await (await contract()).setSwapRewardPercent(args.arg0)
     })
 
 // transferOwnership
 
 // transferTimelockOwnership
 
-task("referralRegister.unpause")
+subtask("referralRegister.unpause")
     .setAction(async () => {
         const result = await (await contract()).unpause()
     })
 
-task("referralRegister.update")
+subtask("referralRegister.update")
     .setAction(async () => {
         const result = await (await contract()).update()
     })
 
-task("referralRegister.withdraw")
+subtask("referralRegister.withdraw")
     .setAction(async () => {
         const result = await (await contract()).withdraw()
     })

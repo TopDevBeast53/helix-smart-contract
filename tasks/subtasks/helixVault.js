@@ -1,7 +1,7 @@
 const { loadContract } = require("./utilities")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
 
 const name = "HelixVault"
 const address = contracts.helixVault[env.network]
@@ -12,121 +12,121 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 // READ
 
 
-task("helixVault.MAX_DECIMALS")
+subtask("helixVault.MAX_DECIMALS")
     .setAction(async () => {
         const result = await (await contract()).MAX_DECIMALS()
         console.log(result.toString())
     })
 
-task("helixVault.PRECISION_FACTOR")
+subtask("helixVault.PRECISION_FACTOR")
     .setAction(async () => {
         const result = await (await contract()).PRECISION_FACTOR()
         console.log(result.toString())
     })
 
-task("helixVault.accTokenPerShare")
+subtask("helixVault.accTokenPerShare")
     .setAction(async () => {
         const result = await (await contract()).accTokenPerShare()
         console.log(result.toString())
     })
 
-task("helixVault.collectorPercent")
+subtask("helixVault.collectorPercent")
     .setAction(async () => {
         const result = await (await contract()).collectorPercent()
         console.log(result.toString())
     })
 
-task("helixVault.decimals")
+subtask("helixVault.decimals")
     .setAction(async () => {
         const result = await (await contract()).decimals()
         console.log(result.toString())
     })
 
-task("helixVault.depositId")
+subtask("helixVault.depositId")
     .setAction(async () => {
         const result = await (await contract()).depositId()
         console.log(result.toString())
     })
 
-task("helixVault.depositIds")
-    .addPositionalParam("address")
-    .addPositionalParam("uint256")
+subtask("helixVault.depositIds")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).depositIds(args.address, args.uint256)
+        const result = await (await contract()).depositIds(args.arg0, args.arg1)
         console.log(result.toString())
     })
 
 
-task("helixVault.deposits")
-    .addPositionalParam("uint256")
+subtask("helixVault.deposits")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).deposits(args.uint256)
+        const result = await (await contract()).deposits(args.arg0)
         console.log(result.toString())
     })
 
-task("helixVault.durations")
-    .addPositionalParam("uint256")
+subtask("helixVault.durations")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).durations(args.uint256)
+        const result = await (await contract()).durations(args.arg0)
         console.log(result.toString())
     })
 
-task("helixVault.feeHandler")
+subtask("helixVault.feeHandler")
     .setAction(async () => {
         const result = await (await contract()).feeHandler()
         console.log(result.toString())
     })
 
-task("helixVault.feeMinter")
+subtask("helixVault.feeMinter")
     .setAction(async () => {
         const result = await (await contract()).feeMinter()
         console.log(result.toString())
     })
 
-task("helixVault.getBlocksDifference")
-    .addPositionalParam("from")
-    .addPositionalParam("to")
+subtask("helixVault.getBlocksDifference")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).getBlocksDifference(args.from, args.to)
+        const result = await (await contract()).getBlocksDifference(args.arg0, args.arg1)
         console.log(result.toString())
     })
 
-task("helixVault.getCollectorFee")
-    .addPositionalParam("amount")
+subtask("helixVault.getCollectorFee")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getCollectorFee(args.amount)
+        const result = await (await contract()).getCollectorFee(args.arg0)
         console.log(result.toString())
     })
 
-task("helixVault.getCollectorFeeSplit")
-    .addPositionalParam("amount")
+subtask("helixVault.getCollectorFeeSplit")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getCollectorFeeSplit(args.amount)
+        const result = await (await contract()).getCollectorFeeSplit(args.arg0)
         console.log(result.toString())
     })
 
-task("helixVault.getDeposit")
-    .addPositionalParam("depositId")
+subtask("helixVault.getDeposit")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getDeposit(args.depositId)
+        const result = await (await contract()).getDeposit(args.arg0)
         console.log(result.toString())
     })
 
-task("helixVault.getDepositAmount")
-    .addPositionalParam("user")
+subtask("helixVault.getDepositAmount")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getDepositAmount(args.user)
+        const result = await (await contract()).getDepositAmount(args.arg0)
         console.log(result.toString())
     })
 
-task("helixVault.getDepositIds")
-    .addPositionalParam("user")
+subtask("helixVault.getDepositIds")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getDepositIds(args.user)
+        const result = await (await contract()).getDepositIds(args.arg0)
         console.log(result.toString())
     })
 
-task("helixVault.getDurations")
+subtask("helixVault.getDurations")
     .setAction(async () => {
         const result = await (await contract()).getDurations()
         for (let i = 0; i < result.length; i++) {
@@ -134,56 +134,56 @@ task("helixVault.getDurations")
         }
     })
 
-task("helixVault.getToMintPerBlock")
+subtask("helixVault.getToMintPerBlock")
     .setAction(async () => {
         const result = await (await contract()).getToMintPerBlock()
         console.log(result.toString())
     })
 
-task("helixVault.isFeeHandlerSet")
+subtask("helixVault.isFeeHandlerSet")
     .setAction(async () => {
         const result = await (await contract()).isFeeHandlerSet()
         console.log(result.toString())
     })
 
-task("helixVault.lastRewardBlock")
+subtask("helixVault.lastRewardBlock")
     .setAction(async () => {
         const result = await (await contract()).lastRewardBlock()
         console.log(result.toString())
     })
 
-task("helixVault.lastUpdateBlock")
+subtask("helixVault.lastUpdateBlock")
     .setAction(async () => {
         const result = await (await contract()).lastUpdateBlock()
         console.log(result.toString())
     })
 
-task("helixVault.owner")
+subtask("helixVault.owner")
     .setAction(async () => {
         const result = await (await contract()).owner()
         console.log(result.toString())
     })
 
-task("helixVault.paused")
+subtask("helixVault.paused")
     .setAction(async () => {
         const result = await (await contract()).paused()
         console.log(result.toString())
     })
 
-task("helixVault.pendingReward")
-    .addPositionalParam("depositId")
+subtask("helixVault.pendingReward")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).pendingReward(args.depositId)
+        const result = await (await contract()).pendingReward(args.arg0)
         console.log(result.toString())
     })
 
-task("helixVault.timelockOwner")
+subtask("helixVault.timelockOwner")
     .setAction(async () => {
         const result = await (await contract()).timelockOwner()
         console.log(result.toString())
     })
 
-task("helixVault.token")
+subtask("helixVault.token")
     .setAction(async () => {
         const result = await (await contract()).token()
         console.log(result.toString())
@@ -193,26 +193,26 @@ task("helixVault.token")
 // WRITE
 
 
-task("helixVault.addDuration")
-    .addPositionalParam("duration")
-    .addPositionalParam("weight")
+subtask("helixVault.addDuration")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).addDuration(args.duration, args.weight)
+        const result = await (await contract()).addDuration(args.arg0, args.arg1)
     })
 
-task("helixVault.claimReward")
-    .addPositionalParam("depositId")
+subtask("helixVault.claimReward")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).claimReward(args.depositId)
+        const result = await (await contract()).claimReward(args.arg0)
     })
 
-task("helixVault.compount")
-    .addPositionalParam("depositId")
+subtask("helixVault.compount")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).compound(args.depositId)
+        const result = await (await contract()).compound(args.arg0)
     })
 
-task("helixVault.emergencyWithdraw")
+subtask("helixVault.emergencyWithdraw")
     .setAction(async () => {
         const result = await (await contract()).emergencyWithdraw()
     })
@@ -220,59 +220,59 @@ task("helixVault.emergencyWithdraw")
 
 // initialize
 
-task("helixVault.newDeposit")
-    .addPositionalParam("amount")
-    .addPositionalParam("index")
+subtask("helixVault.newDeposit")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).newDeposit(args.amount, args.index)
+        const result = await (await contract()).newDeposit(args.arg0, args.arg1)
     })
 
-task("helixVault.pause")
+subtask("helixVault.pause")
     .setAction(async () => {
         const result = await (await contract()).pause()
     })
 
-task("helixVault.removeDuration")
-    .addPositionalParam("index")
+subtask("helixVault.removeDuration")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).removeDuration(args.index)
+        const result = await (await contract()).removeDuration(args.arg0)
     })
 
 // renounceOwnership
 
 // renounceTimelockOwnership
 
-task("helixVault.setCollectorPercentAndDecimals")
-    .addPositionalParam("collectorPercent")
-    .addPositionalParam("decimals")
+subtask("helixVault.setCollectorPercentAndDecimals")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).setCollectorPercent(args.collectorPercent, args.decimals)
+        const result = await (await contract()).setCollectorPercent(args.arg0, args.arg1)
     })
 
-task("helixVault.setDuration")
-    .addPositionalParam("index")
-    .addPositionalParam("duration")
-    .addPositionalParam("weight")
+subtask("helixVault.setDuration")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
     .setAction(async (args) => {
-        const result = await (await contract()).setDuration(args.index, args.duration, args.weight)
+        const result = await (await contract()).setDuration(args.arg0, args.arg1, args.arg2)
     })
 
-task("helixVault.setFeeHandler")
-    .addPositionalParam("feeHandler")
+subtask("helixVault.setFeeHandler")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).setFeeHandler(args.feeHandler)
+        const result = await (await contract()).setFeeHandler(args.arg0)
     })
 
-task("helixVault.setFeeMinter")
-    .addPositionalParam("feeMinter")
+subtask("helixVault.setFeeMinter")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).setFeeMinter(args.feeMinter)
+        const result = await (await contract()).setFeeMinter(args.arg0)
     })
 
-task("helixVault.setLastRewardBlock")
-    .addPositionalParam("lastRewardBlock")
+subtask("helixVault.setLastRewardBlock")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).setLastRewardBlock(args.lastRewardBlock)
+        const result = await (await contract()).setLastRewardBlock(args.arg0)
     })
 
 
@@ -280,26 +280,26 @@ task("helixVault.setLastRewardBlock")
 
 // transferTimelockOwnership
 
-task("helixVault.unpause")
+subtask("helixVault.unpause")
     .setAction(async () => {
         const result = await (await contract()).unpause()
     })
 
-task("helixVault.updateDeposit")
-    .addPositionalParam("amount")
-    .addPositionalParam("depositId")
+subtask("helixVault.updateDeposit")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).updateDeposit(args.amount, args.depositId)
+        const result = await (await contract()).updateDeposit(args.arg0, args.arg1)
     })
 
-task("helixVault.updatePool")
+subtask("helixVault.updatePool")
     .setAction(async () => {
         const result = await (await contract()).updatePool()
     })
 
-task("helixVault.withdraw")
-    .addPositionalParam("amount")
-    .addPositionalParam("depositId")
+subtask("helixVault.withdraw")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).withdraw(args.amount, args.depositId)
+        const result = await (await contract()).withdraw(args.arg0, args.arg1)
     })
