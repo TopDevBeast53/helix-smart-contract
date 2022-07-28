@@ -5,6 +5,7 @@ require("hardhat-gas-reporter")
 require('@openzeppelin/hardhat-upgrades');
 require("dotenv").config();
 
+require("./tasks/ownerMultiSig")
 require("./tasks/helixToken")
 require("./tasks/feeMinter")
 require("./tasks/referralRegister")
