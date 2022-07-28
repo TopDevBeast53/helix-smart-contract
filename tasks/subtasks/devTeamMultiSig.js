@@ -154,7 +154,7 @@ subtask("devTeamMultiSig.submitAddOwner")
 subtask("devTeamMultiSig.submitRemoveAdmin")
     .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).submitRemoveAdmin.arg0)
+        const result = await (await contract()).submitRemoveAdmin(arg0)
     })
 
 subtask("devTeamMultiSig.submitRemoveOwner")

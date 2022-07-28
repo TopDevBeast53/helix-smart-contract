@@ -136,7 +136,7 @@ subtask("factory.updateOracle")
     .addPositionalParam("arg0")
     .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).updateOracle
+        const result = await (await contract()).updateOracle(
             args.arg0,
             args.arg1
         )

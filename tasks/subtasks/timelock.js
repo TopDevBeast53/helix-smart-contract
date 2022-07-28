@@ -62,6 +62,7 @@ subtask("timelock.getTimestamp")
         console.log(result.toString())
     })
 
+/*
 subtask("timelock.supportsInterface")
     .addPositionalParam("arg0")
     .addPositionalParam("arg1")
@@ -69,7 +70,7 @@ subtask("timelock.supportsInterface")
         const result = await (await contract()).supportsInterface(args.arg0, args.arg1)
         console.log(result.toString())
     })
-
+*/
 
 subtask("timelock.hashOperation")
     .addPositionalParam("arg0")

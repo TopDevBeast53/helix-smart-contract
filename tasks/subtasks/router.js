@@ -51,6 +51,7 @@ subtask("router.getAmountIn")
         console.log(result.toString())
     })
 
+/*
 subtask("router.getAmountIn")
     .addPositionalParam("arg0")
     .addPositionalParam("arg1")
@@ -63,7 +64,9 @@ subtask("router.getAmountIn")
         )
         console.log(result.toString())
     })
+*/
 
+/*
 subtask("router.getAmountOut")
     .addPositionalParam("arg0")
     .addPositionalParam("arg1")
@@ -76,6 +79,7 @@ subtask("router.getAmountOut")
         )
         console.log(result.toString())
     })
+*/
 
 subtask("router.getAmountOut")
     .addPositionalParam("arg0")
@@ -122,7 +126,7 @@ subtask("router.owner")
 
 subtask("router.paused")
     .setAction(async () => {
-        const result = await (await contract()).paused(
+        const result = await (await contract()).paused()
         console.log(result.toString())
     })
 
@@ -141,7 +145,7 @@ subtask("router.quote")
 
 subtask("router.swapRewards")
     .setAction(async () => {
-        const result = await (await contract()).swapRewards(
+        const result = await (await contract()).swapRewards()
         console.log(result.toString())
     })
 
