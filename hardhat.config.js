@@ -8,6 +8,7 @@ require("dotenv").config();
 require("./tasks/helixToken")
 require("./tasks/feeMinter")
 require("./tasks/referralRegister")
+require("./tasks/helixVault")
 
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
