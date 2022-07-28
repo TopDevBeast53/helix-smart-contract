@@ -7,6 +7,7 @@ require("dotenv").config();
 
 require("./tasks/ownerMultiSig")
 require("./tasks/devTeamMultiSig")
+require("./tasks/treasuryMultiSig")
 require("./tasks/helixToken")
 require("./tasks/feeMinter")
 require("./tasks/referralRegister")
