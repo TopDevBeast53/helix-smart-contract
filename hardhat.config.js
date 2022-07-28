@@ -17,6 +17,7 @@ require("./tasks/swapRewards")
 require("./tasks/masterChef")
 require("./tasks/autoHelix")
 require("./tasks/multicall")
+require("./tasks/paymentSplitter")
 
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
