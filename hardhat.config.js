@@ -9,6 +9,7 @@ require("./tasks/helixToken")
 require("./tasks/feeMinter")
 require("./tasks/referralRegister")
 require("./tasks/helixVault")
+require("./tasks/factory")
 
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
