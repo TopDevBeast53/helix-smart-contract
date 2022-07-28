@@ -31,4 +31,13 @@ module.exports = {
         4: '0xee936e648cD998e9df4531dF77EF2D2AECA5921b',
         31: '0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8',
     },
+    usdtToken: {
+        31: '0x760ae0f5319D9efEdc9B99d7E73fdaB2f84E4d87',
+    },
+    rifToken: {
+        31: '0x700E1B86F9c47E10AB94FaA7E6C8260C0F07074D',
+    },
+    sovToken: {
+        31: '0xf5aBC0d6239D494AED4433189e1Ccb96B50E2be8',
+    },
 }
