@@ -2,7 +2,7 @@
 
 const { ethers } = require("hardhat")
 
-const verbose = false;
+const verbose = true;
 
 const env = require("../../constants/env")
 const contracts  = require("../../constants/contracts")
