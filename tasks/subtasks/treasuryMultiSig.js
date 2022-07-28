@@ -12,11 +12,25 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 // READ
 
 
-// adminConfirmationsRequired
+subtask("treasuryMultiSig.adminConfirmationsRequired")
+    .setAction(async () => {
+        const result = await (await contract()).adminConfirmationsRequied()
+        console.log(result.toString())
+    })
 
-// admins
+subtask("treasuryMultiSig.admins")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).admins(args.arg0)
+        console.log(result.toString())
+    })
 
-// getAdmins
+subtask("treasuryMultiSig.getAdmins")
+    .setAction(async () => {
+        const result = await (await contract()).getAdmins()
+        console.log(result.toString())
+    })
+
 
 subtask("treasuryMultiSig.getBalance")
     .addPositionalParam("arg0")
@@ -25,14 +39,19 @@ subtask("treasuryMultiSig.getBalance")
         console.log(result.toString())
     })
 
-
-// getOwners
+subtask("treasuryMultiSig.getOwners")
+    .setAction(async () => {
+        const result = await (await contract()).getOwners()
+        console.log(result.toString())
+    })
 
 subtask("treasuryMultiSig.getTransaction")
     .addPositionalParam("arg0")
     .setAction(async (args) => {
         const result = await (await contract()).getTransaction(args.arg0)
-        console.log(result.toString())
+        for (let i = 0; i < result.length; i++) {
+            console.log(result[i].toString())
+        }
     })
 
 subtask("treasuryMultiSig.getTransactionCount")
@@ -41,8 +60,12 @@ subtask("treasuryMultiSig.getTransactionCount")
         console.log(result.toString())
     })
 
-
-// isAdmin
+subtask("treasuryMultiSig.isAdmin")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).isAdmin(args.arg0)
+        console.log(result.toString())
+    })
 
 subtask("treasuryMultiSig.isConfirmed")
     .addPositionalParam("arg0")
@@ -52,13 +75,33 @@ subtask("treasuryMultiSig.isConfirmed")
         console.log(result.toString())
     })
 
-// isOwner
+subtask("treasuryMultiSig.isOwner")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).isOwner(args.arg0)
+        console.log(result.toString())
+    })
 
-// ownerConfirmationsRequired
+subtask("treasuryMultiSig.ownerConfirmationsRequired")
+    .setAction(async () => {
+        const result = await (await contract()).ownerConfirmationsRequired()
+        console.log(result.toString())
+    })
 
-// owners
+subtask("treasuryMultiSig.owners")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).owners(args.arg0)
+        console.log(result.toString())
+    })
 
-// transactions
+subtask("treasuryMultiSig.transactions")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).transactions(args.arg0)
+        console.log(result.toString())
+    })
+
 
 
 // WRITE
@@ -90,20 +133,47 @@ subtask("treasuryMultiSig.executeTransaction")
         const result = await (await contract()).executeTransaction(args.arg0)
     })
 
+subtask("treasuryMultiSig.revokeConfirmation")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).revokeConfirmation(args.arg0)
+    })
 
-// revokeConfirmation
+subtask("treasuryMultiSig.submitAddAdmin")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).submitAddAdmin(args.arg0)
+    })
 
-// submitAddAdmin
+subtask("treasuryMultiSig.submitAddOwner")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).submitAddOwner(args.arg0)
+    })
 
-// submitAddOwner
+subtask("treasuryMultiSig.submitRemoveAdmin")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).submitRemoveAdmin.arg0)
+    })
 
-// submitRemoveAdmin
+subtask("treasuryMultiSig.submitRemoveOwner")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).submitRemoveOwner(args.arg0)
+    })
 
-// submitRemoveOwner
+subtask("treasuryMultiSig.submitSetAdminConfirmationsRequired")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).submitSetAdminConfirmationsRequired(args.arg0)
+    })
 
-// submitSetAdminConfirmationsRequired
-
-// submitSetOwnerConfirmationsRequired
+subtask("treasuryMultiSig.submitSetOwnerConfirmationsRequired")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).submitSetOwnerConfirmationsRequired(args.arg0)
+    })
 
 subtask("treasuryMultiSig.submitTransaction")
     .addPositionalParam("arg0")
