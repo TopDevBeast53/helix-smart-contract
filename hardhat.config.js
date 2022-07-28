@@ -12,6 +12,7 @@ require("./tasks/helixVault")
 require("./tasks/factory")
 require("./tasks/oracleFactory")
 require("./tasks/router")
+require("./tasks/migrator")
 
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
