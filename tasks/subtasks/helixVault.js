@@ -56,7 +56,6 @@ subtask("helixVault.depositIds")
         console.log(result.toString())
     })
 
-
 subtask("helixVault.deposits")
     .addPositionalParam("arg0")
     .setAction(async (args) => {
@@ -217,8 +216,23 @@ subtask("helixVault.emergencyWithdraw")
         const result = await (await contract()).emergencyWithdraw()
     })
 
-
-// initialize
+subtask("helixVault.initialize")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .addPositionalParam("arg3")
+    .addPositionalParam("arg4")
+    .addPositionalParam("arg5")
+    .setAction(async (args) => {
+        const result = await (await contract()).initialize(
+            args.arg0, 
+            args.arg1,
+            args.arg2,
+            args.arg3,
+            args.arg4,
+            args.arg5
+        )
+    })
 
 subtask("helixVault.newDeposit")
     .addPositionalParam("arg0")
@@ -239,8 +253,16 @@ subtask("helixVault.removeDuration")
     })
 
 // renounceOwnership
+subtask("helixVault.renounceOwnership")
+    .setAction(async () => {
+        const result = await (await contract()).renounceOwnership()
+    })
 
 // renounceTimelockOwnership
+subtask("helixVault.renounceTimelockOwnership")
+    .setAction(async () => {
+        const result = await (await contract()).renounceTimelockOwnership()
+    })
 
 subtask("helixVault.setCollectorPercentAndDecimals")
     .addPositionalParam("arg0")
@@ -254,7 +276,11 @@ subtask("helixVault.setDuration")
     .addPositionalParam("arg1")
     .addPositionalParam("arg2")
     .setAction(async (args) => {
-        const result = await (await contract()).setDuration(args.arg0, args.arg1, args.arg2)
+        const result = await (await contract()).setDuration(
+            args.arg0, 
+            args.arg1, 
+            args.arg2
+        )
     })
 
 subtask("helixVault.setFeeHandler")
@@ -275,10 +301,17 @@ subtask("helixVault.setLastRewardBlock")
         const result = await (await contract()).setLastRewardBlock(args.arg0)
     })
 
+subtask("helixVault.transferOwnership")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).transferOwnership(args.arg0)
+    })
 
-// transferOwnership
-
-// transferTimelockOwnership
+subtask("helixVault.transferTimelockOwnership")
+    .addPositionalParam("arg0")
+    .setAction(async (args) => {
+        const result = await (await contract()).transferTimelockOwnership(args.arg0)
+    })
 
 subtask("helixVault.unpause")
     .setAction(async () => {
