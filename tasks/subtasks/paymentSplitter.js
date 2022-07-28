@@ -1,7 +1,7 @@
 const { loadContract } = require("./utilities")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
 
 const name = "PaymentSplitter"
 const address = contracts.paymentSplitter[env.network]
@@ -14,17 +14,17 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 
 // owner
 
-task("paymentSplitter.payee")
-    .addPositionalParam("index")
+subtask("paymentSplitter.payee")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).payee(args.index)
+        const result = await (await contract()).payee(args.arg0)
         console.log(result.toString())
     })
 
-task("paymentSplitter.releaseableErc20")
-    .addPositionalParam("account")
+subtask("paymentSplitter.releaseableErc20")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).releasableErc20(args.account)
+        const result = await (await contract()).releasableErc20(args.arg0)
         console.log(result.toString())
     })
 
@@ -34,10 +34,10 @@ task("paymentSplitter.releaseableErc20")
 
 // releasedEther
 
-task("paymentSplitter.shares")
-    .addPositionalParam("account")
+subtask("paymentSplitter.shares")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).shares(args.account)
+        const result = await (await contract()).shares(args.arg0)
         console.log(result.toString())
     })
 
@@ -45,7 +45,7 @@ task("paymentSplitter.shares")
 
 // totalReleasedEther
 
-task("paymentSplitter.totalShares")
+subtask("paymentSplitter.totalShares")
     .setAction(async () => {
         const result = await (await contract()).totalShares()
         console.log(result.toString())
@@ -57,20 +57,20 @@ task("paymentSplitter.totalShares")
 
 
 // releaseAllErc20
-task("paymentSplitter.releaseAllErc20")
-    .addPositionalParam("token")
+subtask("paymentSplitter.releaseAllErc20")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).releaseAllErc20(args.token)
+        const result = await (await contract()).releaseAllErc20(args.arg0)
     })
 
 
 // releaseAllEther
 
-task("paymentSplitter.releaseErc20")
-    .addPositionalParam("token")
-    .addPositionalParam("account")
+subtask("paymentSplitter.releaseErc20")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).releaseErc20(args.token, args.account)
+        const result = await (await contract()).releaseErc20(args.arg0, args.arg1)
     })
 
 // releaseEther

@@ -1,7 +1,7 @@
 const { loadContract } = require("./utilities")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
 
 const name = "MasterChef"
 const address = contracts.masterChef[env.network]
@@ -29,10 +29,10 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 // getDevToMintPerBlock
 
 // getLpToken
-task("masterChef.getLpToken")
-    .addPositionalParam("pid")
+subtask("masterChef.getLpToken")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getLpToken(args.pid)
+        const result = await (await contract()).getLpToken(args.arg0)
         console.log(result.toString())
     })
 
@@ -40,10 +40,10 @@ task("masterChef.getLpToken")
 // getMultiplier
 
 // getPoolId
-task("masterChef.getPoolId")
-    .addPositionalParam("lpToken")
+subtask("masterChef.getPoolId")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).getPoolId(args.lpToken)
+        const result = await (await contract()).getPoolId(args.arg0)
         console.log(result.toString())
     })
 
@@ -55,7 +55,7 @@ task("masterChef.getPoolId")
 // helixToken
 
 // lastBlockDevWithdraw
-task("masterChef.lastBlockDevWithdraw")
+subtask("masterChef.lastBlockDevWithdraw")
     .setAction(async () => {
         const result = await (await contract()).lastBlockDevWithdraw()
         console.log(result.toString())
@@ -66,11 +66,11 @@ task("masterChef.lastBlockDevWithdraw")
 // paused
 
 // pendingHelixToken
-task("masterChef.pendingHelixToken")
-    .addPositionalParam("pid")
-    .addPositionalParam("user")
+subtask("masterChef.pendingHelixToken")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).pendingHelixToken(args.pid, args.user)
+        const result = await (await contract()).pendingHelixToken(args.arg0, args.arg1)
         console.log(result.toString())
     })
 
@@ -98,15 +98,15 @@ task("masterChef.pendingHelixToken")
 // WRITE
 
 
-task("masterChef.add")
-    .addPositionalParam("allocPoint")
-    .addPositionalParam("lpToken")
-    .addPositionalParam("withUpdate")
+subtask("masterChef.add")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
     .setAction(async (args) => {
         const result = await (await contract()).add(
-            args.allocPoint,
-            args.lpToken,
-            args.withUpdate
+            args.arg0,
+            args.arg1,
+            args.arg2
         )
     })
 
@@ -120,10 +120,10 @@ task("masterChef.add")
 
 // deposit
 
-task("masterChef.emergencyWithdraw")
-    .addPositionalParam("pid")
+subtask("masterChef.emergencyWithdraw")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).emergencyWithdraw(args.pid)
+        const result = await (await contract()).emergencyWithdraw(args.arg0)
     })
 
 // enterStaking
@@ -140,15 +140,15 @@ task("masterChef.emergencyWithdraw")
 
 // renounceTimelockOwnership
 
-task("masterChef.set")
-    .addPositionalParam("pid")
-    .addPositionalParam("allocPoint")
-    .addPositionalParam("withUpdate")
+subtask("masterChef.set")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
     .setAction(async (args) => {
         const result = await (await contract()).set(
-            args.pid,
-            args.allocPoint,
-            args.withUpdate
+            args.arg0,
+            args.arg1,
+            args.arg2
         )
     })
 

@@ -1,7 +1,7 @@
 const { loadContract } = require("./utilities")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
 
 const name = "OracleFactory"
 const address = contracts.oracleFactory[env.network]
@@ -13,19 +13,19 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 
 
 // canUpdate
-task("oracleFactory.canUpdate")
+subtask("oracleFactory.canUpdate")
     .setAction(async () => {
         const result = await (await contract()).canUpdate()
         console.log(result.toString())
     })
 
 // consult
-task("oracleFactory.consult")
-    .addPositionalParam("tokenIn")
-    .addPositionalParam("amountIn")
-    .addPositionalParam("tokenOut")
+subtask("oracleFactory.consult")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
     .setAction(async (args) => {
-        const result = await (await contract()).consult(args.tokenIn, args.amountIn, args.tokenOut)
+        const result = await (await contract()).consult(args.arg0, args.arg1, args.arg2)
         console.log(result.toString())
     })
 

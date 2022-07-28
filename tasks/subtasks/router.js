@@ -1,7 +1,7 @@
 const { loadContract } = require("./utilities")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
 
 const name = "HelixRouterV1"
 const address = contracts.router[env.network]
@@ -13,7 +13,7 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 
 
 // WETH
-task("router.WETH")
+subtask("router.WETH")
     .setAction(async () => {
         const result = await (await contract()).WETH()
         console.log(result.toString())

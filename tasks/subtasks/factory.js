@@ -1,7 +1,7 @@
 const { loadContract } = require("./utilities")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
 
 const name = "HelixFactory"
 const address = contracts.factory[env.network]
@@ -12,20 +12,20 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 // READ
 
 
-task("helixToken.INIT_CODE_HASH")
+subtask("factory.INIT_CODE_HASH")
     .setAction(async () => {
         const result = await (await contract()).INIT_CODE_HASH()
         console.log(result.toString())
     })
 
-task("helixToken.allPairs")
-    .addPositionalParam("uint256")
+subtask("factory.allPairs")
+    .addPositionalParam("arg0")
     .setAction(async (args) => {
-        const result = await (await contract()).allPairs(args.uint256)
+        const result = await (await contract()).allPairs(args.arg0)
         console.log(result.toString())
     })
 
-task("helixToken.allPairsLength")
+subtask("factory.allPairsLength")
     .setAction(async () => {
         const result = await (await contract()).allPairsLength()
         console.log(result.toString())
@@ -38,11 +38,11 @@ task("helixToken.allPairsLength")
 
 // feeToSetter
 
-task("helixToken.getPair")
-    .addPositionalParam("tokenA")
-    .addPositionalParam("tokenB")
+subtask("factory.getPair")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).getPair(args.tokenA, args.tokenB)
+        const result = await (await contract()).getPair(args.arg0, args.arg1)
         console.log(result.toString())
     })
 
@@ -53,11 +53,11 @@ task("helixToken.getPair")
 // WRITE
 
 
-task("helixToken.createPair")
-    .addPositionalParam("tokenA")
-    .addPositionalParam("tokenB")
+subtask("factory.createPair")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).createPair(args.tokenA, args.tokenB)
+        const result = await (await contract()).createPair(args.arg0, args.arg1)
         console.log(result.toString())
     })
 

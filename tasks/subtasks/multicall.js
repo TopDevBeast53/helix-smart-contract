@@ -1,7 +1,7 @@
 const { loadContract } = require("./utilities")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
 
 const name = "Multicall2"
 const address = contracts.multicall[env.network]
@@ -13,7 +13,7 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 
 
 // getBlockHash
-task("multicall.getBlockHash")
+subtask("multicall.getBlockHash")
     .setAction(async () => {
         const result = await (await contract()).getBlockHash()
         console.log(result.toString())

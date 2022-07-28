@@ -1,7 +1,7 @@
 const { loadContract } = require("./utilities")
 
-const env = require("../constants/env")
-const contracts = require("../constants/contracts")
+const env = require("../../constants/env")
+const contracts = require("../../constants/contracts")
 
 const name = "HelixMigrator"
 const address = contracts.helixMigrator[env.network]
@@ -17,7 +17,7 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 // paused
 
 // router
-task("migrator.router")
+subtask("migrator.router")
     .setAction(async (args) => {
         const result = await (await contract()).router()
         console.log(result.toString())
@@ -29,17 +29,17 @@ task("migrator.router")
 
 
 // migrateLiquidity
-task("migrator.migrateLiquidity")
-    .addPositionalParam("tokenA")
-    .addPositionalParam("tokenB")
-    .addPositionalParam("lpToken")
-    .addPositionalParam("externalRouter")
+subtask("migrator.migrateLiquidity")
+    .addPositionalParam("arg0")
+    .addPositionalParam("arg1")
+    .addPositionalParam("arg2")
+    .addPositionalParam("arg3")
     .setAction(async (args) => {
         const result = await (await contract()).migrateLiquidity(
-            args.tokenA,
-            args.tokenB,
-            args.lpToken,
-            args.externalRouter,
+            args.arg0,
+            args.arg1,
+            args.arg2,
+            args.arg3,
         )
     })
 
