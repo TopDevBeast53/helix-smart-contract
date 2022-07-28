@@ -10,6 +10,7 @@ require("./tasks/feeMinter")
 require("./tasks/referralRegister")
 require("./tasks/helixVault")
 require("./tasks/factory")
+require("./tasks/oracleFactory")
 
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
