@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/router.js --network ropsten
  */
 
-const { verifyRouter } = require("../shared/verify/verifiers")
+const { verifyRouter } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyRouter()
