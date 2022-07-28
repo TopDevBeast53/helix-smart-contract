@@ -13,6 +13,7 @@ require("./tasks/factory")
 require("./tasks/oracleFactory")
 require("./tasks/router")
 require("./tasks/migrator")
+require("./tasks/swapRewards")
 
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
