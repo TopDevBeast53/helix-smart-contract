@@ -1,12 +1,14 @@
 /**
+ * @dev Verify the deployed HelixToken
+ *
  * command for verify on testnet: 
- *      npx hardhat run scripts/5_verify/helixVault.js --network ropsten
+ *      npx hardhat run scripts/verify/helixToken.js --network ropsten
  */
 
-const { verifyHelixVault } = require("./verifiers/verifiers")
+const { verifyHelixToken } = require("./verifiers/verifiers")
 
 async function main() {
-    await verifyHelixVault()
+    await verifyHelixToken()
     console.log("done")
 }
 

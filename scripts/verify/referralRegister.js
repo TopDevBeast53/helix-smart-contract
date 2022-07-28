@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/referralRegister.js --network ropsten
  */
 
-const { verifyReferralRegister } = require("../shared/verify/verifiers")
+const { verifyReferralRegister } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyReferralRegister()

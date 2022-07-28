@@ -5,6 +5,24 @@ require("hardhat-gas-reporter")
 require('@openzeppelin/hardhat-upgrades');
 require("dotenv").config();
 
+require("./tasks/ownerMultiSig")
+require("./tasks/devTeamMultiSig")
+require("./tasks/treasuryMultiSig")
+require("./tasks/timelock")
+require("./tasks/helixToken")
+require("./tasks/feeMinter")
+require("./tasks/referralRegister")
+require("./tasks/helixVault")
+require("./tasks/factory")
+require("./tasks/oracleFactory")
+require("./tasks/router")
+require("./tasks/migrator")
+require("./tasks/swapRewards")
+require("./tasks/masterChef")
+require("./tasks/autoHelix")
+require("./tasks/multicall")
+require("./tasks/paymentSplitter")
+
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
 const etherscanApiKey = process.env.ETHERSCANAPIKEY;

@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/oracleFactory.js --network ropsten
  */
 
-const { verifyOracleFactory } = require("../shared/verify/verifiers")
+const { verifyOracleFactory } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyOracleFactory()

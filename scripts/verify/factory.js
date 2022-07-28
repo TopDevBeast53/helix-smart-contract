@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/factory.js --network ropsten
  */
 
-const { verifyFactory } = require("../shared/verify/verifiers")
+const { verifyFactory } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyFactory()
