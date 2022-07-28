@@ -15,6 +15,7 @@ require("./tasks/router")
 require("./tasks/migrator")
 require("./tasks/swapRewards")
 require("./tasks/masterChef")
+require("./tasks/autoHelix")
 
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
