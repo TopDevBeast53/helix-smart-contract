@@ -113,7 +113,7 @@ task("treasuryMultiSig.submitTransaction")
         const result = await (await contract()).submitTransaction(
             args.to,
             args.value,
-            args.data,
+            args.data
         )
     })
 
@@ -125,5 +125,6 @@ task("treasuryMultiSig.submitTransfer")
         const result = await (await contract()).submitTransfer(
             args.token,
             args.to,
-            args.amount,
+            args.amount
         )
+    })
