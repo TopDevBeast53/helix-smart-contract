@@ -64,14 +64,14 @@ module.exports = {
         1: 5, // 5%
         3: 5,
         4: 5,
-        30: 5,
+        30: 0,
         31: 5,
     },
     REFERRAL_SWAP_REWARD_PERCENT: {
         1: 5, // 5%
         3: 5,
         4: 5,
-        30: 5,
+        30: 0,
         31: 5,
     },
     REFERRAL_LAST_MINT_BLOCK: {
@@ -99,17 +99,17 @@ module.exports = {
         31: 0,
     },
     MASTERCHEF_STAKING_PERCENT : {
-        1: 714000,
+        1: 600000,
         3: 714000,
         4: 714000,
-        31: 714000,
+        30: 600000,
         31: 714000,
     },
     MASTERCHEF_DEV_PERCENT : {
-        1: 286000,
+        1: 400000,
         3: 286000,
         4: 286000,
-        30: 286000,
+        30: 400000,
         31: 286000,
     },
     MASTERCHEF_LPTOKEN_ADDRESSES: {
@@ -156,11 +156,11 @@ module.exports = {
         3: [3500, 1500, 1500, 1500, 1500],
         4: [3500, 1500, 1500, 1500, 1500],
         30: [
-                0,   // rhelix-wrbtc
-                0,   // rhelix-rusdc
-                0,   // rusdc-wrbtc
-                0,   // rif-wrbtc
-                0    // sov-wrbtc
+                20000,   // rhelix-wrbtc
+                12500,   // rhelix-rusdc
+                10000,   // rusdc-wrbtc
+                5000,    // rif-wrbtc
+                1000,    // sov-wrbtc
             ],
         31: [
                 3500,   // rhelix-wrbtc
@@ -205,10 +205,10 @@ module.exports = {
     // Referral Rewards: 3.125%
     // Team Emissions: 25%
     FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK: {
-        1: '8000000000000000000',
+        1: '12000000000000000000',
         3: '10000000000000000000',
         4: '10000000000000000000',
-        30: '10000000000000000000',
+        30: '20320000000000000000',
         31: '10000000000000000000',
     },
 
@@ -226,12 +226,11 @@ module.exports = {
     // Referral:     3.13%
     // Vault:        9.37%
     // Sum:        100.00%
- 
     FEE_MINTER_TO_MINT_PERCENTS: {
         1: [8750, 313, 937],
         3: [8750, 313, 937],
         4: [8750, 313, 937],
-        30: [8750, 313, 937],
+        30: [6250, 3416, 334],
         31: [8750, 313, 937],
     },
 
@@ -241,7 +240,7 @@ module.exports = {
         1: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
         4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
-        30: [''],
+        30: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
     },
 
@@ -249,7 +248,13 @@ module.exports = {
         1: ['0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c'],
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
         4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
-        30: [''],
+        30: [
+                '0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', 
+                '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c',
+                '0xfB8B9191A5eF78c4D91a74EcdFd9B10E30Bf716c',
+                '0x609b0D5715728e844CD11d353cb56310B74a31Ca',
+                '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
+            ],
         31: ['0x22745897d49C1e15A562aa9F965aE087F2Fb89AA', '0xd4f46c6342229221d4EC3536627E9E76813f6071'],
     },
 
@@ -275,7 +280,7 @@ module.exports = {
         1: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
         4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
-        30: [''],
+        30: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
     },
 
@@ -283,7 +288,13 @@ module.exports = {
         1: ['0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c'],
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
         4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
-        30: [''],
+        30: [
+                '0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', 
+                '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c',
+                '0xfB8B9191A5eF78c4D91a74EcdFd9B10E30Bf716c',
+                '0x609b0D5715728e844CD11d353cb56310B74a31Ca',
+                '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
+            ],
         31: ['0x22745897d49C1e15A562aa9F965aE087F2Fb89AA', '0xd4f46c6342229221d4EC3536627E9E76813f6071'],
     },
 
@@ -309,7 +320,7 @@ module.exports = {
         1: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
         4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
-        30: [''],
+        30: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
     },
 
@@ -317,7 +328,13 @@ module.exports = {
         1: ['0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c'],
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
         4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
-        30: [''],
+        30: [
+                '0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', 
+                '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c',
+                '0xfB8B9191A5eF78c4D91a74EcdFd9B10E30Bf716c',
+                '0x609b0D5715728e844CD11d353cb56310B74a31Ca',
+                '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
+            ],
         31: ['0x22745897d49C1e15A562aa9F965aE087F2Fb89AA', '0xd4f46c6342229221d4EC3536627E9E76813f6071'],
     },
 
@@ -342,7 +359,7 @@ module.exports = {
     TIMELOCK_MIN_DELAY: {
         1: 21600,   // 6 hours 
         3: 21600,   // 6 hours 
-        4: 0,   // 6 hours 
+        4: 0,  
         30: 21600,   // 6 hours 
         31: 120,   // 2 minutes
     },
