@@ -1,9 +1,9 @@
 const { ethers } = require(`hardhat`);
 const { print } = require("../../shared/utilities")
 
-const name = 'Wrapped RSK Bitcoin'
-const symbol = 'WRBTC'
-const totalSupply = '2100000000000000000000000';        // 21 million
+const name = 'SOV'
+const symbol = 'SOV'
+const totalSupply = '1000000000000000000000000';        // 21 million
 
 const deployTestToken = async (deployer) => {
     print(`Deploy Test Token`);

@@ -105,6 +105,12 @@ module.exports = {
             gasPrice: 15000000000,
             accounts: getAccounts(),
         },
+        rskMainnet: {
+            chainId: 30,
+            url: 'https://public-node.rsk.co',
+            gasPrice: 5000000000,
+            accounts: getAccounts(),
+        },
         rskTestnet: {
             chainId: 31,
             url: 'https://public-node.testnet.rsk.co/',

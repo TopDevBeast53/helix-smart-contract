@@ -84,6 +84,12 @@ async function main() {
     const pair3Address = await factory.getPair(rif.address, wrbtc.address)
     const pair4Address = await factory.getPair(sov.address, wrbtc.address)
 
+    console.log(`rhelix wrbtc pair: ${pair0Address}`)
+    console.log(`rhelix rusdc pair: ${pair1Address}`)
+    console.log(`rusdc wrbtc pair:  ${pair2Address}`)
+    console.log(`rif wrbtc pair:    ${pair3Address}`)
+    console.log(`sov wrbtc pair:    ${pair4Address}`)
+
     /*
     // Approve the masterChef to spend the tokens
     console.log("rhelix approve masterChef")
