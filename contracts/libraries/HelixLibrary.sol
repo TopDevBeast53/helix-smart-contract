@@ -44,7 +44,7 @@ library HelixLibrary {
                 // hex"c982a01a3d96a6bfb7f46c8cdfa12bbe67c0deeaac07310f3cc6327e92f7fbce" // ropsten
                 // hex"368552104b0dcaacb939b1fe4370f68e358d806ee5d5c9a95193874dd004841a" // rinkeby
                 // hex"df06dacc3c0f420f3e881baed6af2087e5ab8bc910d926f439c1081ec11fc885" // mainnet
-                hex"039a6c55d612c34347963d19ff309e53bd5cd2c46f88b67b0f7f65d43193e92b" // rsk testnet
+                hex"039a6c55d612c34347963d19ff309e53bd5cd2c46f88b67b0f7f65d43193e92b" // rsk
             )))));
     }
 
