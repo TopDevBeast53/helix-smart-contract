@@ -12,6 +12,7 @@ module.exports = {
     FACTORY_INIT_CODE_HASH: {
         1: '',
         4: '0xc28107fd87760cfb4e1668f5cb7a07b1049eaedf62697db36fb894567a372da6',
+        30: '',
         31: '0xc28107fd87760cfb4e1668f5cb7a07b1049eaedf62697db36fb894567a372da6',
     },
     
@@ -21,35 +22,40 @@ module.exports = {
         1: 33,      // 33%
         3: 33,
         4: 33,
-        31: 33,
+        30: 0,
+        31: 0,
     },
 
     FEE_HANDLER_HELIX_VAULT_NFT_CHEF_PERCENT: {
         1: 33,      // 33%
         3: 33,
         4: 33,
-        31: 33,
+        30: 0,
+        31: 0,
     },
 
     FEE_HANDLER_REFERRAL_REGISTER_NFT_CHEF_PERCENT: {
         1: 50,      // 50%
         3: 50,
         4: 50,
-        31: 50,
+        30: 0,
+        31: 0,
     },
 
     FEE_HANDLER_LP_SWAP_NFT_CHEF_PERCENT: {
         1: 33,      // 33%
         3: 33,
         4: 33,
-        31: 33,
+        30: 0,
+        31: 0,
     },
 
     FEE_HANDLER_YIELD_SWAP_NFT_CHEF_PERCENT: {
         1: 33,      // 33%
         3: 33,
         4: 33,
-        31: 33,
+        30: 0,
+        31: 0,
     },
 
     // --------- Referral Register --------- //
@@ -58,24 +64,28 @@ module.exports = {
         1: 5, // 5%
         3: 5,
         4: 5,
+        30: 5,
         31: 5,
     },
     REFERRAL_SWAP_REWARD_PERCENT: {
         1: 5, // 5%
         3: 5,
         4: 5,
+        30: 5,
         31: 5,
     },
     REFERRAL_LAST_MINT_BLOCK: {
         1: 0, // if 0, will be set with block.number when deploy
         3: 0,
         4: 0,
+        30: 0,
         31: 0,
     },
     REFERRAL_COLLECTOR_PERCENT: {
         1: 1000, // 10.00%
         3: 1000, 
         4: 1000,
+        30: 1000,
         31: 1000,
     },
 
@@ -85,6 +95,7 @@ module.exports = {
         1: 0, // if 0, will be set with block.number when deploy
         3: 0,
         4: 0,
+        30: 0,
         31: 0,
     },
     MASTERCHEF_STAKING_PERCENT : {
@@ -92,37 +103,72 @@ module.exports = {
         3: 714000,
         4: 714000,
         31: 714000,
+        31: 714000,
     },
     MASTERCHEF_DEV_PERCENT : {
         1: 286000,
         3: 286000,
         4: 286000,
+        30: 286000,
         31: 286000,
     },
     MASTERCHEF_LPTOKEN_ADDRESSES: {
         //HELIX-WETH, DAI-USDC, USDC-WETH, DAI-WETH, USDT-USDC
-        1: ['0x74e3203F7C1008885970703A96e01feA0e5a511F',
-            '0xf52F8F9C1202bb52A6BcA425BCDDbf7C1c85f7c6',
-            '0x2D16c556E13daa5a11140E8EB520255aFe71b3ef',
-            '0xBAfB64dEf8b0EfD1904c7c9e485fcae1993996cB',
-            '0x906e53cC1790578732605C0Cf16DbED1EFaff21e'],
-        3: ['0x674f337EacE3Cb33907daAdA40Ba081326f19022',
-            '0xDF7E7d20eF68Dc304f0C446def7E2eaB4A877fdD',
-            '0xA8bBC7bF44FBFA4218654676095bA6af9A15877B',
-            '0x84F1889112009AA2418AEa8FC66c1e45eFb3Adc9',
-            '0x971a6BbC05fCdDbA1dD65dCE9B247831fc167bEf'],
-        4: ['0x4d762164f26DbfD16634fe933D1f6C7f72f08531',
-            '0xB761cAb861Ba423239E852b7d628c5a14A6fb474',
-            '0x8354fA5b6941b2ca5aD014aB56E69646bf4292F5',
-            '0xaE25d607bB327A7353dbbbdFFc234Cbd3a0E9b29',
-            '0xd87e648ccca6C944FA1A0aACDb4d0577518323f3']
+        1: [
+                '0x74e3203F7C1008885970703A96e01feA0e5a511F',
+                '0xf52F8F9C1202bb52A6BcA425BCDDbf7C1c85f7c6',
+                '0x2D16c556E13daa5a11140E8EB520255aFe71b3ef',
+                '0xBAfB64dEf8b0EfD1904c7c9e485fcae1993996cB',
+                '0x906e53cC1790578732605C0Cf16DbED1EFaff21e'
+            ],
+        3: [
+                '0x674f337EacE3Cb33907daAdA40Ba081326f19022',
+                '0xDF7E7d20eF68Dc304f0C446def7E2eaB4A877fdD',
+                '0xA8bBC7bF44FBFA4218654676095bA6af9A15877B',
+                '0x84F1889112009AA2418AEa8FC66c1e45eFb3Adc9',
+                '0x971a6BbC05fCdDbA1dD65dCE9B247831fc167bEf'
+            ],
+        4: [
+                '0x4d762164f26DbfD16634fe933D1f6C7f72f08531',
+                '0xB761cAb861Ba423239E852b7d628c5a14A6fb474',
+                '0x8354fA5b6941b2ca5aD014aB56E69646bf4292F5',
+                '0xaE25d607bB327A7353dbbbdFFc234Cbd3a0E9b29',
+                '0xd87e648ccca6C944FA1A0aACDb4d0577518323f3'
+            ],
+        30: [
+                '',
+                '',
+                '',
+                '',
+                '',
+            ],
+        31: [
+                '0x792Ba36a0dF41141072A04C4485E393EC8dD7129',   // rhelix-wrbtc
+                '0xb7190921ec3082d8227b02dC95A2d6f5b4AFCcDC',   // rhelix-rusdc
+                '0x810b968858233e4F2873295D409f4E91998207CE',   // rusdc-wrbtc
+                '0xa38B0DEB3d32673dC2CF4bE1B3af8233048A263E',   // rif-wrbtc
+                '0x5863A6b17B8F2898B08c92ba2CBBAdfD8C588812',   // sov-wrbtc
+            ],
     },
     MASTERCHEF_ALLOC_POINTS:{
         //HELIX-WETH, DAI-USDC, USDC-WETH, DAI-WETH, USDT-USDC
         1: [25000, 1000, 2500, 2500, 1000],
         3: [3500, 1500, 1500, 1500, 1500],
         4: [3500, 1500, 1500, 1500, 1500],
-        31: [3500, 1500, 1500, 1500, 1500],
+        30: [
+                0,   // rhelix-wrbtc
+                0,   // rhelix-rusdc
+                0,   // rusdc-wrbtc
+                0,   // rif-wrbtc
+                0    // sov-wrbtc
+            ],
+        31: [
+                3500,   // rhelix-wrbtc
+                1500,   // rhelix-rusdc
+                1500,   // rusdc-wrbtc
+                1500,   // rif-wrbtc
+                1500    // sov-wrbtc
+            ],
     },
 
     // --------- Helix Vault --------- //
@@ -130,6 +176,7 @@ module.exports = {
         1: 0, // if 0, will be set with block.number when deploy
         3: 0,
         4: 0,
+        30: 0,
         31: 0,
     },
 
@@ -138,6 +185,7 @@ module.exports = {
         1: 1972243972, // June 30, 2032
         3: 1972243972,
         4: 1972243972,
+        30: 1972243972,
         31: 1972243972,
     },
 
@@ -145,6 +193,7 @@ module.exports = {
         1: 150,     // 1.50%
         3: 1000,    // 10.00%
         4: 1000,
+        30: 1000,
         31: 1000,
     },
 
@@ -159,6 +208,7 @@ module.exports = {
         1: '8000000000000000000',
         3: '10000000000000000000',
         4: '10000000000000000000',
+        30: '10000000000000000000',
         31: '10000000000000000000',
     },
 
@@ -166,6 +216,7 @@ module.exports = {
         1: [masterChefAddress, referralRegisterAddress, vaultAddress],
         3: [masterChefAddress, referralRegisterAddress, vaultAddress],
         4: [masterChefAddress, referralRegisterAddress, vaultAddress],
+        30: [masterChefAddress, referralRegisterAddress, vaultAddress],
         31: [masterChefAddress, referralRegisterAddress, vaultAddress],
     },
 
@@ -180,6 +231,7 @@ module.exports = {
         1: [8750, 313, 937],
         3: [8750, 313, 937],
         4: [8750, 313, 937],
+        30: [8750, 313, 937],
         31: [8750, 313, 937],
     },
 
@@ -189,6 +241,7 @@ module.exports = {
         1: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
         4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
+        30: [''],
         31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
     },
 
@@ -196,6 +249,7 @@ module.exports = {
         1: ['0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c'],
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
         4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        30: [''],
         31: ['0x22745897d49C1e15A562aa9F965aE087F2Fb89AA', '0xd4f46c6342229221d4EC3536627E9E76813f6071'],
     },
 
@@ -203,6 +257,7 @@ module.exports = {
         1: 1,
         3: 1,
         4: 1,
+        30: 1,
         31: 1,
     },
 
@@ -210,6 +265,7 @@ module.exports = {
         1: 1,
         3: 1,
         4: 1,
+        30: 1,
         31: 1,
     },
 
@@ -219,6 +275,7 @@ module.exports = {
         1: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
         4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
+        30: [''],
         31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
     },
 
@@ -226,6 +283,7 @@ module.exports = {
         1: ['0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c'],
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
         4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        30: [''],
         31: ['0x22745897d49C1e15A562aa9F965aE087F2Fb89AA', '0xd4f46c6342229221d4EC3536627E9E76813f6071'],
     },
 
@@ -233,6 +291,7 @@ module.exports = {
         1: 1,
         3: 1,
         4: 1,
+        30: 1,
         31: 1,
     },
 
@@ -240,6 +299,7 @@ module.exports = {
         1: 1,
         3: 1,
         4: 1,
+        30: 1,
         31: 1,
     },
 
@@ -249,6 +309,7 @@ module.exports = {
         1: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
         4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
+        30: [''],
         31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
     },
 
@@ -256,6 +317,7 @@ module.exports = {
         1: ['0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c'],
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
         4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        30: [''],
         31: ['0x22745897d49C1e15A562aa9F965aE087F2Fb89AA', '0xd4f46c6342229221d4EC3536627E9E76813f6071'],
     },
 
@@ -263,6 +325,7 @@ module.exports = {
         1: 1,
         3: 1,
         4: 1,
+        30: 1,
         31: 1,
     },
 
@@ -270,6 +333,7 @@ module.exports = {
         1: 1,
         3: 1,
         4: 1,
+        30: 1,
         31: 1,
     },
 
@@ -279,6 +343,7 @@ module.exports = {
         1: 21600,   // 6 hours 
         3: 21600,   // 6 hours 
         4: 0,   // 6 hours 
+        30: 21600,   // 6 hours 
         31: 120,   // 2 minutes
     },
 
@@ -286,6 +351,7 @@ module.exports = {
         1: [ownerMultiSigAddress],
         3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
         4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        30: [ownerMultiSigAddress],
         31: [ownerMultiSigAddress],
     },
 
@@ -293,6 +359,7 @@ module.exports = {
         1: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
         4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
+        30: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
         31: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
     },
 
@@ -512,6 +579,21 @@ module.exports = {
             '0x51606cadd699fa80b8bfc3375103259e5ed7c195',
             '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'
         ],   
+        30: [
+            '0x3EC0F3e8b587E21dac6f776780A56F475C16A4b2',
+            '0x1FDbAe6036D0bD2Daf267C809fC45C7Ab6Ec67BB',
+            '0x8d3D07e15317efC76D31Dc12281A970B00bADBB7',
+            '0x9BE663907af30984F3e18B8337742806237A6a5E',
+            '0x6B399E1eEe3b97afBfD33e94900636AaFD1A001c',
+            '0x36d68E8b6a46F1a4538AF4Ba29d91D78fD6A4182',
+            '0xAAb2eACC08690BDbE4A11F43498cA0b9D37D16c2',
+            '0x2A3c3b05bA102d9F0B3B2a635ba73e1996d488d0',
+            '0xED2bcda237e32DC9183f58205C6054f83AD1F1e0',
+            '0x616C5bA33E28659F7Dc5DF009Df85ff0BBb405Cb',
+            '0x2Dbdce62Ef743c196E667B0ABAE988887c805Fc8',
+            '0xE0141093451baC286b497cD6aef4952FA8AE6796',
+            '0x969232E08b2F5Ac75E9e2ad4377D452819bb5d16'
+        ],
         31:[
             '0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8',
             '0x22745897d49C1e15A562aa9F965aE087F2Fb89AA',
@@ -541,6 +623,21 @@ module.exports = {
             5, 
             10,
             20
+        ],
+        30: [
+            10000, 
+            2000, 
+            2000, 
+            2000, 
+            300, 
+            300, 
+            200, 
+            200, 
+            200, 
+            200, 
+            200, 
+            625, 
+            1775
         ],
         31: [
             5, 
