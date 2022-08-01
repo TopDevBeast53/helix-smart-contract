@@ -11,10 +11,7 @@ const swapRewardsAddress = contracts.swapRewards[env.network]
 
 const initializeReferralRegister = async (wallet) => {
     print("initialize the referral register contract")
-    const referralRegister = await loadContract(
-        referralRegisterAddress,
-        wallet
-    )
+    const referralRegister = await loadContract(referralRegisterAddress, wallet)
     await addRecorder(referralRegister, swapRewardsAddress)
     await addRecorder(referralRegister, masterChefAddress)
 }

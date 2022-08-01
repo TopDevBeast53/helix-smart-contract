@@ -162,28 +162,28 @@ module.exports = {
         1: '0xa4c1135f0C0123f6683F98A8177F4c51F3179107',    // deployed 7/4/2022
         3: '0x01ebA7647C33d27742e774aB9507B11A153cde39',
         4: '0x826c6b006Fb183dE41B8f0d16549505569083A14',
-        30: '0x94b6327dA4f39f54EFf829BfA220d485948Fcc6E',   // deployed 7/29/2022
+        30: '0xd5BFD8F6a590a4Ae8e9B86266e78E24b8244eEF8',   // deployed 8/1/2022
         31: '0xE5B2B45e06F6004147e5b1FBbDd183DB0e6EEc6F',
     },
     masterChefImplementation: {
         1: '0x01e4ca54a35e09419791eb0a54a38aec8f656dce',    // deployed 7/22/2022
         3: '0xaEaD56A540873130c5B973E1A64378aca343F6BC',
         4: '0x8ac3fe1241fee5458514d08caef9576f24a2b2d1',
-        30: '0x727e625c35c8c18a1458444901a8EE4AbdB3eCaF',   // deployed 7/29/2022
+        30: '0x727e625c35c8c18a1458444901a8EE4AbdB3eCaF',   // deployed 8/1/2022
         31: '0xAFEe62D2ef96510D7ceFE2a5B97a7fe983DC893E',
     },
     autoHelix: {
         1: '0xabc7303d27658a277830a1F64B3CA77dFFA10483',    // deployed 7/4/2022
         3: '0x3F98698C924941EDe401085D6B932C88e75E7C45',
         4: '0xE3157d8338b593d5F7Bf0A5094a7Dd886aDb3bA9',
-        30: '0x38A23689B52882105dBC50a78be95d52919b98ae',   // deployed 7/29/2022
+        30: '0x4bdefD001a3b7F1d5Bf16B35DD19116aB3C33e64',   // deployed 8/1/2022
         31: '0x443d8b9263b0d506Fd0Acb5B5e7fC013B3841164',
     },
     autoHelixImplementation: {
         1: '0xf11E35518f4FC8141Bf5661130fcf75065bc35C8',    // deployed 7/4/2022
         3: '0xe9987A2fFCe10623680de0F4c5f66566b53E739E',
         4: '0xF362d1cF53a35bCf19Ff22e21f7d3e5eEdfe1017',
-        30: '0x187AB9FD3c34510c634C3d06bFc849D11CdB70C4',   // deployed 7/29/2022
+        30: '0x187AB9FD3c34510c634C3d06bFc849D11CdB70C4',   // deployed 8/1/2022
         31: '0xbFB6763A426EaB71219C910F424fBd0E3a1f41A9',
     },
     multicall: {
