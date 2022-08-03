@@ -36,12 +36,15 @@ module.exports = {
         31: '0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8',
     },
     usdtToken: {
+        30: '0xef213441a85df4d7acbdae0cf78004e1e486bb96',
         31: '0x760ae0f5319D9efEdc9B99d7E73fdaB2f84E4d87',
     },
     rifToken: {
+        30: '0x2acc95758f8b5f583470ba265eb685a8f45fc9d5',
         31: '0x700E1B86F9c47E10AB94FaA7E6C8260C0F07074D',
     },
     sovToken: {
+        30: '0xefc78fc7d48b64958315949279ba181c2114abbd',
         31: '0xf5aBC0d6239D494AED4433189e1Ccb96B50E2be8',
     },
 }

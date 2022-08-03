@@ -136,11 +136,11 @@ module.exports = {
                 '0xd87e648ccca6C944FA1A0aACDb4d0577518323f3'
             ],
         30: [
-                '',
-                '',
-                '',
-                '',
-                '',
+                '0x81b255Faa5828ed50E1B00F4d3b815A5085a1dAE',   // helix-wrbtc
+                '0xeb882f7105fbfb21344460e67de46a24c5df8c1a',   // helix-rusdc
+                '0xfe426a0f3d44f92cecef45d495185c3dd23f49d4',   // rusdt-wrbtc
+                '0x0c80ccc24e21a8376d39924e4ec0dd1f54fda367',   // rif-wrbtc
+                '0x57c3d1e11d79bb117997be1ab861f6d6768e7b63',   // sov-wrbtc
             ],
         31: [
                 '0x792Ba36a0dF41141072A04C4485E393EC8dD7129',   // rhelix-wrbtc

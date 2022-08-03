@@ -193,6 +193,14 @@ module.exports = {
         30: '0x264017e70774Dce5b3f474D2067Dc472a250Fd8d',   // deployed 7/29/2022
         31: '0xa8fa52ED5a03e402916343DfC498071f9b2148B0',
     },
+    helixP: {
+        56: '0x67e02A2A1e7527eB18A703a19778f8ACd9972808',
+        97: '',
+    },
+    vipPresale: {
+        56: '0xb40a03c79C58857ecEe0a4Bd8Dc87d5831CE010e',
+        97: '0x562BeA868BE7951b2f27C5825770CF5BE393d36F',
+    },
     publicSale: {
         1: '0x8DB40469E27496b3ed7AC3bf493c385e942aEd8A',
         4: '0x296d49dDAf208e5049153FB57371f08Be1Df1cEd',
