@@ -14,6 +14,8 @@ module.exports = {
         4: '0xc28107fd87760cfb4e1668f5cb7a07b1049eaedf62697db36fb894567a372da6',
         30: '',
         31: '0xc28107fd87760cfb4e1668f5cb7a07b1049eaedf62697db36fb894567a372da6',
+        56: '',
+        97: '',
     },
     
     // --------- FeeHandler --------- //
@@ -24,6 +26,8 @@ module.exports = {
         4: 33,
         30: 0,
         31: 0,
+        56: 0,
+        97: 0,
     },
 
     FEE_HANDLER_HELIX_VAULT_NFT_CHEF_PERCENT: {
@@ -32,6 +36,8 @@ module.exports = {
         4: 33,
         30: 0,
         31: 0,
+        56: 0,
+        97: 0,
     },
 
     FEE_HANDLER_REFERRAL_REGISTER_NFT_CHEF_PERCENT: {
@@ -40,6 +46,8 @@ module.exports = {
         4: 50,
         30: 0,
         31: 0,
+        56: 0,
+        97: 0,
     },
 
     FEE_HANDLER_LP_SWAP_NFT_CHEF_PERCENT: {
@@ -48,6 +56,8 @@ module.exports = {
         4: 33,
         30: 0,
         31: 0,
+        56: 0,
+        97: 0,
     },
 
     FEE_HANDLER_YIELD_SWAP_NFT_CHEF_PERCENT: {
@@ -56,6 +66,8 @@ module.exports = {
         4: 33,
         30: 0,
         31: 0,
+        56: 0,
+        97: 0,
     },
 
     // --------- Referral Register --------- //
@@ -66,6 +78,8 @@ module.exports = {
         4: 5,
         30: 0,
         31: 5,
+        56: 0,
+        97: 0,
     },
     REFERRAL_SWAP_REWARD_PERCENT: {
         1: 5, // 5%
@@ -73,6 +87,8 @@ module.exports = {
         4: 5,
         30: 0,
         31: 5,
+        56: 0,
+        97: 0,
     },
     REFERRAL_LAST_MINT_BLOCK: {
         1: 0, // if 0, will be set with block.number when deploy
@@ -80,6 +96,8 @@ module.exports = {
         4: 0,
         30: 0,
         31: 0,
+        56: 0,
+        97: 0,
     },
     REFERRAL_COLLECTOR_PERCENT: {
         1: 1000, // 10.00%
@@ -87,6 +105,8 @@ module.exports = {
         4: 1000,
         30: 1000,
         31: 1000,
+        56: 1000,
+        97: 1000,
     },
 
     // --------- MasterChef --------- //
@@ -97,6 +117,8 @@ module.exports = {
         4: 0,
         30: 0,
         31: 0,
+        56: 0,
+        97: 0,
     },
     MASTERCHEF_STAKING_PERCENT : {
         1: 600000,
@@ -104,6 +126,8 @@ module.exports = {
         4: 714000,
         30: 600000,
         31: 714000,
+        56: 600000,
+        97: 600000,
     },
     MASTERCHEF_DEV_PERCENT : {
         1: 400000,
@@ -111,6 +135,8 @@ module.exports = {
         4: 286000,
         30: 400000,
         31: 286000,
+        56: 400000,
+        97: 400000,
     },
     MASTERCHEF_LPTOKEN_ADDRESSES: {
         //HELIX-WETH, DAI-USDC, USDC-WETH, DAI-WETH, USDT-USDC
@@ -149,6 +175,8 @@ module.exports = {
                 '0xa38B0DEB3d32673dC2CF4bE1B3af8233048A263E',   // rif-wrbtc
                 '0x5863A6b17B8F2898B08c92ba2CBBAdfD8C588812',   // sov-wrbtc
             ],
+        56: [],
+        97: [],
     },
     MASTERCHEF_ALLOC_POINTS:{
         //HELIX-WETH, DAI-USDC, USDC-WETH, DAI-WETH, USDT-USDC
@@ -169,6 +197,8 @@ module.exports = {
                 1500,   // rif-wrbtc
                 1500    // sov-wrbtc
             ],
+        56: [],
+        97: [],
     },
 
     // --------- Helix Vault --------- //
@@ -178,6 +208,8 @@ module.exports = {
         4: 0,
         30: 0,
         31: 0,
+        56: 0,
+        97: 0,
     },
 
     //block when rewards are no longer being given away
@@ -187,6 +219,8 @@ module.exports = {
         4: 1972243972,
         30: 1972243972,
         31: 1972243972,
+        56: 1972243972,
+        97: 1972243972,
     },
 
     HELIX_VAULT_COLLECTOR_PERCENT: {
@@ -195,6 +229,8 @@ module.exports = {
         4: 1000,
         30: 1000,
         31: 1000,
+        56: 1000,
+        97: 1000,
     },
 
     // --------- Fee Minter --------- //
@@ -210,6 +246,8 @@ module.exports = {
         4: '10000000000000000000',
         30: '20320000000000000000',
         31: '10000000000000000000',
+        56: '20320000000000000000',
+        97: '20320000000000000000',
     },
 
     FEE_MINTER_MINTERS: {
@@ -218,6 +256,8 @@ module.exports = {
         4: [masterChefAddress, referralRegisterAddress, vaultAddress],
         30: [masterChefAddress, referralRegisterAddress, vaultAddress],
         31: [masterChefAddress, referralRegisterAddress, vaultAddress],
+        56: [masterChefAddress, referralRegisterAddress, vaultAddress],
+        97: [masterChefAddress, referralRegisterAddress, vaultAddress],
     },
 
     // Represents the percents of the to mint per block rate to delegate to each task
@@ -232,6 +272,8 @@ module.exports = {
         4: [8750, 313, 937],
         30: [6250, 334, 3416],
         31: [8750, 313, 937],
+        56: [6250, 334, 3416],
+        97: [6250, 334, 3416],
     },
 
     // --------- Treasury MultiSig --------- //
@@ -242,6 +284,8 @@ module.exports = {
         4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
         30: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
+        56: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
+        97: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
     },
 
     TREASURY_MULTISIG_OWNERS: {
@@ -256,6 +300,14 @@ module.exports = {
                 '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
             ],
         31: ['0x22745897d49C1e15A562aa9F965aE087F2Fb89AA', '0xd4f46c6342229221d4EC3536627E9E76813f6071'],
+        56: [
+                '0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', 
+                '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c',
+                '0xfB8B9191A5eF78c4D91a74EcdFd9B10E30Bf716c',
+                '0x609b0D5715728e844CD11d353cb56310B74a31Ca',
+                '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
+            ],
+        97: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
     },
 
     TREASURY_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
@@ -264,6 +316,8 @@ module.exports = {
         4: 1,
         30: 1,
         31: 1,
+        56: 1,
+        97: 1,
     },
 
     TREASURY_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
@@ -272,6 +326,8 @@ module.exports = {
         4: 1,
         30: 2,
         31: 1,
+        56: 2,
+        97: 1,
     },
 
     // --------- Owner MultiSig --------- //
@@ -282,6 +338,8 @@ module.exports = {
         4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
         30: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
+        56: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
+        97: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
     },
 
     OWNER_MULTISIG_OWNERS: {
@@ -296,6 +354,14 @@ module.exports = {
                 '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
             ],
         31: ['0x22745897d49C1e15A562aa9F965aE087F2Fb89AA', '0xd4f46c6342229221d4EC3536627E9E76813f6071'],
+        56: [
+                '0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', 
+                '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c',
+                '0xfB8B9191A5eF78c4D91a74EcdFd9B10E30Bf716c',
+                '0x609b0D5715728e844CD11d353cb56310B74a31Ca',
+                '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
+            ],
+        97: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
     },
 
     OWNER_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
@@ -304,6 +370,8 @@ module.exports = {
         4: 1,
         30: 1,
         31: 1,
+        56: 1,
+        97: 1,
     },
 
     OWNER_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
@@ -312,6 +380,8 @@ module.exports = {
         4: 1,
         30: 2,
         31: 1,
+        56: 2,
+        97: 1,
     },
 
     // --------- Dev Team MultiSig --------- //
@@ -322,6 +392,8 @@ module.exports = {
         4: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
         30: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
+        56: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
+        97: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
     },
 
     DEV_TEAM_MULTISIG_OWNERS: {
@@ -336,6 +408,14 @@ module.exports = {
                 '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
             ],
         31: ['0x22745897d49C1e15A562aa9F965aE087F2Fb89AA', '0xd4f46c6342229221d4EC3536627E9E76813f6071'],
+        56: [
+                '0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', 
+                '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c',
+                '0xfB8B9191A5eF78c4D91a74EcdFd9B10E30Bf716c',
+                '0x609b0D5715728e844CD11d353cb56310B74a31Ca',
+                '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
+            ],
+        97: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
     },
 
     DEV_TEAM_MULTISIG_ADMIN_CONFIRMATIONS_REQUIRED: {
@@ -344,6 +424,8 @@ module.exports = {
         4: 1,
         30: 1,
         31: 1,
+        56: 1,
+        97: 1,
     },
 
     DEV_TEAM_MULTISIG_OWNER_CONFIRMATIONS_REQUIRED: {
@@ -352,6 +434,8 @@ module.exports = {
         4: 1,
         30: 2,
         31: 1,
+        56: 2,
+        97: 1,
     },
 
     // --------- Timelock --------- //
@@ -362,6 +446,8 @@ module.exports = {
         4: 0,  
         30: 21600,   // 6 hours 
         31: 120,   // 2 minutes
+        56: 21600,   // 6 hours 
+        97: 120,   // 2 minutes
     },
 
     TIMELOCK_PROPOSERS: {
@@ -370,6 +456,8 @@ module.exports = {
         4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
         30: [ownerMultiSigAddress],
         31: [ownerMultiSigAddress],
+        56: [ownerMultiSigAddress],
+        97: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
     },
 
     TIMELOCK_EXECUTORS: {
@@ -378,6 +466,8 @@ module.exports = {
         4: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
         30: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
         31: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
+        56: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
+        97: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
     },
 
     // --------- YieldSwap --------- //
@@ -616,6 +706,26 @@ module.exports = {
             '0x22745897d49C1e15A562aa9F965aE087F2Fb89AA',
             '0xd4f46c6342229221d4EC3536627E9E76813f6071',
         ],
+        56: [
+            '0x3EC0F3e8b587E21dac6f776780A56F475C16A4b2',
+            '0x1FDbAe6036D0bD2Daf267C809fC45C7Ab6Ec67BB',
+            '0x8d3D07e15317efC76D31Dc12281A970B00bADBB7',
+            '0x9BE663907af30984F3e18B8337742806237A6a5E',
+            '0x6B399E1eEe3b97afBfD33e94900636AaFD1A001c',
+            '0x36d68E8b6a46F1a4538AF4Ba29d91D78fD6A4182',
+            '0xAAb2eACC08690BDbE4A11F43498cA0b9D37D16c2',
+            '0x2A3c3b05bA102d9F0B3B2a635ba73e1996d488d0',
+            '0xED2bcda237e32DC9183f58205C6054f83AD1F1e0',
+            '0x616C5bA33E28659F7Dc5DF009Df85ff0BBb405Cb',
+            '0x2Dbdce62Ef743c196E667B0ABAE988887c805Fc8',
+            '0xE0141093451baC286b497cD6aef4952FA8AE6796',
+            '0x969232E08b2F5Ac75E9e2ad4377D452819bb5d16'
+        ],
+        97:[
+            '0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8',
+            '0x22745897d49C1e15A562aa9F965aE087F2Fb89AA',
+            '0xd4f46c6342229221d4EC3536627E9E76813f6071',
+        ],
     },
 
     // Amount of shares each payee receives
@@ -661,7 +771,26 @@ module.exports = {
             10,
             20
         ],
-
+        56: [
+            10000, 
+            2000, 
+            2000, 
+            2000, 
+            300, 
+            300, 
+            200, 
+            200, 
+            200, 
+            200, 
+            200, 
+            625, 
+            1775
+        ],
+        97: [
+            5, 
+            10,
+            20
+        ],
     },
 
     // --------- Airdrop Payment Splitter --------- //
