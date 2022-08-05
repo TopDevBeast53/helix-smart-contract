@@ -8,6 +8,7 @@ const oracleFactoryAddress = contracts.oracleFactoryImplementation[env.network]
 
 const verifyOracleFactory = async () => {
     print("verify oracle factory")
+    print(`oracleFactoryAddress: ${oracleFactoryAddress}`)
 
     await run(
         "verify:verify", {

@@ -11,6 +11,7 @@ const totalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.netw
 
 const verifyFeeMinter = async () => {
     print("verify fee minter");
+    print(`feeMinterAddress: ${feeMinterAddress}`)
     print(`total to mint per block: ${totalToMintPerBlock}`)
 
     await run(

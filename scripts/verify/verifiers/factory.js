@@ -8,6 +8,7 @@ const factoryAddress = contracts.factoryImplementation[env.network]
 
 const verifyFactory = async () => {
     print(`verify HelixFactory Proxy and Implementation`)
+    print(`factoryAddress: ${factoryAddress}`)
 
     await run(
         "verify:verify", {

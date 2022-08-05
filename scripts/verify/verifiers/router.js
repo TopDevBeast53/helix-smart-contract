@@ -12,6 +12,7 @@ const wethAddress = addresses.WETH[env.network]
 
 const verifyRouter = async () => {
     print("verify router")
+    print(`routerAddress: ${routerAddress}`)
     print(`factory address: ${factoryAddress}`)
     print(`weth address: ${wethAddress}`)
 

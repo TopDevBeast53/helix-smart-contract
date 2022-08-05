@@ -8,6 +8,7 @@ const masterChefAddress = contracts.masterChefImplementation[env.network]
 
 const verifyMasterChef = async () => {
     print(`verify Master Chef`)
+    print(`masterChefAddress: ${masterChefAddress}`)
 
     await run(
         "verify:verify", {

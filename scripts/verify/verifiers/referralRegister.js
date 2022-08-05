@@ -8,6 +8,7 @@ const referralRegisterAddress = contracts.referralRegisterImplementation[env.net
 
 const verifyReferralRegister = async () => {
     print("verify referral register")
+    print(`referralRegisterAddress: ${referralRegisterAddress}`)
 
     await run(
         "verify:verify", {

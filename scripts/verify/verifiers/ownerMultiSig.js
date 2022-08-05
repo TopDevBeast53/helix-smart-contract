@@ -14,6 +14,7 @@ const ownerConfirmationsRequired = initials.OWNER_MULTISIG_OWNER_CONFIRMATIONS_R
 
 const verifyOwnerMultiSig = async () => {
     print("verify owner multisig")
+    print(`ownerMultiSigAddress: ${ownerMultiSigAddress}`)
     print(`admins: ${admins}`)
     print(`owners: ${owners}`)
     print(`adminConfirmationsRequired: ${adminConfirmationsRequired}`)

@@ -13,6 +13,7 @@ const routerAddress = contracts.router[env.network]
 
 const verifySwapRewards = async () => {
     print('verify SwapRewards')
+    print(`swapRewardsAddress: ${swapRewardsAddress}`)
     print(`helixTokenAddress: ${helixTokenAddress}`)
     print(`oracleFactoryAddress: ${oracleFactoryAddress}`)
     print(`referralRegisterAddress: ${referralRegisterAddress}`)

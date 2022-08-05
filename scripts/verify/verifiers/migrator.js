@@ -10,6 +10,7 @@ const routerAddress = contracts.router[env.network];
 
 const verifyMigrator = async () => {
     print('verify Migrator');
+    print(`migratorAddress: ${migratorAddress}`)
     print(`routerAddress: ${routerAddress}`)
 
     await run(

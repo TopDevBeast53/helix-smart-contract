@@ -20,6 +20,8 @@ module.exports = {
         4: '0xee936e648cD998e9df4531dF77EF2D2AECA5921b',
         30: '0xaCfe38D0C4537698783593c742803Dfb47227711',
         31: '0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8',
+        56: '0x035aC633De3F14AaA6A96c2Dd98f4c898CD0D860',
+        97: '0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8',
     },
     //ADDRESS_OF_WHO_WILL_RECEIVE_TRADING_FEES
     poolReceiveTradeFee: {
@@ -28,6 +30,8 @@ module.exports = {
         4: '0xee936e648cD998e9df4531dF77EF2D2AECA5921b',
         30: '0xaCfe38D0C4537698783593c742803Dfb47227711',
         31: '0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8',
+        56: '0x035aC633De3F14AaA6A96c2Dd98f4c898CD0D860',
+        97: '0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8',
     },
     //Address of withdraw dev and ref fee
     masterChefDeveloper: {
@@ -54,17 +58,17 @@ module.exports = {
     bnbToken: {
         56: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
         97: '0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3',
-    }
+    },
     usdcToken: {
         56: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
         97: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d',
-    }
+    },
     cakeToken: {
         56: '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82',
         97: '0xF9f93cF501BFaDB6494589Cb4b4C15dE49E85D0e',
-    }
+    },
     busdToken: {
         56: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56',
         97: '0x78867BbEeF44f2326bF8DDd1941a4439382EF2A7',
-    }
+    },
 }
