@@ -21,7 +21,7 @@ async function loadContracts() {
 }
 
 function loadAddresses() {
-    const { addresses } = require("./addresses")
+    const { addresses } = require("./inputs/addresses")
     return addresses
 }
 
@@ -42,6 +42,8 @@ async function main() {
     let results = []
     // Iterate over the unique address list
     for (let i = 0; i < addresses.length; i++) {
+        console.log(i)
+
         // For each address in list check: 
         const address = addresses[i]
 
@@ -57,16 +59,13 @@ async function main() {
     }).join("\n")
 
     // Save to all address balances to csv
-    fs.writeFileSync("./scripts/snapshot/helix/vipPresaleBalances.csv", toCsv, (err) => {
+    fs.writeFileSync("./scripts/snapshot/helix/inputs/vipPresaleBalances.csv", toCsv, (err) => {
         if (err) {
             console.log(error)
-        } else {
-            console.log(fs.readFileSync("./scripts/snapshot/helix/vipPresaleBalances.csv", "utf8"))
         }
     })
 }
 
-   
 main()
     .then(() => process.exit(0))
     .catch((error) => {
