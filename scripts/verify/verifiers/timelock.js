@@ -13,6 +13,7 @@ const executors = initials.TIMELOCK_EXECUTORS[env.network]
 
 const verifyTimelock = async () => {
     print("verify timelock")
+    print(`timelockAddress: ${timelockAddress}`)
     print(`minDelay: ${minDelay}`)
     print(`proposers: ${proposers}`)
     print(`executors: ${executors}`)

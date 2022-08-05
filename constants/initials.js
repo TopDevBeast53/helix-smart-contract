@@ -246,8 +246,8 @@ module.exports = {
         4: '10000000000000000000',
         30: '20320000000000000000',
         31: '10000000000000000000',
-        56: '20320000000000000000',
-        97: '20320000000000000000',
+        56: '450000000000000000',
+        97: '45000000000000000',
     },
 
     FEE_MINTER_MINTERS: {
@@ -457,7 +457,7 @@ module.exports = {
         30: [ownerMultiSigAddress],
         31: [ownerMultiSigAddress],
         56: [ownerMultiSigAddress],
-        97: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
+        97: [ownerMultiSigAddress],
     },
 
     TIMELOCK_EXECUTORS: {

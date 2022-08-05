@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/swapRewards.js --network ropsten
  */
 
-const { verifySwapRewards } = require("../shared/verify/verifiers")
+const { verifySwapRewards } = require("./verifiers/verifiers")
 
 async function main() {
     await verifySwapRewards()

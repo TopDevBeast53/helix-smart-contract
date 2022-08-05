@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/multicall.js --network ropsten
  */
 
-const { verifyMulticall } = require("../shared/verify/verifiers")
+const { verifyMulticall } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyMulticall()

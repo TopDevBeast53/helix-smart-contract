@@ -8,6 +8,7 @@ const feeHandlerAddress = contracts.feeHandlerImplementation[env.network]
 
 const verifyFeeHandler = async () => {
     print(`verify FeeHandler Proxy and Implementation`)
+    print(`feeHandlerAddress: ${feeHandlerAddress}`)
     await run(
         "verify:verify", {
             address: feeHandlerAddress,

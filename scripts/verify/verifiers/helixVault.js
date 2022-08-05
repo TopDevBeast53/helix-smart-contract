@@ -8,6 +8,7 @@ const helixVaultAddress = contracts.helixVaultImplementation[env.network]
 
 const verifyHelixVault = async (verifyer) => {
     print(`verify Helix Vault`);
+    print(`helixVaultAddress: ${helixVaultAddress}`)
 
     await run(
         "verify:verify", {

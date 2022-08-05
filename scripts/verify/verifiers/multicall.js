@@ -8,6 +8,7 @@ const multicallAddress = contracts.multicall[env.network]
 
 const verifyMulticall = async () => {
     print("verify multicall")
+    print(`multicallAddress: ${multicallAddress}`)
 
     await run(
         "verify:verify", {

@@ -8,6 +8,7 @@ const helixTokenAddress = contracts.helixToken[env.network]
 
 const verifyHelixToken = async () => {
     print("verify helix token")
+    print(`helixTokenAddress: ${helixTokenAddress}`)
     await run(
         "verify:verify", {
             address: helixTokenAddress,

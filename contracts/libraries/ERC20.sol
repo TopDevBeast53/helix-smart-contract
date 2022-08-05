@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract ERC20 is Context, Ownable, IERC20, IERC20Metadata {
     uint256 private constant _maxSupply = 1000000000 * 1e18;        // 1B
-    uint256 private constant _preMineSupply = 160000000 * 1e18;     // 16% of 1B
+    uint256 private constant _preMineSupply = 0;
 
     mapping(address => uint256) private _balances;
 

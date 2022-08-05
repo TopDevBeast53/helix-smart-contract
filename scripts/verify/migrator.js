@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/migrator.js --network ropsten
  */
 
-const { verifyMigrator } = require("../shared/verify/verifiers")
+const { verifyMigrator } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyMigrator()

@@ -14,6 +14,7 @@ const ownerConfirmationsRequired = initials.TREASURY_MULTISIG_OWNER_CONFIRMATION
 
 const verifyTreasuryMultiSig = async () => {
     print("verify treasury multiSig") 
+    print(`treasuryMultiSigAddress: ${treasuryMultiSigAddress}`)
     print(`admins: ${admins}`)
     print(`owners: ${owners}`)
     print(`adminConfirmationsRequired: ${adminConfirmationsRequired}`)
