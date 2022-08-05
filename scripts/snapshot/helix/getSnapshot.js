@@ -47,14 +47,14 @@ async function loadContracts() {
 
 // Load the directory as a list with each file in the directory appended as a sub-list
 function loadAddresses() {
-    const { addresses } = require("./addresses")
+    const { addresses } = require("./inputs/addresses")
     return addresses
 }
 
 // Load the vip presale csv
 function loadVipPresale() {
     let data = fs.readFileSync(
-        "./scripts/snapshot/helix/vipPresaleBalances.csv",
+        "./scripts/snapshot/helix/inputs/vipPresaleBalances.csv",
         {encoding:'utf8', flag:'r'}
     )
     data = data.split("\n")
@@ -138,65 +138,39 @@ async function main() {
     const vault = contracts.vault
     const referralRegister = contracts.referralRegister
 
-    // TODO Load spreadsheets from the spreadsheet directory as a list of lists
-    // TODO Merge the spreadsheets for a list of all unique addresses that have ever held helixToken
     const addresses = loadAddresses()
-
     const vipPresale = loadVipPresale()
 
-    let results = []
-    let subResults = []
-
-    // Add a csv header
-    const header = [
-        "address",
-        "helixTokenBalance",
-        "vipPresaleBalance",
-        "airdropBalance",
-        "masterChefAmount",
-        "masterChefPending",
-        "vaultDepositedSum",
-        "referralReward"
-    ]
-    results.push(header)
-
     // Iterate over the unique address list
-    for (let i = 171; i < addresses.length; i++) {
+    for (let i = 390; i < addresses.length; i++) {
         console.log(i)
 
         // For each address in list check: 
         const address = addresses[i]
 
-        // current balance
         const helixTokenBalance = await getHelixTokenBalanceOf(helixToken, address) 
-        // console.log(`${address}: ${helixTokenBalance}`)
-
-        // vip balance
         const vipPresaleBalance = getVipPresaleBalanceOf(vipPresale, address)
-        // console.log(`${address}: ${vipPresaleBalance}`)
-
-        // airdrop balance
         const airdropBalance = await getAirdropBalanceOf(airdrop, address)
-        // console.log(`${address}: ${airdropBalance}`)
-
-        // masterChef deposited total
         const masterChefAmount = await getMasterChefAmount(masterChef, address)
-        // console.log(`${address}: ${masterChefAmount}`)
-
-        // masterChef pending 
         const masterChefPending = await getMasterChefPendingHelix(masterChef, address) 
-        // console.log(`${address}: ${masterChefPending}`)
-
-        // vault deposited total
         const vaultDepositSum = await getVaultDepositSum(vault, address)
-        // console.log(`${address}: ${vaultDeposits}`)
-
-        // referral register rewards 
         const referralReward = await getReferralReward(referralRegister, address)
-        // console.log(`${address}: ${referralReward}`)
+
+        let mintedTotal = ethers.BigNumber.from("0")
+        mintedTotal = mintedTotal.add(helixTokenBalance)
+        mintedTotal = mintedTotal.add(masterChefAmount)
+        mintedTotal = mintedTotal.add(vaultDepositSum)
+        mintedTotal = mintedTotal.add(airdropBalance)
+
+        let unmintedTotal = ethers.BigNumber.from("0")
+        unmintedTotal = unmintedTotal.add(vipPresaleBalance)
+        unmintedTotal = unmintedTotal.add(masterChefPending)
+        unmintedTotal = unmintedTotal.add(referralReward)
+
+        const total = mintedTotal.add(unmintedTotal)
 
         // add each balance to row entry
-        results.push([
+        const subResults = [
             address, 
             helixTokenBalance,
             vipPresaleBalance,
@@ -204,54 +178,23 @@ async function main() {
             masterChefAmount,
             masterChefPending,
             vaultDepositSum,
-            referralReward
-        ])
+            referralReward,
+            mintedTotal, 
+            unmintedTotal,
+            total
+        ]
 
-        subResults.push([
-            address, 
-            helixTokenBalance,
-            vipPresaleBalance,
-            airdropBalance,
-            masterChefAmount,
-            masterChefPending,
-            vaultDepositSum,
-            referralReward
-        ])
+        // Convert the results array to string
+        const toCsv = subResults.join()
 
-        // Save every 10 to prevent having to restart from the beginning if fail
-        if (i > 0 && i % 10 == 0) {
-            // Convert the results array to string
-            const toCsv = subResults.map((subResults) => {
-                return subResults.join()
-            }).join("\n")
-
-            // Save to all address balances to csv
-            const path = `./scripts/snapshot/helix/balancesMaster-${i-10}-${i}.csv`
-            fs.writeFileSync(path, toCsv, (err) => {
-                if (err) {
-                    console.log(error)
-                }
-            })
-
-            subResults = []
-        }
+        // Save to all address balances to csv
+        const path = `./scripts/snapshot/helix/results/subResults/balancesMaster-${i}.csv`
+        fs.writeFileSync(path, toCsv, (err) => {
+            if (err) {
+                console.log(error)
+            }
+        })
     }
-
-    // Convert the results array to string
-    const toCsv = subResults.map((subResults) => {
-        return subResults.join()
-    }).join("\n")
-
-    // Save to all address balances to csv
-    const path = "./scripts/snapshot/helix/balancesMaster-final.csv"
-    fs.writeFileSync(path, toCsv, (err) => {
-        if (err) {
-            console.log(error)
-        } else {
-            console.log(fs.readFileSync(path, "utf8"))
-            console.log("done")
-        }
-    })
 }
 
    

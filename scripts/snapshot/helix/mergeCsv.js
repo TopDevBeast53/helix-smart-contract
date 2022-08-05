@@ -13,7 +13,7 @@ function loadFile(path) {
 }
 
 function getPath(index) {
-    return `./scripts/snapshot/helix/csvs/subResults/balancesMaster-${index}-${index+10}.csv`
+    return `./scripts/snapshot/helix/results/subResults/balancesMaster-${index}.csv`
 }
 
 function getCsv(list) {
@@ -30,7 +30,7 @@ function writeFile(path, content) {
 
 function main() {
     // load the addresses
-    const { addressess } = require("./addresses")
+    const { addressess } = require("./inputs/addresses")
 
     const header = [
         "address",
@@ -40,24 +40,24 @@ function main() {
         "masterChefAmount",
         "masterChefPending",
         "vaultDepositSum",
-        "referralReward"
+        "referralReward",
+        "mintedTotal",
+        "unmintedTotal",
+        "total"
     ]
 
     let results = []
     results.push(header) 
 
-    for (let i = 0; i < addresses.length; i += 10) {
+    for (let i = 0; i < addresses.length; i++) {
         console.log(i)
         const path = getPath(i)
         const file = loadFile(path)
-        for (let i = 0; i < file.length; i++) {
-            const entry = file[i]
-            results.push(entry) 
-        }
+        results.push(file) 
     }
 
     const toCsv = getCsv(results)
-    writeFile("./scripts/snapshot/helix/master.csv", toCsv)
+    writeFile("./scripts/snapshot/helix/results/master.csv", toCsv)
 }
 
 main()
