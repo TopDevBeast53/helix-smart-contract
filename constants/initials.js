@@ -180,15 +180,34 @@ module.exports = {
     },
     MASTERCHEF_ALLOC_POINTS:{
         //HELIX-WETH, DAI-USDC, USDC-WETH, DAI-WETH, USDT-USDC
-        1: [25000, 1000, 2500, 2500, 1000],
+        1: [
+                20000,  // pid 0
+                12500,  // pid 1
+                1000,  // pid 2
+                2500,  // pid 3
+                2500,  // pid 4
+                1000,  // pid 5
+                500,  // pid 6
+                200,  // pid 7
+                200,  // pid 8
+                500,  // pid 9
+                500,  // pid 10
+                10000,  // pid 11
+                1000,  // pid 12
+                200,  // pid 13
+                500,  // pid 14
+                1000,  // pid 15
+                500  // pid 16
+        ],
         3: [3500, 1500, 1500, 1500, 1500],
         4: [3500, 1500, 1500, 1500, 1500],
         30: [
-                20000,   // rhelix-wrbtc
-                12500,   // rhelix-rusdc
-                10000,   // rusdc-wrbtc
-                5000,    // rif-wrbtc
-                1000,    // sov-wrbtc
+                1000,  // pid 0
+                12500,  // pid 1
+                10000,   // pid 2
+                2500,  // pid 3
+                5000,  // pid 4
+                1250  // pid 5
             ],
         31: [
                 3500,   // rhelix-wrbtc
@@ -197,7 +216,9 @@ module.exports = {
                 1500,   // rif-wrbtc
                 1500    // sov-wrbtc
             ],
-        56: [],
+        56: [
+                1000,  // pid 0
+        ],
         97: [],
     },
 
