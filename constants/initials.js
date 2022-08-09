@@ -292,17 +292,16 @@ module.exports = {
 
     // Represents the percents of the to mint per block rate to delegate to each task
     // Percents to each task with 2 decimals of precision
-    // Chef:        87.5%     (Stake: 62.5% + Dev Team: 25%)
-    // Referral:     3.13%
-    // Vault:        9.37%
-    // Sum:        100.00%
+    // Chef:        62.5%     (Stake: 37.5% + Dev Team: 25%)
+    // Referral:     3.34%
+    // Vault:       34.16%
     FEE_MINTER_TO_MINT_PERCENTS: {
-        1: [8750, 313, 937],
+        1: [6250, 334, 3416], // Ethereum
         3: [8750, 313, 937],
         4: [8750, 313, 937],
-        30: [6250, 334, 3416],
+        30: [6250, 334, 3416], // RSK
         31: [8750, 313, 937],
-        56: [6250, 334, 3416],
+        56: [6250, 334, 3416], // BSC
         97: [6250, 334, 3416],
     },
 
