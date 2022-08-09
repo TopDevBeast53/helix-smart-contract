@@ -91,7 +91,7 @@ subtask("feeMinter.setToMintPercents")
     .addPositionalParam("arg1")
     .setAction(async (args) => {
         const result = await (await contract()).setToMintPercents(
-            args.arg0, args.arg1
+            args.arg0.split(","), args.arg1.split(",")
         )
     })
 

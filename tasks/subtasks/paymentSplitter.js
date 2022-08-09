@@ -137,8 +137,8 @@ subtask("paymentSplitter.reset")
     .addPositionalParam("arg1")
     .setAction(async (args) => {
         const result = await (await contract()).reset(
-            args.arg0, 
-            args.arg1
+            args.arg0.split(","), 
+            args.arg1.split(",")
         )
     })
 
