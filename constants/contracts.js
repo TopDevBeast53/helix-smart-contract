@@ -204,7 +204,7 @@ module.exports = {
         4: '0x826c6b006Fb183dE41B8f0d16549505569083A14',
         30: '0xd5BFD8F6a590a4Ae8e9B86266e78E24b8244eEF8',   // deployed 8/1/2022
         31: '0xE5B2B45e06F6004147e5b1FBbDd183DB0e6EEc6F',
-        56: '0xb1D5F4659d3CF82043338E786259F6B9A4e7979A',   // deployed 8/05/2022
+        56: '0x3a391bF56927B69a3A14Aab10731C5d7d7A7b8c3',   // deployed 8/09/2022
         97: '0x570489f4278de24E7421b83C518ABc8B1AfA7D10',
     },
     masterChefImplementation: {
