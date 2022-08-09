@@ -175,7 +175,16 @@ module.exports = {
                 '0xa38B0DEB3d32673dC2CF4bE1B3af8233048A263E',   // rif-wrbtc
                 '0x5863A6b17B8F2898B08c92ba2CBBAdfD8C588812',   // sov-wrbtc
             ],
-        56: [],
+        56: [
+                '0xe3B4C21856153Ef65b8BfBaEb9ca18282c4535e7',   // helix-wbnb
+                '0xbA4BF3A8aa1F566B29F7d13C6fE410D9A6F0cC61',   // helix-busd
+                '0x4258bE0fD967DbFc6D19955828a27cB6D8Ba9344',   // busd-wbnb
+                '0x53E5f05ee4fb500D0dc1f8c32b947952a1114be1',   // usdc-busd
+                '0x47BF097Aa893c02C23c76774FbBDeb7AF693ce8a',   // usdt-busd
+                '0x795839bdE85dadEeb38f9B988E34afF1F20dA063',   // usdc-usdt
+                '0x6D6480E533455aF9112C47E8feD2b8810e78b29D',   // usdc-wbnb
+                '0x45A83465940195AAD94fb0734D4AEc08A35C5bf0',   // cake-wbnb
+        ],
         97: [],
     },
     MASTERCHEF_ALLOC_POINTS:{
