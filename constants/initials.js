@@ -226,7 +226,15 @@ module.exports = {
                 1500    // sov-wrbtc
             ],
         56: [
-                1000,  // pid 0
+             20000, //HELIX pool
+             12500, //HELIX-WBNB
+             10000, //HELIX-BUSD
+             2500, //BUSD-WBNB
+             1000, //USDC-BUSD
+             1000, //USDT-BUSD
+             1000, //USDC-USDT
+             2500, //USDC-WBNB
+             500, //CAKE-WBNB
         ],
         97: [],
     },
