@@ -268,7 +268,7 @@ subtask("helixVault.setCollectorPercentAndDecimals")
     .addPositionalParam("arg0")
     .addPositionalParam("arg1")
     .setAction(async (args) => {
-        const result = await (await contract()).setCollectorPercent(args.arg0, args.arg1)
+        const result = await (await contract()).setCollectorPercentAndDecimals(args.arg0, args.arg1)
     })
 
 subtask("helixVault.setDuration")
