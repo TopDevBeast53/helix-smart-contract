@@ -222,7 +222,7 @@ module.exports = {
         4: '0xE3157d8338b593d5F7Bf0A5094a7Dd886aDb3bA9',
         30: '0x4bdefD001a3b7F1d5Bf16B35DD19116aB3C33e64',   // deployed 8/1/2022
         31: '0x443d8b9263b0d506Fd0Acb5B5e7fC013B3841164',
-        56: '0xD3Ce0BE5D8f472bA7fB0B837c256b96847cb2c40',   // deployed 8/05/2022
+        56: '0xE3723F408749CB9462C95bDA7fd2017d5C19B85E',   // deployed 8/12/2022
         97: '0xbFB6763A426EaB71219C910F424fBd0E3a1f41A9',
     },
     autoHelixImplementation: {
@@ -231,7 +231,7 @@ module.exports = {
         4: '0xF362d1cF53a35bCf19Ff22e21f7d3e5eEdfe1017',
         30: '0x187AB9FD3c34510c634C3d06bFc849D11CdB70C4',   // deployed 8/1/2022
         31: '0xbFB6763A426EaB71219C910F424fBd0E3a1f41A9',
-        56: '0x81cfa324D988dbfeD01879eF3E884f7d353E7B41',   // deployed 8/05/2022
+        56: '0x72f95056Bcf92c1aCc90a58f9D14102C374B0692',   // deployed 8/12/2022
         97: '0xE5B2B45e06F6004147e5b1FBbDd183DB0e6EEc6F',
     },
     multicall: {

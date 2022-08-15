@@ -265,6 +265,7 @@ contract AutoHelix is Initializable, OwnableUpgradeable, PausableUpgradeable, Ow
     function setMasterChef(address _masterChef) external onlyOwner {
         require(_masterChef != address(0), "AutoHelix: zero address");
         masterChef = IMasterChef(_masterChef);
+        IERC20Upgradeable(token).safeApprove(address(_masterChef), type(uint256).max);
         emit SetMasterChef(msg.sender, _masterChef);
     }
 
