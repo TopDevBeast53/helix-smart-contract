@@ -15,6 +15,7 @@ module.exports = {
         30: '',
         31: '0xc28107fd87760cfb4e1668f5cb7a07b1049eaedf62697db36fb894567a372da6',
         56: '',
+        66: '',
         97: '',
     },
     
@@ -27,6 +28,7 @@ module.exports = {
         30: 0,
         31: 0,
         56: 0,
+        66: 0,
         97: 0,
     },
 
@@ -37,6 +39,7 @@ module.exports = {
         30: 0,
         31: 0,
         56: 0,
+        66: 0,
         97: 0,
     },
 
@@ -47,6 +50,7 @@ module.exports = {
         30: 0,
         31: 0,
         56: 0,
+        66: 0,
         97: 0,
     },
 
@@ -57,6 +61,7 @@ module.exports = {
         30: 0,
         31: 0,
         56: 0,
+        66: 0,
         97: 0,
     },
 
@@ -67,6 +72,7 @@ module.exports = {
         30: 0,
         31: 0,
         56: 0,
+        66: 0,
         97: 0,
     },
 
@@ -79,6 +85,7 @@ module.exports = {
         30: 0,
         31: 5,
         56: 0,
+        66: 0,
         97: 0,
     },
     REFERRAL_SWAP_REWARD_PERCENT: {
@@ -88,6 +95,7 @@ module.exports = {
         30: 0,
         31: 5,
         56: 0,
+        66: 0,
         97: 0,
     },
     REFERRAL_LAST_MINT_BLOCK: {
@@ -97,6 +105,7 @@ module.exports = {
         30: 0,
         31: 0,
         56: 0,
+        66: 0,
         97: 0,
     },
     REFERRAL_COLLECTOR_PERCENT: {
@@ -106,6 +115,7 @@ module.exports = {
         30: 1000,
         31: 1000,
         56: 1000,
+        66: 1000,
         97: 1000,
     },
 
@@ -118,6 +128,7 @@ module.exports = {
         30: 0,
         31: 0,
         56: 0,
+        66: 0,
         97: 0,
     },
     MASTERCHEF_STAKING_PERCENT : {
@@ -127,6 +138,7 @@ module.exports = {
         30: 600000,
         31: 714000,
         56: 600000,
+        66: 600000,
         97: 600000,
     },
     MASTERCHEF_DEV_PERCENT : {
@@ -136,6 +148,7 @@ module.exports = {
         30: 400000,
         31: 286000,
         56: 400000,
+        66: 400000,
         97: 400000,
     },
     MASTERCHEF_LPTOKEN_ADDRESSES: {
@@ -185,6 +198,7 @@ module.exports = {
                 '0x6D6480E533455aF9112C47E8feD2b8810e78b29D',   // usdc-wbnb
                 '0x45A83465940195AAD94fb0734D4AEc08A35C5bf0',   // cake-wbnb
         ],
+        66: [],
         97: [],
     },
     MASTERCHEF_ALLOC_POINTS:{
@@ -236,6 +250,7 @@ module.exports = {
              2500, //USDC-WBNB
              500, //CAKE-WBNB
         ],
+        66: [],
         97: [],
     },
 
@@ -247,6 +262,7 @@ module.exports = {
         30: 0,
         31: 0,
         56: 0,
+        66: 0,
         97: 0,
     },
 
@@ -258,6 +274,7 @@ module.exports = {
         30: 1972243972,
         31: 1972243972,
         56: 1972243972,
+        66: 1972243972,
         97: 1972243972,
     },
 
@@ -268,6 +285,7 @@ module.exports = {
         30: 150,
         31: 1000,
         56: 150,
+        66: 150,
         97: 1000,
     },
 
@@ -285,6 +303,7 @@ module.exports = {
         30: '15000000000000000000',
         31: '10000000000000000000',
         56: '450000000000000000',
+        66: '',
         97: '45000000000000000',
     },
 
@@ -295,6 +314,7 @@ module.exports = {
         30: [masterChefAddress, referralRegisterAddress, vaultAddress],
         31: [masterChefAddress, referralRegisterAddress, vaultAddress],
         56: [masterChefAddress, referralRegisterAddress, vaultAddress],
+        66: [masterChefAddress, referralRegisterAddress, vaultAddress],
         97: [masterChefAddress, referralRegisterAddress, vaultAddress],
     },
 
@@ -310,6 +330,7 @@ module.exports = {
         30: [6250, 334, 3416], // RSK
         31: [8750, 313, 937],
         56: [6250, 334, 3416], // BSC
+        66: [6250, 334, 3416], // OKC
         97: [6250, 334, 3416],
     },
 
@@ -322,6 +343,7 @@ module.exports = {
         30: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
         56: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
+        66: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         97: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
     },
 
@@ -344,6 +366,13 @@ module.exports = {
                 '0x609b0D5715728e844CD11d353cb56310B74a31Ca',
                 '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
             ],
+        66: [
+                '0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', 
+                '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c',
+                '0xfB8B9191A5eF78c4D91a74EcdFd9B10E30Bf716c',
+                '0x609b0D5715728e844CD11d353cb56310B74a31Ca',
+                '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
+            ],
         97: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
     },
 
@@ -354,6 +383,7 @@ module.exports = {
         30: 1,
         31: 1,
         56: 1,
+        66: 1,
         97: 1,
     },
 
@@ -363,7 +393,7 @@ module.exports = {
         4: 1,
         30: 2,
         31: 1,
-        56: 2,
+        66: 2,
         97: 1,
     },
 
@@ -376,6 +406,7 @@ module.exports = {
         30: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
         56: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
+        66: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         97: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
     },
 
@@ -398,6 +429,13 @@ module.exports = {
                 '0x609b0D5715728e844CD11d353cb56310B74a31Ca',
                 '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
             ],
+        66: [
+                '0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', 
+                '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c',
+                '0xfB8B9191A5eF78c4D91a74EcdFd9B10E30Bf716c',
+                '0x609b0D5715728e844CD11d353cb56310B74a31Ca',
+                '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
+            ],
         97: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
     },
 
@@ -408,6 +446,7 @@ module.exports = {
         30: 1,
         31: 1,
         56: 1,
+        66: 1,
         97: 1,
     },
 
@@ -418,6 +457,7 @@ module.exports = {
         30: 2,
         31: 1,
         56: 2,
+        66: 2,
         97: 1,
     },
 
@@ -430,6 +470,7 @@ module.exports = {
         30: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         31: ['0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8'],
         56: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
+        66: ['0x50aA3d33800A1BF4B8ED76740Fd52dfB4Bb503E7'],
         97: ['0x51606CAdD699fa80B8bFc3375103259e5ed7C195'],
     },
 
@@ -452,6 +493,13 @@ module.exports = {
                 '0x609b0D5715728e844CD11d353cb56310B74a31Ca',
                 '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
             ],
+        66: [
+                '0xccd291eD76EFeC9dde0cb3Ce148AaC59d7656bAe', 
+                '0xe8736c8610AcbD753023ec367b8E020Ae1d2D17c',
+                '0xfB8B9191A5eF78c4D91a74EcdFd9B10E30Bf716c',
+                '0x609b0D5715728e844CD11d353cb56310B74a31Ca',
+                '0x84e7286ecF7049CcFe9590e9d91b6361B10f8795',
+            ],
         97: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
     },
 
@@ -462,6 +510,7 @@ module.exports = {
         30: 1,
         31: 1,
         56: 1,
+        66: 1,
         97: 1,
     },
 
@@ -472,6 +521,7 @@ module.exports = {
         30: 2,
         31: 1,
         56: 2,
+        66: 2,
         97: 1,
     },
 
@@ -484,6 +534,7 @@ module.exports = {
         30: 21600,   // 6 hours 
         31: 120,   // 2 minutes
         56: 21600,   // 6 hours 
+        66: 21600,   // 6 hours 
         97: 120,   // 2 minutes
     },
 
@@ -494,6 +545,7 @@ module.exports = {
         30: [ownerMultiSigAddress],
         31: [ownerMultiSigAddress],
         56: [ownerMultiSigAddress],
+        66: [ownerMultiSigAddress],
         97: [ownerMultiSigAddress],
     },
 
@@ -504,6 +556,7 @@ module.exports = {
         30: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
         31: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
         56: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
+        66: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
         97: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
     },
 
@@ -758,6 +811,21 @@ module.exports = {
             '0xE0141093451baC286b497cD6aef4952FA8AE6796',
             '0x969232E08b2F5Ac75E9e2ad4377D452819bb5d16'
         ],
+        66: [
+            '0x3EC0F3e8b587E21dac6f776780A56F475C16A4b2',
+            '0x1FDbAe6036D0bD2Daf267C809fC45C7Ab6Ec67BB',
+            '0x8d3D07e15317efC76D31Dc12281A970B00bADBB7',
+            '0x9BE663907af30984F3e18B8337742806237A6a5E',
+            '0x6B399E1eEe3b97afBfD33e94900636AaFD1A001c',
+            '0x36d68E8b6a46F1a4538AF4Ba29d91D78fD6A4182',
+            '0xAAb2eACC08690BDbE4A11F43498cA0b9D37D16c2',
+            '0x2A3c3b05bA102d9F0B3B2a635ba73e1996d488d0',
+            '0xED2bcda237e32DC9183f58205C6054f83AD1F1e0',
+            '0x616C5bA33E28659F7Dc5DF009Df85ff0BBb405Cb',
+            '0x2Dbdce62Ef743c196E667B0ABAE988887c805Fc8',
+            '0xE0141093451baC286b497cD6aef4952FA8AE6796',
+            '0x969232E08b2F5Ac75E9e2ad4377D452819bb5d16'
+        ],
         97:[
             '0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8',
             '0x22745897d49C1e15A562aa9F965aE087F2Fb89AA',
@@ -809,6 +877,21 @@ module.exports = {
             20
         ],
         56: [
+            10000, 
+            2000, 
+            2000, 
+            2000, 
+            300, 
+            300, 
+            200, 
+            200, 
+            200, 
+            200, 
+            200, 
+            625, 
+            1775
+        ],
+        66: [
             10000, 
             2000, 
             2000, 
