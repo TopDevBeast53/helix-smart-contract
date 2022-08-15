@@ -6,6 +6,7 @@ module.exports = {
         30: '0xAD4c5d74C703BB5ae0f715FEd4CaC5f55e5ad401',   // deployed 7/29/2022
         31: '0x2437f0210a9DaB41d33bD873A3890a4c16b62556',
         56: '0x2732500b1381d492769f605d29c77183e53cb0be',   // deployed 8/05/2022
+        66: '0x9f4026cDA1abC830B029A7899AD096FC3a6cf872',   // deployed 8/15/2022
         97: '0x2437f0210a9DaB41d33bD873A3890a4c16b62556',
     },
     treasuryMultiSig: {
@@ -15,6 +16,7 @@ module.exports = {
         30: '0xfFAc59B310C2761A5b76d4c42b80c6eaD56360D2',   // deployed 7/29/2022
         31: '0x6E883091CA11001E5cE69421CEdDF9f6817B0be5',
         56: '0xbD3F3B87aa0883901655D481C71f86e2342Ae184',   // deployed 8/05/2022
+        66: '0xa2f5F5D03a809141aB254B741497A4869B833988',   // deployed 8/15/2022
         97: '0x6E883091CA11001E5cE69421CEdDF9f6817B0be5',
     },
     devTeamMultiSig: {
@@ -24,6 +26,7 @@ module.exports = {
         30: '0x4F047aBb21381Cfee428C1C856184d077c7e987D',   // deployed 7/29/2022
         31: '0x564099Db88a8d36815a430A705F43205fbec8Cb8',
         56: '0x7020e0B164FeeA7Faa4c8b3940f7392248A24f01',   // deployed 8/05/2022
+        66: '0xABf07B9e2964dE08f229E8aB73555aC47D79c9e1',   // deployed 8/15/2022
         97: '0x564099Db88a8d36815a430A705F43205fbec8Cb8',
     },
     timelock: {
@@ -33,6 +36,7 @@ module.exports = {
         30: '0x27A6B6FFA0b69F098973C856ADf3c28F262839a9',   // deployed 7/29/2022
         31: '0x3182f585926Cfaa5f9fe43c22a250bdD276fB886',
         56: '0x9477FC47683478258d857cD1A966cFb662D403cc',   // deployed 8/05/2022
+        66: '0x449694448302785Fc0766494598AC27448E34efa',   // deployed 8/15/2022
         97: '0x3182f585926Cfaa5f9fe43c22a250bdD276fB886',
     },
     helixToken: {
@@ -42,6 +46,7 @@ module.exports = {
         30: '0x3D2441Fa9Aab621e72121fb1c620FDAE59eAe812',   // deployed 7/27/2022
         31: '0x08626CF6A212a44C877D9740f86252dBD6292364',
         56: '0xFd9B1448A8874b03e6E8476049dB259A82569a41',   // deployed 8/05/2022
+        66: '0xb5687be50e1506820996dB6C1EF3a9CD86a7eB66',   // deployed 8/15/2022
         97: '0x08626CF6A212a44C877D9740f86252dBD6292364',
     },
     helixNFT: {
@@ -61,6 +66,7 @@ module.exports = {
         30: '0x9Ae0bA9807482b8e14a251fc17aC9EeE0068F432',   // deployed 7/29/2022
         31: '0xF19f5E94f94C2c9f280a7BE143857ae1e0cb2330',
         56: '0xB7DB7C5596e93E93Dbe0eAC38Edd68eF1292ada2',   // deployed 8/05/2022
+        66: '0x6f2Beed672154232D254b00f2fd67CcA3dF691e9',   // deployed 8/15/2022
         97: '0xF19f5E94f94C2c9f280a7BE143857ae1e0cb2330',
     },
     helixNFTBridge: {
@@ -75,6 +81,7 @@ module.exports = {
         30: '0x0000000000000000000000000000000000000000',   // deployed 7/29/2022
         31: '0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8',
         56: '0x0000000000000000000000000000000000000000',
+        66: '0x0000000000000000000000000000000000000000',
         97: '0x0000000000000000000000000000000000000000',
     },
     helixChefNFTImplementation: {
@@ -89,6 +96,7 @@ module.exports = {
         30: '0xB06D10098ACbaDa65E02435CCFE9D3432253F89c',   // deployed 7/29/2022
         31: '0x89f1d3fFa6f2D38A3cbBaE30475cf86a2FcBE3D5',
         56: '0xC59D7FF4f274Dd6B87ED95ADDACaeE62eF5e916D',   // deployed 8/05/2022
+        66: '0x00406994bB06Dbd35baa0E18E242008217be8126',   // deployed 8/15/2022
         97: '0xfFe7BcEBFb7E6094774fd2e7458Dd137C9C1CcC9',
     },
     feeHandlerImplementation: {
@@ -97,6 +105,7 @@ module.exports = {
         4: '0xf25221935e23C4f016235dE8A37090421a1f1Cb2',
         30: '0xE20CA5e7d1470a7D6704FeFBF76165E813d5E415',   // deployed 7/29/2022
         56: '0x5AF5C5a51F773593560B0273fe3BC217e535488E',   // deployed 8/05/2022
+        66: '0x784486BeaE6579A91c8E6BB4D75338DE05E74d87',   // deployed 8/15/2022
         97: '0xf25221935e23C4f016235dE8A37090421a1f1Cb2',
     },
     referralRegister: {
@@ -106,6 +115,7 @@ module.exports = {
         30: '0x2c81B51488D7BeA8Dc9eb79193a8531f4FBc3A13',   // deployed 7/29/2022
         31: '0x7A7db73e79610fE42cDFD4E043DF0aCDA4c48E73',
         56: '0x3AfbC26563b5482e146f954071F3f58b24DaC22F',   // deployed 8/05/2022
+        66: '0xb82ABa33e696867c9223431399A006869A9f958c',   // deployed 8/15/2022
         97: '0x2b8Fd0Dd7b70baA9cAbfcA31090DBf19D8789A17',
     },
     referralRegisterImplementation: {
@@ -115,6 +125,7 @@ module.exports = {
         30: '0x92cfc8A3e6D96bff4a3C846E0ca4fd6387E5545c',   // deployed 7/29/2022
         31: '0x2b8Fd0Dd7b70baA9cAbfcA31090DBf19D8789A17',
         56: '0x8709AEd7f2dB0a336aBADcc6A63F4c05f1783F1c',   // deployed 8/05/2022
+        66: '0xD4e85bb9e373e4D051581F27eD7D5fe6Ba8027B5',   // deployed 8/15/2022
         97: '0x89f1d3fFa6f2D38A3cbBaE30475cf86a2FcBE3D5',
     },
     helixVault: {
@@ -124,6 +135,7 @@ module.exports = {
         30: '0xECD6B46cF7DFC4A0663Fa0e47746F640BbD76987',   // deployed 7/29/2022
         31: '0x510085FDBD2123d3753Aa61C495af7d863746c24',
         56: '0x3CFf96a6Fa5d9197E5FD21E50A7320a68F581b3E',   // deployed 8/05/2022
+        66: '0x8e7c6084ed2eaFF8645EDcfDAE0a32A8626557EF',   // deployed 8/15/2022
         97: '0x7A7db73e79610fE42cDFD4E043DF0aCDA4c48E73',
     },
     helixVaultImplementation: {
@@ -133,6 +145,7 @@ module.exports = {
         30: '0xCd89d15257224ef889F89A4A3Db1eac9a55D092D',   // deployed 7/29/2022
         31: '0x9B939F647E9B5a07c4039c1ED93fc75F559e5b2d',
         56: '0x8528922afea9435490B3f1Eb3c0dbc5035F2aFc5',   // deployed 8/05/2022
+        66: '0x7b84e18F2586047A80900186aeA6D6290272847F',   // deployed 8/15/2022
         97: '0xd902Bffd17Be9B1504C6208fd478F8e94C72e1E1',
     },
     factory: {
@@ -142,6 +155,7 @@ module.exports = {
         30: '0x305f3bd2Bf2425A8BA10588529B132F14D436a71',   // deployed 7/29/2022
         31: '0x15CA80E2006823904d41b967839Cce8D4b26D43b',
         56: '0x7e599C90C5D84DF399F8EfE3462a5F5C673c0ca8',   // deployed 8/05/2022
+        66: '0x1ABFa8E80D33Cc250bbd2bCbac99bC84ACEAdb11',   // deployed 8/15/2022
         97: '0x510085FDBD2123d3753Aa61C495af7d863746c24',
     },
     factoryImplementation: {
@@ -151,6 +165,7 @@ module.exports = {
         30: '0xC0b33816Ad3b6b358f835BCa5bC4dB7B2D37dDA4',   // deployed 7/29/2022
         31: '0xBbe0AFF7622BC4A2E28CE698e36fD00B8C2Df9f4',
         56: '0xA599D1b48dE190C4c66F7c22752f7fC65394946B',   // deployed 8/05/2022
+        66: '0xA3A2B1Cc0661a8346A9952a9510d747DEca3f364',   // deployed 8/15/2022
         97: '0x9B939F647E9B5a07c4039c1ED93fc75F559e5b2d',
     },
     oracleFactory: {
@@ -160,6 +175,7 @@ module.exports = {
         30: '0xBdf2F38AF1d5aF64F2bab664FDcbBFb96a8DBDe3',   // deployed 7/29/2022
         31: '0x6cD44f81D4A4390E0492F39F73A6F5094F2252E3',
         56: '0x72d85030A1a01Eed16C6E7e71db421D058e471C0',   // deployed 8/05/2022
+        66: '0x501CA3E302a3848350ba6cB6ee93393af6fbE447',   // deployed 8/15/2022
         97: '0x15CA80E2006823904d41b967839Cce8D4b26D43b',
     },
     oracleFactoryImplementation: {
@@ -169,6 +185,7 @@ module.exports = {
         30: '0x417C98fc89e9D319817815905FbCAD39B37f9448',   // deployed 7/29/2022
         31: '0xc161e5396f4CC1b37BB85aF1FeEFD4Ab186206E7',
         56: '0x1D831FbE70b82E885a91aA6d33CD852b96F9CD32',   // deployed 8/05/2022
+        66: '0x1F9285e2454DB2bB1da85030a62BAf92E5ECE2a0',   // deployed 8/15/2022
         97: '0xBbe0AFF7622BC4A2E28CE698e36fD00B8C2Df9f4',
     },
     router: {
@@ -178,6 +195,7 @@ module.exports = {
         30: '0x3a9D41c8f905D1744180DA36B7EB8350A67cE8e4',   // deployed 7/29/2022
         31: '0x4600c109DF1E2226d7f3B10b69AAd26a2AAc1f04',
         56: '0x8404d326C4BF82075C50567123683BF798C3725f',   // deployed 8/05/2022
+        66: '0xc5B58628575dF1d27931E359220D2328e829FA5B',   // deployed 8/15/2022
         97: '0xc161e5396f4CC1b37BB85aF1FeEFD4Ab186206E7',
     },
     helixMigrator: {
@@ -187,6 +205,7 @@ module.exports = {
         30: '0x930F0AB1f3e5fa32Ada50E97de872b503b28c8BB',
         31: '0xba4d628ddA76aF2D7503033F3a6f7f329fF39E55',
         56: '0x20BBA7881ffb0bE6923B2C0AAD59721ee796703f',   // deployed 8/05/2022
+        66: '0x9919C93FC0d875F277c7f2d0bfE326044e816a94',   // deployed 8/15/2022
         97: '0x6cD44f81D4A4390E0492F39F73A6F5094F2252E3',
     },
     swapRewards: {
@@ -196,6 +215,7 @@ module.exports = {
         30: '0xf741f28cFA0550bcCeFE885d082F9Bc006106FE2',
         31: '0x8A1f37a5055390f716c1923A618c30Cb4A0A94c1',
         56: '0xaCC07c2B20668392c86651af8DAE02BA6F8E32BF',   // deployed 8/05/2022
+        66: '0xcD7116c5Ab89fe4d3764C96D31F81a09B633B811',   // deployed 8/15/2022
         97: '0xAFEe62D2ef96510D7ceFE2a5B97a7fe983DC893E',
     },
     masterChef: {
@@ -205,6 +225,7 @@ module.exports = {
         30: '0xd5BFD8F6a590a4Ae8e9B86266e78E24b8244eEF8',   // deployed 8/1/2022
         31: '0xE5B2B45e06F6004147e5b1FBbDd183DB0e6EEc6F',
         56: '0x3a391bF56927B69a3A14Aab10731C5d7d7A7b8c3',   // deployed 8/09/2022
+        66: '0xC99F7Ad8C8DCCBd500D2d791F61b7B75d7F38432',   // deployed 8/15/2022
         97: '0x570489f4278de24E7421b83C518ABc8B1AfA7D10',
     },
     masterChefImplementation: {
@@ -214,6 +235,7 @@ module.exports = {
         30: '0x727e625c35c8c18a1458444901a8EE4AbdB3eCaF',   // deployed 8/1/2022
         31: '0xAFEe62D2ef96510D7ceFE2a5B97a7fe983DC893E',
         56: '0xF5051ef7037dF0ad54731aA2bd189Ad80499B049',   // deployed 8/05/2022
+        66: '0xDF70A7cab3Fd4160cd3F1f7017f65F2C231F29a6',   // deployed 8/15/2022
         97: '0x2D3f2C55c1c52eB62708E71fEDECEa2B61a45460',
     },
     autoHelix: {
@@ -223,6 +245,7 @@ module.exports = {
         30: '0x4bdefD001a3b7F1d5Bf16B35DD19116aB3C33e64',   // deployed 8/1/2022
         31: '0x443d8b9263b0d506Fd0Acb5B5e7fC013B3841164',
         56: '0xE3723F408749CB9462C95bDA7fd2017d5C19B85E',   // deployed 8/12/2022
+        66: '0xcD9D0ba6e57DC7FaA5165a0F000262C134136DdE',   // deployed 8/15/2022
         97: '0xbFB6763A426EaB71219C910F424fBd0E3a1f41A9',
     },
     autoHelixImplementation: {
@@ -232,6 +255,7 @@ module.exports = {
         30: '0x187AB9FD3c34510c634C3d06bFc849D11CdB70C4',   // deployed 8/1/2022
         31: '0xbFB6763A426EaB71219C910F424fBd0E3a1f41A9',
         56: '0x72f95056Bcf92c1aCc90a58f9D14102C374B0692',   // deployed 8/12/2022
+        66: '0x3De8781d7cA6D08B6c24c8AD1B6ad2BA76516289',   // deployed 8/15/2022
         97: '0xE5B2B45e06F6004147e5b1FBbDd183DB0e6EEc6F',
     },
     multicall: {
@@ -241,6 +265,7 @@ module.exports = {
         30: '0x264017e70774Dce5b3f474D2067Dc472a250Fd8d',   // deployed 7/29/2022
         31: '0xa8fa52ED5a03e402916343DfC498071f9b2148B0',
         56: '0xfB6d0037415710030DE7E88c421F276Df66123eA',   // deployed 8/05/2022
+        66: '0x5DB0433A648DFe8af4EdbFde97743579AdD7d866',   // deployed 8/15/2022
         97: '0x443d8b9263b0d506Fd0Acb5B5e7fC013B3841164',
     },
     helixP: {
@@ -290,6 +315,7 @@ module.exports = {
         30: '0x79CE68e5e22b97F388E742ADBF5BD0b5d04B9b5b',   // deployed 7/29/2022
         31: '0x402E563c15D52fBF47A24621ABee72212C2a0022',
         56: '0xB18aaDC80E0D4Efb755009dC0D2F7626833A5Cc4',   // deployed 8/05/2022
+        66: '0xD4cA7e7f00f841816a2a61A9393B075701D959F5',   // deployed 8/15/2022
         97: '0xa8fa52ED5a03e402916343DfC498071f9b2148B0',
     },
     airdropPaymentSplitter: {

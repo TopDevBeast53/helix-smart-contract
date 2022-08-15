@@ -5,7 +5,8 @@ module.exports = {
     // network: 5,     // Goerli Testnet
     // network: 30,    // RSK Mainnet
     // network: 31,    // RSK Testnet
-    network: 56,    // BSC Mainnet
+    // network: 56,    // BSC Mainnet
+    network: 66,    // OKC Mainnet
     // network: 97,    // BSC Testnet
 
     // rpcURL: 'https://eth-mainnet.g.alchemy.com/v2/VqUJXhZEYxUqofUHG6UWgxbuD3tw3yCf',    // Ethererum Mainnet
@@ -14,7 +15,8 @@ module.exports = {
     // rpcURL: 'https://goerli.infura.io/v3/ae4fd86582354ff0b957e9c8a0915658',             // Goerli Testnet
     // rpcURL: 'https://public-node.rsk.co',                                               // RSK Mainnet
     // rpcURL: 'https://public-node.testnet.rsk.co/',                                      // RSK Testnet
-    rpcURL: 'https://bsc-dataseed1.binance.org',                                        // BSC Mainnet
+    // rpcURL: 'https://bsc-dataseed1.binance.org',                                        // BSC Mainnet
+    rpcURL: 'https://exchainrpc.okex.org',                                              // OKC Mainnet
     // rpcURL: 'https://data-seed-prebsc-1-s1.binance.org:8545',                           // BSC Testnet
 
     testNetwork: 4,
