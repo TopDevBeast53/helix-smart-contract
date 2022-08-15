@@ -1,16 +1,8 @@
 const { ethers, upgrades } = require("hardhat")
 const { print } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
-const addresses = require("../../../constants/addresses")
-
-const setterFeeOnPairSwaps = addresses.setterFeeOnPairSwaps[env.network]
-const poolReceiveTradeFee = addresses.poolReceiveTradeFee[env.network]
-
 const deployFactory = async (deployer) => {
     print(`Deploy HelixFactory Proxy and Implementation`)
-    print(`setterFeeOnPairSwaps: ${setterFeeOnPairSwaps}`)
-    print(`poolReceiveTradeFee: ${poolReceiveTradeFee}`)
 
     const Factory = await ethers.getContractFactory("HelixFactory")
     const factoryProxy = await upgrades.deployProxy(Factory, []) 
