@@ -1,12 +1,12 @@
 const { run } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
 
-const autoHelixAddress = contracts.autoHelixImplementation[env.network]
-
 const verifyAutoHelix = async () => {
+    const chainId = await getChainId()
+    const autoHelixAddress = contracts.autoHelixImplementation[chainId]
+
     print("verify auto helix")
     print(`autoHelixAddress: ${autoHelixAddress}`)
 

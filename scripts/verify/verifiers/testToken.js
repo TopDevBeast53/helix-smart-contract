@@ -1,16 +1,16 @@
 const { run } = require(`hardhat`);
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
-
-const testTokenAddress = contracts.testToken[env.network]
 
 const name = 'Test Token B'
 const symbol = 'TTB'
 const totalSupply = '1000000000000000000000000000';        // 1 billion
 
 const verifyTestToken = async () => {
+    const chainId = await getChainId()
+    const testTokenAddress = contracts.testToken[chainId]
+
     print(`verify Test Token`);
     print(`name: ${name}`)
     print(`symbol: ${symbol}`)

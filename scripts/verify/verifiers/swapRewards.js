@@ -1,17 +1,16 @@
 const { run } = require('hardhat')
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
 
-const swapRewardsAddress = contracts.swapRewards[env.network]
-
-const helixTokenAddress = contracts.helixToken[env.network]
-const oracleFactoryAddress = contracts.oracleFactory[env.network]
-const referralRegisterAddress = contracts.referralRegister[env.network]
-const routerAddress = contracts.router[env.network]
-
 const verifySwapRewards = async () => {
+    const chainId = await getChainId()
+    const swapRewardsAddress = contracts.swapRewards[chainId]
+    const helixTokenAddress = contracts.helixToken[chainId]
+    const oracleFactoryAddress = contracts.oracleFactory[chainId]
+    const referralRegisterAddress = contracts.referralRegister[chainId]
+    const routerAddress = contracts.router[chainId]
+
     print('verify SwapRewards')
     print(`swapRewardsAddress: ${swapRewardsAddress}`)
     print(`helixTokenAddress: ${helixTokenAddress}`)

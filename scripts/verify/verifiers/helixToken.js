@@ -1,12 +1,12 @@
 const { run } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
 
-const helixTokenAddress = contracts.helixToken[env.network]
-
 const verifyHelixToken = async () => {
+    const chainId = await getChainId()
+    const helixTokenAddress = contracts.helixToken[chainId]
+
     print("verify helix token")
     print(`helixTokenAddress: ${helixTokenAddress}`)
     await run(
