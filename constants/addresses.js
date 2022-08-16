@@ -26,6 +26,7 @@ module.exports = {
         30: '0xef213441a85df4d7acbdae0cf78004e1e486bb96',
         31: '0x760ae0f5319D9efEdc9B99d7E73fdaB2f84E4d87',
         56: '0x55d398326f99059fF775485246999027B3197955',
+        66: '0x382bB369d343125BfB2117af9c149795C6C65C50',
         97: '0x7ef95a0FEE0Dd31b22626fA2e10Ee6A223F8a684',
     },
     rifToken: {
@@ -42,6 +43,7 @@ module.exports = {
     },
     usdcToken: {
         56: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+        66: '0xc946DAf81b08146B1C7A8Da2A851Ddf2B3EAaf85',
         97: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d',
     },
     cakeToken: {
@@ -51,5 +53,8 @@ module.exports = {
     busdToken: {
         56: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56',
         97: '0x78867BbEeF44f2326bF8DDd1941a4439382EF2A7',
+    },
+    cherryToken: {
+        66: '0x8179D97Eb6488860d816e3EcAFE694a4153F216c',
     },
 }
