@@ -1,6 +1,6 @@
 // Export functions used by scripts
 
-const { ethers } = require("hardhat")
+const { ethers, network } = require("hardhat")
 
 const verbose = true;
 
@@ -39,6 +39,20 @@ const getEncodedFunctionData = (contract, functionName, arguments) => {
     const contractInterface = new ethers.utils.Interface(contractAbi)
 
     return contractInterface.encodeFunctionData(functionName, arguments)
+}
+
+// Return the current chainId
+const getChainId = async () => {
+    let chainId = network.config.chainId
+
+    // Get the chainId from the provider if it can't be accessed directly
+    if (chainId === undefined) {
+        const url = network.config.url
+        const provider = new ethers.providers.JsonRpcProvider(url)
+        chainId = (await provider.getNetwork()).chainId
+    }
+
+    return chainId
 }
 
 // Return true if the string is an address and false otherwise
@@ -210,4 +224,5 @@ module.exports = {
     getContractName,
     getCommaSeparatedString,
     getEncodedFunctionData,
+    getChainId,
 }
