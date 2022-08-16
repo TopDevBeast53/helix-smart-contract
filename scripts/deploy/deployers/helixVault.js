@@ -1,18 +1,18 @@
 const { ethers } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require('../../../constants/env')
 const contracts = require('../../../constants/contracts')
 const initials = require('../../../constants/initials')
 
-const helixTokenAddress = contracts.helixToken[env.network]
-const feeHandlerAddress = contracts.feeHandler[env.network]
-const feeMinterAddress = contracts.feeMinter[env.network]
-const startBlock = initials.HELIX_VAULT_START_BLOCK[env.network]
-const lastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[env.network]
-const collectorPercent = initials.HELIX_VAULT_COLLECTOR_PERCENT[env.network]
-
 const deployHelixVault = async (deployer) => {
+    const chainId = await getChainId()
+    const helixTokenAddress = contracts.helixToken[chainId]
+    const feeHandlerAddress = contracts.feeHandler[chainId]
+    const feeMinterAddress = contracts.feeMinter[chainId]
+    const startBlock = initials.HELIX_VAULT_START_BLOCK[chainId]
+    const lastRewardBlock = initials.HELIX_VAULT_LAST_REWARD_BLOCK[chainId]
+    const collectorPercent = initials.HELIX_VAULT_COLLECTOR_PERCENT[chainId]
+
     print(`Deploy Helix Vault`);
     print(`helixTokenAddress: ${helixTokenAddress}`)
     print(`feeHandlerAddress: ${feeHandlerAddress}`)

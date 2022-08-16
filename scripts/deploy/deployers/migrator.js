@@ -1,12 +1,12 @@
 const { ethers } = require('hardhat');
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
 
-const routerAddress = contracts.router[env.network];
-
 const deployMigrator = async (deployer) => {
+    const chainId = await getChainId() 
+    const routerAddress = contracts.router[chainId];
+
     print('Deploy Migrator');
     print(`routerAddress: ${routerAddress}`)
 

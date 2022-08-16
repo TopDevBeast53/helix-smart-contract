@@ -1,19 +1,19 @@
 const { ethers, upgrades } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
 const contracts = require("../../../constants/contracts")
 const initials = require("../../../constants/initials")
-const env = require("../../../constants/env")
-
-const helixTokenAddress = contracts.helixToken[env.network]
-const feeHandlerAddress = contracts.feeHandler[env.network]
-const feeMinterAddress = contracts.feeMinter[env.network]
-const stakeRewardPercent = initials.REFERRAL_STAKE_REWARD_PERCENT[env.network]
-const swapRewardPercent = initials.REFERRAL_SWAP_REWARD_PERCENT[env.network]
-const lastMintBlock = initials.REFERRAL_LAST_MINT_BLOCK[env.network]
-const collectorPercent = initials.REFERRAL_COLLECTOR_PERCENT[env.network]
 
 const deployReferralRegister = async (deployer) => {
+    const chainId = await getChainId()
+    const helixTokenAddress = contracts.helixToken[chainId]
+    const feeHandlerAddress = contracts.feeHandler[chainId]
+    const feeMinterAddress = contracts.feeMinter[chainId]
+    const stakeRewardPercent = initials.REFERRAL_STAKE_REWARD_PERCENT[chainId]
+    const swapRewardPercent = initials.REFERRAL_SWAP_REWARD_PERCENT[chainId]
+    const lastMintBlock = initials.REFERRAL_LAST_MINT_BLOCK[chainId]
+    const collectorPercent = initials.REFERRAL_COLLECTOR_PERCENT[chainId]
+
     print("deploy referral register")
     print(`helixTokenAddress: ${helixTokenAddress}`)
     print(`feeHandlerAddress: ${feeHandlerAddress}`)

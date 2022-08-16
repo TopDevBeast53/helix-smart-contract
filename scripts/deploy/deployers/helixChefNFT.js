@@ -1,13 +1,13 @@
 const { ethers, upgrades } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
 const contracts = require("../../../constants/contracts")
-const env = require("../../../constants/env")
-
-const rewardToken = contracts.helixToken[env.network];
-const helixNftAddress = contracts.helixNFT[env.network];
 
 const deployHelixChefNft = async (deployer) => {
+    const chainId = await getChainId()
+    const rewardToken = contracts.helixToken[chainId];
+    const helixNftAddress = contracts.helixNFT[chainId];
+
     print(`Deploy Upgradeable Helix Chef Nft`)
     print(`rewardToken: ${rewardToken}`)
     print(`helixNftAddress: ${helixNftAddress}`)

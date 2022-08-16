@@ -1,14 +1,14 @@
 const { ethers } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
 const initials = require("../../../constants/initials")
 
-const feeHandlerAddress = contracts.feeHandler[env.network]
-const collectorPercent = initials.LP_SWAP_COLLECTOR_PERCENT[env.network]
-
 const deployLpSwap = async (deployer) => {
+    const chainId = await getChainId()
+    const feeHandlerAddress = contracts.feeHandler[chainId]
+    const collectorPercent = initials.LP_SWAP_COLLECTOR_PERCENT[chainId]
+
     print(`Deploy LP Swap`)
     print(`feeHandlerAddress: ${feeHandlerAddress}`)
     print(`collectorPercent: ${collectorPercent}`)

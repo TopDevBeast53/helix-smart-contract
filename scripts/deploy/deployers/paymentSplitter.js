@@ -1,13 +1,13 @@
 const { ethers } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const initials = require("../../../constants/initials")
 
-const payees = initials.PAYMENT_SPLITTER_PAYEES[env.network]
-const shares = initials.PAYMENT_SPLITTER_SHARES[env.network]
-
 const deployPaymentSplitter = async (deployer) => {
+    const chainId = await getChainId()
+    const payees = initials.PAYMENT_SPLITTER_PAYEES[chainId]
+    const shares = initials.PAYMENT_SPLITTER_SHARES[chainId]
+
     print("deploy payment splitter")
 
     if (payees.length != shares.length) {
