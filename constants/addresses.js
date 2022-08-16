@@ -57,4 +57,19 @@ module.exports = {
     cherryToken: {
         66: '0x8179D97Eb6488860d816e3EcAFE694a4153F216c',
     },
+    helixWoktLpToken: {
+        66: '0xD871238f5BD2a1e8ba935b716e664f6518A96CA1',
+    },
+    helixUsdcLpToken: {
+        66: '0x24ACF2545a13e02c6dA0933A866b5f16b1ad0d46',
+    },
+    usdcWoktLpToken: {
+        66: '0xaE78F8b1FdD0269dAfaaC1031cB899ee453b4f19',
+    },
+    usdtUsdcLpToken: {
+        66: '0x5CE7d045C55523Dbfa6eEC200E81fCE665358409',
+    },
+    cheWoktLpToken: {
+        66: '0x8ca827dA72C915Ddd86094329aE274201C9b93Bc',
+    },
 }
