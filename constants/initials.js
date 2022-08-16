@@ -10,13 +10,13 @@ const helixTokenAddress = contracts.helixToken[env.network]
 
 module.exports = {
     FACTORY_INIT_CODE_HASH: {
-        1: '',
-        4: '0xc28107fd87760cfb4e1668f5cb7a07b1049eaedf62697db36fb894567a372da6',
-        30: '',
-        31: '0xc28107fd87760cfb4e1668f5cb7a07b1049eaedf62697db36fb894567a372da6',
-        56: '',
+        1: 'df06dacc3c0f420f3e881baed6af2087e5ab8bc910d926f439c1081ec11fc885',
+        4: '368552104b0dcaacb939b1fe4370f68e358d806ee5d5c9a95193874dd004841a',
+        30: '039a6c55d612c34347963d19ff309e53bd5cd2c46f88b67b0f7f65d43193e92b',
+        31: '039a6c55d612c34347963d19ff309e53bd5cd2c46f88b67b0f7f65d43193e92b',
+        56: '039a6c55d612c34347963d19ff309e53bd5cd2c46f88b67b0f7f65d43193e92b',
         66: '039a6c55d612c34347963d19ff309e53bd5cd2c46f88b67b0f7f65d43193e92b',
-        97: '',
+        97: '039a6c55d612c34347963d19ff309e53bd5cd2c46f88b67b0f7f65d43193e92b',
     },
     
     // --------- FeeHandler --------- //
