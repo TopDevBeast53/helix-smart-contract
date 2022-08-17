@@ -1,14 +1,14 @@
 const { ethers } = require("hardhat")
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
 const addresses = require("../../../constants/addresses")
 
-const factoryAddress = contracts.factory[env.network]
-const wethAddress = addresses.WETH[env.network]
-
 const deployRouter = async (deployer) => {
+    const chainId = await getChainId()
+    const factoryAddress = contracts.factory[env.network]
+    const wethAddress = addresses.WETH[env.network]
+
     print("deploy router")
     print(`factory address: ${factoryAddress}`)
     print(`weth address: ${wethAddress}`)

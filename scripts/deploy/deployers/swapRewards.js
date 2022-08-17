@@ -1,22 +1,15 @@
-/*
- * deploy Swap Rewards
- * 
- * run from root: 
- *      npx hardhat run scripts/deploy/16_deploySwapRewards.js --network ropsten
- */
-
 const { ethers } = require('hardhat')
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
 
-const helixTokenAddress = contracts.helixToken[env.network]
-const oracleFactoryAddress = contracts.oracleFactory[env.network]
-const referralRegisterAddress = contracts.referralRegister[env.network]
-const routerAddress = contracts.router[env.network]
-
 const deploySwapRewards = async (deployer) => {
+    const chainId = await getChainId()
+    const helixTokenAddress = contracts.helixToken[chainId]
+    const oracleFactoryAddress = contracts.oracleFactory[chainId]
+    const referralRegisterAddress = contracts.referralRegister[chainId]
+    const routerAddress = contracts.router[chainId]
+
     print('Deploy SwapRewards')
     print(`helixTokenAddress: ${helixTokenAddress}`)
     print(`oracleFactoryAddress: ${oracleFactoryAddress}`)

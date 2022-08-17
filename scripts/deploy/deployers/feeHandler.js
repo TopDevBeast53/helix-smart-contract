@@ -1,17 +1,17 @@
 const { ethers, upgrades } = require("hardhat")
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const addresses = require("../../../constants/addresses")
 const contracts = require("../../../constants/contracts")
 const initials = require("../../../constants/initials")
 
-const treasuryAddress = contracts.treasuryMultiSig[env.network]
-const nftChefAddress = contracts.helixChefNFT[env.network]
-const helixTokenAddress = contracts.helixToken[env.network]
-const defaultNftChefPercent = initials.FEE_HANDLER_DEFAULT_NFT_CHEF_PERCENT[env.network]
-
 const deployFeeHandler = async (deployer) => {
+    const chainId = await getChainId()
+    const treasuryAddress = contracts.treasuryMultiSig[chainId]
+    const nftChefAddress = contracts.helixChefNFT[chainId]
+    const helixTokenAddress = contracts.helixToken[chainId]
+    const defaultNftChefPercent = initials.FEE_HANDLER_DEFAULT_NFT_CHEF_PERCENT[chainId]
+
     print(`Deploy FeeHandler Proxy and Implementation`)
     print(`treasuryAddress: ${treasuryAddress}`)
     print(`nftChefAddress: ${nftChefAddress}`)

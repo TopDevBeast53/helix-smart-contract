@@ -1,12 +1,13 @@
 const { ethers, upgrades } = require("hardhat")
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const initials = require("../../../constants/initials")
 
-const totalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[env.network]
 
 const deployFeeMinter = async (deployer) => {
+    const chainId = await getChainId()
+    const totalToMintPerBlock = initials.FEE_MINTER_TOTAL_TO_MINT_PER_BLOCK[chainId]
+
     print("deploy fee minter");
     print(`total to mint per block: ${totalToMintPerBlock}`)
 

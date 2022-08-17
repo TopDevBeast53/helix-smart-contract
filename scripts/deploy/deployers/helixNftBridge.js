@@ -1,16 +1,16 @@
 const { ethers } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
 const initials = require("../../../constants/initials")
 
-const helixNftAddress = contracts.helixNFT[env.network]
-const adminAddress = initials.BRIDGE_ADMIN_ADDRESS[env.network]
-const fee_eth = initials.BRIDGE_FEE_ETH_AMOUNT[env.network]
-const limitWrap = initials.BRIDGE_LIMIT_WRAP[env.network]
-
 const deployHelixNftBridge = async (deployer) => {
+    const chainId = await getChainId()
+    const helixNftAddress = contracts.helixNFT[chainId]
+    const adminAddress = initials.BRIDGE_ADMIN_ADDRESS[chainId]
+    const fee_eth = initials.BRIDGE_FEE_ETH_AMOUNT[chainId]
+    const limitWrap = initials.BRIDGE_LIMIT_WRAP[chainId]
+
     print("deploy helix nft bridge")
     print(`helixNftAddress: ${helixNftAddress}`)
     print(`adminAddress: ${adminAddress}`)

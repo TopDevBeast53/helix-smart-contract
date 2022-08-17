@@ -1,17 +1,15 @@
 const { ethers } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require('../../../constants/env')
 const contracts = require('../../../constants/contracts')
 const initials = require('../../../constants/initials')
 
-const tokenAddress = initials.AIRDROP_TOKEN[env.network]               // HELIX / tokenB
-const withdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[env.network]
-
-// Define contract settings
-const initialBalance = initials.AIRDROP_INITIAL_BALANCE[env.network]
-
 const deployAirDrop = async (deployer) => {
+    const chainId = await getChainId()
+    const tokenAddress = initials.AIRDROP_TOKEN[chainId]               // HELIX / tokenB
+    const withdrawPhaseDuration = initials.AIRDROP_WITHDRAW_PHASE_DURATION[chainId]
+    const initialBalance = initials.AIRDROP_INITIAL_BALANCE[chainId]
+
     print(`Deploy Air Drop`)
     print(`tokenAddress: ${tokenAddress}`)
     print(`withdrawPhaseDuration: ${withdrawPhaseDuration}`)
