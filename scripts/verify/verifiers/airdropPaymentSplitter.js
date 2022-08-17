@@ -1,16 +1,15 @@
 const { run } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const initials = require("../../../constants/initials")
 const contracts = require("../../../constants/contracts")
 
-const airdropPaymentSplitterAddress = contracts.airdropPaymentSplitter[env.network]
-
-const payees = initials.AIRDROP_PAYMENT_SPLITTER_PAYEES[env.network]
-const shares = initials.AIRDROP_PAYMENT_SPLITTER_SHARES[env.network]
-
 const verifyAirdropPaymentSplitter = async () => {
+    const chainId = await getChainId()
+    const airdropPaymentSplitterAddress = contracts.airdropPaymentSplitter[chainId]
+    const payees = initials.AIRDROP_PAYMENT_SPLITTER_PAYEES[chainId]
+    const shares = initials.AIRDROP_PAYMENT_SPLITTER_SHARES[chainId]
+
     print("verify airdrop payment splitter")
     print(`airdropPaymentSplitterAddress ${airdropPaymentSplitterAddress}`)
 

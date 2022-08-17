@@ -1,16 +1,15 @@
 const { run } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const initials = require("../../../constants/initials")
 const contracts = require("../../../constants/contracts")
 
-const paymentSplitterAddress = contracts.paymentSplitter[env.network]
-
-const payees = initials.PAYMENT_SPLITTER_PAYEES[env.network]
-const shares = initials.PAYMENT_SPLITTER_SHARES[env.network]
-
 const verifyPaymentSplitter = async () => {
+    const chainId = await getChainId()
+    const paymentSplitterAddress = contracts.paymentSplitter[chainId]
+    const payees = initials.PAYMENT_SPLITTER_PAYEES[chainId]
+    const shares = initials.PAYMENT_SPLITTER_SHARES[chainId]
+
     print("verify payment splitter")
     print(`paymentSplitterAddress ${paymentSplitterAddress}`)
 

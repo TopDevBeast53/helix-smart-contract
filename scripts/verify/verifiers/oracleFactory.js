@@ -1,12 +1,12 @@
 const { run } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require('../../../constants/env')
 const contracts = require('../../../constants/contracts')
 
-const oracleFactoryAddress = contracts.oracleFactoryImplementation[env.network]
-
 const verifyOracleFactory = async () => {
+    const chainId = await getChainId()
+    const oracleFactoryAddress = contracts.oracleFactoryImplementation[chainId]
+
     print("verify oracle factory")
     print(`oracleFactoryAddress: ${oracleFactoryAddress}`)
 

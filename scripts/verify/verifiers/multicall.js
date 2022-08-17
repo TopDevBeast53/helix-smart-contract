@@ -1,12 +1,12 @@
 const { run } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
 
-const multicallAddress = contracts.multicall[env.network]
-
 const verifyMulticall = async () => {
+    const chainId = await getChainId()
+    const multicallAddress = contracts.multicall[chainId]
+
     print("verify multicall")
     print(`multicallAddress: ${multicallAddress}`)
 
