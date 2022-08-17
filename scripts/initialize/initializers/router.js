@@ -1,14 +1,14 @@
 const { ethers } = require(`hardhat`)
-const { print, loadContract } = require("../../shared/utilities")
+const { print, loadContract, getChainId } = require("../../shared/utilities")
 const { setSwapRewards } = require("../../shared/setters/setters")
 
-const env = require('../../../constants/env')
 const contracts = require('../../../constants/contracts')
 
-const swapRewardsAddress = contracts.swapRewards[env.network]
-const routerAddress = contracts.router[env.network]
-
 const initializeRouter = async (wallet) => {
+    const chainId = await getChainId()
+    const swapRewardsAddress = contracts.swapRewards[chainId]
+    const routerAddress = contracts.router[chainId]
+
     print("initialize the router contract")
     const router = await loadContract(routerAddress, wallet)
     await setSwapRewards(router, swapRewardsAddress)
