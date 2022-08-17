@@ -1,8 +1,7 @@
 const { ethers, upgrades } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
 const contracts = require("../../../constants/contracts")
-const addresses = require("../../../constants/addresses")
 const initials = require("../../../constants/initials")
 
 const deployMasterChef = async (deployer) => {
