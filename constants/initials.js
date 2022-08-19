@@ -250,7 +250,14 @@ module.exports = {
              2500, //USDC-WBNB
              500, //CAKE-WBNB
         ],
-        66: [],
+        66: [
+            20000, // 0: helix:
+            12500, // 1: helix-okt: 
+            10000, // 2: helix-usdc: 
+            2500, // 3: usdc-okt: 
+            5000, // 4: usdt-usdc:
+            1250, // 5: che-okt: 
+        ],
         97: [],
     },
 
