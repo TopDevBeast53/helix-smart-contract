@@ -606,7 +606,7 @@ contract MasterChef is Initializable, PausableUpgradeable, OwnableUpgradeable, O
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function emergencyWithdraw(uint256 _pid) external {
-        PoolInfo storage pool = poolInfo[_pid];
+        PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
         uint256 _amount = user.amount;
