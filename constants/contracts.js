@@ -229,13 +229,13 @@ module.exports = {
         97: '0x570489f4278de24E7421b83C518ABc8B1AfA7D10',
     },
     masterChefImplementation: {
-        1: '0x01e4ca54a35e09419791eb0a54a38aec8f656dce',    // deployed 7/22/2022
+        1: '0x08e83311dfef96c94da97e9b1cb70f179b697461',    // deployed 8/21/2022
         3: '0xaEaD56A540873130c5B973E1A64378aca343F6BC',
         4: '0x8ac3fe1241fee5458514d08caef9576f24a2b2d1',
-        30: '0x727e625c35c8c18a1458444901a8EE4AbdB3eCaF',   // deployed 8/1/2022
+        30: '0x11b4fF7304DccB7Bcc100eae747D091aAC41566A',   // deployed 8/21/2022
         31: '0xAFEe62D2ef96510D7ceFE2a5B97a7fe983DC893E',
-        56: '0xF5051ef7037dF0ad54731aA2bd189Ad80499B049',   // deployed 8/05/2022
-        66: '0xDF70A7cab3Fd4160cd3F1f7017f65F2C231F29a6',   // deployed 8/15/2022
+        56: '0x292e0526bc7aae484951c33e91393c1da898e460',   // deployed 8/21/2022
+        66: '0xa88988e4bc34f9a8d653fc0ab3ca6029df251cd3',   // deployed 8/21/2022
         97: '0x2D3f2C55c1c52eB62708E71fEDECEa2B61a45460',
     },
     autoHelix: {
