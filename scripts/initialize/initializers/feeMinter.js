@@ -7,10 +7,13 @@ const initials = require("../../../constants/initials")
 
 const initializeFeeMinter = async (wallet) => {
     const chainId = await getChainId()
+    const masterChefAddress = contracts.masterChef[chainId]
+    const referralRegisterAddress = contracts.referralRegister[chainId]
+    const vaultAddress = contracts.helixVault[chainId]
 
     const feeMinterAddress = contracts.feeMinter[chainId]
 
-    const minters = initials.FEE_MINTER_MINTERS[chainId]
+    const minters = [masterChefAddress, referralRegisterAddress, vaultAddress]
     const toMintPercents = initials.FEE_MINTER_TO_MINT_PERCENTS[chainId]
 
     print("initialize the feeMinter contract")

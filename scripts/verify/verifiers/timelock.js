@@ -8,7 +8,7 @@ const verifyTimelock = async () => {
     const chainId = await getChainId()
     const timelockAddress = contracts.timelock[chainId]
     const minDelay = initials.TIMELOCK_MIN_DELAY[chainId]
-    const proposers = initials.TIMELOCK_PROPOSERS[chainId]
+    const proposers = contracts.ownerMultiSig[chainId]
     const executors = initials.TIMELOCK_EXECUTORS[chainId]
 
     print("verify timelock")

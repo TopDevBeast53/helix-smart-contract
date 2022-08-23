@@ -2,12 +2,6 @@
 const env = require("./env")
 const contracts = require("./contracts")
 
-const masterChefAddress = contracts.masterChef[env.network]
-const referralRegisterAddress = contracts.referralRegister[env.network]
-const vaultAddress = contracts.helixVault[env.network]
-const ownerMultiSigAddress = contracts.ownerMultiSig[env.network]
-const helixTokenAddress = contracts.helixToken[env.network]
-
 module.exports = {
     FACTORY_INIT_CODE_HASH: {
         1: 'df06dacc3c0f420f3e881baed6af2087e5ab8bc910d926f439c1081ec11fc885',
@@ -314,17 +308,6 @@ module.exports = {
         97: '45000000000000000',
     },
 
-    FEE_MINTER_MINTERS: {
-        1: [masterChefAddress, referralRegisterAddress, vaultAddress],
-        3: [masterChefAddress, referralRegisterAddress, vaultAddress],
-        4: [masterChefAddress, referralRegisterAddress, vaultAddress],
-        30: [masterChefAddress, referralRegisterAddress, vaultAddress],
-        31: [masterChefAddress, referralRegisterAddress, vaultAddress],
-        56: [masterChefAddress, referralRegisterAddress, vaultAddress],
-        66: [masterChefAddress, referralRegisterAddress, vaultAddress],
-        97: [masterChefAddress, referralRegisterAddress, vaultAddress],
-    },
-
     // Represents the percents of the to mint per block rate to delegate to each task
     // Percents to each task with 2 decimals of precision
     // Chef:        62.5%     (Stake: 37.5% + Dev Team: 25%)
@@ -546,17 +529,6 @@ module.exports = {
         97: 120,   // 2 minutes
     },
 
-    TIMELOCK_PROPOSERS: {
-        1: [ownerMultiSigAddress],
-        3: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-        4: ['0xb1F7D313Ce45fe62EdE9CE4cfb46833051d38e57'],
-        30: [ownerMultiSigAddress],
-        31: [ownerMultiSigAddress],
-        56: [ownerMultiSigAddress],
-        66: [ownerMultiSigAddress],
-        97: [ownerMultiSigAddress],
-    },
-
     TIMELOCK_EXECUTORS: {
         1: ['0x0000000000000000000000000000000000000000'],  // Anyone can propose - https://docs.openzeppelin.com/contracts/4.x/api/governance#TimelockController
         3: ['0x8E655798f4D263B77CBc5791C1Eb8885e55e972d', '0xee936e648cD998e9df4531dF77EF2D2AECA5921b'],
@@ -727,7 +699,7 @@ module.exports = {
     // token address
     AIRDROP_TOKEN: {
         1: '',
-        4: helixTokenAddress,
+        4: '0x79DD2dad8D04F9279F94580DBEd2306A0aE118Bd',
         56: '0x67e02A2A1e7527eB18A703a19778f8ACd9972808', // HELIX-P
         97: '0xfa120708E905A870212B3DCd0079EC6084F5aC3E',   // Test Token B for testing
     },

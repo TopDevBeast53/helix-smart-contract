@@ -2,7 +2,7 @@
  * @dev Verify the deployed MasterChef
  *
  * command for verify on testnet: 
- *      npx hardhat run scripts/5_verify/masterChef.js --network ropsten
+ *      npx hardhat run scripts/verify/masterChef.js --network 
  */
 
 const { verifyMasterChef } = require("./verifiers/verifiers")

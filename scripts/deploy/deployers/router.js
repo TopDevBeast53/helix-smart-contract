@@ -6,8 +6,8 @@ const addresses = require("../../../constants/addresses")
 
 const deployRouter = async (deployer) => {
     const chainId = await getChainId()
-    const factoryAddress = contracts.factory[env.network]
-    const wethAddress = addresses.WETH[env.network]
+    const factoryAddress = contracts.factory[chainId]
+    const wethAddress = addresses.WETH[chainId]
 
     print("deploy router")
     print(`factory address: ${factoryAddress}`)
