@@ -25,6 +25,15 @@ const loadContract = async (address, wallet) => {
     return contract
 }
 
+
+const loadContractNoVerbose = async (address) => {
+    const [wallet] = await ethers.getSigners()
+    const name = await getContractName(address)
+    const contractFactory = await ethers.getContractFactory(name)
+    const contract = contractFactory.attach(address).connect(wallet)
+    return contract
+}
+
 // Return the encoded function data for calling the function with arguments
 const getEncodedFunctionData = (contract, functionName, arguments) => {
     let contractName = isAddress(contract) ? getContractName(contract) : contract
@@ -85,9 +94,9 @@ const getContractName = async (address) => {
         case contracts.ownerMultiSig[chainId]:
            return "MultiSigWallet"
         case contracts.treasuryMultiSig[chainId]:
-            return "TokenMultiSigWallet"
+            return "MultiSigWallet"
         case contracts.devTeamMultiSig[chainId]:
-            return "TokenMultiSigWallet"
+            return "MultiSigWallet"
         case contracts.timelock[chainId]:
             return "TimelockController"
         case contracts.helixToken[chainId]:
@@ -150,6 +159,8 @@ const getContractName = async (address) => {
             return "LpSwap"
         case contracts.lpSwapImplementation[chainId]:
             return "LpSwap"
+        case contracts.paymentSplitter[chainId]:
+            return "PaymentSplitter"
         default:
             throw "Error: contract address not found"
             return
@@ -226,4 +237,5 @@ module.exports = {
     getCommaSeparatedString,
     getEncodedFunctionData,
     getChainId,
+    loadContractNoVerbose,
 }

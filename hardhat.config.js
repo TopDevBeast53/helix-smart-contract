@@ -6,6 +6,8 @@ require('@openzeppelin/hardhat-upgrades');
 require("dotenv").config();
 
 require("./tasks/approveLp")
+require("./tasks/devTeamTransfer")
+
 require("./tasks/call")
 require("./tasks/subtasks/ownerMultiSig")
 require("./tasks/subtasks/devTeamMultiSig")
