@@ -1,12 +1,17 @@
-const { loadContract } = require("./utilities")
+const { getChainId, loadContract } = require("./utilities")
 
-const env = require("../../constants/env")
 const contracts = require("../../constants/contracts")
 
 const name = "FeeHandler"
-const address = contracts.feeHandler[env.network]
 
-const contract = async () => await hre.run("loadContract", { name: name, address: address })
+const chainId = async () => await hre.run("getChainId")
+const contract = async () => await hre.run(
+    "loadContract", 
+    { 
+        name: name, 
+        address: contracts.feeHandler[await chainId()]
+    }
+)
 
 
 // READ
