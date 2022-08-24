@@ -126,6 +126,12 @@ module.exports = {
             gasPrice: 5000000000,
             accounts: getAccounts(),
         },
+        okcMainnet: {
+            chainId: 66,
+            url: 'https://exchainrpc.okex.org/',
+            gasPrice: 100000000,
+            accounts: getAccounts(),
+        },
     },
     solidity: {
         compilers:[
