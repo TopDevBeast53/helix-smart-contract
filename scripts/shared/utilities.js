@@ -4,7 +4,6 @@ const { ethers, network } = require("hardhat")
 
 const verbose = true;
 
-const env = require("../../constants/env")
 const contracts  = require("../../constants/contracts")
 
 const overrides = {
