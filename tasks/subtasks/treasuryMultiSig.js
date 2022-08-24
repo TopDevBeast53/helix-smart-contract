@@ -1,12 +1,16 @@
-const { loadContract } = require("./utilities")
-
-const env = require("../../constants/env")
+const { getChainId, loadContract } = require("./utilities")
 const contracts = require("../../constants/contracts")
 
 const name = "MultiSigWallet"
-const address= contracts.treasuryMultiSig[env.network]
 
-const contract = async () => await hre.run("loadContract", { name: name, address: address })
+const chainId = async () => await hre.run("getChainId")
+const contract = async () => await hre.run(
+    "loadContract", 
+    { 
+        name: name, 
+        address: contracts.treasuryMultiSig[await chainId()]
+    }
+)
 
 
 // READ
@@ -14,7 +18,7 @@ const contract = async () => await hre.run("loadContract", { name: name, address
 
 subtask("treasuryMultiSig.adminConfirmationsRequired")
     .setAction(async () => {
-        const result = await (await contract()).adminConfirmationsRequied()
+        const result = await (await contract()).adminConfirmationsRequired()
         console.log(result.toString())
     })
 

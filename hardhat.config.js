@@ -14,6 +14,7 @@ require("./tasks/subtasks/devTeamMultiSig")
 require("./tasks/subtasks/treasuryMultiSig")
 require("./tasks/subtasks/timelock")
 require("./tasks/subtasks/helixToken")
+require("./tasks/subtasks/feeHandler")
 require("./tasks/subtasks/feeMinter")
 require("./tasks/subtasks/referralRegister")
 require("./tasks/subtasks/helixVault")
@@ -26,6 +27,11 @@ require("./tasks/subtasks/masterChef")
 require("./tasks/subtasks/autoHelix")
 require("./tasks/subtasks/multicall")
 require("./tasks/subtasks/paymentSplitter")
+require("./tasks/subtasks/helixChefNft")
+require("./tasks/subtasks/helixNft")
+require("./tasks/subtasks/helixNftBridge")
+require("./tasks/subtasks/lpSwap")
+
 
 const mnemonic = process.env.MNEMONIC;
 const bscScanApiKey = process.env.BSCSCANAPIKEY;
