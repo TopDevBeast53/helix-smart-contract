@@ -7,7 +7,7 @@
 
 const { ethers, network } = require(`hardhat`);
 const contracts = require("./constants/contracts")
-const { getChainId } = require("../shared/utilities")
+const { getChainId, getRpcUrl } = require("../shared/utilities")
 const initials = require("./constants/initials");
 require("dotenv").config();
 
@@ -21,7 +21,8 @@ async function check() {
     const chainId = await getChainId()
     const vipPresale = contracts.vipPresale[chainId];
 
-    const rpc = new ethers.providers.JsonRpcProvider(env.rpcURL);
+    const rpcUrl = getRpcUrl()
+    const rpc = new ethers.providers.JsonRpcProvider(rpcUrl);
     const admin = new ethers.Wallet(process.env.PRIVATE_KEY, rpc);
 
     const IVipPresale = await ethers.getContractFactory('VipPresale')
@@ -43,7 +44,8 @@ async function getPurchasedList() {
     const chainId = await getChainId()
     const vipPresale = contracts.vipPresale[chainId];
 
-    const rpc = new ethers.providers.JsonRpcProvider(env.rpcURL);
+    const rpcUrl = getRpcUrl()
+    const rpc = new ethers.providers.JsonRpcProvider(rpcUrl);
     const admin = new ethers.Wallet(process.env.PRIVATE_KEY, rpc);
 
     const IVipPresale = await ethers.getContractFactory('VipPresale')
@@ -65,7 +67,8 @@ async function main() {
     const chainId = await getChainId()
     const vipPresale = contracts.vipPresale[chainId];
 
-    const rpc = new ethers.providers.JsonRpcProvider(env.rpcURL);
+    const rpcUrl = getRpcUrl()
+    const rpc = new ethers.providers.JsonRpcProvider(rpcUrl);
     const admin = new ethers.Wallet(process.env.PRIVATE_KEY, rpc);
 
     const IVipPresale = await ethers.getContractFactory('VipPresale')
