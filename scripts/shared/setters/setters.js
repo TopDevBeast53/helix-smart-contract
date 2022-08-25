@@ -2,8 +2,6 @@
 
 const { print, getContractName } = require("../utilities")
 
-const env = require("../../../constants/env")
-
 // Set the fee collector percent on the contract
 const setCollectorPercent = async (contract, percent) => {
     const contractName = await getContractName(contract.address)
