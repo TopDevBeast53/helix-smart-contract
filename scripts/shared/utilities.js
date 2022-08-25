@@ -64,6 +64,11 @@ const getChainId = async () => {
     return chainId
 }
 
+// Return the current rpcUrl
+const getRpcUrl = async () => {
+    return network.config.url
+}
+
 // Return true if the string is an address and false otherwise
 const isAddress = (str) => {
     if (str.length != 42) {
@@ -238,4 +243,5 @@ module.exports = {
     getEncodedFunctionData,
     getChainId,
     loadContractNoVerbose,
+    getRpcUrl,
 }
