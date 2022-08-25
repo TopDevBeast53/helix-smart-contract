@@ -1,12 +1,12 @@
 const { ethers } = require("hardhat")
-const { loadContract } = require("../shared/utilities")
+const { loadContract, getChainId } = require("../shared/utilities")
 
-const env = require("../../constants/env")
 const contracts = require("../../constants/contracts")
 
-const masterChefAddress = contracts.masterChef[env.network]
+async function main() { 
+    const chainId = await getChainId()
+    const masterChefAddress = contracts.masterChef[chainId]
 
-async function main() {
     const [wallet] = await ethers.getSigners()
     const masterChef = await loadContract(masterChefAddress, wallet)
 
