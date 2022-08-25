@@ -1,26 +1,8 @@
 const fs = require("fs")
 const { ethers } = require("hardhat") 
+const { getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
-
-const helixTokenName = "HelixToken"
-const helixTokenAddress = contracts.helixToken[env.network]
-
-const vipPresaleName = "VipPresale"
-const vipPresaleAddress = contracts.vipPresale[env.network]
-
-const airdropName = "AirdropPaymentSplitter"
-const airdropAddress = contracts.airdropPaymentSplitter[env.network]
-
-const masterChefName = "MasterChef"
-const masterChefAddress = contracts.masterChef[env.network]
-
-const vaultName = "HelixVault"
-const vaultAddress = contracts.helixVault[env.network]
-
-const referralRegisterName = "ReferralRegister"
-const referralRegisterAddress = contracts.referralRegister[env.network]
 
 // Load a contract
 async function loadContract(name, address) {
@@ -31,11 +13,28 @@ async function loadContract(name, address) {
 
 // Return the contracts that will be queried in this script
 async function loadContracts() {
+    const chainId = await getChainId()
+
+    const helixTokenName = "HelixToken"
+    const helixTokenAddress = contracts.helixToken[chainId]
     const helixToken = await loadContract(helixTokenName, helixTokenAddress)
+
+    const airdropName = "AirdropPaymentSplitter"
+    const airdropAddress = contracts.airdropPaymentSplitter[chainId]
     const airdrop = await loadContract(airdropName, airdropAddress)
+
+    const masterChefName = "MasterChef"
+    const masterChefAddress = contracts.masterChef[chainId]
     const masterChef = await loadContract(masterChefName, masterChefAddress)
+
+    const vaultName = "HelixVault"
+    const vaultAddress = contracts.helixVault[chainId]
     const vault = await loadContract(vaultName, vaultAddress)
+
+    const referralRegisterName = "ReferralRegister"
+    const referralRegisterAddress = contracts.referralRegister[chainId]
     const referralRegister = await loadContract(referralRegisterName, referralRegisterAddress)
+
     return { 
         helixToken, 
         airdrop,
