@@ -6,16 +6,19 @@
  */
 
  const { ethers, network } = require(`hardhat`);
+ const { getChainId } = require("../shared/utilities")
  const contracts = require("./constants/contracts")
  const env = require("./constants/env")
  require("dotenv").config();
  
  
- const helixChefNFTAddress = contracts.helixChefNFT[env.network];
- const helixNFTAddress = contracts.helixNFT[env.network];
- const helixToken = contracts.helixToken[env.network];
+async function main() {
+    const chainId = await getChainId()
+    const helixChefNFTAddress = contracts.helixChefNFT[chainId];
+    const helixNFTAddress = contracts.helixNFT[chainId];
+    const helixToken = contracts.helixToken[chainId];
  
- async function main() {
+
      const rpc =  new ethers.providers.JsonRpcProvider(env.rpcURL) ;
      const admin = new ethers.Wallet( process.env.PRIVATE_KEY, rpc);
      

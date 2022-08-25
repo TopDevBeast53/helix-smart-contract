@@ -1,11 +1,6 @@
 const { ethers } = require(`hardhat`);
-
-const env = require("../../constants/env")
+const { getChainId } = require("../shared/utilities")
 const contracts = require("../../constants/contracts")
-
-const factoryAddress = contracts.factory[env.network]
-const routerAddress = contracts.router[env.network]
-const masterChefAddress = contracts.masterChef[env.network]
 
 const rhelixAddress = "0x08626CF6A212a44C877D9740f86252dBD6292364"
 const wrbtcAddress = "0xd07445d75A1A18A0030Bf7786990F3C1Ee71dB6e"
@@ -18,6 +13,11 @@ const maxInt = ethers.constants.MaxUint256;
 let tx
 
 async function main() {
+    const chainId = await getChainId()
+    const factoryAddress = contracts.factory[chainId]
+    const routerAddress = contracts.router[chainId]
+    const masterChefAddress = contracts.masterChef[chainId]
+
     const [wallet] = await ethers.getSigners()
     console.log(wallet.address)
 

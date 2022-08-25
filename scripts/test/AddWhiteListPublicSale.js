@@ -9,10 +9,9 @@
 
 const { ethers, network } = require(`hardhat`);
 const contracts = require("../constants/contracts")
-const env = require("../constants/env");
+const { getChainId } = require("../shared/utilities")
 require("dotenv").config();
 
-const publicSaleAddress = contracts.publicSale[env.network];
 
 const addresses = [
     '0x00305a69E7ecD9f5f52e3484b0172F4c75761730',
@@ -431,8 +430,9 @@ const overrides = {
 }
 
 async function main() {
-    // const rpc = new ethers.providers.JsonRpcProvider(env.rpcURL);
-    // const admin = new ethers.Wallet(process.env.PRIVATE_KEY, rpc);
+    const chainId = await getChainId() 
+    const publicSaleAddress = contracts.publicSale[chainId];
+
     const [deployer] = await ethers.getSigners()
     console.log(`deployer ${deployer.address}`)
 
