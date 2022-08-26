@@ -37,6 +37,7 @@ contract RouterProxy is Ownable {
     constructor (address _router, address _partner) {
         router = _router;
         partner = _partner;
+        partnerPercent = 500; // 0.05%
         percentDecimals = 100000;  // partnerFee = amount * partnerPercent / percentDecimals
     }
 
