@@ -323,6 +323,6 @@ module.exports = {
         4: '0x26e3BD7Fd18b236B6f766E8CD6A95a6999e2b569',    // deployed 7/26/2022
     },    
     routerProxy: {
-        4: '0x24F0df949fd6Ad9eaD6fCCd163c9dD223e9d8aA4',    // deployed 8/26/2022
+        4: '0x6Dd24c5896698d841e5a17988db65fCbe26bFDF0',    // deployed 8/29/2022
     },
 }
