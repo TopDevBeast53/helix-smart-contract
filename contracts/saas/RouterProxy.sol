@@ -75,9 +75,8 @@ contract RouterProxy is Ownable {
         external
         returns (uint256[] memory amounts)
     {
-        TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amountIn);
-
-        amountIn -= getFee(amountIn);
+        uint256 fee = getFee(amountIn);
+        TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amountIn + fee);
         TransferHelper.safeApprove(path[0], router, amountIn);
         amounts = IHelixV2Router02(router).swapExactTokensForTokens(
             amountIn, 
@@ -88,7 +87,6 @@ contract RouterProxy is Ownable {
         );
     }
 
-    // swapTokensForExactTokens
     function swapTokensForExactTokens(
         uint256 amountOut,
         uint256 amountInMax,
@@ -121,7 +119,6 @@ contract RouterProxy is Ownable {
         );
     }
 
-    // swapExactEthForTokens
     function swapExactETHForTokens(
         uint256 amountOutMin,
         address[] calldata path,
