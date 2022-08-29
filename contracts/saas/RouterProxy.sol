@@ -2,8 +2,8 @@
 pragma solidity >=0.8.10;
 
 import "../interfaces/IHelixV2Router02.sol";
-
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IWETH.sol"; 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract RouterProxy is Ownable {
@@ -84,6 +84,193 @@ contract RouterProxy is Ownable {
             amountOutMin, 
             path, 
             to, 
+            deadline
+        );
+    }
+
+    // swapTokensForExactTokens
+    function swapTokensForExactTokens(
+        uint256 amountOut,
+        uint256 amountInMax,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    )
+        external
+        returns (uint256[] memory amounts)
+    {
+        // Get the amounts that will be swapped
+        amounts = IHelixV2Router02(router).getAmountsIn(amountOut, path);
+
+        // Compute the fee
+        uint256 fee = getFee(amounts[0]);
+
+        // Transfer from the caller the amount in and the fee
+        TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amounts[0] + fee);  
+    
+        // Approve the router to swap the amount in
+        TransferHelper.safeApprove(path[0], router, amounts[0]);
+
+        // Swap and return
+        amounts = IHelixV2Router02(router).swapTokensForExactTokens(
+            amountOut,
+            amountInMax,
+            path,
+            to,
+            deadline
+        );
+    }
+
+    // swapExactEthForTokens
+    function swapExactETHForTokens(
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) 
+        external
+        payable
+        returns (uint256[] memory amounts) 
+    {
+        amounts = IHelixV2Router02(router).getAmountsOut(msg.value, path);
+        uint256 fee = getFee(amounts[0]);
+        IWETH(IHelixV2Router02(router).WETH()).deposit{value: amounts[0] + fee}();
+        TransferHelper.safeApprove(IHelixV2Router02(router).WETH(), router, amounts[0]);
+        amounts = IHelixV2Router02(router).swapExactETHForTokens(
+            amountOutMin,
+            path,
+            to,
+            deadline
+        );
+    }
+
+    function swapTokensForExactETH(
+        uint256 amountOut,
+        uint256 amountInMax,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    )
+        external
+        returns (uint256[] memory amounts)
+    {
+        amounts = IHelixV2Router02(router).getAmountsIn(amountOut, path);
+        uint256 fee = getFee(amounts[0]);
+        TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amounts[0] + fee);
+        TransferHelper.safeApprove(path[0], router, amounts[0]);
+        amounts = IHelixV2Router02(router).swapTokensForExactETH(
+            amountOut,
+            amountInMax,
+            path,
+            to,
+            deadline
+        );
+    }
+
+    function swapExactTokensForETH(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) 
+        external
+        returns (uint256[] memory amounts)
+    {
+        uint256 fee = getFee(amountIn);
+        TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amountIn + fee);
+        TransferHelper.safeApprove(path[0], router, amountIn);
+        amounts = IHelixV2Router02(router).swapExactTokensForETH(
+            amountIn,
+            amountOutMin,
+            path,
+            to,
+            deadline
+        );
+    }
+
+    function swapETHForExactTokens(
+        uint256 amountOut,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    )
+        external
+        payable
+        returns (uint256[] memory amounts)
+    {
+        amounts = IHelixV2Router02(router).getAmountsIn(amountOut, path);
+        uint256 fee = getFee(amounts[0]);
+        IWETH(IHelixV2Router02(router).WETH()).deposit{value: amounts[0] + fee}();
+        TransferHelper.safeApprove(IHelixV2Router02(router).WETH(), router, amounts[0]);
+        amounts = IHelixV2Router02(router).swapETHForExactTokens(
+            amountOut,
+            path,
+            to,
+            deadline
+        );
+    }
+
+    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    )
+        external
+    {
+        uint256 fee = getFee(amountIn);
+        TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amountIn + fee);
+        TransferHelper.safeApprove(path[0], router, amountIn);
+        IHelixV2Router02(router).swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            amountIn,
+            amountOutMin,
+            path,
+            to,
+            deadline
+        );
+    }
+
+    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    )
+        external
+        payable
+    {
+        uint256 amountIn = msg.value;
+        uint256 fee = getFee(amountIn);
+        IWETH(IHelixV2Router02(router).WETH()).deposit{value: amountIn + fee}();
+        TransferHelper.safeApprove(IHelixV2Router02(router).WETH(), router, amountIn);
+        IHelixV2Router02(router).swapExactETHForTokensSupportingFeeOnTransferTokens(
+            amountOutMin,
+            path,
+            to,
+            deadline
+        );
+    }
+
+    // swapExactTokensForETHSupportingFeeOnTransferTokens
+    function swapExactTokensForETHSupportingFeeOnTransferTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    )   
+        external
+    {
+        uint256 fee = getFee(amountIn);
+        TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amountIn + fee);
+        TransferHelper.safeApprove(path[0], router, amountIn);
+        IHelixV2Router02(router).swapExactTokensForETHSupportingFeeOnTransferTokens(
+            amountIn,
+            amountOutMin,
+            path,
+            to,
             deadline
         );
     }
