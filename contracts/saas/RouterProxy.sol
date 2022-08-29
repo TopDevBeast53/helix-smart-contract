@@ -110,7 +110,6 @@ contract RouterProxy is Ownable {
         );
     }
 
-    /*
     function swapExactETHForTokens(
         uint256 amountOutMin,
         address[] calldata path,
@@ -242,7 +241,6 @@ contract RouterProxy is Ownable {
         );
     }
 
-    // swapExactTokensForETHSupportingFeeOnTransferTokens
     function swapExactTokensForETHSupportingFeeOnTransferTokens(
         uint256 amountIn,
         uint256 amountOutMin,
@@ -263,7 +261,6 @@ contract RouterProxy is Ownable {
             deadline
         );
     }
-    */
 
     function getFee(uint256 _amount) public view returns(uint256) {
         return _amount * partnerPercent / percentDecimals;
