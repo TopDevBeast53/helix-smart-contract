@@ -110,6 +110,7 @@ contract RouterProxy is Ownable {
         );
     }
 
+    /*
     function swapExactETHForTokens(
         uint256 amountOutMin,
         address[] calldata path,
@@ -188,7 +189,7 @@ contract RouterProxy is Ownable {
         returns (uint256[] memory amounts)
     {
         amounts = IHelixV2Router02(router).getAmountsIn(amountOut, path);
-        amounts[0] -= getFee(amounts[0]);
+        uint256 fee = getFee(amounts[0]);
         IWETH(IHelixV2Router02(router).WETH()).deposit{value: amounts[0] + fee}();
         TransferHelper.safeApprove(IHelixV2Router02(router).WETH(), router, amounts[0]);
         amounts = IHelixV2Router02(router).swapETHForExactTokens(
@@ -262,6 +263,7 @@ contract RouterProxy is Ownable {
             deadline
         );
     }
+    */
 
     function getFee(uint256 _amount) public view returns(uint256) {
         return _amount * partnerPercent / percentDecimals;
