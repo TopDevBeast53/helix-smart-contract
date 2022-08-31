@@ -100,371 +100,337 @@ describe("RouterProxy", () => {
         await routerProxy.connect(bobby).withdraw(tokenA.address, bobby.address, balance)
     }
 
-    /*
+    async function getAmountOut(amountIn, fee, path) {
+        const amountsOut = await router.getAmountsOut(
+                expandTo18Decimals(amountIn).sub(fee),
+                path
+            )
+        return amountsOut[amountsOut.length - 1]
+    }
+
+    async function getAmountIn(amountOut, path) {
+        const amountsIn = await router.getAmountsIn(
+            amountOut,
+            path
+        )
+        return amountsIn[0]
+    }
+
+    async function addLiquidityEth(liquidityA, liquidityEth, from, to) {
+        await tokenA.connect(from).approve(router.address, expandTo18Decimals(liquidityA))
+        await router.connect(from).addLiquidityETH(
+            tokenA.address,
+            expandTo18Decimals(liquidityA),
+            0,
+            0,
+            to.address,
+            deadline,
+            { value: expandTo18Decimals(liquidityEth) }
+        )
+    }
+
     it("routerProxy: swap exact tokens for tokens", async () => {
+        // alice adds liquidity
         const liquidityA = 1000
-        const liquidityB = 500
+        const liquidityB = 1000
         await addLiquidity(liquidityA, liquidityB, alice, alice)
 
+        // alice transfers tokens to carol
         const transferAmount = 1000
         await transfer(transferAmount, alice, carol)
 
-        const swapAmount = 100
-        await approve(swapAmount, carol)
+        // set the tokens to swap
+        const path = [tokenA.address, tokenB.address]
 
+        // set the amountIn and get the fee and amountOut
+        const amountIn = 100
+        const fee = await getFee(amountIn)
+        const amountOut = await getAmountOut(amountIn, fee, path)
+
+        // carol approve the transfer
+        await approve(amountIn, carol)
+
+        // collect data before swap
         const prevBalances = await getBalances()
-        console.log(prevBalances)
 
+        // carol swaps
         const tx = await routerProxy.connect(carol).swapExactTokensForTokens(
-            expandTo18Decimals(swapAmount),
+            expandTo18Decimals(amountIn),
             0,
-            [tokenA.address, tokenB.address],
+            path,
             carol.address,
             deadline,
         )
+
+        // bobby withdraw swap token
         await withdraw(tokenA)
 
-        const postBalances = await getBalances()
-        console.log(postBalances)
+        // collect data after swap
         const gas = await getGas(tx)
-        const fee = await getFee(swapAmount)
+        const postBalances = await getBalances()
 
-        expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.sub(swapAmount))
+        // check the results
+        // bobby
+        expect(postBalances.bobby.tokenA).to.eq(prevBalances.bobby.tokenA.add(fee))
+        
+        // carol
+        expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas))
+        expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.sub(expandTo18Decimals(amountIn)))
+        expect(postBalances.carol.tokenB).to.eq(prevBalances.carol.tokenB.add(amountOut))
     })
-    
-    */
-
-    it("routerProxy: swap exact tokens for tokens", async () => {
-                        const liquidityA = 1000
-                        const liquidityB = 500
-                        await addLiquidity(liquidityA, liquidityB, alice, alice)
-
-                        const swapAmount = 100
-                        await transfer(swapAmount, alice, carol)
-                        await approve(swapAmount, carol)
-
-                        const prevBalances = await getBalances()
-
-
-                        // expect routerProxy tokenA balance to be 0 before swap
-                        expect(await tokenA.balanceOf(routerProxy.address)).to.eq(0)
-
-                        // carol swap on routerProxy
-                        const routerProxyCarol = routerProxy.connect(carol)
-                        const tx = await routerProxyCarol.swapExactTokensForTokens(
-                            expandTo18Decimals(swapAmount),
-                            0,
-                            [tokenA.address, tokenB.address],
-                            carol.address,
-                            deadline,
-                        )
-
-                        const gas = await getGas(tx)
-                        const fee = await getFee(swapAmount)
-
-                        // carol receive tokenB
-                        expect(await tokenB.balanceOf(carol.address)).to.eq("45206683096833228655")
-
-                        // routerProxy collects fee
-                        expect(await tokenA.balanceOf(routerProxy.address)).to.eq(fee)
-    })
-
 
     it("routerProxy: swap tokens for exact tokens", async () => {
-        // alice add pair (A, B) to router
-        await tokenA.approve(router.address, expandTo18Decimals(1000))
-        await tokenB.approve(router.address, expandTo18Decimals(500))
-        await router.addLiquidity(
-            tokenA.address,
-            tokenB.address,
-            expandTo18Decimals(1000),
-            expandTo18Decimals(500),
-            0,
-            0,
-            alice.address,
-            expandTo18Decimals(10000)
-        )
+        // alice adds liquidity
+        const liquidityA = 1000
+        const liquidityB = 1000
+        await addLiquidity(liquidityA, liquidityB, alice, alice)
 
-        // alice transfer A to carol
-        await tokenA.transfer(carol.address, expandTo18Decimals(1000))
+        // alice transfers tokens to carol
+        const transferAmount = 1000
+        await transfer(transferAmount, alice, carol)
 
-        // bobby set routerProxy fee percent
-        const routerProxyBobby = routerProxy.connect(bobby)
-        await routerProxyBobby.setPartnerPercent(500)
+        // set the tokens to swap
+        const path = [tokenA.address, tokenB.address]
 
-        const expectedAmountsIn = await router.getAmountsIn(
-            expandTo18Decimals(50), 
-            [tokenA.address, tokenB.address]
-        )
-        const expectedFee = await routerProxy.getFee(expectedAmountsIn[0])
-        
-        // carol approve transfer tokenA to routerProxy
-        const tokenACarol = tokenA.connect(carol)
-        await tokenACarol.approve(routerProxy.address, expectedAmountsIn[0].add(expectedFee))
+        // set the amountOut and get the fee and amountIn
+        const amountOut = 100
+        const amountIn = (await router.getAmountsIn(expandTo18Decimals(amountOut), path))[0]
+        const fee = await routerProxy.getFee(amountIn)
 
-        // expect carol tokenB balance to be 0 before swap
+        // carol approve the transfer
+        await approve(amountIn + fee, carol)
 
-        expect(await tokenB.balanceOf(carol.address)).to.eq(0)
+        // collect data before swap
+        const prevBalances = await getBalances()
 
-        // expect routerProxy tokenA balance to be 0 before swap
-        expect(await tokenA.balanceOf(routerProxy.address)).to.eq(0)
-        
         // carol swap on routerProxy
-        const routerProxyCarol = routerProxy.connect(carol)
-        await routerProxyCarol.swapTokensForExactTokens(
-            expandTo18Decimals(50),
-            expandTo18Decimals(expectedAmountsIn[0].add(expectedFee)),
-            [tokenA.address, tokenB.address],
+        const tx = await routerProxy.connect(carol).swapTokensForExactTokens(
+            expandTo18Decimals(amountOut),
+            expandTo18Decimals(amountIn + fee),
+            path,
             carol.address,
-            expandTo18Decimals(100000)
+            deadline 
         )
 
-        // carol remaining balance tokenA
-        const minExpectedCarolBalanceTokenA = expandTo18Decimals(1000).sub(expectedAmountsIn[0]).add(expectedFee).sub(expandTo18Decimals(2))
-        expect(await tokenA.balanceOf(carol.address)).to.be.above(minExpectedCarolBalanceTokenA)
+        // bobby withdraw swap token
+        await withdraw(tokenA)
+
+        // collect data after swap
+        const gas = await getGas(tx)
+        const postBalances = await getBalances()
+
+        // check the results
+        // bobby
+        expect(postBalances.bobby.tokenA).to.eq(prevBalances.bobby.tokenA.add(fee))
         
-        // carol receive tokenB
-        expect(await tokenB.balanceOf(carol.address)).to.eq(expandTo18Decimals(50))
-
-        // routerProxy collects fee
-        expect(await tokenA.balanceOf(routerProxy.address)).to.eq(expectedFee)
-
-        // bobby withdraw collected fee
-        await routerProxyBobby.withdraw(tokenA.address, bobby.address, expectedFee)
-        expect(await tokenA.balanceOf(bobby.address)).to.eq(expectedFee)
+        // carol
+        expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas))
+        expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.sub(amountIn.add(fee)))
+        expect(postBalances.carol.tokenB).to.eq(prevBalances.carol.tokenB.add(expandTo18Decimals(amountOut)))
     })
 
     it("routerProxy: swap exact ETH for tokens", async () => {
         // alice add pair (weth, B) to router
-        await weth.approve(router.address, expandTo18Decimals(1000))
-        await tokenB.approve(router.address, expandTo18Decimals(1000))
-        await router.addLiquidityETH(
-            tokenB.address,
-            expandTo18Decimals(1000),
-            expandTo18Decimals(1000),
-            expandTo18Decimals(1000),
-            alice.address,
-            expandTo18Decimals(10000),
-            { value: expandTo18Decimals(1000) }
-        )
-    
-        // bobby set routerProxy fee percent
-        const routerProxyBobby = routerProxy.connect(bobby)
-        await routerProxyBobby.setPartnerPercent(500)
-        const expectedFee = await routerProxy.getFee(expandTo18Decimals(100))
+        const liquidityA = 1000
+        const liquidityEth = 1000
+        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
 
-        const prevAliceBalanceTokenB = await tokenB.balanceOf(alice.address)
+        // set the tokens to swap
+        const path = [weth.address, tokenA.address]
 
-        await routerProxy.swapExactETHForTokens(
+        // set the amountIn and get the fee and amountOut
+        const amountIn = expandTo18Decimals(100)
+        const fee = await routerProxy.getFee(amountIn)
+        const amountsOut = await router.getAmountsOut(amountIn.sub(fee), path)
+        const amountOut = amountsOut[amountsOut.length - 1]
+
+        // collect data before swap
+        const prevBalances = await getBalances()
+
+        const tx = await routerProxy.connect(carol).swapExactETHForTokens(
             0,
-            [weth.address, tokenB.address],
-            alice.address,
-            expandTo18Decimals(100000),
-            { value: expandTo18Decimals(50) }
+            path,
+            carol.address,
+            deadline,
+            { value: amountIn }
         )
 
-        const postAliceBalanceTokenB = await tokenB.balanceOf(alice.address)
+        // collect data after swap
+        const gas = await getGas(tx)
+        const postBalances = await getBalances()
 
-        // TODO Check WETH balance
-        // routerProxy collects fee
-        // expect(await weth.balanceOf(routerProxy.address)).to.eq(expectedFee)
-
-        // bobby withdraw collected fee
-        // await routerProxyBobby.withdraw(tokenA.address, bobby.address, expectedFee)
-        // expect(await weth.balanceOf(bobby.address)).to.eq(expectedFee)
+        // check the results
+        // bobby
+        expect(postBalances.bobby.eth).to.eq(prevBalances.bobby.eth.add(fee))
+        
+        // carol
+        expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas).sub(amountIn))
+        expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.add(amountOut))
     })
 
     it("routerProxy: swap tokens for exact ETH", async () => {
-        // alice add pair (A, B) to router
-        await tokenA.approve(router.address, expandTo18Decimals(1000))
-        await weth.approve(router.address, expandTo18Decimals(500))
-        await router.addLiquidityETH(
-            tokenA.address,
-            expandTo18Decimals(1000),
-            expandTo18Decimals(1000),
-            expandTo18Decimals(500),
-            alice.address,
-            expandTo18Decimals(10000),
-            { value: expandTo18Decimals(500) }
-        )
+        const liquidityA = 1000
+        const liquidityEth = 1000
+        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
 
-        // alice transfer A to carol
-        await tokenA.transfer(carol.address, expandTo18Decimals(1000))
+        // alice transfer tokenA to carol
+        const transferAmount = expandTo18Decimals(1000)
+        await tokenA.connect(alice).transfer(carol.address, transferAmount) 
 
-        // bobby set routerProxy fee percent
-        const routerProxyBobby = routerProxy.connect(bobby)
-        await routerProxyBobby.setPartnerPercent(500)
+        // set the tokens to swap
+        const path = [tokenA.address, weth.address]
 
-        const expectedAmountsIn = await router.getAmountsIn(
-            expandTo18Decimals(50), 
-            [tokenA.address, weth.address]
-        )
-        const expectedFee = await routerProxy.getFee(expectedAmountsIn[0])
-        
-        // carol approve transfer tokenA to routerProxy
-        const tokenACarol = tokenA.connect(carol)
-        await tokenACarol.approve(routerProxy.address, expandTo18Decimals(1000))
+        // set the amountOut and get the amountIn and fee
+        const amountOut = expandTo18Decimals(100)
+        const amountsIn = await router.getAmountsIn(amountOut, path)
+        const amountIn = amountsIn[0]
+        const fee = await routerProxy.getFee(amountIn)
 
-        // expect carol tokenA balance to be 1000 before swap
-        expect(await tokenA.balanceOf(carol.address)).to.eq(expandTo18Decimals(1000))
+        // carol approve the transfer
+        await tokenA.connect(carol).approve(routerProxy.address, amountIn.add(fee))
 
-        // expect carol tokenB balance to be 0 before swap
-        expect(await weth.balanceOf(carol.address)).to.eq(0)
+        // collect data before swap
+        const prevBalances = await getBalances()
 
-        // expect routerProxy tokenA balance to be 0 before swap
-        expect(await tokenA.balanceOf(routerProxy.address)).to.eq(0)
-        
-        // carol swap on routerProxy
-        const routerProxyCarol = routerProxy.connect(carol)
-        await routerProxyCarol.swapTokensForExactETH(
-            expandTo18Decimals(50),
-            expandTo18Decimals(1000),
-            [tokenA.address, weth.address],
+        const tx = await routerProxy.connect(carol).swapTokensForExactETH(
+            amountOut,
+            amountIn.add(fee),
+            path,
             carol.address,
-            expandTo18Decimals(100000),
+            deadline,
         )
 
-        // carol remaining balance tokenA
-        const minExpectedCarolBalanceTokenA = expandTo18Decimals(1000).sub(expectedAmountsIn[0]).add(expectedFee).sub(expandTo18Decimals(2))
-        expect(await tokenA.balanceOf(carol.address)).to.be.above(minExpectedCarolBalanceTokenA)
-       
-        // carol receive tokenB
-        // TODO carol receive weth
-        // expect(await tokenB.balanceOf(carol.address)).to.eq(expandTo18Decimals(50))
+        // collect data after swap
+        const gas = await getGas(tx)
+        const postBalances = await getBalances()
 
-        // routerProxy collects fee
-        expect(await tokenA.balanceOf(routerProxy.address)).to.eq(expectedFee)
-
-        // bobby withdraw collected fee
-        await routerProxyBobby.withdraw(tokenA.address, bobby.address, expectedFee)
-        expect(await tokenA.balanceOf(bobby.address)).to.eq(expectedFee)
+        // check the results
+        // bobby
+        expect(postBalances.bobby.tokenA).to.eq(prevBalances.bobby.tokenA.add(fee))
+        
+        // carol
+        expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas).add(amountOut))
+        expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.sub(amountIn).sub(fee))
     })
 
     it("routerProxy: swap exact tokens for ETH", async () => {
-        // alice add pair (A, weth) to router
-        await tokenA.approve(router.address, expandTo18Decimals(1000))
-        await weth.approve(router.address, expandTo18Decimals(1000))
-        await router.addLiquidityETH(
-            tokenA.address,
-            expandTo18Decimals(1000),
-            0,
-            0,
-            alice.address,
-            expandTo18Decimals(10000),
-            { value: expandTo18Decimals(1000) }
-        )
+        const liquidityA = 1000
+        const liquidityEth = 1000
+        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
 
-        // alice transfer A to carol
-        await tokenA.transfer(carol.address, expandTo18Decimals(1000))
-        expect(await tokenA.balanceOf(carol.address)).to.eq(expandTo18Decimals(1000))
-        
-        // carol approve transfer tokenA to routerProxy
-        const tokenACarol = tokenA.connect(carol)
-        await tokenACarol.approve(routerProxy.address, expandTo18Decimals(1000))
+        // alice transfer tokenA to carol
+        const transferAmount = expandTo18Decimals(1000)
+        await tokenA.connect(alice).transfer(carol.address, transferAmount) 
 
-        // carol swap on routerProxy
-        const routerProxyCarol = routerProxy.connect(carol)
-        await routerProxyCarol.swapExactTokensForETH(
-            expandTo18Decimals(100),
+        // set the tokens to swap
+        const path = [tokenA.address, weth.address]
+
+        // set the amountIn and get the fee and amountOut 
+        const amountIn = expandTo18Decimals(100)
+        const fee = await routerProxy.getFee(amountIn)
+        const amountsOut = await router.getAmountsOut(amountIn.sub(fee), path)
+        const amountOut = amountsOut[amountsOut.length - 1]
+
+        // carol approve the transfer
+        await tokenA.connect(carol).approve(routerProxy.address, amountIn)
+
+        // collect data before swap
+        const prevBalances = await getBalances()
+
+        const tx = await routerProxy.connect(carol).swapExactTokensForETH(
+            amountIn,
             0,
-            [tokenA.address, weth.address],
+            path,
             carol.address,
-            expandTo18Decimals(100000)
+            deadline 
         )
 
-        const expectedFee = await routerProxy.getFee(expandTo18Decimals(100))
+        // collect data after swap
+        const gas = await getGas(tx)
+        const postBalances = await getBalances()
 
-        expect(await tokenA.balanceOf(carol.address)).to.eq(expandTo18Decimals(1000).sub(expandTo18Decimals(100)))
-
-        // routerProxy collects fee
-        expect(await tokenA.balanceOf(routerProxy.address)).to.eq(expectedFee)
-
-        // bobby withdraw collected fee
-        await routerProxy.connect(bobby).withdraw(tokenA.address, bobby.address, expectedFee)
-        expect(await tokenA.balanceOf(bobby.address)).to.eq(expectedFee)
+        // check the results
+        // bobby
+        expect(postBalances.bobby.tokenA).to.eq(prevBalances.bobby.tokenA.add(fee))
+        
+        // carol
+        expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas).add(amountOut))
+        expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.sub(amountIn))
     })
 
     /*
     it("routerProxy: swap ETH for exact tokens", async () => {
-        // alice add liquidity
-        await weth.deposit({ value: expandTo18Decimals(1000) })
-        await tokenB.approve(router.address, expandTo18Decimals(1000))
-        await router.addLiquidityETH(
-            tokenB.address,
-            expandTo18Decimals(1000),
-            0,
-            0,
-            alice.address,
-            expandTo18Decimals(10000),
-            { value: expandTo18Decimals(1000) }
-        )
+        const liquidityA = 1000
+        const liquidityEth = 1000
+        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
 
-        // await weth.connect(carol).deposit({ value: expandTo18Decimals(1000) })
-        // await weth.connect(carol).approve(router.address, expandTo18Decimals(1000))
+        // set the tokens to swap
+        const path = [weth.address, tokenA.address]
 
-        // carol swap eth for token b
+        // set the amountOut and get the amountIn and fee
+        const amountOut = expandTo18Decimals(100)
+        const amountsIn = await router.getAmountsIn(amountOut, path)
+        const amountIn = amountsIn[0]
+        const fee = await routerProxy.getFee(amountIn)
+
+        // collect data before swap
+        const prevBalances = await getBalances()
+
         await routerProxy.connect(carol).swapETHForExactTokens(
-            expandTo18Decimals(50),
-            [weth.address, tokenB.address],
+            amountOut,
+            path,
             carol.address,
-            expandTo18Decimals(10000),
-            { value: expandTo18Decimals(1000) }
+            deadline,
+            { value: amountIn.add(fee) }
         )
     })
     */
 
     it("routerProxy: swap exact tokens for tokens supporting fee on transfer tokens", async () => {
-        // alice add pair (A, B) to router
-        await tokenA.approve(router.address, expandTo18Decimals(1000))
-        await tokenB.approve(router.address, expandTo18Decimals(500))
-        await router.addLiquidity(
-            tokenA.address,
-            tokenB.address,
-            expandTo18Decimals(1000),
-            expandTo18Decimals(500),
+        // alice adds liquidity
+        const liquidityA = 1000
+        const liquidityB = 1000
+        await addLiquidity(liquidityA, liquidityB, alice, alice)
+
+        // alice transfers tokens to carol
+        const transferAmount = 1000
+        await transfer(transferAmount, alice, carol)
+
+        // set the tokens to swap
+        const path = [tokenA.address, tokenB.address]
+
+        // set the amountIn and get the fee and amountOut
+        const amountIn = 100
+        const fee = await getFee(amountIn)
+        const amountOut = await getAmountOut(amountIn, fee, path)
+
+        // carol approve the transfer
+        await approve(amountIn, carol)
+
+        // collect data before swap
+        const prevBalances = await getBalances()
+
+        // carol swaps
+        const tx = await routerProxy.connect(carol).swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            expandTo18Decimals(amountIn),
             0,
-            0,
-            alice.address,
-            expandTo18Decimals(10000)
-        )
-
-        // alice transfer A to carol
-        await tokenA.transfer(carol.address, expandTo18Decimals(1000))
-
-        // bobby set routerProxy fee percent
-        const routerProxyBobby = routerProxy.connect(bobby)
-        await routerProxyBobby.setPartnerPercent(500)
-        const expectedFee = await routerProxy.getFee(expandTo18Decimals(100))
-        
-        // carol approve transfer tokenA to routerProxy
-        const tokenACarol = tokenA.connect(carol)
-        await tokenACarol.approve(routerProxy.address, expandTo18Decimals(100))
-
-        // expect carol tokenB balance to be 0 before swap
-        expect(await tokenB.balanceOf(carol.address)).to.eq(0)
-
-        // expect routerProxy tokenA balance to be 0 before swap
-        expect(await tokenA.balanceOf(routerProxy.address)).to.eq(0)
-
-        // carol swap on routerProxy
-        const routerProxyCarol = routerProxy.connect(carol)
-        await routerProxyCarol.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            expandTo18Decimals(100),
-            0,
-            [tokenA.address, tokenB.address],
+            path,
             carol.address,
-            expandTo18Decimals(100000)
+            deadline,
         )
 
-        // carol receive tokenB
-        expect(await tokenB.balanceOf(carol.address)).to.eq("45206683096833228655")
+        // collect data after swap
+        const gas = await getGas(tx)
+        const postBalances = await getBalances()
 
-        // routerProxy collects fee
-        expect(await tokenA.balanceOf(routerProxy.address)).to.eq(expectedFee)
-
-        // bobby withdraw collected fee
-        await routerProxyBobby.withdraw(tokenA.address, bobby.address, expectedFee)
-        expect(await tokenA.balanceOf(bobby.address)).to.eq(expectedFee)
+        // check the results
+        // bobby
+        expect(postBalances.bobby.tokenA).to.eq(prevBalances.bobby.tokenA.add(fee))
+        
+        // carol
+        expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas))
+        expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.sub(expandTo18Decimals(amountIn)))
+        expect(postBalances.carol.tokenB).to.eq(prevBalances.carol.tokenB.add(amountOut))
     })
 
     it("routerProxy: swap exact ETH for tokens supporting fee on transfer tokens", async () => {

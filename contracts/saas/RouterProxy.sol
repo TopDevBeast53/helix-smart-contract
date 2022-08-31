@@ -77,7 +77,6 @@ contract RouterProxy is Ownable {
     {
         TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amountIn);
         amountIn -= getFee(amountIn);
-        // uint256 swapAmount = amountIn - getFee(amountIn);
         TransferHelper.safeApprove(path[0], router, amountIn);
         amounts = IHelixV2Router02(router).swapExactTokensForTokens(
             amountIn, 
@@ -128,6 +127,10 @@ contract RouterProxy is Ownable {
             to,
             deadline
         );
+
+        // transfer fee to partner
+        (bool success, ) = partner.call{ value: fee }("");
+        require(success, "Failed to withdraw Ether");
     }
 
     function swapTokensForExactETH(
@@ -151,6 +154,7 @@ contract RouterProxy is Ownable {
             to,
             deadline
         );
+        withdrawErc20(path[0], fee);
     }
 
     function swapExactTokensForETH(
@@ -164,7 +168,8 @@ contract RouterProxy is Ownable {
         returns (uint256[] memory amounts)
     {
         TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amountIn);
-        amountIn -= getFee(amountIn);
+        uint256 fee = getFee(amountIn);
+        amountIn -= fee;
         TransferHelper.safeApprove(path[0], router, amountIn);
         amounts = IHelixV2Router02(router).swapExactTokensForETH(
             amountIn,
@@ -173,6 +178,7 @@ contract RouterProxy is Ownable {
             to,
             deadline
         );
+        withdrawErc20(path[0], fee);
     }
 
     function swapETHForExactTokens(
@@ -185,10 +191,10 @@ contract RouterProxy is Ownable {
         payable
         returns (uint256[] memory amounts)
     {
-        // amounts = IHelixV2Router02(router).getAmountsIn(amountOut, path);
-        // uint256 fee = getFee(amounts[0]);
-        // IWETH(IHelixV2Router02(router).WETH()).deposit{value: msg.value }();
-        // TransferHelper.safeApprove(IHelixV2Router02(router).WETH(), router, msg.value);
+        amounts = IHelixV2Router02(router).getAmountsIn(amountOut, path);
+        uint256 fee = getFee(amounts[0]);
+        IWETH(IHelixV2Router02(router).WETH()).deposit{value: msg.value }();
+        TransferHelper.safeApprove(IHelixV2Router02(router).WETH(), router, msg.value);
         amounts = IHelixV2Router02(router).swapETHForExactTokens{ value: msg.value }(
             amountOut,
             path,
@@ -207,7 +213,8 @@ contract RouterProxy is Ownable {
         external
     {
         TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amountIn);
-        amountIn -= getFee(amountIn);
+        uint256 fee = getFee(amountIn);
+        amountIn -= fee;
         TransferHelper.safeApprove(path[0], router, amountIn);
         IHelixV2Router02(router).swapExactTokensForTokensSupportingFeeOnTransferTokens(
             amountIn,
@@ -216,6 +223,7 @@ contract RouterProxy is Ownable {
             to,
             deadline
         );
+        withdrawErc20(path[0], fee);
     }
 
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
@@ -267,5 +275,9 @@ contract RouterProxy is Ownable {
 
     function getFee(uint256 _amount) public view returns(uint256) {
         return _amount * partnerPercent / percentDecimals;
+    }
+
+    function withdrawErc20(address _token, uint256 _fee) internal {
+        TransferHelper.safeTransfer(_token, partner, _fee);
     }
 }
