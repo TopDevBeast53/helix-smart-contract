@@ -77,6 +77,7 @@ contract RouterProxy is Ownable {
     {
         TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amountIn);
         amountIn -= getFee(amountIn);
+        // uint256 swapAmount = amountIn - getFee(amountIn);
         TransferHelper.safeApprove(path[0], router, amountIn);
         amounts = IHelixV2Router02(router).swapExactTokensForTokens(
             amountIn, 
