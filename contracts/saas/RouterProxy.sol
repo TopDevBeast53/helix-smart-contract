@@ -33,11 +33,14 @@ contract RouterProxy is Ownable {
         _;
     }
 
-    constructor (address _router, address _partner) {
+    constructor (address _router, address _partner) 
+        onlyValidAddress(_router)
+        onlyValidAddress(_partner)
+    {
         router = _router;
         partner = _partner;
         partnerPercent = 500; // 0.050%
-        percentDecimals = 100000;  // 3 decimals of precision
+        percentDecimals = 1e5;  // Use 3 decimals of precision for percents, i.e. 000.000%
     }
 
     function setRouter(address _router) external onlyOwner onlyValidAddress(_router) {
