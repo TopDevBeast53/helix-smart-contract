@@ -36,7 +36,7 @@ contract RouterProxy is Ownable {
     constructor (address _router, address _partner) {
         router = _router;
         partner = _partner;
-        partnerPercent = 500; // 0.05%
+        partnerPercent = 500; // 0.050%
         percentDecimals = 100000;  // 3 decimals of precision
     }
 
@@ -45,7 +45,7 @@ contract RouterProxy is Ownable {
         emit SetRouter(_router);
     }
 
-    function setPartner(address _partner) external onlyPartner {
+    function setPartner(address _partner) external onlyPartner onlyValidAddress(_partner) {
         partner = _partner;
         emit SetPartner(_partner);
     }
@@ -55,6 +55,7 @@ contract RouterProxy is Ownable {
         onlyPartner 
         onlyValidPartnerPercent(_partnerPercent) 
     {
+        require(_partnerPercent <= percentDecimals, "Invalid partner percent");
         partnerPercent = _partnerPercent;
         emit SetPartnerPercent(_partnerPercent);
     }

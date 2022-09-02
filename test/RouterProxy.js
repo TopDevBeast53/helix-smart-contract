@@ -95,6 +95,29 @@ describe("RouterProxy", () => {
         return receipt.gasUsed.mul(receipt.effectiveGasPrice)
     }
 
+    function getFee(amountIn, partnerPercent) {
+        // will fail if amountIn is not a BigNumber
+        return amountIn.mul(partnerPercent).div(100000)
+    }
+
+    it("routerProxy: set and get partner percent", async () => {
+        const partnerPercents = [0, 5, 50, 500, 5000, 50000, 100000]
+        const amountsIn = [0, 1, 10, 100, 1000, 10000, 100000]
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let j = 0; j < amountsIn.length; j++) {
+                const amountIn = expandTo18Decimals(amountsIn[j])
+                expect(await routerProxy.getFee(amountIn)).to.eq(getFee(amountIn, partnerPercent))
+            }
+        }
+
+        await expect(routerProxy.connect(bobby).setPartnerPercent(100001))
+            .to.be.revertedWith("Invalid partner percent")
+    })
+
     it("routerProxy: swap exact tokens for tokens", async () => {
         // alice adds liquidity
         const liquidityA = expandTo18Decimals(1000)
