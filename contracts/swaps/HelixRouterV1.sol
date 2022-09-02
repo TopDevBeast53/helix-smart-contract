@@ -201,7 +201,8 @@ contract HelixRouterV1 is IHelixV2Router02, Pausable, Ownable {
         returns (uint256 amountA, uint256 amountB) 
     {
         address pair = HelixLibrary.pairFor(_factory, tokenA, tokenB);
-        HelixPair(pair).transferFrom(msg.sender, pair, liquidity);
+        // HelixPair(pair).transferFrom(msg.sender, pair, liquidity);
+        TransferHelper.safeTransferFrom(pair, msg.sender, pair, liquidity);
         (uint256 amount0, uint256 amount1) = HelixPair(pair).burn(to);
         (address token0,) = HelixLibrary.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
