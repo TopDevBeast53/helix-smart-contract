@@ -18,6 +18,17 @@ describe("RouterProxy", () => {
     let tokenB
     let weth
 
+    const liquidityEth = expandTo18Decimals(5000)
+    const liquidityA = expandTo18Decimals(5000)
+    const liquidityB = expandTo18Decimals(5000)
+    const transferAmount = expandTo18Decimals(5000)
+
+    minAmount = 1
+    maxAmount = 100
+
+    const partnerPercents = [1, 50, 500, 5000]
+    const swapAmounts = [1, 5, 10, 50, 100, 500]
+
     beforeEach(async () => {
         [alice, bobby, carol, david, edith] = await ethers.getSigners()
 
@@ -35,6 +46,273 @@ describe("RouterProxy", () => {
         expect(await routerProxy.router()).to.eq(router.address)
         expect(await routerProxy.partner()).to.eq(bobby.address)
         expect(await routerProxy.percentDecimals()).to.eq(100000)
+    })
+
+    it("routerProxy: set and get partner percent", async () => {
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let j = 0; j < swapAmounts.length; j++) {
+                const amountIn = expandTo18Decimals(swapAmounts[j])
+                expect(await routerProxy.getFee(amountIn)).to.eq(getFee(amountIn, partnerPercent))
+            }
+        }
+
+        await expect(routerProxy.connect(bobby).setPartnerPercent(100001))
+            .to.be.revertedWith("Invalid partner percent")
+    })
+
+    it("routerProxy: swap exact tokens for tokens random", async () => {
+        await addLiquidity(liquidityA, liquidityB, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = randomNumber(minAmount, maxAmount)
+                await swapExactTokensForTokens(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap exact tokens for tokens", async () => {
+        await addLiquidity(liquidityA, liquidityB, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = swapAmounts[i]
+                await swapExactTokensForTokens(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap tokens for exact tokens random", async () => {
+        await addLiquidity(liquidityA, liquidityB, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountOut = randomNumber(minAmount, maxAmount)
+                await swapTokensForExactTokens(amountOut)
+            }
+        }
+    })
+
+    it("routerProxy: swap tokens for exact tokens", async () => {
+        await addLiquidity(liquidityA, liquidityB, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = swapAmounts[i]
+                await swapTokensForExactTokens(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap exact ETH for tokens random", async () => {
+        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = randomNumber(minAmount, maxAmount)
+                await swapExactETHForTokens(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap exact ETH for tokens", async () => {
+        await addLiquidityEth(liquidityA, liquidityB, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = swapAmounts[i]
+                await swapExactETHForTokens(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap tokens for exact ETH random", async () => {
+        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountOut = randomNumber(minAmount, maxAmount)
+                await swapTokensForExactETH(amountOut)
+            }
+        }
+    })
+
+    it("routerProxy: swap tokens for exact ETH", async () => {
+        await addLiquidityEth(liquidityA, liquidityB, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = swapAmounts[i]
+                await swapTokensForExactETH(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap exact tokens for ETH random", async () => {
+        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = randomNumber(minAmount, maxAmount)
+                await swapExactTokensForETH(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap exact tokens for ETH", async () => {
+        await addLiquidityEth(liquidityA, liquidityB, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = swapAmounts[i]
+                await swapExactTokensForETH(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap ETH for exact tokens random", async () => {
+        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = randomNumber(minAmount, maxAmount)
+                await swapETHForExactTokens(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap ETH for exact tokens", async () => {
+        await addLiquidityEth(liquidityA, liquidityB, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = swapAmounts[i]
+                await swapETHForExactTokens(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap exact tokens for tokens supporting fee on transfer tokens random", async () => {
+        await addLiquidity(liquidityA, liquidityB, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = randomNumber(minAmount, maxAmount)
+                await swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap exact tokens for tokens supporting fee on transfer tokens", async () => {
+        await addLiquidity(liquidityA, liquidityB, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = swapAmounts[i]
+                await swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap exact ETH for tokens supporting fee on transfer tokens random", async () => {
+        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = randomNumber(minAmount, maxAmount)
+                await swapExactETHForTokensSupportingFeeOnTransferTokens(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap exact ETH for tokens supporting fee on transfer tokens", async () => {
+        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = swapAmounts[i]
+                await swapExactETHForTokensSupportingFeeOnTransferTokens(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap exact tokens for ETH supporting fee on transfer tokens random", async () => {
+        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = randomNumber(minAmount, maxAmount)
+                await swapExactTokensForETHSupportingFeeOnTransferTokens(amountIn)
+            }
+        }
+    })
+
+    it("routerProxy: swap exact tokens for ETH supporting fee on transfer tokens", async () => {
+        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
+
+        for (let i = 0; i < partnerPercents.length; i++) {
+            const partnerPercent = partnerPercents[i]
+            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
+
+            for (let i = 0; i < swapAmounts.length; i++) {
+                amountIn = swapAmounts[i]
+                await swapExactTokensForETHSupportingFeeOnTransferTokens(amountIn)
+            }
+        }
     })
 
     async function addLiquidity(amountA, amountB, from, to) {
@@ -100,39 +378,18 @@ describe("RouterProxy", () => {
         return amountIn.mul(partnerPercent).div(100000)
     }
 
-    it("routerProxy: set and get partner percent", async () => {
-        const partnerPercents = [0, 5, 50, 500, 5000, 50000, 100000]
-        const amountsIn = [0, 1, 10, 100, 1000, 10000, 100000]
+    function randomNumber(min, max) {
+        return Math.floor(Math.random() * (max - min) + min)
+    }
 
-        for (let i = 0; i < partnerPercents.length; i++) {
-            const partnerPercent = partnerPercents[i]
-            await routerProxy.connect(bobby).setPartnerPercent(partnerPercent)
-
-            for (let j = 0; j < amountsIn.length; j++) {
-                const amountIn = expandTo18Decimals(amountsIn[j])
-                expect(await routerProxy.getFee(amountIn)).to.eq(getFee(amountIn, partnerPercent))
-            }
-        }
-
-        await expect(routerProxy.connect(bobby).setPartnerPercent(100001))
-            .to.be.revertedWith("Invalid partner percent")
-    })
-
-    it("routerProxy: swap exact tokens for tokens", async () => {
-        // alice adds liquidity
-        const liquidityA = expandTo18Decimals(1000)
-        const liquidityB = expandTo18Decimals(1000)
-        await addLiquidity(liquidityA, liquidityB, alice, alice)
-
-        // alice transfers tokens to carol
-        const transferAmount = expandTo18Decimals(1000)
-        await tokenA.connect(alice).transfer(carol.address, transferAmount)
-
-        // set the tokens to swap
+    async function swapExactTokensForTokens(amountIn) {
         const path = [tokenA.address, tokenB.address]
 
+        // alice transfers tokens to carol
+        await tokenA.connect(alice).transfer(carol.address, transferAmount)
+
         // set the amountIn and get the fee and amountOut
-        const amountIn = expandTo18Decimals(100)
+        amountIn = expandTo18Decimals(amountIn)
         const fee = await routerProxy.getFee(amountIn)
         const amountsOut = await router.getAmountsOut(amountIn.sub(fee), path)
         const amountOut = amountsOut[amountsOut.length - 1]
@@ -164,29 +421,21 @@ describe("RouterProxy", () => {
         expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas))
         expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.sub(amountIn))
         expect(postBalances.carol.tokenB).to.eq(prevBalances.carol.tokenB.add(amountOut))
-    })
+    }
 
-    it("routerProxy: swap tokens for exact tokens", async () => {
-        // alice adds liquidity
-        const liquidityA = expandTo18Decimals(1000)
-        const liquidityB = expandTo18Decimals(1000)
-        await addLiquidity(liquidityA, liquidityB, alice, alice)
-
-        // alice transfers tokens to carol
-        const transferAmount = expandTo18Decimals(1000)
-        await tokenA.connect(alice).transfer(carol.address, transferAmount)
-
-        // set the tokens to swap
+    async function swapTokensForExactTokens(amountOut) {
         const path = [tokenA.address, tokenB.address]
 
+        // alice transfers tokens to carol
+        await tokenA.connect(alice).transfer(carol.address, transferAmount)
+
         // set the amountOut and get the fee and amountIn
-        const amountOut = expandTo18Decimals(100)
+        amountOut = expandTo18Decimals(amountOut)
         const amountsIn = await router.getAmountsIn(amountOut, path)
         const amountIn = amountsIn[0]
         const fee = await routerProxy.getFee(amountIn)
 
         // carol approve the transfer
-        // await approve(amountIn + fee, carol)
         await tokenA.connect(carol).approve(routerProxy.address, amountIn.add(fee))
 
         // collect data before swap
@@ -213,19 +462,13 @@ describe("RouterProxy", () => {
         expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas))
         expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.sub(amountIn.add(fee)))
         expect(postBalances.carol.tokenB).to.eq(prevBalances.carol.tokenB.add(amountOut))
-    })
+    }
 
-    it("routerProxy: swap exact ETH for tokens", async () => {
-        // alice add pair (weth, B) to router
-        const liquidityA = expandTo18Decimals(1000)
-        const liquidityEth = expandTo18Decimals(1000)
-        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
-
-        // set the tokens to swap
+    async function swapExactETHForTokens(amountIn) {
         const path = [weth.address, tokenA.address]
 
         // set the amountIn and get the fee and amountOut
-        const amountIn = expandTo18Decimals(100)
+        amountIn = expandTo18Decimals(amountIn)
         const fee = await routerProxy.getFee(amountIn)
         const amountsOut = await router.getAmountsOut(amountIn.sub(fee), path)
         const amountOut = amountsOut[amountsOut.length - 1]
@@ -252,22 +495,16 @@ describe("RouterProxy", () => {
         // carol
         expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas).sub(amountIn))
         expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.add(amountOut))
-    })
+    }
 
-    it("routerProxy: swap tokens for exact ETH", async () => {
-        const liquidityA = expandTo18Decimals(1000)
-        const liquidityEth = expandTo18Decimals(1000)
-        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
-
-        // alice transfer tokenA to carol
-        const transferAmount = expandTo18Decimals(1000)
-        await tokenA.connect(alice).transfer(carol.address, transferAmount) 
-
-        // set the tokens to swap
+    async function swapTokensForExactETH(amountOut) {
         const path = [tokenA.address, weth.address]
 
+        // alice transfer tokenA to carol
+        await tokenA.connect(alice).transfer(carol.address, transferAmount) 
+
         // set the amountOut and get the amountIn and fee
-        const amountOut = expandTo18Decimals(100)
+        amountOut = expandTo18Decimals(amountOut)
         const amountsIn = await router.getAmountsIn(amountOut, path)
         const amountIn = amountsIn[0]
         const fee = await routerProxy.getFee(amountIn)
@@ -297,22 +534,16 @@ describe("RouterProxy", () => {
         // carol
         expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas).add(amountOut))
         expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.sub(amountIn).sub(fee))
-    })
+    }
 
-    it("routerProxy: swap exact tokens for ETH", async () => {
-        const liquidityA = expandTo18Decimals(1000)
-        const liquidityEth = expandTo18Decimals(1000)
-        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
-
-        // alice transfer tokenA to carol
-        const transferAmount = expandTo18Decimals(1000)
-        await tokenA.connect(alice).transfer(carol.address, transferAmount) 
-
-        // set the tokens to swap
+    async function swapExactTokensForETH(amountIn) {
         const path = [tokenA.address, weth.address]
 
+        // alice transfer tokenA to carol
+        await tokenA.connect(alice).transfer(carol.address, transferAmount) 
+
         // set the amountIn and get the fee and amountOut 
-        const amountIn = expandTo18Decimals(100)
+        amountIn = expandTo18Decimals(amountIn)
         const fee = await routerProxy.getFee(amountIn)
         const amountsOut = await router.getAmountsOut(amountIn.sub(fee), path)
         const amountOut = amountsOut[amountsOut.length - 1]
@@ -342,18 +573,13 @@ describe("RouterProxy", () => {
         // carol
         expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas).add(amountOut))
         expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.sub(amountIn))
-    })
+    }
 
-    it("routerProxy: swap ETH for exact tokens", async () => {
-        const liquidityA = expandTo18Decimals(1000)
-        const liquidityEth = expandTo18Decimals(1000)
-        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
-
-        // set the tokens to swap
+    async function swapETHForExactTokens(amountOut) {
         const path = [weth.address, tokenA.address]
 
         // set the amountOut and get the amountIn and fee
-        const amountOut = expandTo18Decimals(100)
+        amountOut = expandTo18Decimals(amountOut)
         const amountsIn = await router.getAmountsIn(amountOut, path)
         const amountIn = amountsIn[0]
         const fee = await routerProxy.getFee(amountIn)
@@ -380,61 +606,16 @@ describe("RouterProxy", () => {
         // carol
         expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas).sub(amountIn).sub(fee))
         expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.add(amountOut))
-    })
+    }
 
-    it("routerProxy: swap ETH for exact tokens returns surplus ETH", async () => {
-        const liquidityA = expandTo18Decimals(1000)
-        const liquidityEth = expandTo18Decimals(1000)
-        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
-
-        // set the tokens to swap
-        const path = [weth.address, tokenA.address]
-
-        // set the amountOut and get the amountIn and fee
-        const amountOut = expandTo18Decimals(100)
-        const amountsIn = await router.getAmountsIn(amountOut, path)
-        const amountIn = amountsIn[0]
-        const fee = await routerProxy.getFee(amountIn)
-
-        // collect data before swap
-        const prevBalances = await getBalances()
-    
-        const tx = await routerProxy.connect(carol).swapETHForExactTokens(
-            amountOut,
-            path,
-            carol.address,
-            deadline,
-            { value: expandTo18Decimals(500) }  // Pass more than enough ETH to check that the surplus is returned
-        )
-
-        // collect data after swap
-        const gas = await getGas(tx)
-        const postBalances = await getBalances()
-
-        // check the results
-        // bobby
-        expect(postBalances.bobby.eth).to.eq(prevBalances.bobby.eth.add(fee))
-        
-        // carol
-        expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas).sub(amountIn).sub(fee))
-        expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.add(amountOut))
-    })
-
-    it("routerProxy: swap exact tokens for tokens supporting fee on transfer tokens", async () => {
-        // alice adds liquidity
-        const liquidityA = expandTo18Decimals(1000)
-        const liquidityB = expandTo18Decimals(1000)
-        await addLiquidity(liquidityA, liquidityB, alice, alice)
-
-        // alice transfers tokens to carol
-        const transferAmount = expandTo18Decimals(1000)
-        await tokenA.connect(alice).transfer(carol.address, transferAmount)
-
-        // set the tokens to swap
+    async function swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn) {
         const path = [tokenA.address, tokenB.address]
 
+        // alice transfers tokens to carol
+        await tokenA.connect(alice).transfer(carol.address, transferAmount)
+
         // set the amountIn and get the fee and amountOut
-        const amountIn = expandTo18Decimals(100)
+        amountIn = expandTo18Decimals(amountIn)
         const fee = await routerProxy.getFee(amountIn)
         const amountsOut = await router.getAmountsOut(amountIn.sub(fee), path)
         const amountOut = amountsOut[amountsOut.length - 1] 
@@ -466,18 +647,13 @@ describe("RouterProxy", () => {
         expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas))
         expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.sub(amountIn))
         expect(postBalances.carol.tokenB).to.eq(prevBalances.carol.tokenB.add(amountOut))
-    })
+    }
 
-    it("routerProxy: swap exact ETH for tokens supporting fee on transfer tokens", async () => {
-        const liquidityA = expandTo18Decimals(1000)
-        const liquidityEth = expandTo18Decimals(1000)
-        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
-
-        // set the tokens to swap
+    async function swapExactETHForTokensSupportingFeeOnTransferTokens(amountIn) {
         const path = [weth.address, tokenA.address]
 
         // set the amountIn and get the fee and amountOut 
-        const amountIn = expandTo18Decimals(100)
+        amountIn = expandTo18Decimals(amountIn)
         const fee = await routerProxy.getFee(amountIn)
         const amountsOut = await router.getAmountsOut(amountIn.sub(fee), path)
         const amountOut = amountsOut[amountsOut.length - 1]
@@ -504,23 +680,16 @@ describe("RouterProxy", () => {
         // carol
         expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas).sub(amountIn))
         expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.add(amountOut))
-    })
+    }
 
-    it("routerProxy: swap exact tokens for ETH supporting fee on transfer tokens", async () => {
-        // alice add liquidity
-        const liquidityA = expandTo18Decimals(1000)
-        const liquidityEth = expandTo18Decimals(1000)
-        await addLiquidityEth(liquidityA, liquidityEth, alice, alice)
-   
-        // alice transfer tokenA to carol
-        const transferAmount = expandTo18Decimals(1000)
-        await tokenA.connect(alice).transfer(carol.address, transferAmount) 
-
-        // set the tokens to swap
+    async function swapExactTokensForETHSupportingFeeOnTransferTokens(amountIn) {
         const path = [tokenA.address, weth.address]
 
+        // alice transfer tokenA to carol
+        await tokenA.connect(alice).transfer(carol.address, transferAmount) 
+
         // set the amountIn and get the fee and amountOut 
-        const amountIn = expandTo18Decimals(100)
+        amountIn = expandTo18Decimals(amountIn)
         const fee = await routerProxy.getFee(amountIn)
         const amountsOut = await router.getAmountsOut(amountIn.sub(fee), path)
         const amountOut = amountsOut[amountsOut.length - 1]
@@ -550,5 +719,5 @@ describe("RouterProxy", () => {
         // carol
         expect(postBalances.carol.eth).to.eq(prevBalances.carol.eth.sub(gas).add(amountOut))
         expect(postBalances.carol.tokenA).to.eq(prevBalances.carol.tokenA.sub(amountIn))
-    })
+    }
 })
