@@ -5,7 +5,6 @@ const { initializeFactory } = require("./factory")
 const { initializeHelixChefNft } = require("./helixChefNft")
 const { initializeHelixNft } = require("./helixNft")
 const { initializeHelixToken } = require("./helixToken")
-const { initializeMasterChef } = require("./masterChef")
 const { initializeReferralRegister } = require("./referralRegister")
 const { initializeRouter } = require("./router")
 const { initializeFeeMinter } = require("./feeMinter")
@@ -16,7 +15,6 @@ module.exports = {
     initializeHelixChefNft,
     initializeHelixNft,
     initializeHelixToken,
-    initializeMasterChef,
     initializeReferralRegister,
     initializeRouter,
     initializeFeeMinter,

@@ -8,17 +8,19 @@
  */
 
 const { ethers, network } = require(`hardhat`);
+const { getChainId, getRpcUrl } = require("../shared/utilities")
 const contracts = require("./constants/contracts")
 const addresses = require("./constants/addresses")
-const env = require("./constants/env")
 require("dotenv").config();
 
-const yieldSwapAddress = contracts.yieldSwap[env.network];
-const LpHelixWETHToken = addresses.HELIX_WETH[env.network];
-const helixToken = contracts.helixToken[env.network];
-
 async function main() {
-    const rpc =  new ethers.providers.JsonRpcProvider(env.rpcURL) ;
+    const chainId = await getChainId()
+    const yieldSwapAddress = contracts.yieldSwap[chainId];
+    const LpHelixWETHToken = addresses.HELIX_WETH[chainId];
+    const helixToken = contracts.helixToken[chainId];
+
+    const rpcUrl = getRpcUrl()
+    const rpc =  new ethers.providers.JsonRpcProvider(rpcUrl) ;
     const admin = new ethers.Wallet( process.env.PRIVATE_KEY, rpc);
     
     const ILpToken = await ethers.getContractFactory("HelixToken");

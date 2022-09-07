@@ -1,13 +1,14 @@
 const { run } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
 const contracts = require("../../../constants/contracts")
-const env = require("../../../constants/env")
-
-const referralRegisterAddress = contracts.referralRegisterImplementation[env.network]
 
 const verifyReferralRegister = async () => {
+    const chainId = await getChainId()
+    const referralRegisterAddress = contracts.referralRegisterImplementation[chainId]
+
     print("verify referral register")
+    print(`referralRegisterAddress: ${referralRegisterAddress}`)
 
     await run(
         "verify:verify", {

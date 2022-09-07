@@ -1,15 +1,16 @@
 const { ethers, upgrades } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
 const addresses = require("../../../constants/addresses")
 
-const helixTokenAddress = contracts.helixToken[env.network]
-const masterChefAddress = contracts.masterChef[env.network]
-const treasuryAddress = contracts.treasuryMultiSig[env.network]
 
 const deployAutoHelix = async (deployer) => {
+    const chainId = await getChainId()
+    const helixTokenAddress = contracts.helixToken[chainId]
+    const masterChefAddress = contracts.masterChef[chainId]
+    const treasuryAddress = contracts.treasuryMultiSig[chainId]
+
     print("deploy auto helix")
     print(`helixTokenAddress: ${helixTokenAddress}`)
     print(`masterChefAddress: ${masterChefAddress}`)

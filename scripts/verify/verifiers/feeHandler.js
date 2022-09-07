@@ -1,13 +1,14 @@
 const { run } = require("hardhat")
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
 const contracts = require("../../../constants/contracts")
-const env = require("../../../constants/env")
-
-const feeHandlerAddress = contracts.feeHandlerImplementation[env.network]
 
 const verifyFeeHandler = async () => {
+    const chainId = await getChainId()
+    const feeHandlerAddress = contracts.feeHandlerImplementation[chainId]
+
     print(`verify FeeHandler Proxy and Implementation`)
+    print(`feeHandlerAddress: ${feeHandlerAddress}`)
     await run(
         "verify:verify", {
             address: feeHandlerAddress,

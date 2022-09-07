@@ -1,6 +1,6 @@
 const { expandTo18Decimals } = require("./utilities")
 
-const env = require("../../constants/env")
+const env = { testNetwork: 4 }
 const addresses = require("../../constants/addresses")
 const initials = require("../../constants/initials")
 
@@ -40,6 +40,7 @@ const billion = 1000000000
 // Deploy external DEX contracts
 // Deploy DEX contracts
 // Deploy presale contracts 
+// Deploy "Proxy" contracts
 // Initialize external DEX contracts
 // Initialize DEX contracts
 //
@@ -67,6 +68,7 @@ module.exports.fullExchangeFixture = async () => {
     const airdropContractFactory = await ethers.getContractFactory("AirDrop")
     const multiSigWalletContractFactory = await ethers.getContractFactory("MultiSigWallet")
     const advisorRewardsContractFactory = await ethers.getContractFactory("AdvisorRewards")
+    const routerProxyContractFactory = await ethers.getContractFactory("RouterProxy")
 
     // 
     // Deploy misc token contracts
@@ -240,6 +242,13 @@ module.exports.fullExchangeFixture = async () => {
     )
 
     // 
+    // Deploy "Proxy" contracts
+    // 
+
+    // deploy proxy router
+    const routerProxy = await routerProxyContractFactory.deploy(router.address, bobby.address)
+
+    // 
     // Initialize external DEX contracts
     //
 
@@ -313,6 +322,7 @@ module.exports.fullExchangeFixture = async () => {
         masterChef,
         publicPresale,
         airdrop,
-        advisorRewards
+        advisorRewards,
+        routerProxy,
     }
 }

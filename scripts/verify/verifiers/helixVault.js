@@ -1,13 +1,14 @@
 const { run } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require('../../../constants/env')
 const contracts = require('../../../constants/contracts')
 
-const helixVaultAddress = contracts.helixVaultImplementation[env.network]
-
 const verifyHelixVault = async (verifyer) => {
+    const chainId = await getChainId()
+    const helixVaultAddress = contracts.helixVaultImplementation[chainId]
+
     print(`verify Helix Vault`);
+    print(`helixVaultAddress: ${helixVaultAddress}`)
 
     await run(
         "verify:verify", {

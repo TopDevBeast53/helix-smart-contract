@@ -63,7 +63,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
     address public treasury;
 
     /// Owner defined pool where fees can be staked
-    IHelixChefNFT public nftChef;
+    address public nftChef;
 
     /// Determines default percentage of collector fees sent to nftChef
     uint256 public defaultNftChefPercent;
@@ -118,7 +118,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
         __Ownable_init();
         __OwnableTimelock_init();
         treasury = _treasury;
-        nftChef = IHelixChefNFT(_nftChef);
+        nftChef = _nftChef;
         helixToken = _helixToken;
         defaultNftChefPercent = _defaultNftChefPercent;
     }
@@ -138,7 +138,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
         
         if (nftChefAmount > 0) {
             IERC20Upgradeable(_token).safeTransferFrom(_from, address(nftChef), nftChefAmount);
-            nftChef.accrueReward(_rewardAccruer, nftChefAmount);
+            IHelixChefNFT(nftChef).accrueReward(_rewardAccruer, nftChefAmount);
         }
 
         if (treasuryAmount > 0) {
@@ -169,7 +169,7 @@ contract FeeHandler is Initializable, OwnableUpgradeable, OwnableTimelockUpgrade
         onlyOwner
         onlyValidAddress(_nftChef) 
     {
-        nftChef = IHelixChefNFT(_nftChef);
+        nftChef = _nftChef;
         emit SetNftChef(msg.sender, _nftChef);
     }
 

@@ -6,14 +6,17 @@
  */
 
 const { ethers, network } = require(`hardhat`);
+const { getChainId, getRpcUrl } = require("../shared/utilities")
 const contracts = require("../constants/contracts")
-const env = require("../constants/env")
 require("dotenv").config();
 
-const bridgeAddress = contracts.helixNFTBridge[env.network];
 
 async function main() {
-    const rpc =  new ethers.providers.JsonRpcProvider(env.rpcURL) ;
+    const chainId = await getChainId()
+    const bridgeAddress = contracts.helixNFTBridge[chainId];
+
+    const rpcUrl = getRpcUrl()
+    const rpc =  new ethers.providers.JsonRpcProvider(rpcUrl) ;
     const admin = new ethers.Wallet( process.env.PRIVATE_KEY, rpc);
     
     const IBridge = await ethers.getContractFactory("HelixNFTBridge");

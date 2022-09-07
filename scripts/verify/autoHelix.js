@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/autoHelix.js --network ropsten
  */
 
-const { verifyAutoHelix } = require("../shared/verify/verifiers")
+const { verifyAutoHelix } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyAutoHelix()

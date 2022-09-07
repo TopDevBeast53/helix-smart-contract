@@ -1,13 +1,14 @@
 const { run } = require("hardhat")
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
 
-const factoryAddress = contracts.factoryImplementation[env.network]
-
 const verifyFactory = async () => {
+    const chainId = await getChainId()
+    const factoryAddress = contracts.factoryImplementation[chainId]
+
     print(`verify HelixFactory Proxy and Implementation`)
+    print(`factoryAddress: ${factoryAddress}`)
 
     await run(
         "verify:verify", {

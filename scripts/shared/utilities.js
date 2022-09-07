@@ -1,10 +1,9 @@
 // Export functions used by scripts
 
-const { ethers } = require("hardhat")
+const { ethers, network } = require("hardhat")
 
 const verbose = true;
 
-const env = require("../../constants/env")
 const contracts  = require("../../constants/contracts")
 
 const overrides = {
@@ -18,8 +17,17 @@ const print = (str) => {
 
 // Return the contract from address with wallet connected
 const loadContract = async (address, wallet) => {
-    const name = getContractName(address)
+    const name = await getContractName(address)
     print(`load contract ${name} from ${address}`)
+    const contractFactory = await ethers.getContractFactory(name)
+    const contract = contractFactory.attach(address).connect(wallet)
+    return contract
+}
+
+
+const loadContractNoVerbose = async (address) => {
+    const [wallet] = await ethers.getSigners()
+    const name = await getContractName(address)
     const contractFactory = await ethers.getContractFactory(name)
     const contract = contractFactory.attach(address).connect(wallet)
     return contract
@@ -39,6 +47,25 @@ const getEncodedFunctionData = (contract, functionName, arguments) => {
     const contractInterface = new ethers.utils.Interface(contractAbi)
 
     return contractInterface.encodeFunctionData(functionName, arguments)
+}
+
+// Return the current chainId
+const getChainId = async () => {
+    let chainId = network.config.chainId
+
+    // Get the chainId from the provider if it can't be accessed directly
+    if (chainId === undefined) {
+        const url = network.config.url
+        const provider = new ethers.providers.JsonRpcProvider(url)
+        chainId = (await provider.getNetwork()).chainId
+    }
+
+    return chainId
+}
+
+// Return the current rpcUrl
+const getRpcUrl = async () => {
+    return network.config.url
 }
 
 // Return true if the string is an address and false otherwise
@@ -65,76 +92,79 @@ const getCommaSeparatedString = (array) => {
 }
 
 // Return the name of the contract at address
-const getContractName = (address) => {
+const getContractName = async (address) => {
+    const chainId = await getChainId()
     switch (address) {
-        case contracts.ownerMultiSig[env.network]:
+        case contracts.ownerMultiSig[chainId]:
            return "MultiSigWallet"
-        case contracts.treasuryMultiSig[env.network]:
-            return "TokenMultiSigWallet"
-        case contracts.devTeamMultiSig[env.network]:
-            return "TokenMultiSigWallet"
-        case contracts.timelock[env.network]:
+        case contracts.treasuryMultiSig[chainId]:
+            return "MultiSigWallet"
+        case contracts.devTeamMultiSig[chainId]:
+            return "MultiSigWallet"
+        case contracts.timelock[chainId]:
             return "TimelockController"
-        case contracts.helixToken[env.network]:
+        case contracts.helixToken[chainId]:
             return "HelixToken"
-        case contracts.helixNFT[env.network]:
+        case contracts.helixNFT[chainId]:
             return "HelixNFT"
-        case contracts.helixNFTImplementation[env.network]:
+        case contracts.helixNFTImplementation[chainId]:
             return "HelixNFT"
-        case contracts.feeMinter[env.network]:
+        case contracts.feeMinter[chainId]:
             return "FeeMinter"
-        case contracts.helixNFTBridge[env.network]:
+        case contracts.helixNFTBridge[chainId]:
             return "HelixNFTBridge"
-        case contracts.helixChefNFT[env.network]:
+        case contracts.helixChefNFT[chainId]:
             return "HelixChefNFT"
-        case contracts.helixChefNFTImplementation[env.network]:
+        case contracts.helixChefNFTImplementation[chainId]:
             return "HelixChefNFT"
-        case contracts.feeHandler[env.network]:
+        case contracts.feeHandler[chainId]:
             return "FeeHandler"
-        case contracts.feeHandlerImplementation[env.network]:
+        case contracts.feeHandlerImplementation[chainId]:
             return "FeeHandler"
-        case contracts.referralRegister[env.network]:
+        case contracts.referralRegister[chainId]:
             return "ReferralRegister"
-        case contracts.referralRegisterImplementation[env.network]:
+        case contracts.referralRegisterImplementation[chainId]:
             return "ReferralRegister"
-        case contracts.helixVault[env.network]:
+        case contracts.helixVault[chainId]:
             return "HelixVault"
-        case contracts.helixVaultImplementation[env.network]:
+        case contracts.helixVaultImplementation[chainId]:
             return "HelixVault"
-        case contracts.factory[env.network]:
+        case contracts.factory[chainId]:
             return "HelixFactory"
-        case contracts.factoryImplementation[env.network]:
+        case contracts.factoryImplementation[chainId]:
             return "HelixFactory"
-        case contracts.oracleFactory[env.network]:
+        case contracts.oracleFactory[chainId]:
             return "OracleFactory"
-        case contracts.oracleFactoryImplementation[env.network]:
+        case contracts.oracleFactoryImplementation[chainId]:
             return "OracleFactory"
-        case contracts.router[env.network]:
+        case contracts.router[chainId]:
             return "HelixRouterV1"
-        case contracts.helixMigrator[env.network]:
+        case contracts.helixMigrator[chainId]:
             return "HelixMigrator"
-        case contracts.swapRewards[env.network]:
+        case contracts.swapRewards[chainId]:
             return "SwapRewards"
-        case contracts.masterChef[env.network]:
+        case contracts.masterChef[chainId]:
             return "MasterChef"
-        case contracts.masterChefImplementation[env.network]:
+        case contracts.masterChefImplementation[chainId]:
             return "MasterChef"
-        case contracts.autoHelix[env.network]:
+        case contracts.autoHelix[chainId]:
             return "AutoHelix"
-        case contracts.autoHelixImplementation[env.network]:
+        case contracts.autoHelixImplementation[chainId]:
             return "AutoHelix"
-        case contracts.multicall[env.network]:
+        case contracts.multicall[chainId]:
             return "Multicall"
-        case contracts.airDrop[env.network]:
+        case contracts.airDrop[chainId]:
             return "AirDrop"
-        case contracts.yieldSwap[env.network]:
+        case contracts.yieldSwap[chainId]:
             return "YieldSwap"
-        case contracts.yieldSwapImplementation[env.network]:
+        case contracts.yieldSwapImplementation[chainId]:
             return "YieldSwap"
-        case contracts.lpSwap[env.network]:
+        case contracts.lpSwap[chainId]:
             return "LpSwap"
-        case contracts.lpSwapImplementation[env.network]:
+        case contracts.lpSwapImplementation[chainId]:
             return "LpSwap"
+        case contracts.paymentSplitter[chainId]:
+            return "PaymentSplitter"
         default:
             throw "Error: contract address not found"
             return
@@ -210,4 +240,7 @@ module.exports = {
     getContractName,
     getCommaSeparatedString,
     getEncodedFunctionData,
+    getChainId,
+    loadContractNoVerbose,
+    getRpcUrl,
 }

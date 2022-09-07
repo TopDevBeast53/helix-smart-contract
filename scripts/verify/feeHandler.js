@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/feeHandler.js --network ropsten
  */
 
-const { verifyFeeHandler } = require("../shared/verify/verifiers")
+const { verifyFeeHandler } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyFeeHandler()

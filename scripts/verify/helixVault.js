@@ -3,7 +3,7 @@
  *      npx hardhat run scripts/5_verify/helixVault.js --network ropsten
  */
 
-const { verifyHelixVault } = require("../shared/verify/verifiers")
+const { verifyHelixVault } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyHelixVault()

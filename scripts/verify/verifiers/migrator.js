@@ -1,15 +1,15 @@
 const { run } = require('hardhat');
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
 
-const migratorAddress = contracts.helixMigrator[env.network]
-
-const routerAddress = contracts.router[env.network];
-
 const verifyMigrator = async () => {
+    const chainId = await getChainId()
+    const migratorAddress = contracts.helixMigrator[chainId]
+    const routerAddress = contracts.router[chainId];
+
     print('verify Migrator');
+    print(`migratorAddress: ${migratorAddress}`)
     print(`routerAddress: ${routerAddress}`)
 
     await run(

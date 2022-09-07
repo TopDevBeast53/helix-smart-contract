@@ -1,18 +1,18 @@
 const { run } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const initials = require("../../../constants/initials")
 const contracts = require("../../../constants/contracts")
 
-const timelockAddress = contracts.timelock[env.network]
-
-const minDelay = initials.TIMELOCK_MIN_DELAY[env.network]
-const proposers = initials.TIMELOCK_PROPOSERS[env.network]
-const executors = initials.TIMELOCK_EXECUTORS[env.network]
-
 const verifyTimelock = async () => {
+    const chainId = await getChainId()
+    const timelockAddress = contracts.timelock[chainId]
+    const minDelay = initials.TIMELOCK_MIN_DELAY[chainId]
+    const proposers = contracts.ownerMultiSig[chainId]
+    const executors = initials.TIMELOCK_EXECUTORS[chainId]
+
     print("verify timelock")
+    print(`timelockAddress: ${timelockAddress}`)
     print(`minDelay: ${minDelay}`)
     print(`proposers: ${proposers}`)
     print(`executors: ${executors}`)

@@ -1,13 +1,14 @@
 const { run } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require("../../../constants/env")
 const contracts = require("../../../constants/contracts")
 
-const masterChefAddress = contracts.masterChefImplementation[env.network]
-
 const verifyMasterChef = async () => {
+    const chainId = await getChainId() 
+    const masterChefAddress = contracts.masterChefImplementation[chainId]
+
     print(`verify Master Chef`)
+    print(`masterChefAddress: ${masterChefAddress}`)
 
     await run(
         "verify:verify", {

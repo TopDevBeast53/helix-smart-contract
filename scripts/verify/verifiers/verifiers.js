@@ -24,6 +24,8 @@ const { verifyAirDrop } = require("./airDrop")
 const { verifyTestToken } = require("./testToken")
 const { verifyAdvisorRewards } = require("./advisorRewards")
 const { verifyPaymentSplitter } = require("./paymentSplitter")
+const { verifyAirdropPaymentSplitter } = require("./airdropPaymentSplitter")
+const { verifyRouterProxy } = require("./routerProxy")
 
 module.exports = {
     verifyOwnerMultiSig,
@@ -50,4 +52,6 @@ module.exports = {
     verifyTestToken,
     verifyAdvisorRewards,
     verifyPaymentSplitter,
+    verifyAirdropPaymentSplitter,
+    verifyRouterProxy,
 }

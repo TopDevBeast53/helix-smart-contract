@@ -1,18 +1,18 @@
 const { ethers } = require(`hardhat`)
-const { print } = require("../../shared/utilities")
+const { print, getChainId } = require("../../shared/utilities")
 
-const env = require('../../../constants/env')
 const contracts = require('../../../constants/contracts')
 const initials = require('../../../constants/initials')
 
-const chefAddress = contracts.masterChef[env.network]
-const rewardTokenAddress = contracts.helixToken[env.network]
-const feeHandlerAddress = contracts.feeHandler[env.network]
-const collectorPercent = initials.YIELD_SWAP_COLLECTOR_PERCENT[env.network]
-const minLockDuration = initials.YIELD_SWAP_MIN_LOCK_DURATION[env.network]
-const maxLockDuration = initials.YIELD_SWAP_MAX_LOCK_DURATION[env.network]
-
 const deployYieldSwap = async (deployer) => {
+    const chainId = await getChainId()
+    const chefAddress = contracts.masterChef[chainId]
+    const rewardTokenAddress = contracts.helixToken[chainId]
+    const feeHandlerAddress = contracts.feeHandler[chainId]
+    const collectorPercent = initials.YIELD_SWAP_COLLECTOR_PERCENT[chainId]
+    const minLockDuration = initials.YIELD_SWAP_MIN_LOCK_DURATION[chainId]
+    const maxLockDuration = initials.YIELD_SWAP_MAX_LOCK_DURATION[chainId]
+
     print(`Deploy Yield Swap`);
     print(`chefAddress: ${chefAddress}`)
     print(`rewardTokenAddress: ${rewardTokenAddress}`)
