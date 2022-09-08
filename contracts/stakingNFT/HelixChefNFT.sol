@@ -28,6 +28,7 @@ contract HelixChefNFT is
         uint256[] stakedNFTsId;        // Ids of the NFTs this user has staked
         uint256 accruedReward;         // Amount of unwithdrawn rewardToken
         uint256 rewardDebt;
+        uint256 stakedNfts;
     }
 
     /// Owner approved contracts which can accrue user rewards
@@ -56,6 +57,10 @@ contract HelixChefNFT is
 
     /// Last block number when rewards were reward
     uint256 public lastUpdateBlock;
+
+    uint256 private constant REWARDS_PRECISION = 1e12;
+
+    uint256 public totalStakedNfts;
 
     // Emitted when an NFTs are staked
     event Stake(address indexed user, uint256[] tokenIds);
@@ -88,6 +93,9 @@ contract HelixChefNFT is
         uint256 indexed toMint
     );
 
+    // TODO
+    event HarvestRewards(address harvester, uint256 rewards);
+
     modifier onlyAccruer {
         require(isAccruer(msg.sender), "HelixChefNFT: not an accruer");
         _;
@@ -113,28 +121,29 @@ contract HelixChefNFT is
 
     /// Stake the tokens with _tokenIds in the pool
     function stake(uint256[] memory _tokenIds) external whenNotPaused nonReentrant {
-        updatePool();
+        uint256 tokenIdsLength = _tokenIds.length; 
+        require(tokenIdsLength > 0, "tokenIds length can't be zero");
         
         UserInfo storage user = users[msg.sender];
-        uint256 pendingReward = getPendingReward(msg.sender);
+
+        harvestRewards();
    
-        uint256 length = _tokenIds.length; 
-        for (uint256 i = 0; i < length; i++){
-            (address tokenOwner, bool isStaked, uint256 wrappedNFTs) = 
-                helixNFT.getInfoForStaking(_tokenIds[i]);
+        for (uint256 i = 0; i < tokenIdsLength; i++){
+            (address tokenOwner, bool isStaked, uint256 wrappedNfts) = helixNFT.getInfoForStaking(
+                _tokenIds[i]
+            );
+
             _requireIsTokenOwner(msg.sender, tokenOwner);
             require(!isStaked, "HelixChefNFT: already staked");
 
             helixNFT.setIsStaked(_tokenIds[i], true);
             user.stakedNFTsId.push(_tokenIds[i]);
 
-            usersStakedWrappedNfts[msg.sender] += wrappedNFTs;
-            totalStakedWrappedNfts += wrappedNFTs;
-        }
-
-        user.rewardDebt = _getRewardDebt(msg.sender);
-        if (pendingReward > 0) {
-            rewardToken.transfer(msg.sender, pendingReward);
+            user.stakedNfts += (wrappedNfts > 0) ? wrappedNfts : 1;
+            totalStakedNfts += (wrappedNfts > 0) ? wrappedNfts : 1;
+        
+            usersStakedWrappedNfts[msg.sender] += wrappedNfts;
+            totalStakedWrappedNfts += wrappedNfts;
         }
 
         emit Stake(msg.sender, _tokenIds);
@@ -142,14 +151,17 @@ contract HelixChefNFT is
 
     /// Unstake the tokens with _tokenIds in the pool
     function unstake(uint256[] memory _tokenIds) external whenNotPaused nonReentrant {
-        updatePool();
+        uint256 tokenIdsLength = _tokenIds.length;
+        require(tokenIdsLength > 0, "tokenIds length can't be zero");
 
         UserInfo storage user = users[msg.sender];
-        uint256 pendingReward = getPendingReward(msg.sender);
+        uint256 stakedNfts = user.stakedNfts;
+        require(stakedNfts > 0, "caller doesn't have staked nfts");
 
-        uint256 length = _tokenIds.length; 
-        for (uint256 i = 0; i < length; i++){
-            (address tokenOwner, bool isStaked, uint256 wrappedNFTs) = 
+        harvestRewards();
+
+        for (uint256 i = 0; i < tokenIdsLength; i++){
+            (address tokenOwner, bool isStaked, uint256 wrappedNfts) = 
                 helixNFT.getInfoForStaking(_tokenIds[i]);
             _requireIsTokenOwner(msg.sender, tokenOwner);
             require(isStaked, "HelixChefNFT: already unstaked");
@@ -157,13 +169,11 @@ contract HelixChefNFT is
             helixNFT.setIsStaked(_tokenIds[i], false);
             _removeTokenIdFromUser(msg.sender, _tokenIds[i]);
 
-            usersStakedWrappedNfts[msg.sender] -= wrappedNFTs;
-            totalStakedWrappedNfts -= wrappedNFTs;
-        }
+            user.stakedNfts -= (wrappedNfts > 0) ? wrappedNfts : 1;
+            totalStakedNfts -= (wrappedNfts > 0) ? wrappedNfts : 1;
 
-        user.rewardDebt = _getRewardDebt(msg.sender);
-        if (pendingReward > 0) {
-            rewardToken.transfer(msg.sender, pendingReward);
+            usersStakedWrappedNfts[msg.sender] -= wrappedNfts;
+            totalStakedWrappedNfts -= wrappedNfts;
         }
 
         emit Unstake(msg.sender, _tokenIds);
@@ -183,7 +193,7 @@ contract HelixChefNFT is
         uint256 pendingReward = getPendingReward(msg.sender);
 
         users[msg.sender].accruedReward = 0;
-        users[msg.sender].rewardDebt = _getRewardDebt(msg.sender);
+        users[msg.sender].rewardDebt = _getRewards(msg.sender);
     
         if (pendingReward > 0) {
             rewardToken.safeTransfer(msg.sender, pendingReward);
@@ -239,9 +249,22 @@ contract HelixChefNFT is
         return usersStakedWrappedNfts[_user];
     }
 
-    // Return the toMintPerBlock rate assigned to this contract by the feeMinter
-    function getToMintPerBlock() external view returns (uint256) {
-        return _getToMintPerBlock();
+    function harvestRewards() public {
+        updatePool();
+        UserInfo storage user = users[msg.sender];
+
+        uint256 rewards = _getRewards(msg.sender) - user.rewardDebt;
+        if (rewards == 0) {
+            user.rewardDebt = _getRewards(msg.sender);
+            return;
+        }
+
+        user.accruedReward = 0;
+        user.rewardDebt = _getRewards(msg.sender);
+
+        emit HarvestRewards(msg.sender, rewards);
+
+        HelixToken(address(rewardToken)).mint(msg.sender, rewards);
     }
 
     /// Update the pool
@@ -250,30 +273,23 @@ contract HelixChefNFT is
             return;
         }
 
-        uint256 rewardTokenBalance = _getContractRewardTokenBalance();
-        if (rewardTokenBalance <= 0) {
+        if (totalStakedNfts == 0) {
             lastUpdateBlock = block.number;
             return;
-        }
+        } 
 
-        uint256 toMint = _getToMint();
-        accTokenPerShare = _getAccTokenPerShare(toMint, rewardTokenBalance);
+        uint256 blockDelta = block.number - lastUpdateBlock;
+        uint256 rewards = blockDelta * getRewardsPerBlock();
+        accTokenPerShare = accTokenPerShare + (rewards * REWARDS_PRECISION / totalStakedNfts);
         lastUpdateBlock = block.number;
 
-        HelixToken(address(rewardToken)).mint(address(this), toMint);
-        emit UpdatePool(accTokenPerShare, lastUpdateBlock, toMint);
+        emit UpdatePool(accTokenPerShare, lastUpdateBlock, rewards);
     }
 
     /// Return the _user's pending reward
     function getPendingReward(address _user) public view returns (uint256) {
         UserInfo memory user = users[_user];
-
-        uint256 rewardTokenBalance = _getContractRewardTokenBalance();
-        uint256 toMint = _getToMint();
-        uint256 _accTokenPerShare = _getAccTokenPerShare(toMint, rewardTokenBalance);
-
-        return usersStakedWrappedNfts[_user] * _accTokenPerShare / 1e12 - 
-            user.rewardDebt + user.accruedReward;
+        return _getRewards(_user) - user.rewardDebt;
     }
 
     /// Return the number of added _accruers
@@ -313,36 +329,13 @@ contract HelixChefNFT is
     }
 
     // Return the toMintPerBlockRate assigned to this contract by the feeMinter
-    function _getToMintPerBlock() private view returns (uint256) {
+    function getRewardsPerBlock() public view returns (uint256) {
         require(address(feeMinter) != address(0), "HelixChefNFT: fee minter unassigned");
         return feeMinter.getToMintPerBlock(address(this));
     }
 
-    // Return this contract's rewardToken balance
-    function _getContractRewardTokenBalance() private view returns (uint256) {
-        return rewardToken.balanceOf(address(this));
-    }
-
-    // Return the amount reward token to reward
-    function _getToMint() private view returns (uint256) {
-        if (block.number <= lastUpdateBlock || _getContractRewardTokenBalance() <= 0) {
-            return 0;
-        }
-        return _getBlockDelta(lastUpdateBlock, block.number) * _getToMintPerBlock();
-    }
-
-    // Return the accumulated reward token per share since the last block reward
-    function _getAccTokenPerShare(uint256 _amount, uint256 _balance) private view returns (uint256) {
-        return accTokenPerShare + (_amount * 1e12 / _balance);
-    }
-
     // Return the _user's reward debt
-    function _getRewardDebt(address _user) private view returns (uint256) {
-        return usersStakedWrappedNfts[_user] * accTokenPerShare / 1e12;
-    }
-
-    // Return the delta between _from and _to blocks
-    function _getBlockDelta(uint256 _from, uint256 _to) private pure returns (uint256) {
-        return _to - _from;
+    function _getRewards(address _user) public view returns (uint256) {
+        return users[_user].stakedNfts * accTokenPerShare / REWARDS_PRECISION;
     }
 }
