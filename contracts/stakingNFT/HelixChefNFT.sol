@@ -156,7 +156,7 @@ contract HelixChefNFT is
 
         UserInfo storage user = users[msg.sender];
         uint256 stakedNfts = user.stakedNfts;
-        require(stakedNfts > 0, "caller doesn't have staked nfts");
+        require(stakedNfts > 0, "caller hasn't staked any nfts");
 
         harvestRewards();
 
@@ -239,16 +239,17 @@ contract HelixChefNFT is
         updatePool();
         UserInfo storage user = users[msg.sender];
 
-        uint256 rewards = _getRewards(msg.sender) - user.rewardDebt;
-        user.rewardDebt = _getRewards(msg.sender);
+        uint256 rewards = _getRewards(msg.sender);
+        uint256 toMint = rewards > user.rewardDebt ? rewards - user.rewardDebt : 0;
+        user.rewardDebt = rewards;
 
-        if (rewards == 0) {
+        if (toMint <= 0) {
             return;
         }
 
         user.accruedReward = 0;
-        emit HarvestRewards(msg.sender, rewards);
-        HelixToken(address(rewardToken)).mint(msg.sender, rewards);
+        emit HarvestRewards(msg.sender, toMint);
+        HelixToken(address(rewardToken)).mint(msg.sender, toMint);
     }
 
     /// Update the pool
@@ -324,6 +325,6 @@ contract HelixChefNFT is
 
     // Return the _user's rewards
     function _getRewards(address _user) private view returns (uint256) {
-        users[_user].stakedNfts * accTokenPerShare / REWARDS_PRECISION;
+        return users[_user].stakedNfts * accTokenPerShare / REWARDS_PRECISION;
     }
 }

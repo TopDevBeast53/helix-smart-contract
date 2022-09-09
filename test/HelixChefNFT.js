@@ -42,16 +42,22 @@ describe("HelixChefNft", () => {
         //mint helixNft to `alice` by `minter`
         const helixNftMinter = helixNft.connect(minter)
 
-        await helixNftMinter.mint(alice.address)        // created tokenId will be 1.
+        await helixNftMinter.mint(alice.address)             // created tokenId will be 1.
         expect(await helixNft.ownerOf(1)).to.eq(alice.address)
-        await helixNftMinter.mint(alice.address)        // created tokenId will be 2.
+        await helixNftMinter.mint(alice.address)             // created tokenId will be 2.
         expect(await helixNft.ownerOf(2)).to.eq(alice.address)
 
+        //mint helixNft to `bobby` by `minter`
+        await helixNftMinter.mint(bobby.address)             // created tokenId will be 3.
+        expect(await helixNft.ownerOf(3)).to.eq(bobby.address)
+        await helixNftMinter.mint(bobby.address)             // created tokenId will be 4.
+        expect(await helixNft.ownerOf(4)).to.eq(bobby.address)
+
         //mint helixNft to `carol` by `minter`
-        await helixNftMinter.mint(carol.address)             // created tokenId will be 3.
-        expect(await helixNft.ownerOf(3)).to.eq(carol.address)
-        await helixNftMinter.mint(carol.address)             // created tokenId will be 4.
-        expect(await helixNft.ownerOf(4)).to.eq(carol.address)
+        await helixNftMinter.mint(carol.address)             // created tokenId will be 5
+        expect(await helixNft.ownerOf(5)).to.eq(carol.address)
+        await helixNftMinter.mint(carol.address)             // created tokenId will be 6
+        expect(await helixNft.ownerOf(6)).to.eq(carol.address)
 
         // config the feeMinter
         await feeMinter.setTotalToMintPerBlock(totalToMintPerBlock)
@@ -122,6 +128,54 @@ describe("HelixChefNft", () => {
         })
     })
 
+    describe("harvestRewards", async () => {
+        it("updatePool is called", async () => {
+            await expect(helixChefNft.harvestRewards()).to.emit(helixChefNft, "UpdatePool")
+        })
+
+        it("emits HarvestRewards event", async () => {
+            await helixChefNft.connect(alice).stake([1])
+            await expect(helixChefNft.connect(alice).harvestRewards()).to.emit(helixChefNft, "HarvestRewards")
+        })
+
+        it("mints helix to harvester", async () => {
+            await helixChefNft.connect(alice).stake([1])
+
+            const prevBalance = await helixToken.balanceOf(alice.address)
+            const aliceUserInfo = await helixChefNft.users(alice.address)
+            const rewardDebt = aliceUserInfo.rewardDebt
+            const stakedNfts = aliceUserInfo.stakedNfts
+
+            const blockDelta = 256
+            await hre.network.provider.send("hardhat_mine", [hex(blockDelta)])
+            await helixChefNft.connect(alice).harvestRewards()
+
+            const accTokenPerShare = await helixChefNft.accTokenPerShare()
+            const rewards = (stakedNfts.mul(accTokenPerShare).div(1e12)).sub(rewardDebt)
+            const expectedBalance = prevBalance.add(rewards)
+
+            expect(await helixToken.balanceOf(alice.address)).to.eq(expectedBalance)
+        })
+
+        it("updates the harvester's rewardDebt", async () => {
+            const prevAliceUserInfo  = await helixChefNft.users(alice.address)
+            const prevRewardDebt = prevAliceUserInfo.rewardDebt
+
+            await helixChefNft.connect(alice).stake([1])
+            await helixChefNft.connect(alice).harvestRewards()
+
+            const aliceUserInfo  = await helixChefNft.users(alice.address)
+            const stakedNfts = aliceUserInfo.stakedNfts
+            const accTokenPerShare = await helixChefNft.accTokenPerShare()
+            const calcRewardDebt = stakedNfts.mul(accTokenPerShare).div(1e12)
+            const expectedRewardDebt = prevRewardDebt.add(calcRewardDebt)
+
+            const rewardDebt = aliceUserInfo.rewardDebt
+            
+            expect(rewardDebt).to.eq(expectedRewardDebt)
+        })
+    })
+
     describe("stake", async () => {
         it("emits Stake event", async () => {
             await expect(helixChefNft.connect(alice).stake([1])).to.emit(helixChefNft, "Stake")
@@ -168,21 +222,132 @@ describe("HelixChefNft", () => {
             expect(await helixChefNft.totalStakedNfts()).to.eq(prevTotalStakedNfts.add(1))
         })
 
-        /*
-        it("accrues reward", async () => {
-            let aliceUserInfo = await helixChefNft.users(alice.address)
-            const prevAccruedReward = aliceUserInfo.accruedReward
-            expect(prevAccruedReward).to.eq(0)
+        it("harvests rewards", async () => {
+            await helixChefNft.updatePool()
+            await helixChefNft.connect(alice).stake([1])
+
+            const prevBalance = await helixToken.balanceOf(alice.address)
+            const aliceUserInfo = await helixChefNft.users(alice.address)
+            const rewardDebt = aliceUserInfo.rewardDebt
+            const stakedNfts = aliceUserInfo.stakedNfts
+
+            await helixChefNft.connect(alice).stake([2])
+            
+            const accTokenPerShare = await helixChefNft.accTokenPerShare()
+            const rewards = (stakedNfts.mul(accTokenPerShare).div(1e12)).sub(rewardDebt)
+            const expectedBalance = prevBalance.add(rewards)
+
+            expect(await helixToken.balanceOf(alice.address)).to.eq(expectedBalance)
+        })
+
+        it("fails if no tokenIds passed", async () => {
+            await expect(helixChefNft.connect(alice).stake([]))
+                .to.be.revertedWith("tokenIds length can't be zero")
+        })
+
+        it("fails if staking same nft more than once", async () => {
+            await helixChefNft.connect(alice).stake([1])
+            await expect(helixChefNft.connect(alice).stake([1]))
+                .to.be.revertedWith("HelixChefNFT: already staked")
+        })
+
+        it("fails if staker is not token owner", async () => {
+            await expect(helixChefNft.connect(bobby).stake([1]))
+                .to.be.revertedWith("HelixChefNFT: not token owner")
+        })
+
+        it("staking allows re-unstaking the nft", async () => {
+            // can't unstake the same nft twice without staking
+            await helixChefNft.connect(alice).stake([1])
+            await helixChefNft.connect(alice).stake([2])
+            await helixChefNft.connect(alice).unstake([1])
+            await expect(helixChefNft.connect(alice).unstake([1]))
+                .to.be.revertedWith("HelixChefNFT: already unstaked")
+
 
             await helixChefNft.connect(alice).stake([1])
-            await helixChefNft.updatePool()
-
-            await hre.network.provider.send("evm_increaseTime", [1000])
-            await hre.network.provider.send("evm_mine")
-
-            console.log(await helixChefNft.getPendingReward(alice.address))
+            await helixChefNft.connect(alice).unstake([1])
         })
-        */
+
+        it("stake multiple tokens", async () => {
+            const prevAliceUserInfo = await helixChefNft.users(alice.address)
+            const prevStakedNfts = prevAliceUserInfo.stakedNfts
+            const prevTotalStakedNfts = await helixChefNft.totalStakedNfts()
+
+            await helixChefNft.connect(alice).stake([1, 2])
+            
+            // increments alice staked nfts by 2
+            const aliceUserInfo = await helixChefNft.users(alice.address)
+            const stakedNfts = aliceUserInfo.stakedNfts
+            expect(stakedNfts).to.eq(prevStakedNfts.add(2))
+
+            // increments total staked nfts by 2
+            const totalStakedNfts = await helixChefNft.totalStakedNfts()
+            expect(totalStakedNfts).to.eq(prevTotalStakedNfts.add(2))
+        })
+    })
+
+    describe("unstake", async () => {
+        it("fails if no tokenIds passed", async () => {
+            await expect(helixChefNft.connect(alice).unstake([]))
+                .to.be.revertedWith("tokenIds length can't be zero")
+        }) 
+
+        it("fails if caller hasn't staked any nfts", async () => {
+            await expect(helixChefNft.connect(alice).unstake([1]))
+                .to.be.revertedWith("caller hasn't staked any nfts")
+        })
+
+        it("updates the pool", async () => {
+            await helixChefNft.connect(alice).stake([1])
+            await expect(helixChefNft.connect(alice).unstake([1]))
+                .to.emit(helixChefNft, "UpdatePool")
+        })
+
+        it("harvests rewards", async () => {
+            await helixChefNft.connect(alice).stake([1])
+            await expect(helixChefNft.connect(alice).unstake([1]))
+                .to.emit(helixChefNft, "HarvestRewards")
+        })
+
+        it("decrements the users staked nfts", async () => {
+            await helixChefNft.connect(alice).stake([1])
+            const prevAliceUserInfo = await helixChefNft.users(alice.address)
+            const prevStakedNfts = prevAliceUserInfo.stakedNfts
+
+            await helixChefNft.connect(alice).unstake([1])
+            const aliceUserInfo = await helixChefNft.users(alice.address)
+            const stakedNfts = aliceUserInfo.stakedNfts
+
+            expect(stakedNfts).to.eq(prevStakedNfts.sub(1))
+        })
+
+        it("decrements the total staked nfts", async () => {
+            await helixChefNft.connect(alice).stake([1])
+            const prevTotalStakedNfts = await helixChefNft.totalStakedNfts()
+
+            await helixChefNft.connect(alice).unstake([1])
+            const totalStakedNfts = await helixChefNft.totalStakedNfts()
+
+            expect(totalStakedNfts).to.eq(prevTotalStakedNfts.sub(1))
+        })
+
+        it("emits Unstake event", async () => {
+            await helixChefNft.connect(alice).stake([1])
+            await expect(helixChefNft.connect(alice).unstake([1]))
+                .to.emit(helixChefNft, "Unstake")
+        })
+
+        it("unstaking allows re-staking the nft", async () => {
+            // can't stake the same nft twice without first unstaking
+            await helixChefNft.connect(alice).stake([1])
+            await expect(helixChefNft.connect(alice).stake([1]))
+                .to.be.revertedWith("HelixChefNFT: already staked")
+
+            
+            await helixChefNft.connect(alice).unstake([1])
+            await helixChefNft.connect(alice).stake([1])
+        })
     })
 
     describe("getPendingReward", async () => {
@@ -200,7 +365,55 @@ describe("HelixChefNft", () => {
             const pendingReward = await helixChefNft.getPendingReward(alice.address)
             expect(pendingReward).to.eq(expectedReward)
         })
-   })
+    })
+
+    it("multiple users stake and collect rewards", async () => {
+        // Mint 2 more nfts to Bobby so that he has a total of 4 nfts
+        await helixNft.connect(minter).mint(bobby.address)    // id 7 
+        await helixNft.connect(minter).mint(bobby.address)    // id 8
+    
+        // record the helix being minted per block
+        const rewardPerBlock = await feeMinter.getToMintPerBlock(helixChefNft.address)
+
+        // alice stakes her nft on block "0"
+        await helixChefNft.connect(alice).stake([1])                        // block 0
+
+        // mine 9 blocks
+        let blockDelta = 9
+        await hre.network.provider.send("hardhat_mine", [hex(blockDelta)])  // block 9
+
+        // bobby stakes his 4 nfts on block "10"
+        expect(await helixChefNft.getPendingReward(bobby.address)).to.eq(0)
+        await helixChefNft.connect(bobby).stake([3, 4, 7, 8])               // block 10
+        
+        // check alice rewards after 10 blocks
+        expect(await helixChefNft.getPendingReward(alice.address)).to.eq(rewardPerBlock.mul(10))
+
+        // mine 4 more blocks
+        blockDelta = 4
+        await hre.network.provider.send("hardhat_mine", [hex(blockDelta)])  // block 14
+    
+        // check alice rewards 
+        expect(await helixChefNft.getPendingReward(alice.address)).to.eq(rewardPerBlock.mul(10).add(rewardPerBlock.mul(4).mul(1).div(5)))
+
+        // check bobby rewards
+        let bobbyUserInfo = await helixChefNft.users(bobby.address)
+        let bobbyStakedNfts = bobbyUserInfo.stakedNfts
+        let bobbyRewardDebt = bobbyUserInfo.rewardDebt
+
+        let blockNumber = hre.ethers.BigNumber.from((await hre.ethers.provider.getBlock("latest")).number)
+        let lastUpdateBlock = await helixChefNft.lastUpdateBlock()
+        blockDelta = blockNumber.sub(lastUpdateBlock)
+
+        let rewards = blockDelta.mul(rewardPerBlock)
+        let totalStakedNfts = await helixChefNft.totalStakedNfts()
+
+        let accTokenPerShare = await helixChefNft.accTokenPerShare()
+        accTokenPerShare = accTokenPerShare.add(rewards.mul(1e12).div(totalStakedNfts))
+
+        let expectedBobbyReward = bobbyStakedNfts.mul(accTokenPerShare).div(1e12).sub(bobbyRewardDebt)
+        expect(await helixChefNft.getPendingReward(bobby.address)).to.eq(expectedBobbyReward)
+    })
 
     /*
     describe("When token is deployed", async () => {
