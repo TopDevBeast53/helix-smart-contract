@@ -85,41 +85,87 @@ describe("HelixChefNft", () => {
             expect(await helixChefNft.lastUpdateBlock()).to.be.eq(prevUpdateBlock.add(256).add(1)) 
         })
 
-        it("mints helix", async () => {
+        it("updates the accTokenPerShare", async () => {
+            // update the pool so that it's as up-to-date as possible
             await helixChefNft.updatePool()
-            const prevHelixTokenBalance = await helixToken.balanceOf(helixChefNft.address)
 
-            // mine 256 blocks and update again
-            await hre.network.provider.send("hardhat_mine", ["0x100"])
+            // record the data before staking
+            const prevAccTokenPerShare = await helixChefNft.accTokenPerShare()
+           
+            // stake and update so that rewards are accruing
+            await helixChefNft.connect(alice).stake([1])
             await helixChefNft.updatePool()
-      
-            const totalToMintPerBlock = await feeMinter.totalToMintPerBlock()
-            const toMintPercent = await feeMinter.getToMintPercent(helixChefNft.address)
-            const expectedIncrement = totalToMintPerBlock.mul(toMintPercent).mul(256+1).div(10000) 
-                
-            expect(await helixToken.balanceOf(helixChefNft.address)).to.eq(prevHelixTokenBalance.add(expectedIncrement))
+
+            // calculate the expected accumulatedTokensPerShare 
+            const blockDelta = 2 
+            const totalStakedNfts = await helixChefNft.totalStakedNfts()
+            const rewardsPerBlock = await feeMinter.getToMintPerBlock(helixChefNft.address)
+            const rewards = rewardsPerBlock.mul(blockDelta - 1) // sub 1 because rewards only accruing for 1 block (not 2)
+            const expectedAccTokenPerShare = prevAccTokenPerShare.add(rewards.mul(1e12).div(totalStakedNfts))
+
+            // check that the results are as expected
+            const accTokenPerShare = await helixChefNft.accTokenPerShare()
+            expect(accTokenPerShare).to.eq(expectedAccTokenPerShare)
         })
 
         it("emits UpdatePool event", async () => {
+            await helixChefNft.updatePool()
+
+            // check that it emits event when only updating lastUpdateBlock
+            const blockDelta = 1
+            await hre.network.provider.send("hardhat_mine", [hex(blockDelta)])
+            await expect(helixChefNft.updatePool()).to.emit(helixChefNft, "UpdatePool")
+
+            // check that it emits when totalStakedNfts > 0
+            await helixChefNft.connect(alice).stake([1])
             await expect(helixChefNft.updatePool()).to.emit(helixChefNft, "UpdatePool")
         })
     })
 
     describe("stake", async () => {
+        it("emits Stake event", async () => {
+            await expect(helixChefNft.connect(alice).stake([1])).to.emit(helixChefNft, "Stake")
+        })
+
         it("updates the pool", async () => {
-            await expect(helixChefNft.connect(alice).stake([1])).to.emit(helixChefNft, "UpdatePool")
+            // update the pool so that it's as up-to-date as possible
+            await helixChefNft.updatePool()
+
+            // record the data before staking
+            const prevLastUpdateBlock = await helixChefNft.lastUpdateBlock()
+            const prevAccTokenPerShare = await helixChefNft.accTokenPerShare()
+           
+            // stake and update so that rewards are accruing
+            await helixChefNft.connect(alice).stake([1])
+            await helixChefNft.updatePool()
+
+            // get the data after staking
+            const lastUpdateBlock = await helixChefNft.lastUpdateBlock()
+            const accTokenPerShare = await helixChefNft.accTokenPerShare()
+
+            // expect the lastUpdateBlock to be incremented by 2
+            const blockDelta = 2 
+            expect(lastUpdateBlock).to.eq(prevLastUpdateBlock.add(blockDelta))
+
+            // calculate the expected accumulatedTokensPerShare 
+            const totalStakedNfts = await helixChefNft.totalStakedNfts()
+            const rewardsPerBlock = await feeMinter.getToMintPerBlock(helixChefNft.address)
+            const rewards = rewardsPerBlock.mul(blockDelta - 1) // sub 1 because rewards only accruing for 1 block (not 2)
+            const expectedAccTokenPerShare = prevAccTokenPerShare.add(rewards.mul(1e12).div(totalStakedNfts))
+            expect(accTokenPerShare).to.eq(expectedAccTokenPerShare)
         })
 
         it("increments the user's staked nfts", async () => {
-            const prevUsersStakedWrappedNfts = await helixChefNft.usersStakedWrappedNfts(alice.address)
+            const prevUserStakedNfts = (await helixChefNft.users(alice.address)).stakedNfts
             await helixChefNft.connect(alice).stake([1])
-            expect(await helixChefNft.usersStakedWrappedNfts(alice.address)).to.eq(prevUsersStakedWrappedNfts.add(1))
+            const userStakedNfts = (await helixChefNft.users(alice.address)).stakedNfts
+            expect(userStakedNfts).to.eq(prevUserStakedNfts.add(1))
         })
 
         it("increments the total staked nfts", async () => {
-            const prevTotalStakedWrappedNfts = await helixChefNft.totalStakedWrappedNfts()
+            const prevTotalStakedNfts = await helixChefNft.totalStakedNfts()
             await helixChefNft.connect(alice).stake([1])
-            expect(await helixChefNft.totalStakedWrappedNfts()).to.eq(prevTotalStakedWrappedNfts.add(1))
+            expect(await helixChefNft.totalStakedNfts()).to.eq(prevTotalStakedNfts.add(1))
         })
 
         /*
@@ -140,23 +186,19 @@ describe("HelixChefNft", () => {
     })
 
     describe("getPendingReward", async () => {
-        it("produces a reward", async () => {
+        it("returns the correct reward with a single staker", async () => {
             // alice stakes tokens
             await helixChefNft.connect(alice).stake([1])
 
+            const rewardPerBlock = await feeMinter.getToMintPerBlock(helixChefNft.address)
+            const blockDelta = 256
+            const expectedReward = rewardPerBlock.mul(blockDelta)
+            
             // wait 256 blocks
-            await hre.network.provider.send("hardhat_mine", ["0x100"])
-
-            const bal = await helixToken.balanceOf(helixChefNft.address)
-            console.log(`bal: ${bal}`)
-            const toMint = await helixChefNft._getToMint()
-            console.log(`toMint: ${toMint}`)
-            const accTokenPerShare = await helixChefNft._getAccTokenPerShare(toMint, bal)
-            console.log(`accTokenPerShare: ${accTokenPerShare}`)
+            await hre.network.provider.send("hardhat_mine", [hex(blockDelta)])
 
             const pendingReward = await helixChefNft.getPendingReward(alice.address)
-            console.log(pendingReward)
-
+            expect(pendingReward).to.eq(expectedReward)
         })
    })
 
@@ -226,4 +268,8 @@ describe("HelixChefNft", () => {
         })
     })
     */
+
+    function hex(int) {
+        return "0x" + int.toString(16)
+    }
 })

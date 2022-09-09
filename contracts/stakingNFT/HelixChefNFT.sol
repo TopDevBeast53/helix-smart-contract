@@ -133,7 +133,7 @@ contract HelixChefNFT is
                 _tokenIds[i]
             );
 
-            _requireIsTokenOwner(msg.sender, tokenOwner);
+            require(msg.sender == tokenOwner, "HelixChefNFT: not token owner");
             require(!isStaked, "HelixChefNFT: already staked");
 
             helixNFT.setIsStaked(_tokenIds[i], true);
@@ -163,7 +163,8 @@ contract HelixChefNFT is
         for (uint256 i = 0; i < tokenIdsLength; i++){
             (address tokenOwner, bool isStaked, uint256 wrappedNfts) = 
                 helixNFT.getInfoForStaking(_tokenIds[i]);
-            _requireIsTokenOwner(msg.sender, tokenOwner);
+
+            require(msg.sender == tokenOwner, "HelixChefNFT: not token owner");
             require(isStaked, "HelixChefNFT: already unstaked");
 
             helixNFT.setIsStaked(_tokenIds[i], false);
@@ -184,21 +185,6 @@ contract HelixChefNFT is
         uint256 reward = getAccruedReward(_user, _fee);
         users[_user].accruedReward += reward;
         emit AccrueReward(_user, reward);
-    }
-
-    /// Withdraw accrued reward token
-    function withdrawRewardToken() external nonReentrant {
-        updatePool();
-
-        uint256 pendingReward = getPendingReward(msg.sender);
-
-        users[msg.sender].accruedReward = 0;
-        users[msg.sender].rewardDebt = _getRewards(msg.sender);
-    
-        if (pendingReward > 0) {
-            rewardToken.safeTransfer(msg.sender, pendingReward);
-        }
-        emit WithdrawRewardToken(msg.sender, pendingReward);
     }
 
     /// Called by the owner to add an accruer
@@ -254,16 +240,14 @@ contract HelixChefNFT is
         UserInfo storage user = users[msg.sender];
 
         uint256 rewards = _getRewards(msg.sender) - user.rewardDebt;
+        user.rewardDebt = _getRewards(msg.sender);
+
         if (rewards == 0) {
-            user.rewardDebt = _getRewards(msg.sender);
             return;
         }
 
         user.accruedReward = 0;
-        user.rewardDebt = _getRewards(msg.sender);
-
         emit HarvestRewards(msg.sender, rewards);
-
         HelixToken(address(rewardToken)).mint(msg.sender, rewards);
     }
 
@@ -275,6 +259,7 @@ contract HelixChefNFT is
 
         if (totalStakedNfts == 0) {
             lastUpdateBlock = block.number;
+            emit UpdatePool(accTokenPerShare, lastUpdateBlock, 0);
             return;
         } 
 
@@ -289,7 +274,15 @@ contract HelixChefNFT is
     /// Return the _user's pending reward
     function getPendingReward(address _user) public view returns (uint256) {
         UserInfo memory user = users[_user];
-        return _getRewards(_user) - user.rewardDebt;
+   
+        uint256 _accTokenPerShare = accTokenPerShare;
+        if (block.number > lastUpdateBlock) {
+            uint256 blockDelta = block.number - lastUpdateBlock;
+            uint256 rewards = blockDelta * getRewardsPerBlock();
+            _accTokenPerShare += rewards * REWARDS_PRECISION / totalStakedNfts;
+        }
+        
+        return users[_user].stakedNfts * _accTokenPerShare / REWARDS_PRECISION - user.rewardDebt;
     }
 
     /// Return the number of added _accruers
@@ -323,19 +316,14 @@ contract HelixChefNFT is
         }
     }
 
-    // Require that _caller is _tokenOwner
-    function _requireIsTokenOwner(address _caller, address _tokenOwner) private pure {
-        require(_caller == _tokenOwner, "HelixChefNFT: not token owner");
-    }
-
     // Return the toMintPerBlockRate assigned to this contract by the feeMinter
     function getRewardsPerBlock() public view returns (uint256) {
         require(address(feeMinter) != address(0), "HelixChefNFT: fee minter unassigned");
         return feeMinter.getToMintPerBlock(address(this));
     }
 
-    // Return the _user's reward debt
-    function _getRewards(address _user) public view returns (uint256) {
-        return users[_user].stakedNfts * accTokenPerShare / REWARDS_PRECISION;
+    // Return the _user's rewards
+    function _getRewards(address _user) private view returns (uint256) {
+        users[_user].stakedNfts * accTokenPerShare / REWARDS_PRECISION;
     }
 }
