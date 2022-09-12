@@ -47,11 +47,11 @@ contract HelixChefNFT is
     /// Last block number when rewards were reward
     uint256 public lastUpdateBlock;
     
-    // Used in reward calculations
-    uint256 private constant REWARDS_PRECISION = 1e12;
-
     /// Total (wrapped and unwrapped) nfts staked in this contract
     uint256 public totalStakedNfts;
+
+    // Used in reward calculations
+    uint256 private constant REWARDS_PRECISION = 1e12;
 
     // Emitted when an NFTs are staked
     event Stake(address indexed user, uint256[] tokenIds);
@@ -291,6 +291,11 @@ contract HelixChefNFT is
         return EnumerableSetUpgradeable.contains(_accruers, _address);
     }
 
+    // Return the toMintPerBlockRate assigned to this contract by the feeMinter
+    function getRewardsPerBlock() public view returns (uint256) {
+        return feeMinter.getToMintPerBlock(address(this));
+    }
+
     // Remove _tokenId from _user's account
     function _removeTokenIdFromUser(address _user, uint256 _tokenId) private {
         uint256[] storage tokenIds = users[_user].stakedNFTsId;
@@ -302,11 +307,6 @@ contract HelixChefNFT is
                 return;
             }
         }
-    }
-
-    // Return the toMintPerBlockRate assigned to this contract by the feeMinter
-    function getRewardsPerBlock() public view returns (uint256) {
-        return feeMinter.getToMintPerBlock(address(this));
     }
 
     // Return the _user's rewards
