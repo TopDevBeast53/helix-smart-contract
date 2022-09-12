@@ -297,7 +297,6 @@ contract HelixChefNFT is
 
     // Return the toMintPerBlockRate assigned to this contract by the feeMinter
     function getRewardsPerBlock() public view returns (uint256) {
-        require(address(feeMinter) != address(0), "HelixChefNFT: fee minter unassigned");
         return feeMinter.getToMintPerBlock(address(this));
     }
 
