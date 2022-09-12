@@ -217,7 +217,7 @@ contract HelixChefNFT is
         updatePool();
         UserInfo storage user = users[msg.sender];
 
-        uint256 rewards = _getRewards(msg.sender);
+        uint256 rewards = _getRewards(msg.sender) + user.accruedReward;
         uint256 toMint = rewards > user.rewardDebt ? rewards - user.rewardDebt : 0;
         user.rewardDebt = rewards;
 
@@ -260,8 +260,14 @@ contract HelixChefNFT is
             uint256 rewards = blockDelta * getRewardsPerBlock();
             _accTokenPerShare += rewards * REWARDS_PRECISION / totalStakedNfts;
         }
-        
-        return users[_user].stakedNfts * _accTokenPerShare / REWARDS_PRECISION - user.rewardDebt;
+  
+        uint256 toMint = users[_user].stakedNfts * _accTokenPerShare / REWARDS_PRECISION;
+        toMint += user.accruedReward;
+        if (toMint > user.rewardDebt) {
+            return toMint - user.rewardDebt;
+        } else {
+            return 0;
+        }
     }
 
     /// Return the number of added _accruers
@@ -274,7 +280,7 @@ contract HelixChefNFT is
         if (totalStakedNfts == 0) {
             return 0;
         }
-        return users[_user].stakedNfts * _fee / totalStakedNfts ;
+        return users[_user].stakedNfts * _fee / totalStakedNfts;
     }
 
     /// Return true if the _address is a registered accruer and false otherwise
