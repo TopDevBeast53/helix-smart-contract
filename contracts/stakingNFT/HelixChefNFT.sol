@@ -223,12 +223,12 @@ contract HelixChefNFT is
         uint256 rewards = _getRewards(msg.sender) + user.accruedReward;
         uint256 toMint = rewards > user.rewardDebt ? rewards - user.rewardDebt : 0;
         user.rewardDebt = rewards;
+        user.accruedReward = 0;
 
         if (toMint <= 0) {
             return;
         }
 
-        user.accruedReward = 0;
         emit HarvestRewards(msg.sender, toMint);
         IHelixToken(rewardToken).mint(msg.sender, toMint);
     }
