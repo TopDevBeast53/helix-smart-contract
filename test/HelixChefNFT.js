@@ -71,7 +71,7 @@ describe("HelixChefNft", () => {
 
     it("initialized correctly", async () => {
         expect(await helixChefNft.helixNFT()).to.eq(helixNft.address)
-        expect(await helixChefNft.rewardToken()).to.eq(helixToken.address)
+        expect(await helixChefNft.helixToken()).to.eq(helixToken.address)
         expect(await helixChefNft.feeMinter()).to.eq(feeMinter.address)
        
         expect(await feeMinter.totalToMintPerBlock()).to.eq(totalToMintPerBlock)
@@ -453,7 +453,7 @@ describe("HelixChefNft", () => {
             res = await this.helixChefNft.pendingReward(alice)// eventually, passed 30 from start
             assert.equal((res[1]).toString(), (REWARD_PER_BLOCK * 30).toString())
 
-            await this.helixChefNft.withdrawRewardToken({ from: alice })// block.number is increased
+            await this.helixChefNft.withdrawHelixToken({ from: alice })// block.number is increased
             assert.equal((await this.rwt1.balanceOf(alice)).toString(), (REWARD_PER_BLOCK * (30 + 1)).toString())
 
             startBlockNumber = parseInt((await time.latestBlock()).toString())
@@ -473,10 +473,10 @@ describe("HelixChefNft", () => {
             _blockNumber = parseInt((await time.latestBlock()).toString())
             await time.advanceBlockTo(_blockNumber + 10)
          
-            await this.helixChefNft.withdrawRewardToken({ from: alice })
+            await this.helixChefNft.withdrawHelixToken({ from: alice })
             assert.equal((await this.rwt1.balanceOf(alice)).toString(), '25')
 
-            await this.helixChefNft.withdrawRewardToken({ from: carol })
+            await this.helixChefNft.withdrawHelixToken({ from: carol })
             assert.equal((await this.rwt1.balanceOf(carol)).toString(), '12')
         })
     })

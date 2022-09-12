@@ -21,7 +21,7 @@ contract HelixChefNFT is
     // Info on each user who has NFTs staked in this contract
     struct UserInfo {
         uint256[] stakedNFTsId; // Ids of the NFTs this user has staked
-        uint256 accruedReward;  // Amount of directly accrued rewardToken
+        uint256 accruedReward;  // Amount of directly accrued helixToken
         uint256 rewardDebt;     // Used in reward calculations
         uint256 stakedNfts;     // Total (wrapped and unwrapped) nfts
     }
@@ -33,9 +33,9 @@ contract HelixChefNFT is
     IHelixNFT public helixNFT;
 
     /// Token that reward are earned in (HELIX)
-    IHelixToken public rewardToken;
+    IHelixToken public helixToken;
 
-    /// Called to get rewardToken to mint per block
+    /// Called to get helixToken to mint per block
     IFeeMinter public feeMinter;
 
     /// Maps a user's address to their info struct
@@ -69,13 +69,13 @@ contract HelixChefNFT is
     event RemoveAccruer(address indexed remover, address indexed removed);
 
     // Emitted when reward tokens is withdrawn
-    event WithdrawRewardToken(address indexed withdrawer, uint256 amount);
+    event WithdrawHelixToken(address indexed withdrawer, uint256 amount);
 
     // Emitted when a new helixNFT address is set
     event SetHelixNFT(address indexed setter, address indexed helixNFT);
 
-    // Emitted when a new rewardToken address is set
-    event SetRewardToken(address indexed setter, address indexed rewardToken);
+    // Emitted when a new helixToken address is set
+    event SetHelixToken(address indexed setter, address indexed helixToken);
 
     // Emitted when a new feeMinter is set
     event SetFeeMinter(address indexed setter, address indexed feeMinter);
@@ -102,19 +102,19 @@ contract HelixChefNFT is
 
     function initialize(
         address _helixNFT, 
-        address _rewardToken,
+        address _helixToken,
         address _feeMinter
     ) 
         external 
         initializer 
         onlyValidAddress(_helixNFT)
-        onlyValidAddress(_rewardToken)
+        onlyValidAddress(_helixToken)
         onlyValidAddress(_feeMinter)
     {
         __Ownable_init();
         __ReentrancyGuard_init();
         helixNFT = IHelixNFT(_helixNFT);
-        rewardToken = IHelixToken(_rewardToken);
+        helixToken = IHelixToken(_helixToken);
         feeMinter = IFeeMinter(_feeMinter);
         lastUpdateBlock = block.number;
     }
@@ -211,9 +211,9 @@ contract HelixChefNFT is
     }
 
     /// Called by the owner to set the _helixNFT address
-    function setRewardToken(address _rewardToken) external onlyOwner onlyValidAddress(_rewardToken) {
-        rewardToken = IHelixToken(_rewardToken);
-        emit SetRewardToken(msg.sender, _rewardToken);
+    function setHelixToken(address _helixToken) external onlyOwner onlyValidAddress(_helixToken) {
+        helixToken = IHelixToken(_helixToken);
+        emit SetHelixToken(msg.sender, _helixToken);
     }
 
     /// Called by the owner to set the _feeMinter address
@@ -243,7 +243,7 @@ contract HelixChefNFT is
         }
 
         emit HarvestRewards(msg.sender, toMint);
-        rewardToken.mint(msg.sender, toMint);
+        helixToken.mint(msg.sender, toMint);
     }
 
     /// Update the pool's accTokenPerShare and lastUpdateBlock
