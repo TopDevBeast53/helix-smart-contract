@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/helixChefNft.js --network ropsten
  */
 
-const { verifyHelixChefNft } = require("../shared/verify/verifiers")
+const { verifyHelixChefNft } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyHelixChefNft()
