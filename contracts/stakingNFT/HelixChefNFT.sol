@@ -20,10 +20,10 @@ contract HelixChefNFT is
 {
     // Info on each user who has NFTs staked in this contract
     struct UserInfo {
-        uint256[] stakedNFTsId;        // Ids of the NFTs this user has staked
-        uint256 accruedReward;         // Amount of unwithdrawn rewardToken
-        uint256 rewardDebt;
-        uint256 stakedNfts;
+        uint256[] stakedNFTsId; // Ids of the NFTs this user has staked
+        uint256 accruedReward;  // Amount of directly accrued rewardToken
+        uint256 rewardDebt;     // Used in reward calculations
+        uint256 stakedNfts;     // Total (wrapped and unwrapped) nfts
     }
 
     /// Owner approved contracts which can accrue user rewards
@@ -41,14 +41,16 @@ contract HelixChefNFT is
     /// Called to get rewardToken to mint per block
     IFeeMinter public feeMinter;
 
-    /// TODO
+    /// Used in reward calculations
     uint256 public accTokenPerShare;
 
     /// Last block number when rewards were reward
     uint256 public lastUpdateBlock;
-
+    
+    // Used in reward calculations
     uint256 private constant REWARDS_PRECISION = 1e12;
 
+    /// Total (wrapped and unwrapped) nfts staked in this contract
     uint256 public totalStakedNfts;
 
     // Emitted when an NFTs are staked
@@ -82,7 +84,7 @@ contract HelixChefNFT is
         uint256 indexed toMint
     );
 
-    // TODO
+    // Emitted when a user harvests their rewards
     event HarvestRewards(address harvester, uint256 rewards);
 
     modifier onlyAccruer {
@@ -213,6 +215,7 @@ contract HelixChefNFT is
         return EnumerableSetUpgradeable.at(_accruers, _index);
     }
 
+    /// Mint the caller's rewards to their address
     function harvestRewards() public {
         updatePool();
         UserInfo storage user = users[msg.sender];
@@ -230,7 +233,7 @@ contract HelixChefNFT is
         IHelixToken(rewardToken).mint(msg.sender, toMint);
     }
 
-    /// Update the pool
+    /// Update the pool's accTokenPerShare and lastUpdateBlock
     function updatePool() public {
         if (block.number <= lastUpdateBlock) {
             return;
