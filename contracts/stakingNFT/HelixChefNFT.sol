@@ -68,9 +68,6 @@ contract HelixChefNFT is
     // Emitted when an accruer is removed
     event RemoveAccruer(address indexed remover, address indexed removed);
 
-    // Emitted when reward tokens is withdrawn
-    event WithdrawHelixToken(address indexed withdrawer, uint256 amount);
-
     // Emitted when a new helixNFT address is set
     event SetHelixNFT(address indexed setter, address indexed helixNFT);
 
@@ -91,12 +88,12 @@ contract HelixChefNFT is
     event HarvestRewards(address harvester, uint256 rewards);
 
     modifier onlyAccruer {
-        require(isAccruer(msg.sender), "HelixChefNFT: not an accruer");
+        require(isAccruer(msg.sender), "caller is not an accruer");
         _;
     }
 
     modifier onlyValidAddress(address _address) {
-        require(_address != address(0), "HelixChefNFT: zero address");
+        require(_address != address(0), "zero address");
         _;
     }
 
@@ -122,7 +119,7 @@ contract HelixChefNFT is
     /// Stake the tokens with _tokenIds in the pool
     function stake(uint256[] memory _tokenIds) external whenNotPaused nonReentrant {
         uint256 tokenIdsLength = _tokenIds.length; 
-        require(tokenIdsLength > 0, "tokenIds length can't be zero");
+        require(tokenIdsLength > 0, "tokenIds length can not be zero");
         
         UserInfo storage user = users[msg.sender];
 
@@ -133,8 +130,8 @@ contract HelixChefNFT is
                 _tokenIds[i]
             );
 
-            require(msg.sender == tokenOwner, "HelixChefNFT: not token owner");
-            require(!isStaked, "HelixChefNFT: already staked");
+            require(msg.sender == tokenOwner, "caller is not token owner");
+            require(!isStaked, "token is already staked");
 
             helixNFT.setIsStaked(_tokenIds[i], true);
             user.stakedNFTsId.push(_tokenIds[i]);
@@ -149,11 +146,11 @@ contract HelixChefNFT is
     /// Unstake the tokens with _tokenIds in the pool
     function unstake(uint256[] memory _tokenIds) external whenNotPaused nonReentrant {
         uint256 tokenIdsLength = _tokenIds.length;
-        require(tokenIdsLength > 0, "tokenIds length can't be zero");
+        require(tokenIdsLength > 0, "tokenIds length can not be zero");
 
         UserInfo storage user = users[msg.sender];
         uint256 stakedNfts = user.stakedNfts;
-        require(stakedNfts > 0, "caller hasn't staked any nfts");
+        require(stakedNfts > 0, "caller has not staked any nfts");
 
         harvestRewards();
 
@@ -161,8 +158,8 @@ contract HelixChefNFT is
             (address tokenOwner, bool isStaked, uint256 wrappedNfts) = 
                 helixNFT.getInfoForStaking(_tokenIds[i]);
 
-            require(msg.sender == tokenOwner, "HelixChefNFT: not token owner");
-            require(isStaked, "HelixChefNFT: already unstaked");
+            require(msg.sender == tokenOwner, "caller is not token owner");
+            require(isStaked, "token is already unstaked");
 
             helixNFT.setIsStaked(_tokenIds[i], false);
             _removeTokenIdFromUser(msg.sender, _tokenIds[i]);
@@ -189,7 +186,7 @@ contract HelixChefNFT is
 
     /// Called by the owner to remove an accruer
     function removeAccruer(address _address) external onlyOwner {
-        require(isAccruer(_address), "HelixChefNFT: not an accruer");
+        require(isAccruer(_address), "caller not an accruer");
         EnumerableSetUpgradeable.remove(_accruers, _address);
         emit RemoveAccruer(msg.sender, _address);
     }   
@@ -224,7 +221,7 @@ contract HelixChefNFT is
 
     /// Return the accruer at _index
     function getAccruer(uint256 _index) external view returns (address) {
-        require(_index <= getNumAccruers() - 1, "HelixChefNFT: index out of bounds");
+        require(_index <= getNumAccruers() - 1, "index out of bounds");
         return EnumerableSetUpgradeable.at(_accruers, _index);
     }
 
