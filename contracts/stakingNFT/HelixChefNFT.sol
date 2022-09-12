@@ -26,6 +26,7 @@ contract HelixChefNFT is
     // Info on each user who has NFTs staked in this contract
     struct UserInfo {
         uint256[] stakedNFTsId;        // Ids of the NFTs this user has staked
+        uint256 pendingReward;
         uint256 accruedReward;         // Amount of unwithdrawn rewardToken
         uint256 rewardDebt;
         uint256 stakedNfts;
