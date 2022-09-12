@@ -3,10 +3,8 @@ pragma solidity >= 0.8.0;
 
 import "../interfaces/IHelixNFT.sol";
 import "../interfaces/IFeeMinter.sol";
-import "../tokens/HelixToken.sol";
+import "../interfaces/IHelixToken.sol";
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -20,9 +18,6 @@ contract HelixChefNFT is
     ReentrancyGuardUpgradeable,
     PausableUpgradeable
 {
-    using SafeERC20Upgradeable for IERC20Upgradeable;
-    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
-
     // Info on each user who has NFTs staked in this contract
     struct UserInfo {
         uint256[] stakedNFTsId;        // Ids of the NFTs this user has staked
@@ -39,7 +34,7 @@ contract HelixChefNFT is
     IHelixNFT public helixNFT;
 
     /// Token that reward are earned in (HELIX)
-    IERC20Upgradeable public rewardToken;
+    address public rewardToken;
 
     /// Total number of NFTs staked in this contract
     uint256 public totalStakedWrappedNfts;
@@ -109,7 +104,7 @@ contract HelixChefNFT is
 
     function initialize(
         IHelixNFT _helixNFT, 
-        IERC20Upgradeable _rewardToken,
+        address _rewardToken,
         address _feeMinter
     ) external initializer {
         __Ownable_init();
@@ -250,7 +245,7 @@ contract HelixChefNFT is
 
         user.accruedReward = 0;
         emit HarvestRewards(msg.sender, toMint);
-        HelixToken(address(rewardToken)).mint(msg.sender, toMint);
+        IHelixToken(rewardToken).mint(msg.sender, toMint);
     }
 
     /// Update the pool
