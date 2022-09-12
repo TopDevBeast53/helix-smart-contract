@@ -124,7 +124,8 @@ contract HelixChefNFT is
         UserInfo storage user = users[msg.sender];
 
         harvestRewards();
-   
+  
+        uint256 stakedNfts = 0;
         for (uint256 i = 0; i < tokenIdsLength; i++){
             (address tokenOwner, bool isStaked, uint256 wrappedNfts) = helixNFT.getInfoForStaking(
                 _tokenIds[i]
@@ -136,9 +137,10 @@ contract HelixChefNFT is
             helixNFT.setIsStaked(_tokenIds[i], true);
             user.stakedNFTsId.push(_tokenIds[i]);
 
-            user.stakedNfts += (wrappedNfts > 0) ? wrappedNfts : 1;
-            totalStakedNfts += (wrappedNfts > 0) ? wrappedNfts : 1;
+            stakedNfts += (wrappedNfts > 0) ? wrappedNfts : 1;
         }
+        user.stakedNfts += stakedNfts;
+        totalStakedNfts += stakedNfts;
 
         emit Stake(msg.sender, _tokenIds);
     }
@@ -153,7 +155,8 @@ contract HelixChefNFT is
         require(stakedNfts > 0, "caller has not staked any nfts");
 
         harvestRewards();
-
+        
+        uint256 unstakedNfts = 0;
         for (uint256 i = 0; i < tokenIdsLength; i++){
             (address tokenOwner, bool isStaked, uint256 wrappedNfts) = 
                 helixNFT.getInfoForStaking(_tokenIds[i]);
@@ -164,9 +167,10 @@ contract HelixChefNFT is
             helixNFT.setIsStaked(_tokenIds[i], false);
             _removeTokenIdFromUser(msg.sender, _tokenIds[i]);
 
-            user.stakedNfts -= (wrappedNfts > 0) ? wrappedNfts : 1;
-            totalStakedNfts -= (wrappedNfts > 0) ? wrappedNfts : 1;
+            unstakedNfts += (wrappedNfts > 0) ? wrappedNfts : 1;
         }
+        user.stakedNfts -= unstakedNfts;
+        totalStakedNfts -= unstakedNfts;
 
         emit Unstake(msg.sender, _tokenIds);
     }
@@ -209,7 +213,7 @@ contract HelixChefNFT is
         emit SetHelixNFT(msg.sender, _helixNFT);
     }
 
-    /// Called by the owner to set the _helixNFT address
+    /// Called by the owner to set the _helixToken address
     function setHelixToken(address _helixToken) external onlyOwner onlyValidAddress(_helixToken) {
         helixToken = IHelixToken(_helixToken);
         emit SetHelixToken(msg.sender, _helixToken);
@@ -221,6 +225,26 @@ contract HelixChefNFT is
         emit SetFeeMinter(msg.sender, _feeMinter);
     }
 
+    /// Return the _user's pending reward
+    function getPendingReward(address _user) external view returns (uint256) {
+        UserInfo memory user = users[_user];
+   
+        uint256 _accTokenPerShare = accTokenPerShare;
+        if (block.number > lastUpdateBlock) {
+            uint256 blockDelta = block.number - lastUpdateBlock;
+            uint256 rewards = blockDelta * getRewardsPerBlock();
+            _accTokenPerShare += rewards * REWARDS_PRECISION / totalStakedNfts;
+        }
+  
+        uint256 toMint = users[_user].stakedNfts * _accTokenPerShare / REWARDS_PRECISION;
+        toMint += user.accruedReward;
+        if (toMint > user.rewardDebt) {
+            return toMint - user.rewardDebt;
+        } else {
+            return 0;
+        }
+    }
+
     /// Return the accruer at _index
     function getAccruer(uint256 _index) external view returns (address) {
         require(_index <= getNumAccruers() - 1, "index out of bounds");
@@ -228,7 +252,7 @@ contract HelixChefNFT is
     }
 
     /// Mint the caller's rewards to their address
-    function harvestRewards() public {
+    function harvestRewards() public nonReentrant {
         updatePool();
         UserInfo storage user = users[msg.sender];
 
@@ -247,7 +271,7 @@ contract HelixChefNFT is
     }
 
     /// Update the pool's accTokenPerShare and lastUpdateBlock
-    function updatePool() public {
+    function updatePool() public nonReentrant {
         if (block.number <= lastUpdateBlock) {
             return;
         }
@@ -264,26 +288,6 @@ contract HelixChefNFT is
         lastUpdateBlock = block.number;
 
         emit UpdatePool(accTokenPerShare, lastUpdateBlock, rewards);
-    }
-
-    /// Return the _user's pending reward
-    function getPendingReward(address _user) public view returns (uint256) {
-        UserInfo memory user = users[_user];
-   
-        uint256 _accTokenPerShare = accTokenPerShare;
-        if (block.number > lastUpdateBlock) {
-            uint256 blockDelta = block.number - lastUpdateBlock;
-            uint256 rewards = blockDelta * getRewardsPerBlock();
-            _accTokenPerShare += rewards * REWARDS_PRECISION / totalStakedNfts;
-        }
-  
-        uint256 toMint = users[_user].stakedNfts * _accTokenPerShare / REWARDS_PRECISION;
-        toMint += user.accruedReward;
-        if (toMint > user.rewardDebt) {
-            return toMint - user.rewardDebt;
-        } else {
-            return 0;
-        }
     }
 
     /// Return the number of added _accruers
