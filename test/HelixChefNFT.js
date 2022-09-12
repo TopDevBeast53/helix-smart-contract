@@ -242,18 +242,18 @@ describe("HelixChefNft", () => {
 
         it("fails if no tokenIds passed", async () => {
             await expect(helixChefNft.connect(alice).stake([]))
-                .to.be.revertedWith("tokenIds length can't be zero")
+                .to.be.revertedWith("tokenIds length can not be zero")
         })
 
         it("fails if staking same nft more than once", async () => {
             await helixChefNft.connect(alice).stake([1])
             await expect(helixChefNft.connect(alice).stake([1]))
-                .to.be.revertedWith("HelixChefNFT: already staked")
+                .to.be.revertedWith("token is already staked")
         })
 
         it("fails if staker is not token owner", async () => {
             await expect(helixChefNft.connect(bobby).stake([1]))
-                .to.be.revertedWith("HelixChefNFT: not token owner")
+                .to.be.revertedWith("caller is not token owner")
         })
 
         it("staking allows re-unstaking the nft", async () => {
@@ -262,7 +262,7 @@ describe("HelixChefNft", () => {
             await helixChefNft.connect(alice).stake([2])
             await helixChefNft.connect(alice).unstake([1])
             await expect(helixChefNft.connect(alice).unstake([1]))
-                .to.be.revertedWith("HelixChefNFT: already unstaked")
+                .to.be.revertedWith("token is already unstaked")
 
 
             await helixChefNft.connect(alice).stake([1])
@@ -290,12 +290,12 @@ describe("HelixChefNft", () => {
     describe("unstake", async () => {
         it("fails if no tokenIds passed", async () => {
             await expect(helixChefNft.connect(alice).unstake([]))
-                .to.be.revertedWith("tokenIds length can't be zero")
+                .to.be.revertedWith("tokenIds length can not be zero")
         }) 
 
         it("fails if caller hasn't staked any nfts", async () => {
             await expect(helixChefNft.connect(alice).unstake([1]))
-                .to.be.revertedWith("caller hasn't staked any nfts")
+                .to.be.revertedWith("caller has not staked any nfts")
         })
 
         it("updates the pool", async () => {
@@ -342,7 +342,7 @@ describe("HelixChefNft", () => {
             // can't stake the same nft twice without first unstaking
             await helixChefNft.connect(alice).stake([1])
             await expect(helixChefNft.connect(alice).stake([1]))
-                .to.be.revertedWith("HelixChefNFT: already staked")
+                .to.be.revertedWith("token is already staked")
 
             
             await helixChefNft.connect(alice).unstake([1])

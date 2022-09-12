@@ -252,7 +252,7 @@ contract HelixChefNFT is
     }
 
     /// Mint the caller's rewards to their address
-    function harvestRewards() public nonReentrant {
+    function harvestRewards() public {
         updatePool();
         UserInfo storage user = users[msg.sender];
 
@@ -271,7 +271,7 @@ contract HelixChefNFT is
     }
 
     /// Update the pool's accTokenPerShare and lastUpdateBlock
-    function updatePool() public nonReentrant {
+    function updatePool() public {
         if (block.number <= lastUpdateBlock) {
             return;
         }
