@@ -32,7 +32,7 @@ contract HelixChefNFT is
     /// Instance of HelixNFT
     IHelixNFT public helixNFT;
 
-    /// Token that reward are earned in (HELIX)
+    /// Token that rewards are earned in
     IHelixToken public helixToken;
 
     /// Called to get helixToken to mint per block
@@ -180,14 +180,16 @@ contract HelixChefNFT is
 
     /// Called by the owner to add an accruer
     function addAccruer(address _address) external onlyOwner onlyValidAddress(_address) {
-        EnumerableSetUpgradeable.add(_accruers, _address);
+        bool success = EnumerableSetUpgradeable.add(_accruers, _address);
+        require(success, "add accruer failed");
         emit AddAccruer(msg.sender, _address);
     }
 
     /// Called by the owner to remove an accruer
     function removeAccruer(address _address) external onlyOwner {
         require(isAccruer(_address), "caller not an accruer");
-        EnumerableSetUpgradeable.remove(_accruers, _address);
+        bool success = EnumerableSetUpgradeable.remove(_accruers, _address);
+        require(success, "remove accruer failed");
         emit RemoveAccruer(msg.sender, _address);
     }   
     
@@ -240,7 +242,8 @@ contract HelixChefNFT is
         }
 
         emit HarvestRewards(msg.sender, toMint);
-        helixToken.mint(msg.sender, toMint);
+        bool success = helixToken.mint(msg.sender, toMint);
+        require(success, "harvest rewards failed");
     }
 
     /// Update the pool's accTokenPerShare and lastUpdateBlock
