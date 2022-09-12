@@ -35,14 +35,8 @@ contract HelixChefNFT is
     /// Token that reward are earned in (HELIX)
     address public rewardToken;
 
-    /// Total number of NFTs staked in this contract
-    uint256 public totalStakedWrappedNfts;
-
     /// Maps a user's address to their info struct
     mapping(address => UserInfo) public users;
-
-    /// Maps a user's address to the number of NFTs they've staked
-    mapping(address => uint256) public usersStakedWrappedNfts;
 
     /// Called to get rewardToken to mint per block
     IFeeMinter public feeMinter;
@@ -136,9 +130,6 @@ contract HelixChefNFT is
 
             user.stakedNfts += (wrappedNfts > 0) ? wrappedNfts : 1;
             totalStakedNfts += (wrappedNfts > 0) ? wrappedNfts : 1;
-        
-            usersStakedWrappedNfts[msg.sender] += wrappedNfts;
-            totalStakedWrappedNfts += wrappedNfts;
         }
 
         emit Stake(msg.sender, _tokenIds);
@@ -167,9 +158,6 @@ contract HelixChefNFT is
 
             user.stakedNfts -= (wrappedNfts > 0) ? wrappedNfts : 1;
             totalStakedNfts -= (wrappedNfts > 0) ? wrappedNfts : 1;
-
-            usersStakedWrappedNfts[msg.sender] -= wrappedNfts;
-            totalStakedWrappedNfts -= wrappedNfts;
         }
 
         emit Unstake(msg.sender, _tokenIds);
@@ -223,11 +211,6 @@ contract HelixChefNFT is
     function getAccruer(uint256 _index) external view returns (address) {
         require(_index <= getNumAccruers() - 1, "HelixChefNFT: index out of bounds");
         return EnumerableSetUpgradeable.at(_accruers, _index);
-    }
-
-    /// Return the number of NFTs the _user has staked
-    function getUsersStakedWrappedNfts(address _user) external view returns(uint256) {
-        return usersStakedWrappedNfts[_user];
     }
 
     function harvestRewards() public {
@@ -288,10 +271,10 @@ contract HelixChefNFT is
 
     /// Return the reward accrued to _user based on the transaction _fee
     function getAccruedReward(address _user, uint256 _fee) public view returns (uint256) {
-        if (totalStakedWrappedNfts == 0) {
+        if (totalStakedNfts == 0) {
             return 0;
         }
-        return usersStakedWrappedNfts[_user] * _fee / totalStakedWrappedNfts ;
+        return users[_user].stakedNfts * _fee / totalStakedNfts ;
     }
 
     /// Return true if the _address is a registered accruer and false otherwise
