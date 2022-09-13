@@ -5,7 +5,7 @@
  *      npx hardhat run scripts/5_verify/helixNft.js --network ropsten
  */
 
-const { verifyHelixNft } = require("../shared/verify/verifiers")
+const { verifyHelixNft } = require("./verifiers/verifiers")
 
 async function main() {
     await verifyHelixNft()

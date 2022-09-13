@@ -124,7 +124,6 @@ module.exports.fullExchangeFixture = async () => {
     // 0. deploy helix token
     const helixToken = await helixTokenContractFactory.deploy()  
 
-
     // 1. deploy helix nft
     const helixNft = await helixNftContractFactory.deploy()
     await helixNft.initialize('BASEURI') // TODO replace
@@ -145,7 +144,7 @@ module.exports.fullExchangeFixture = async () => {
 
     // 4. deploy helix chef nft
     const helixChefNft = await helixChefNftContractFactory.deploy()
-    await helixChefNft.initialize(helixNft.address, helixToken.address)
+    await helixChefNft.initialize(helixNft.address, helixToken.address, feeMinter.address)
 
     // 5. deploy fee handler
     const feeHandler = await feeHandlerContractFactory.deploy()
