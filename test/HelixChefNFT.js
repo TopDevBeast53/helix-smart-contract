@@ -367,6 +367,29 @@ describe("HelixChefNft", () => {
         })
     })
 
+    describe("getStakedNftIds", async () => {
+        it("returns the array of staked nft ids", async () => {
+            let expectedStakedNftIds = []
+            expect(await helixChefNft.getStakedNftIds(alice.address)).to.deep.eq(expectedStakedNftIds)
+
+            await helixChefNft.connect(alice).stake([1])
+            expectedStakedNftIds.push(hre.ethers.BigNumber.from(1))
+            expect(await helixChefNft.getStakedNftIds(alice.address)).to.deep.eq(expectedStakedNftIds)
+
+            await helixChefNft.connect(alice).stake([2])
+            expectedStakedNftIds.push(hre.ethers.BigNumber.from(2))
+            expect(await helixChefNft.getStakedNftIds(alice.address)).to.deep.eq(expectedStakedNftIds)
+
+            await helixChefNft.connect(alice).unstake([1])
+            expectedStakedNftIds = [hre.ethers.BigNumber.from(2)]
+            expect(await helixChefNft.getStakedNftIds(alice.address)).to.deep.eq(expectedStakedNftIds)
+
+            await helixChefNft.connect(alice).unstake([2])
+            expectedStakedNftIds.pop()
+            expect(await helixChefNft.getStakedNftIds(alice.address)).to.deep.eq(expectedStakedNftIds)
+        })
+    })
+
     it("multiple users stake and collect rewards", async () => {
         // Mint 2 more nfts to Bobby so that he has a total of 4 nfts
         await helixNft.connect(minter).mint(bobby.address)    // id 7 

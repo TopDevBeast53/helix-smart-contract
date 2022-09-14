@@ -20,7 +20,7 @@ contract HelixChefNFT is
 {
     // Info on each user who has NFTs staked in this contract
     struct UserInfo {
-        uint256[] stakedNFTsId; // Ids of the NFTs this user has staked
+        uint256[] stakedNftIds; // Ids of the NFTs this user has staked
         uint256 accruedReward;  // Amount of directly accrued helixToken
         uint256 rewardDebt;     // Used in reward calculations
         uint256 stakedNfts;     // Total (wrapped and unwrapped) nfts
@@ -135,7 +135,7 @@ contract HelixChefNFT is
             require(!isStaked, "token is already staked");
 
             helixNFT.setIsStaked(_tokenIds[i], true);
-            user.stakedNFTsId.push(_tokenIds[i]);
+            user.stakedNftIds.push(_tokenIds[i]);
 
             stakedNfts += (wrappedNfts > 0) ? wrappedNfts : 1;
         }
@@ -251,6 +251,11 @@ contract HelixChefNFT is
         return EnumerableSetUpgradeable.at(_accruers, _index);
     }
 
+    /// Return the list of nft ids staked by the user
+    function getStakedNftIds(address _user) external view returns (uint256[] memory) {
+        return users[_user].stakedNftIds;
+    }
+
     /// Mint the caller's rewards to their address
     function harvestRewards() public {
         updatePool();
@@ -315,7 +320,7 @@ contract HelixChefNFT is
 
     // Remove _tokenId from _user's account
     function _removeTokenIdFromUser(address _user, uint256 _tokenId) private {
-        uint256[] storage tokenIds = users[_user].stakedNFTsId;
+        uint256[] storage tokenIds = users[_user].stakedNftIds;
         uint256 length = tokenIds.length;
         for (uint256 i = 0; i < length; i++) {
             if (_tokenId == tokenIds[i]) {
