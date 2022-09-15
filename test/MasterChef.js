@@ -103,7 +103,7 @@ describe('MasterChef', () => {
         const newHelixBalance = await helixToken.balanceOf(wallet.address)
         const newBalanceOfLp = await lpToken.balanceOf(wallet.address)
         expect(newBalanceOfLp).to.eq(99000)
-        expect(newHelixBalance).to.eq("160003722354999999999999999")
+        expect(newHelixBalance).to.eq("160000420664999999999999999")
     })
 
     it('masterChef: stake helix', async () => {
