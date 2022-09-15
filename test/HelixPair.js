@@ -198,9 +198,9 @@ describe('HelixPair', () => {
         const expectedOutputAmount = bigNumberify('453305446940074565')
         await token1.transfer(pair.address, swapAmount)
         await mineBlocks(1)
-        const tx = await pair.swap(expectedOutputAmount, 0, wallet.addresss)
+        const tx = await pair.swap(expectedOutputAmount, 0, wallet.address)
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(205225)
+        expect(receipt.gasUsed).to.eq(216433)
     })
 
     it('helixPair: burn', async () => {
