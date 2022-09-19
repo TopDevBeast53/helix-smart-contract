@@ -1,3 +1,4 @@
+// npx hardhat submitDevTeamTransfer --network [network]
 task("submitDevTeamTransfer", "Submit and confirm a transfer of dev team funds")
     .setAction(async () => {
         const { getChainId, loadContractNoVerbose } = require("../scripts/shared/utilities")
@@ -66,6 +67,7 @@ task("submitDevTeamTransfer", "Submit and confirm a transfer of dev team funds")
         console.log("Done")
     })
 
+// npx hardhat executeDevTeamTransfer [txIndex] --network [network]
 task("executeDevTeamTransfer", "Execute a transfer of dev team funds")
     .addPositionalParam("txIndex")
     .setAction(async (args) => {
