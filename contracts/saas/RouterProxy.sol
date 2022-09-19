@@ -17,6 +17,57 @@ contract RouterProxy is Ownable {
     event SetPartner(address partner);
     event SetPartnerPercent(uint256 partnerPercent);
     event CollectFee(address token, address from, uint256 amount);
+    event SwapExactTokensForTokens(
+        uint256 indexed swapAmount,
+        uint256 indexed fee,
+        address[] path,
+        uint256[] amounts
+    );
+    event SwapTokensForExactTokens(
+        uint256 indexed swapAmount,
+        uint256 indexed fee,
+        address[] path,
+        uint256[] amounts
+    );
+    event SwapExactETHForTokens(
+        uint256 indexed swapAmount,
+        uint256 indexed fee,
+        address[] path,
+        uint256[] amounts
+    );
+    event SwapTokensForExactETH(
+        uint256 indexed swapAmount,
+        uint256 indexed fee,
+        address[] path,
+        uint256[] amounts
+    );
+    event SwapExactTokensForETH(
+        uint256 indexed swapAmount,
+        uint256 indexed fee,
+        address[] path,
+        uint256[] amounts
+    );
+    event SwapETHForExactTokens(
+        uint256 indexed swapAmount,
+        uint256 indexed fee,
+        address[] path,
+        uint256[] amounts
+    );
+    event SwapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint256 indexed swapAmount,
+        uint256 indexed fee,
+        address[] path
+    );
+    event SwapExactETHForTokensSupportingFeeOnTransferTokens(
+        uint256 indexed swapAmount,
+        uint256 indexed fee,
+        address[] path
+    );
+    event SwapExactTokensForETHSupportingFeeOnTransferTokens(
+        uint256 indexed swapAmount,
+        uint256 indexed fee,
+        address[] path
+    );
 
     modifier onlyPartner() {
         require(msg.sender == partner, "Caller is not partner");
@@ -85,6 +136,12 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawErc20(path[0], fee);
+        emit SwapExactTokensForTokens(
+            amountIn,
+            fee,
+            path,
+            amounts
+        );
     }
 
     function swapTokensForExactTokens(
@@ -109,6 +166,12 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawErc20(path[0], fee);
+        emit SwapTokensForExactTokens(
+            amounts[0],
+            fee,
+            path,
+            amounts
+        );
     }
 
     function swapExactETHForTokens(
@@ -129,6 +192,12 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawEth(fee);
+        emit SwapExactETHForTokens(
+            msg.value - fee,
+            fee,
+            path,
+            amounts
+        );
     }
 
     function swapTokensForExactETH(
@@ -153,6 +222,12 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawErc20(path[0], fee);
+        emit SwapTokensForExactETH(
+            amounts[0],
+            fee,
+            path,
+            amounts
+        );
     }
 
     function swapExactTokensForETH(
@@ -177,6 +252,12 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawErc20(path[0], fee);
+        emit SwapExactTokensForETH(
+            amountIn,
+            fee,
+            path,
+            amounts
+        );
     }
 
     function swapETHForExactTokens(
@@ -201,6 +282,12 @@ contract RouterProxy is Ownable {
         if (msg.value > amounts[0] + fee) {
             TransferHelper.safeTransferETH(msg.sender, msg.value - (amounts[0] + fee));
         }
+        emit SwapETHForExactTokens(
+            amounts[0],
+            fee,
+            path,
+            amounts
+        );
     }
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(
@@ -224,6 +311,11 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawErc20(path[0], fee);
+        emit SwapExactTokensForTokensSupportingFeeOnTransferTokens(
+            amountIn,
+            fee,
+            path
+        );
     }
 
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
@@ -243,6 +335,11 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawEth(fee);
+        emit SwapExactETHForTokensSupportingFeeOnTransferTokens(
+            msg.value - fee,
+            fee,
+            path
+        );
     }
 
     function swapExactTokensForETHSupportingFeeOnTransferTokens(
@@ -266,6 +363,11 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawErc20(path[0], fee);
+        emit SwapExactTokensForETHSupportingFeeOnTransferTokens(
+            amountIn,
+            fee,
+            path
+        );
     }
 
     function getFee(uint256 _amount) public view returns(uint256) {
