@@ -324,7 +324,7 @@ module.exports = {
     },    
     routerProxy: {
         1: '0x6190A8e824972e2A085Dc689968DBc694184574E',    // deployed 9/07/2022
-        4: '0x75281009831e2189Cf738ae49776FCE222b198CC',    // deployed 9/07/2022
+        4: '0x143334c046673b895e467964d5900fB65475Bb95',    // deployed 9/07/2022
         30: '0xA42427746F3406873CF2618B6dC92b23daFCc8D5',    // deployed 9/07/2022
         56: '0x0ca51aFF1e3E056fA0d35Ef6B12d055fa1fd9D7D',    // deployed 9/07/2022
         66: '0x186784afb7FD97c5D4bC3Fbf349D82F95dAAe60C',    // deployed 9/07/2022
