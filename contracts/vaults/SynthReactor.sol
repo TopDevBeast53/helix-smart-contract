@@ -16,8 +16,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract HelixVault is 
-    FeeCollector, 
+contract SynthReactor is 
     OwnableUpgradeable, 
     PausableUpgradeable, 
     ReentrancyGuardUpgradeable,
@@ -106,7 +105,6 @@ contract HelixVault is
     );
     
     modifier onlyValidDepositIndex(uint256 _depositIndex) {
-        require(_depositIndex > 0, "Vault: no deposit made");
         require(_depositIndex < deposits.length, "Vault: invalid depositIndex");
         _;
     }

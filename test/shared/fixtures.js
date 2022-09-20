@@ -51,6 +51,7 @@ module.exports.fullExchangeFixture = async () => {
 
     const testTokenContractFactory = await ethers.getContractFactory("TestToken")
     const helixTokenContractFactory = await ethers.getContractFactory("HelixToken")
+    const synthTokenContractFactory = await ethers.getContractFactory("SynthToken")
     const helixNftContractFactory = await ethers.getContractFactory("HelixNFT")
     const helixNftBridgeContractFactory = await ethers.getContractFactory("HelixNFTBridge")
     const helixChefNftContractFactory = await ethers.getContractFactory("HelixChefNFT")
@@ -69,6 +70,7 @@ module.exports.fullExchangeFixture = async () => {
     const multiSigWalletContractFactory = await ethers.getContractFactory("MultiSigWallet")
     const advisorRewardsContractFactory = await ethers.getContractFactory("AdvisorRewards")
     const routerProxyContractFactory = await ethers.getContractFactory("RouterProxy")
+    const synthReactorContractFactory = await ethers.getContractFactory("SynthReactor")
 
     // 
     // Deploy misc token contracts
@@ -216,6 +218,16 @@ module.exports.fullExchangeFixture = async () => {
     // 14. deploy auto chef
     // TODO
 
+    // Deploy synth token 
+    const synthToken = await synthTokenContractFactory.deploy()  
+
+    // Deploy synth reactor
+    const synthReactor = await synthReactorContractFactory.deploy()
+    await synthReactor.initialize(
+        helixToken.address,
+        synthToken.address
+    )
+
     //
     // Deploy presale contracts
     // 
@@ -324,5 +336,7 @@ module.exports.fullExchangeFixture = async () => {
         airdrop,
         advisorRewards,
         routerProxy,
+        synthToken,
+        synthReactor
     }
 }
