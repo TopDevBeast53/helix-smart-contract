@@ -6,6 +6,7 @@ import "../libraries/Percent.sol";
 import "../fees/FeeCollector.sol";
 import "../interfaces/IFeeMinter.sol";
 import "../interfaces/ISynthToken.sol";
+import "../interfaces/IHelixToken.sol";
 import "../timelock/OwnableTimelockUpgradeable.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -68,8 +69,6 @@ contract HelixVault is
     address public helixToken;
     address public synthToken;
 
-    uint256 totalDepositedHelix;
-
     uint256 public synthToMintPerBlock;
 
     /// Last block after which new rewards will no longer be minted
@@ -81,7 +80,7 @@ contract HelixVault is
     /// Sets an upper limit on the number of decimals a token can have
     uint256 public constant MAX_DECIMALS = 30;
 
-    event NewDeposit(
+    event Lock(
         address indexed user, 
         uint256 indexed depositId, 
         uint256 amount, 
@@ -89,18 +88,12 @@ contract HelixVault is
         uint256 depositTimestamp,
         uint256 withdrawTimestamp
     );
-    event UpdateDeposit(
-        address indexed user, 
-        uint256 indexed depositId, 
-        uint256 amount,
-        uint256 balance
-    );
     event UpdatePool(
         uint256 accTokenPerShare,
         uint256 lastUpdateBlock,
         uint256 reward
     );
-    event Withdraw(address indexed user);
+    event Unlock(address indexed user);
     event EmergencyWithdraw(address indexed user, uint256 amount);
     event HarvestReward(address indexed user, uint256 indexed depositId, uint256 reward);
     event LastRewardBlockSet(uint256 lastRewardBlock);
@@ -118,8 +111,8 @@ contract HelixVault is
         _;
     }
 
-    modifier onlyValidIndex(uint256 _index) {
-        require(_index < durations.length, "Vault: invalid index");
+    modifier onlyValidDurationIndex(uint256 durationIndex) {
+        require(durationIndex < durations.length, "Vault: invalid index");
         _;
     }
 
@@ -150,7 +143,6 @@ contract HelixVault is
         helixToken = _helixToken;
         synthToken = _synthToken;
 
-        lastRewardBlock = block.number;
         lastUpdateBlock = block.number;
 
         // default locked deposit durations and their weights
@@ -161,13 +153,13 @@ contract HelixVault is
         durations.push(Duration(720 days, 100));
     }
 
-    /// Create a new deposit and lock _amount of token for duration _index
-    function deposit(uint256 _amount, uint256 _durationIndex) 
+    /// Create a new deposit and lock _amount of token for duration durationIndex
+    function lock(uint256 _amount, uint256 _durationIndex) 
         external 
         whenNotPaused
         nonReentrant
         onlyValidAmount(_amount) 
-        onlyValidIndex(_durationIndex) 
+        onlyValidDurationIndex(_durationIndex) 
     {
         updatePool();
 
@@ -195,9 +187,7 @@ contract HelixVault is
 
         TransferHelper.safeTransferFrom(helixToken, msg.sender, address(this), _amount);
 
-        totalDepositedHelix = IHelixToken(helixToken).balanceOf(address(this));
-
-        emit NewDeposit(
+        emit Lock(
             msg.sender, 
             depositIndex, 
             _amount, 
@@ -240,13 +230,15 @@ contract HelixVault is
         uint256 toMint = reward > deposit.rewardDebt ? reward - deposit.rewardDebt : 0;
         deposit.rewardDebt = reward;
 
-        deposit.lastHarvestTimestamp = block.timestamp; 
-        if (reward > 0) {
-            bool success = ISynthToken(synthToken).mint(msg.sender, reward);
-            require(success, "harvest reward failed");
+        if (toMint <= 0) {
+            return;
         }
 
-        emit HarvestReward(msg.sender, _depositIndex, reward);
+        toMint = toMint * deposit.weight;
+        bool success = ISynthToken(synthToken).mint(msg.sender, toMint);
+        require(success, "harvest reward failed");
+
+        emit HarvestReward(msg.sender, _depositIndex, toMint);
     }
 
     function updatePool() public {
@@ -254,6 +246,7 @@ contract HelixVault is
             return;
         }
 
+        uint256 totalDepositedHelix = IERC20(helixToken).balanceOf(address(this));
         if (totalDepositedHelix == 0) {
             lastUpdateBlock = block.number;
             emit UpdatePool(accTokenPerShare, lastUpdateBlock, 0);
@@ -269,7 +262,7 @@ contract HelixVault is
     }
 
     /// Withdraw _amount of token from _depositId
-    function withdraw(uint256 _depositIndex) 
+    function unlock(uint256 _depositIndex) 
         external 
         whenNotPaused 
         nonReentrant 
@@ -291,7 +284,7 @@ contract HelixVault is
         // Return the original deposit to the depositor
         TransferHelper.safeTransfer(helixToken, msg.sender, deposit.amount);
 
-        emit Withdraw(msg.sender);
+        emit Unlock(msg.sender);
     }
 
     /// Withdraw all the tokens in this contract. Emergency ONLY
@@ -299,17 +292,17 @@ contract HelixVault is
         TransferHelper.safeTransfer(_token, msg.sender, IERC20(_token).balanceOf(address(this)));
     }
     
-    /// Called by the owner to get a duration by it's _index and assign it a 
+    /// Called by the owner to get a duration by it's durationIndex and assign it a 
     /// new _duration and _weight
-    function setDuration(uint256 _index, uint256 _duration, uint256 _weight)
+    function setDuration(uint256 durationIndex, uint256 _duration, uint256 _weight)
         external
         onlyTimelock
-        onlyValidIndex(_index)
+        onlyValidDurationIndex(durationIndex)
         onlyValidDuration(_duration)
         onlyValidWeight(_weight)  
     {
-        durations[_index].duration = _duration;
-        durations[_index].weight = _weight;
+        durations[durationIndex].duration = _duration;
+        durations[durationIndex].weight = _weight;
     }
    
     /// Called by the owner to add a new duration with _duration and _weight
@@ -322,15 +315,15 @@ contract HelixVault is
         durations.push(Duration(_duration, _weight));
     }
 
-    /// Called by the owner to remove the duration at _index
-    function removeDuration(uint256 _index) 
+    /// Called by the owner to remove the duration at durationIndex
+    function removeDuration(uint256 durationIndex) 
         external 
         onlyTimelock
-        onlyValidIndex(_index)
+        onlyValidDurationIndex(durationIndex)
     {
         // remove by array shift to preserve order
         uint256 length = durations.length - 1;
-        for (uint256 i = _index; i < length; i++) {
+        for (uint256 i = durationIndex; i < length; i++) {
             durations[i] = durations[i + 1];
         }
         durations.pop();
