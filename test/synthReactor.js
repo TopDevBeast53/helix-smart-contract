@@ -257,14 +257,14 @@ describe("SynthReactor", () => {
             // and she'll be staked with bobby for 1 block
             const aliceDeposited = aliceLockAmount.mul(bigInt(100).add(aliceWeight)).div(bigInt(100))
             const bobbyDeposited = bobbyLockAmount.mul(bigInt(100).add(bobbyWeight)).div(bigInt(100))
-            const expectedTotalDeposited = aliceDeposited.add(bobbyDeposited)
-            const totalDeposited = await synthReactor.totalDeposited()
-            expect(totalDeposited).to.eq(expectedTotalDeposited)
+            const expectedTotalShares = aliceDeposited.add(bobbyDeposited)
+            const totalShares = await synthReactor.totalShares()
+            expect(totalShares).to.eq(expectedTotalShares)
 
             await synthReactor.updatePool()
 
             const expectedAliceReward = synthToMintPerBlock.add(
-                aliceDeposited.mul(expandTo18Decimals(100)).div(totalDeposited)
+                aliceDeposited.mul(expandTo18Decimals(100)).div(totalShares)
             )
             const aliceDepositIndex = 0
             const aliceReward = await synthReactor.getPendingReward(aliceDepositIndex)
@@ -273,9 +273,9 @@ describe("SynthReactor", () => {
             /**
             console.log(`synthToMintPerBlock ${synthToMintPerBlock}`)
             console.log(`bobbyDeposited ${bobbyDeposited}`)
-            console.log(`totalDeposited ${totalDeposited}`)
+            console.log(`totalShares ${totalShares}`)
             const expectedBobbyReward = synthToMintPerBlock.add(
-                bobbyDeposited.mul(expandTo18Decimals(100)).div(totalDeposited)
+                bobbyDeposited.mul(expandTo18Decimals(100)).div(totalShares)
             )
             console.log(`expectedBobbyReward ${expectedBobbyReward}`)
             const bobbyDepositIndex = 1
@@ -338,19 +338,19 @@ describe("SynthReactor", () => {
             expect(await synthReactor.getUserDepositIndices(alice.address)).to.deep.eq(expectedDepositIndices)
         })
 
-        it("increments the user's totalDeposited", async () => {
-            expect(await synthReactor.getUserTotalDeposited(alice.address)).to.eq(bigInt(0))
+        it("increments the user's totalAmount", async () => {
+            expect(await synthReactor.getUserTotalAmount(alice.address)).to.eq(bigInt(0))
 
             const lockAmount = await helixToken.balanceOf(alice.address)
             const durationIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
             await synthReactor.connect(alice).lock(lockAmount, durationIndex)
 
-            expect(await synthReactor.getUserTotalDeposited(alice.address)).to.eq(lockAmount)
+            expect(await synthReactor.getUserTotalAmount(alice.address)).to.eq(lockAmount)
         })
 
-        it("increments the contract totalDeposited", async () => {
-            const prevTotalDeposited = await helixToken.balanceOf(synthReactor.address)
+        it("increments the contract totalShares", async () => {
+            const prevTotalShares = await helixToken.balanceOf(synthReactor.address)
 
             const lockAmount = await helixToken.balanceOf(alice.address)
             const durationIndex = 0
@@ -359,8 +359,8 @@ describe("SynthReactor", () => {
     
             // TODO expect this to fail when accounting for weight/staked multipliers
             const weight = (await synthReactor.durations(durationIndex)).weight
-            const expectedTotalDeposited = prevTotalDeposited.add(lockAmount.mul(bigInt(100).add(weight)).div(bigInt(100)))
-            expect(await synthReactor.totalDeposited()).to.eq(expectedTotalDeposited)
+            const expectedTotalShares = prevTotalShares.add(lockAmount.mul(bigInt(100).add(weight)).div(bigInt(100)))
+            expect(await synthReactor.totalShares()).to.eq(expectedTotalShares)
         })
 
         it("pushes a new deposit into the deposits array", async () => {
@@ -491,7 +491,7 @@ describe("SynthReactor", () => {
             expect((await synthReactor.deposits(0)).withdrawn).to.be.true
         })
 
-        it("decrements the contract totalDeposited", async () => {
+        it("decrements the contract totalShares", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
             const durationIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
@@ -505,10 +505,10 @@ describe("SynthReactor", () => {
             const depositIndex = bigInt(0)
             await synthReactor.connect(alice).unlock(depositIndex)
 
-            expect(await synthReactor.totalDeposited()).to.eq(bigInt(0))
+            expect(await synthReactor.totalShares()).to.eq(bigInt(0))
         })
 
-        it("decrements the user's totalDeposited", async () => {
+        it("decrements the user's totalAmount", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
             const durationIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
@@ -522,7 +522,7 @@ describe("SynthReactor", () => {
             const depositIndex = bigInt(0)
             await synthReactor.connect(alice).unlock(depositIndex)
 
-            expect(await synthReactor.getUserTotalDeposited(alice.address)).to.eq(bigInt(0))
+            expect(await synthReactor.getUserTotalAmount(alice.address)).to.eq(bigInt(0))
         })
 
         it("returns the deposited amount to the caller", async () => {

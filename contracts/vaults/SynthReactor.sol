@@ -24,7 +24,7 @@ contract SynthReactor is
 {
     struct User {
         uint256[] depositIndices;
-        uint256 totalDeposited;
+        uint256 totalAmount;
     }
 
     struct Deposit {
@@ -67,7 +67,7 @@ contract SynthReactor is
 
     uint256 public synthToMintPerBlock;
 
-    uint256 public totalDeposited;
+    uint256 public totalShares;
 
     /// Last block after which new rewards will no longer be minted
     uint256 public lastRewardBlock;
@@ -158,12 +158,12 @@ contract SynthReactor is
 
         User storage user = users[msg.sender];
         user.depositIndices.push(depositIndex);
-        user.totalDeposited += _amount;
+        user.totalAmount += _amount;
 
         uint256 weight = durations[_durationIndex].weight;
         uint256 unlockTimestamp = block.timestamp + durations[_durationIndex].duration;
 
-        totalDeposited += getTotalDeposited(_amount, weight);
+        totalShares += getTotalShares(_amount, weight);
 
         deposits.push(
             Deposit({
@@ -202,10 +202,10 @@ contract SynthReactor is
         require(msg.sender == deposit.depositor, "caller is not depositor");
         require(block.timestamp >= deposit.unlockTimestamp, "deposit is locked");
 
-        users[msg.sender].totalDeposited -= deposit.amount;
+        users[msg.sender].totalAmount -= deposit.amount;
 
         harvestReward(_depositIndex);
-        totalDeposited -= getTotalDeposited(deposit.amount, deposit.weight);
+        totalShares -= getTotalShares(deposit.amount, deposit.weight);
         deposit.withdrawn = true;
         TransferHelper.safeTransfer(helixToken, msg.sender, deposit.amount);
 
@@ -224,7 +224,7 @@ contract SynthReactor is
         require(msg.sender == deposit.depositor, "caller is not depositor");
         require(!deposit.withdrawn, "deposit is already withdrawn");
       
-        uint256 amount = getTotalDeposited(deposit.amount, deposit.weight);
+        uint256 amount = getTotalShares(deposit.amount, deposit.weight);
         uint256 reward = amount * accTokenPerShare / _REWARD_PRECISION;
         uint256 toMint = reward > deposit.rewardDebt ? reward - deposit.rewardDebt : 0;
         deposit.rewardDebt = reward;
@@ -244,7 +244,7 @@ contract SynthReactor is
             return;
         }
 
-        if (totalDeposited <= 0) {
+        if (totalShares <= 0) {
             lastUpdateBlock = block.number;
             emit UpdatePool(accTokenPerShare, lastUpdateBlock, 0);
             return;
@@ -252,7 +252,7 @@ contract SynthReactor is
 
         uint256 blockDelta = block.number - lastUpdateBlock;
         uint256 reward = blockDelta * synthToMintPerBlock;
-        accTokenPerShare += reward * _REWARD_PRECISION / totalDeposited;
+        accTokenPerShare += reward * _REWARD_PRECISION / totalShares;
         lastUpdateBlock = block.number;
 
         emit UpdatePool(accTokenPerShare, lastUpdateBlock, reward);
@@ -268,12 +268,12 @@ contract SynthReactor is
         if (block.number > lastUpdateBlock) {
             uint256 blockDelta = block.number - lastUpdateBlock;
             uint256 reward = blockDelta * synthToMintPerBlock;
-            _accTokenPerShare += reward * _REWARD_PRECISION / totalDeposited;
+            _accTokenPerShare += reward * _REWARD_PRECISION / totalShares;
         }
 
         Deposit memory deposit = deposits[_depositIndex];     
 
-        uint256 toMint = getTotalDeposited(deposit.amount, deposit.weight) * _accTokenPerShare / _REWARD_PRECISION;
+        uint256 toMint = getTotalShares(deposit.amount, deposit.weight) * _accTokenPerShare / _REWARD_PRECISION;
         if (toMint > deposit.rewardDebt) {
             return toMint - deposit.rewardDebt;
         } else {
@@ -281,7 +281,7 @@ contract SynthReactor is
         }
     }
 
-    function getTotalDeposited(uint256 _amount, uint256 _weight) public view returns (uint256) {
+    function getTotalShares(uint256 _amount, uint256 _weight) public view returns (uint256) {
         return _amount * (_WEIGHT_PRECISION + _weight) / _WEIGHT_PRECISION;
     }
 
@@ -345,8 +345,8 @@ contract SynthReactor is
         _unpause();
     }
 
-    function getUserTotalDeposited(address _user) external view returns(uint256) {
-        return users[_user].totalDeposited;
+    function getUserTotalAmount(address _user) external view returns(uint256) {
+        return users[_user].totalAmount;
     }
 
     // Get the _user's deposit indices which are used for accessing their deposits
