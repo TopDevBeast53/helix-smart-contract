@@ -198,7 +198,7 @@ describe("SynthReactor", () => {
             const synthToMintPerBlock = await synthReactor.synthToMintPerBlock()
             const expectedRewardDebt = synthToMintPerBlock.sub(prevRewardDebt)
             const rewardDebt = (await synthReactor.deposits(depositIndex)).rewardDebt
-            expect(rewardDebt).to.eq(expectedRewardDebt)
+            expect(roundBigInt(rewardDebt)).to.eq(roundBigInt(expectedRewardDebt))
         })
 
         it("mints synthToken reward to the caller", async () => {
@@ -221,14 +221,14 @@ describe("SynthReactor", () => {
             // expect alice to recieve the full amount minted 
             const synthToMintPerBlock = await synthReactor.synthToMintPerBlock()
             const expectedAliceSynthBalance = prevAliceSynthBalance.add(synthToMintPerBlock)
-            expect(await synthToken.balanceOf(alice.address)).to.eq(expectedAliceSynthBalance)
+            const aliceSynthBalance = await synthToken.balanceOf(alice.address)
+            expect(roundBigInt(aliceSynthBalance)).to.eq(roundBigInt(expectedAliceSynthBalance))
 
             // expect the contract balance to be the same, i.e. minted synth and not transferred
             const expectedContractSynthBalance = prevContractSynthBalance
             expect(await synthToken.balanceOf(synthReactor.address)).to.eq(expectedContractSynthBalance)
         })
 
-        /* TODO
         it("accrues higher rewards to users with higher weights", async () => {
             // alice prepares to lock her helix balance
             const prevAliceSynthBalance = await synthToken.balanceOf(alice.address)
@@ -247,24 +247,43 @@ describe("SynthReactor", () => {
             // alice locks her helix 
             await synthReactor.connect(alice).lock(aliceLockAmount, aliceDurationIndex)
 
-            lastUpdateBlock = await synthReactor.lastUpdateBlock()
-            console.log(lastUpdateBlock)
-
             // bobby locks his helix
             await synthReactor.connect(bobby).lock(bobbyLockAmount, bobbyDurationIndex)
             
-            lastUpdateBlock = await synthReactor.lastUpdateBlock()
-            console.log(lastUpdateBlock)
-
             const synthToMintPerBlock = await synthReactor.synthToMintPerBlock()
 
             // calculate alice's expected reward
             // she'll be staked by herself for 1 block
             // and she'll be staked with bobby for 1 block
-            const aliceDeposited = aliceLockAmount.add(aliceLockAmount.mul(aliceWeight).div(100))
-            console.log(aliceDeposited)
+            const aliceDeposited = aliceLockAmount.mul(bigInt(100).add(aliceWeight)).div(bigInt(100))
+            const bobbyDeposited = bobbyLockAmount.mul(bigInt(100).add(bobbyWeight)).div(bigInt(100))
+            const expectedTotalDeposited = aliceDeposited.add(bobbyDeposited)
+            const totalDeposited = await synthReactor.totalDeposited()
+            expect(totalDeposited).to.eq(expectedTotalDeposited)
+
+            await synthReactor.updatePool()
+
+            const expectedAliceReward = synthToMintPerBlock.add(
+                aliceDeposited.mul(expandTo18Decimals(100)).div(totalDeposited)
+            )
+            const aliceDepositIndex = 0
+            const aliceReward = await synthReactor.getPendingReward(aliceDepositIndex)
+            expect(roundBigInt(aliceReward)).to.eq(roundBigInt(expectedAliceReward))
+
+            /**
+            console.log(`synthToMintPerBlock ${synthToMintPerBlock}`)
+            console.log(`bobbyDeposited ${bobbyDeposited}`)
+            console.log(`totalDeposited ${totalDeposited}`)
+            const expectedBobbyReward = synthToMintPerBlock.add(
+                bobbyDeposited.mul(expandTo18Decimals(100)).div(totalDeposited)
+            )
+            console.log(`expectedBobbyReward ${expectedBobbyReward}`)
+            const bobbyDepositIndex = 1
+            const bobbyReward = await synthReactor.getPendingReward(bobbyDepositIndex)
+            expect(roundBigInt(bobbyReward)).to.eq(roundBigInt(expectedBobbyReward))
+            */
         })
-        */
+
 
         it("emits HarvestReward event", async () => {
             // alice locks her helix balance
@@ -339,7 +358,9 @@ describe("SynthReactor", () => {
             await synthReactor.connect(alice).lock(lockAmount, durationIndex)
     
             // TODO expect this to fail when accounting for weight/staked multipliers
-            expect(await synthReactor.totalDeposited()).to.eq(prevTotalDeposited.add(lockAmount))
+            const weight = (await synthReactor.durations(durationIndex)).weight
+            const expectedTotalDeposited = prevTotalDeposited.add(lockAmount.mul(bigInt(100).add(weight)).div(bigInt(100)))
+            expect(await synthReactor.totalDeposited()).to.eq(expectedTotalDeposited)
         })
 
         it("pushes a new deposit into the deposits array", async () => {
@@ -564,6 +585,10 @@ describe("SynthReactor", () => {
     async function setNextBlockTimestamp(int) {
         await hre.network.provider.send("evm_setNextBlockTimestamp", [int])
         await hre.network.provider.send("evm_mine")
+    }
+
+    function roundBigInt(bigInt) {
+        return Math.round(bigInt.div(1e10).toNumber() / 1e6)
     }
 
     async function now() {

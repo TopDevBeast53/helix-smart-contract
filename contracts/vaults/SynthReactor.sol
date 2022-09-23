@@ -56,7 +56,7 @@ contract SynthReactor is
 
     uint256 public accTokenPerShare;
 
-    uint256 private constant _REWARD_PRECISION = 1e12;
+    uint256 private constant _REWARD_PRECISION = 1e19;
 
     uint256 private constant _WEIGHT_PRECISION = 100;
 
@@ -163,7 +163,7 @@ contract SynthReactor is
         uint256 weight = durations[_durationIndex].weight;
         uint256 unlockTimestamp = block.timestamp + durations[_durationIndex].duration;
 
-        totalDeposited += _amount;
+        totalDeposited += getTotalDeposited(_amount, weight);
 
         deposits.push(
             Deposit({
@@ -205,7 +205,7 @@ contract SynthReactor is
         users[msg.sender].totalDeposited -= deposit.amount;
 
         harvestReward(_depositIndex);
-        totalDeposited -= deposit.amount;
+        totalDeposited -= getTotalDeposited(deposit.amount, deposit.weight);
         deposit.withdrawn = true;
         TransferHelper.safeTransfer(helixToken, msg.sender, deposit.amount);
 
@@ -223,8 +223,9 @@ contract SynthReactor is
         Deposit storage deposit = deposits[_depositIndex];
         require(msg.sender == deposit.depositor, "caller is not depositor");
         require(!deposit.withdrawn, "deposit is already withdrawn");
-        
-        uint256 reward = deposit.amount * accTokenPerShare / _REWARD_PRECISION;
+      
+        uint256 amount = getTotalDeposited(deposit.amount, deposit.weight);
+        uint256 reward = amount * accTokenPerShare / _REWARD_PRECISION;
         uint256 toMint = reward > deposit.rewardDebt ? reward - deposit.rewardDebt : 0;
         deposit.rewardDebt = reward;
 
@@ -261,16 +262,27 @@ contract SynthReactor is
         public 
         view 
         onlyValidDepositIndex(_depositIndex)
-        returns(uint256) 
+        returns (uint256)
     {
-        Deposit memory deposit = deposits[_depositIndex];     
-        
-        if (block.timestamp <= deposit.lastHarvestTimestamp) {
-            return 0;
+        uint256 _accTokenPerShare = accTokenPerShare;
+        if (block.number > lastUpdateBlock) {
+            uint256 blockDelta = block.number - lastUpdateBlock;
+            uint256 reward = blockDelta * synthToMintPerBlock;
+            _accTokenPerShare += reward * _REWARD_PRECISION / totalDeposited;
         }
 
-        uint256 blockDelta = block.timestamp - deposit.lastHarvestTimestamp;
-        return blockDelta * synthToMintPerBlock * deposit.weight;
+        Deposit memory deposit = deposits[_depositIndex];     
+
+        uint256 toMint = getTotalDeposited(deposit.amount, deposit.weight) * _accTokenPerShare / _REWARD_PRECISION;
+        if (toMint > deposit.rewardDebt) {
+            return toMint - deposit.rewardDebt;
+        } else {
+            return 0;
+        }
+    }
+
+    function getTotalDeposited(uint256 _amount, uint256 _weight) public view returns (uint256) {
+        return _amount * (_WEIGHT_PRECISION + _weight) / _WEIGHT_PRECISION;
     }
 
     function getWeightModifier(uint256 _amount, uint256 _weight) public view returns(uint256) {
