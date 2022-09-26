@@ -335,4 +335,9 @@ contract HelixChefNFT is
     function _getRewards(address _user) private view returns (uint256) {
         return users[_user].stakedNfts * accTokenPerShare / REWARDS_PRECISION;
     }
+
+    // Return the number of nfts staked by user
+    function getUserStakedNfts(address _user) external view returns (uint256) {
+        return users[_user].stakedNfts;
+    }
 }
