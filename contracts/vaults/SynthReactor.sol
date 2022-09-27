@@ -7,6 +7,7 @@ import "../fees/FeeCollector.sol";
 import "../interfaces/IFeeMinter.sol";
 import "../interfaces/ISynthToken.sol";
 import "../interfaces/IHelixToken.sol";
+import "../interfaces/IHelixChefNFT.sol";
 import "../timelock/OwnableTimelockUpgradeable.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -24,7 +25,11 @@ contract SynthReactor is
 {
     struct User {
         uint256[] depositIndices;
-        uint256 totalAmount;
+        uint256 helixDeposited;             // sum for all unwithdrawn deposits (amount)
+        uint256 weightedDeposits;           // sum for all unwithdrawn deposits (amount * weight)
+        uint256 shares;                     // weightedDeposits * stakedNfts
+        uint256 lastHarvestTimestamp;
+        uint256 rewardDebt;
     }
 
     struct Deposit {
@@ -33,8 +38,6 @@ contract SynthReactor is
         uint256 weight;                     // reward weight by duration 
         uint256 depositTimestamp;           // when the deposit was made and used for calculating rewards
         uint256 unlockTimestamp;          // when the deposit is eligible for withdrawal
-        uint256 lastHarvestTimestamp;
-        uint256 rewardDebt;
         bool withdrawn;                     // true if the deposit has been withdrawn and false otherwise
     }
     
@@ -64,6 +67,7 @@ contract SynthReactor is
     /// and the token rewarded by the vault to user for locked token deposits
     address public helixToken;
     address public synthToken;
+    address public nftChef;
 
     uint256 public synthToMintPerBlock;
 
@@ -80,14 +84,10 @@ contract SynthReactor is
         uint256 depositTimestamp,
         uint256 unlockTimestamp
     );
-    event UpdatePool(
-        uint256 accTokenPerShare,
-        uint256 lastUpdateBlock,
-        uint256 reward
-    );
+    event UpdatePool(uint256 accTokenPerShare, uint256 lastUpdateBlock);
     event Unlock(address indexed user);
     event EmergencyWithdraw(address indexed user, uint256 amount);
-    event HarvestReward(address indexed user, uint256 indexed depositId, uint256 reward);
+    event HarvestReward(address indexed user, uint256 reward);
     event LastRewardBlockSet(uint256 lastRewardBlock);
     event SetFeeMinter(address indexed setter, address indexed feeMinter);
     event Compound(
@@ -96,7 +96,19 @@ contract SynthReactor is
         uint256 amount, 
         uint256 reward
     );
-    
+    event SetNftChef();
+    event UpdateUserStakedNfts(
+        address user,
+        uint256 stakedNfts,
+        uint256 userShares,
+        uint256 totalShares
+    );
+   
+    modifier onlyValidAddress(address _address) {
+        require(_address != address(0), "invalid address");
+        _;
+    }
+
     modifier onlyValidDepositIndex(uint256 _depositIndex) {
         require(_depositIndex < deposits.length, "invalid deposit index");
         _;
@@ -122,10 +134,22 @@ contract SynthReactor is
         _;
     }
 
+    modifier onlyNftChef() {
+        require(msg.sender == nftChef, "caller is not nftChef");
+        _;
+    }
+
     function initialize(
         address _helixToken,
-        address _synthToken
-    ) external initializer {
+        address _synthToken,
+        address _nftChef
+    ) 
+        external 
+        initializer 
+        onlyValidAddress(_helixToken)
+        onlyValidAddress(_synthToken)
+        onlyValidAddress(_nftChef)
+    {
         __Ownable_init();
         __OwnableTimelock_init();
         __Pausable_init();
@@ -133,6 +157,7 @@ contract SynthReactor is
 
         helixToken = _helixToken;
         synthToken = _synthToken;
+        nftChef = _nftChef;
 
         lastUpdateBlock = block.number;
 
@@ -152,19 +177,23 @@ contract SynthReactor is
         onlyValidAmount(_amount) 
         onlyValidDurationIndex(_durationIndex) 
     {
-        updatePool();
+        harvestReward();
 
         uint256 depositIndex = deposits.length;
+        uint256 unlockTimestamp = block.timestamp + durations[_durationIndex].duration;
+        uint256 weight = durations[_durationIndex].weight;
+        uint256 weightedDeposit = _getWeightedDeposit(_amount, weight);
+        uint256 stakedNfts = _getUserStakedNfts(msg.sender);
+        uint256 shares = _getShares(weightedDeposit, stakedNfts);
+
+        totalShares += shares;
 
         User storage user = users[msg.sender];
         user.depositIndices.push(depositIndex);
-        user.totalAmount += _amount;
-
-        uint256 weight = durations[_durationIndex].weight;
-        uint256 unlockTimestamp = block.timestamp + durations[_durationIndex].duration;
-
-        totalShares += getTotalShares(_amount, weight);
-
+        user.helixDeposited += _amount;
+        user.weightedDeposits += weightedDeposit;
+        user.shares += shares;
+  
         deposits.push(
             Deposit({
                 depositor: msg.sender, 
@@ -172,8 +201,6 @@ contract SynthReactor is
                 weight: weight,
                 depositTimestamp: block.timestamp,
                 unlockTimestamp: unlockTimestamp,
-                lastHarvestTimestamp: block.timestamp,
-                rewardDebt: 0,
                 withdrawn: false
             })
         );
@@ -197,37 +224,43 @@ contract SynthReactor is
         nonReentrant 
         onlyValidDepositIndex(_depositIndex)
     {
+        harvestReward();
+
         Deposit storage deposit = deposits[_depositIndex];
-    
         require(msg.sender == deposit.depositor, "caller is not depositor");
         require(block.timestamp >= deposit.unlockTimestamp, "deposit is locked");
 
-        users[msg.sender].totalAmount -= deposit.amount;
+        uint256 weightedDeposit = _getWeightedDeposit(deposit.amount, deposit.weight);
+        uint256 stakedNfts = _getUserStakedNfts(msg.sender);
+        uint256 shares = _getShares(weightedDeposit, stakedNfts);
 
-        harvestReward(_depositIndex);
-        totalShares -= getTotalShares(deposit.amount, deposit.weight);
+        totalShares -= shares;
+
+        User storage user = users[msg.sender];
+        user.helixDeposited -= deposit.amount;
+        user.weightedDeposits -= weightedDeposit;
+        user.shares -= shares;
+
         deposit.withdrawn = true;
+
         TransferHelper.safeTransfer(helixToken, msg.sender, deposit.amount);
 
         emit Unlock(msg.sender);
     }
 
     /// Claim accrued rewards on _depositId
-    function harvestReward(uint256 _depositIndex) 
+    function harvestReward() 
         public 
         whenNotPaused 
-        onlyValidDepositIndex(_depositIndex)
     {
         updatePool();
 
-        Deposit storage deposit = deposits[_depositIndex];
-        require(msg.sender == deposit.depositor, "caller is not depositor");
-        require(!deposit.withdrawn, "deposit is already withdrawn");
-      
-        uint256 amount = getTotalShares(deposit.amount, deposit.weight);
-        uint256 reward = amount * accTokenPerShare / _REWARD_PRECISION;
-        uint256 toMint = reward > deposit.rewardDebt ? reward - deposit.rewardDebt : 0;
-        deposit.rewardDebt = reward;
+        User storage user = users[msg.sender];
+
+        uint256 reward = user.shares * accTokenPerShare / _REWARD_PRECISION;
+        uint256 toMint = reward > user.rewardDebt ? reward - user.rewardDebt : 0;
+        user.rewardDebt = reward;
+        user.lastHarvestTimestamp = block.number;
 
         if (toMint <= 0) {
             return;
@@ -236,7 +269,7 @@ contract SynthReactor is
         bool success = ISynthToken(synthToken).mint(msg.sender, toMint);
         require(success, "harvest reward failed");
 
-        emit HarvestReward(msg.sender, _depositIndex, toMint);
+        emit HarvestReward(msg.sender, toMint);
     }
 
     function updatePool() public {
@@ -246,47 +279,67 @@ contract SynthReactor is
 
         if (totalShares <= 0) {
             lastUpdateBlock = block.number;
-            emit UpdatePool(accTokenPerShare, lastUpdateBlock, 0);
+            emit UpdatePool(accTokenPerShare, lastUpdateBlock);
             return;
         }
 
-        uint256 blockDelta = block.number - lastUpdateBlock;
-        uint256 reward = blockDelta * synthToMintPerBlock;
-        accTokenPerShare += reward * _REWARD_PRECISION / totalShares;
+        accTokenPerShare += _getAccTokenPerShare();
         lastUpdateBlock = block.number;
 
-        emit UpdatePool(accTokenPerShare, lastUpdateBlock, reward);
+        emit UpdatePool(accTokenPerShare, lastUpdateBlock);
     }
 
-    function getPendingReward(uint256 _depositIndex) 
+    function getPendingReward(address _user) 
         public 
         view 
-        onlyValidDepositIndex(_depositIndex)
+        onlyValidAddress(_user)
         returns (uint256)
     {
         uint256 _accTokenPerShare = accTokenPerShare;
         if (block.number > lastUpdateBlock) {
-            uint256 blockDelta = block.number - lastUpdateBlock;
-            uint256 reward = blockDelta * synthToMintPerBlock;
-            _accTokenPerShare += reward * _REWARD_PRECISION / totalShares;
+            _accTokenPerShare += _getAccTokenPerShare();
         }
 
-        Deposit memory deposit = deposits[_depositIndex];     
-
-        uint256 toMint = getTotalShares(deposit.amount, deposit.weight) * _accTokenPerShare / _REWARD_PRECISION;
-        if (toMint > deposit.rewardDebt) {
-            return toMint - deposit.rewardDebt;
-        } else {
-            return 0;
-        }
+        User memory user = users[msg.sender];     
+        uint256 toMint = user.shares * _accTokenPerShare / _REWARD_PRECISION;
+        return toMint > user.rewardDebt ? toMint - user.rewardDebt : 0;
     }
 
-    function getTotalShares(uint256 _amount, uint256 _weight) public view returns (uint256) {
+    function _getAccTokenPerShare() private view returns (uint256) {
+        uint256 blockDelta = block.number - lastUpdateBlock;
+        return blockDelta * synthToMintPerBlock * _REWARD_PRECISION / totalShares;
+    }
+
+    function _getWeightedDeposit(uint256 _amount, uint256 _weight) private pure returns (uint256) {
         return _amount * (_WEIGHT_PRECISION + _weight) / _WEIGHT_PRECISION;
     }
 
-    function getWeightModifier(uint256 _amount, uint256 _weight) public view returns(uint256) {
-        return _amount * _weight / _WEIGHT_PRECISION;
+    function _getShares(uint256 _weightedDeposit, uint256 _stakedNfts) private pure returns (uint256) {   
+        if (_stakedNfts <= 0) {
+            return _weightedDeposit;
+        }
+        if (_stakedNfts <= 2) {
+            return _weightedDeposit * 15 / 10;
+        }
+        else {
+            return _weightedDeposit * 2;
+        }
+    }
+
+    function updateUserStakedNfts(address _user, uint256 _stakedNfts) external onlyNftChef {
+        // Do nothing if the user has no open deposits
+        if (users[_user].helixDeposited <= 0) {
+            return;
+        }
+
+        User storage user = users[_user];
+        totalShares -= user.shares;
+        user.shares = _getShares(user.weightedDeposits, _stakedNfts);
+        totalShares += user.shares;
+
+        updatePool();
+
+        emit UpdateUserStakedNfts(_user, _stakedNfts, user.shares, totalShares);
     }
 
     /// Withdraw all the tokens in this contract. Emergency ONLY
@@ -335,18 +388,28 @@ contract SynthReactor is
         durations.pop();
     }
 
+    function setNftChef(address _nftChef) external onlyOwner onlyValidAddress(_nftChef) {
+        nftChef = _nftChef;
+        emit SetNftChef();
+    }
+
     /// Called by the owner to pause the contract
     function pause() external onlyOwner {
         _pause();
     }
+    
 
     /// Called by the owner to unpause the contract
     function unpause() external onlyOwner {
         _unpause();
     }
 
-    function getUserTotalAmount(address _user) external view returns(uint256) {
-        return users[_user].totalAmount;
+    function _getUserStakedNfts(address _user) private view returns (uint256) {
+        return IHelixChefNFT(nftChef).getUserStakedNfts(_user); 
+    }
+
+    function getUserHelixDeposited(address _user) external view returns(uint256) {
+        return users[_user].helixDeposited;
     }
 
     // Get the _user's deposit indices which are used for accessing their deposits
