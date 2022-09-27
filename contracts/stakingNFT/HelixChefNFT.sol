@@ -4,6 +4,7 @@ pragma solidity >= 0.8.0;
 import "../interfaces/IHelixNFT.sol";
 import "../interfaces/IFeeMinter.sol";
 import "../interfaces/IHelixToken.sol";
+import "../interfaces/ISynthReactor.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -53,6 +54,9 @@ contract HelixChefNFT is
     // Used in reward calculations
     uint256 private constant REWARDS_PRECISION = 1e12;
 
+    // Tracks staked nfts and mints synth token to stakers
+    ISynthReactor public synthReactor;
+
     // Emitted when an NFTs are staked
     event Stake(address indexed user, uint256[] tokenIds);
 
@@ -86,6 +90,9 @@ contract HelixChefNFT is
 
     // Emitted when a user harvests their rewards
     event HarvestRewards(address harvester, uint256 rewards);
+
+    // Emitted when a new synthReactor address is set
+    event SetSynthReactor(address indexed setter, address indexed synthReactor);
 
     modifier onlyAccruer {
         require(isAccruer(msg.sender), "caller is not an accruer");
@@ -142,6 +149,8 @@ contract HelixChefNFT is
         user.stakedNfts += stakedNfts;
         totalStakedNfts += stakedNfts;
 
+        _notifySynthReactor(msg.sender, user.stakedNfts);
+
         emit Stake(msg.sender, _tokenIds);
     }
 
@@ -171,6 +180,8 @@ contract HelixChefNFT is
         }
         user.stakedNfts -= unstakedNfts;
         totalStakedNfts -= unstakedNfts;
+
+        _notifySynthReactor(msg.sender, user.stakedNfts);
 
         emit Unstake(msg.sender, _tokenIds);
     }
@@ -225,6 +236,12 @@ contract HelixChefNFT is
         emit SetFeeMinter(msg.sender, _feeMinter);
     }
 
+    /// Called by the owner to set the _synthReactor address
+    function setSynthReactor(address _synthReactor) external onlyOwner onlyValidAddress(_synthReactor) {
+        synthReactor = ISynthReactor(_synthReactor);
+        emit SetSynthReactor(msg.sender, _synthReactor);
+    }
+
     /// Return the _user's pending reward
     function getPendingReward(address _user) external view returns (uint256) {
         UserInfo memory user = users[_user];
@@ -254,6 +271,11 @@ contract HelixChefNFT is
     /// Return the list of nft ids staked by the user
     function getStakedNftIds(address _user) external view returns (uint256[] memory) {
         return users[_user].stakedNftIds;
+    }
+
+    // Return the number of nfts staked by user
+    function getUserStakedNfts(address _user) external view returns (uint256) {
+        return users[_user].stakedNfts;
     }
 
     /// Mint the caller's rewards to their address
@@ -336,8 +358,10 @@ contract HelixChefNFT is
         return users[_user].stakedNfts * accTokenPerShare / REWARDS_PRECISION;
     }
 
-    // Return the number of nfts staked by user
-    function getUserStakedNfts(address _user) external view returns (uint256) {
-        return users[_user].stakedNfts;
+    // Register the change in _user's _stakedNfts with the synthReactor
+    function _notifySynthReactor(address _user, uint256 _stakedNfts) private {
+        if (address(synthReactor) != address(0)) {
+            synthReactor.updateUserStakedNfts(_user, _stakedNfts);
+        }
     }
 }
