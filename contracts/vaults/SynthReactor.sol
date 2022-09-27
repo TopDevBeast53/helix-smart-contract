@@ -25,10 +25,9 @@ contract SynthReactor is
 {
     struct User {
         uint256[] depositIndices;
-        uint256 helixDeposited;             // sum for all unwithdrawn deposits (amount)
+        uint256 depositedHelix;             // sum for all unwithdrawn deposits (amount)
         uint256 weightedDeposits;           // sum for all unwithdrawn deposits (amount * weight)
         uint256 shares;                     // weightedDeposits * stakedNfts
-        uint256 lastHarvestTimestamp;
         uint256 rewardDebt;
     }
 
@@ -190,7 +189,7 @@ contract SynthReactor is
 
         User storage user = users[msg.sender];
         user.depositIndices.push(depositIndex);
-        user.helixDeposited += _amount;
+        user.depositedHelix += _amount;
         user.weightedDeposits += weightedDeposit;
         user.shares += shares;
   
@@ -237,7 +236,7 @@ contract SynthReactor is
         totalShares -= shares;
 
         User storage user = users[msg.sender];
-        user.helixDeposited -= deposit.amount;
+        user.depositedHelix -= deposit.amount;
         user.weightedDeposits -= weightedDeposit;
         user.shares -= shares;
 
@@ -248,7 +247,7 @@ contract SynthReactor is
         emit Unlock(msg.sender);
     }
 
-    /// Claim accrued rewards on _depositId
+    /// Claim accrued rewards
     function harvestReward() 
         public 
         whenNotPaused 
@@ -260,14 +259,11 @@ contract SynthReactor is
         uint256 reward = user.shares * accTokenPerShare / _REWARD_PRECISION;
         uint256 toMint = reward > user.rewardDebt ? reward - user.rewardDebt : 0;
         user.rewardDebt = reward;
-        user.lastHarvestTimestamp = block.number;
 
-        if (toMint <= 0) {
-            return;
+        if (toMint > 0) {
+            bool success = ISynthToken(synthToken).mint(msg.sender, toMint);
+            require(success, "harvest reward failed");
         }
-
-        bool success = ISynthToken(synthToken).mint(msg.sender, toMint);
-        require(success, "harvest reward failed");
 
         emit HarvestReward(msg.sender, toMint);
     }
@@ -277,15 +273,8 @@ contract SynthReactor is
             return;
         }
 
-        if (totalShares <= 0) {
-            lastUpdateBlock = block.number;
-            emit UpdatePool(accTokenPerShare, lastUpdateBlock);
-            return;
-        }
-
-        accTokenPerShare += _getAccTokenPerShare();
+        accTokenPerShare += _getAccTokenPerShareIncrement();
         lastUpdateBlock = block.number;
-
         emit UpdatePool(accTokenPerShare, lastUpdateBlock);
     }
 
@@ -297,15 +286,17 @@ contract SynthReactor is
     {
         uint256 _accTokenPerShare = accTokenPerShare;
         if (block.number > lastUpdateBlock) {
-            _accTokenPerShare += _getAccTokenPerShare();
+            _accTokenPerShare += _getAccTokenPerShareIncrement();
         }
-
         User memory user = users[msg.sender];     
         uint256 toMint = user.shares * _accTokenPerShare / _REWARD_PRECISION;
         return toMint > user.rewardDebt ? toMint - user.rewardDebt : 0;
     }
 
-    function _getAccTokenPerShare() private view returns (uint256) {
+    function _getAccTokenPerShareIncrement() private view returns (uint256) {
+        if (totalShares == 0) {
+            return 0;
+        }
         uint256 blockDelta = block.number - lastUpdateBlock;
         return blockDelta * synthToMintPerBlock * _REWARD_PRECISION / totalShares;
     }
@@ -328,7 +319,7 @@ contract SynthReactor is
 
     function updateUserStakedNfts(address _user, uint256 _stakedNfts) external onlyNftChef {
         // Do nothing if the user has no open deposits
-        if (users[_user].helixDeposited <= 0) {
+        if (users[_user].depositedHelix <= 0) {
             return;
         }
 
@@ -406,10 +397,6 @@ contract SynthReactor is
 
     function _getUserStakedNfts(address _user) private view returns (uint256) {
         return IHelixChefNFT(nftChef).getUserStakedNfts(_user); 
-    }
-
-    function getUserHelixDeposited(address _user) external view returns(uint256) {
-        return users[_user].helixDeposited;
     }
 
     // Get the _user's deposit indices which are used for accessing their deposits
