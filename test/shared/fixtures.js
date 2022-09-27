@@ -225,7 +225,8 @@ module.exports.fullExchangeFixture = async () => {
     const synthReactor = await synthReactorContractFactory.deploy()
     await synthReactor.initialize(
         helixToken.address,
-        synthToken.address
+        synthToken.address,
+        helixChefNft.address
     )
 
     //

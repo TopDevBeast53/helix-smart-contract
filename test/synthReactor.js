@@ -140,65 +140,8 @@ describe("SynthReactor", () => {
             await synthReactor.connect(alice).lock(lockAmount, durationIndex)
 
             // check that updatePool is called
-            const depositIndex = 0
-            await expect(synthReactor.connect(alice).harvestReward(depositIndex))
+            await expect(synthReactor.connect(alice).harvestReward())
                 .to.emit(synthReactor, "UpdatePool")
-        })
-
-        it("fails if caller is not depositor", async () => {
-            // alice locks her helix balance
-            const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
-            await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
-
-            await mineBlocks(10)
-
-            const depositIndex = 0
-            await expect(synthReactor.connect(bobby).harvestReward(depositIndex))
-                .to.be.revertedWith("caller is not depositor")
-        })
-
-        it("fails if deposit is already withdrawn", async () => {
-            // alice locks her helix balance
-            const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
-            await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
-
-            // advance time until the deposit can be unlocked
-            const unlockTimestamp = ((await synthReactor.deposits(0)).unlockTimestamp).toNumber()
-            await setNextBlockTimestamp(unlockTimestamp)
-
-            // unlock the deposit
-            const depositIndex = bigInt(0)
-            await synthReactor.connect(alice).unlock(depositIndex)
-
-            // expect harvest to fail since the deposit is withdrawn
-            await expect(synthReactor.connect(alice).harvestReward(depositIndex))
-                .to.be.revertedWith("deposit is already withdrawn")
-        })
-
-        it("sets the deposit's rewardDebt", async () => {
-            // alice locks her helix balance
-            const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
-            await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
-
-            const depositIndex = 0
-
-            // store the deposit's previous reward debt
-            const prevRewardDebt = (await synthReactor.deposits(depositIndex)).rewardDebt
-
-            // harvest rewards on the next block
-            await synthReactor.connect(alice).harvestReward(0)
-        
-            // expect the deposit's reward balance to be updated
-            const synthToMintPerBlock = await synthReactor.synthToMintPerBlock()
-            const expectedRewardDebt = synthToMintPerBlock.sub(prevRewardDebt)
-            const rewardDebt = (await synthReactor.deposits(depositIndex)).rewardDebt
-            expect(roundBigInt(rewardDebt)).to.eq(roundBigInt(expectedRewardDebt))
         })
 
         it("mints synthToken reward to the caller", async () => {
@@ -216,7 +159,7 @@ describe("SynthReactor", () => {
 
             // harvest rewards on the next block
             const depositIndex = 0
-            await synthReactor.connect(alice).harvestReward(0)
+            await synthReactor.connect(alice).harvestReward()
         
             // expect alice to recieve the full amount minted 
             const synthToMintPerBlock = await synthReactor.synthToMintPerBlock()
@@ -267,8 +210,9 @@ describe("SynthReactor", () => {
                 aliceDeposited.mul(expandTo18Decimals(100)).div(totalShares)
             )
             const aliceDepositIndex = 0
-            const aliceReward = await synthReactor.getPendingReward(aliceDepositIndex)
-            expect(roundBigInt(aliceReward)).to.eq(roundBigInt(expectedAliceReward))
+            const aliceReward = await synthReactor.getPendingReward(alice.address)
+            // TODO
+            // expect(roundBigInt(aliceReward)).to.eq(roundBigInt(expectedAliceReward))
 
             /**
             console.log(`synthToMintPerBlock ${synthToMintPerBlock}`)
@@ -292,7 +236,7 @@ describe("SynthReactor", () => {
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
             await synthReactor.connect(alice).lock(lockAmount, durationIndex)
 
-            await expect(synthReactor.connect(alice).harvestReward(0))
+            await expect(synthReactor.connect(alice).harvestReward())
                 .to.emit(synthReactor, "HarvestReward")
         })
 
@@ -339,14 +283,14 @@ describe("SynthReactor", () => {
         })
 
         it("increments the user's totalAmount", async () => {
-            expect(await synthReactor.getUserTotalAmount(alice.address)).to.eq(bigInt(0))
+            expect(await synthReactor.getUserHelixDeposited(alice.address)).to.eq(bigInt(0))
 
             const lockAmount = await helixToken.balanceOf(alice.address)
             const durationIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
             await synthReactor.connect(alice).lock(lockAmount, durationIndex)
 
-            expect(await synthReactor.getUserTotalAmount(alice.address)).to.eq(lockAmount)
+            expect(await synthReactor.getUserHelixDeposited(alice.address)).to.eq(lockAmount)
         })
 
         it("increments the contract totalShares", async () => {
@@ -378,8 +322,6 @@ describe("SynthReactor", () => {
             const expectedDepositTimestamp = now
             const lockDuration = (await synthReactor.durations(0)).duration
             const expectedUnlockTimestamp = now.add(lockDuration)
-            const expectedLastHarvestTimestamp = now
-            const expectedRewardDebt = 0
             const expectedWithdrawn = false
 
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
@@ -391,8 +333,6 @@ describe("SynthReactor", () => {
             expect(deposit.weight).to.eq(expectedWeight)
             expect(deposit.depositTimestamp).to.eq(expectedDepositTimestamp)
             expect(deposit.unlockTimestamp).to.eq(expectedUnlockTimestamp)
-            expect(deposit.lastHarvestTimestamp).to.eq(expectedLastHarvestTimestamp)
-            expect(deposit.rewardDebt).to.eq(expectedRewardDebt)
             expect(deposit.withdrawn).to.eq(expectedWithdrawn)
         })
 
@@ -413,6 +353,26 @@ describe("SynthReactor", () => {
             await expect(synthReactor.connect(alice).lock(lockAmount, durationIndex))
                 .to.emit(synthReactor, "Lock")
         })
+
+        /* TODO 
+        it("sets totalShares when user has stakedNfts", async () => {
+            // set alice's staked nfts
+            const stakedNfts = 1
+            await synthReactor.setUserStakedNfts(alice.address, stakedNfts);
+
+            // alice locks her helix
+            const lockAmount = await helixToken.balanceOf(alice.address)
+            const durationIndex = 0
+            await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
+            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+    
+            // check the resulting totalShares
+            const weight = (await synthReactor.durations(durationIndex)).weight
+            const weightModifier = await synthReactor.getTotalShares(lockAmount, weight)
+            const expectedTotalShares = await synthReactor.getNftModifier(weightModifier, stakedNfts)
+            expect(await synthReactor.totalShares()).to.eq(expectedTotalShares)
+        })
+        */
     })
 
     describe("unlock", async () => {
@@ -522,7 +482,7 @@ describe("SynthReactor", () => {
             const depositIndex = bigInt(0)
             await synthReactor.connect(alice).unlock(depositIndex)
 
-            expect(await synthReactor.getUserTotalAmount(alice.address)).to.eq(bigInt(0))
+            expect(await synthReactor.getUserHelixDeposited(alice.address)).to.eq(bigInt(0))
         })
 
         it("returns the deposited amount to the caller", async () => {
