@@ -183,9 +183,9 @@ contract SynthReactor is
         uint256 weight = durations[_durationIndex].weight;
         uint256 weightedDeposit = _getWeightedDeposit(_amount, weight);
         uint256 stakedNfts = _getUserStakedNfts(msg.sender);
-        uint256 shares = _getShares(weightedDeposit, stakedNfts);
+        uint256 shares = _getShares(alice.weightedDeposits + weightedDeposit, stakedNfts);
 
-        totalShares += shares;
+        totalShares += (alice.shares - shares);
 
         User storage user = users[msg.sender];
         user.depositIndices.push(depositIndex);

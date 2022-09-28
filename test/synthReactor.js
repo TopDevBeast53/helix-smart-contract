@@ -619,6 +619,76 @@ describe("SynthReactor", () => {
             // set the synth to mint per block
             const synthToMintPerBlock = expandTo18Decimals(100)
             await synthReactor.setSynthToMintPerBlock(synthToMintPerBlock)
+
+            const aliceHelixBalance = await helixToken.balanceOf(alice.address)
+            await helixToken.connect(alice).approve(synthReactor.address, aliceHelixBalance)
+
+            const bobbyHelixBalance = await helixToken.balanceOf(bobby.address)
+            await helixToken.connect(bobby).approve(synthReactor.address, bobbyHelixBalance)
+        })
+
+        it("calculates shares properly", async() => {
+            // sanity check that all are zero before any deposits
+            let expectedAliceShares = bigInt(0)
+            let expectedBobbyShares = bigInt(0)
+            let expectedTotalShares = bigInt(0)
+
+            expect((await synthReactor.users(alice.address)).shares).to.eq(expectedAliceShares)
+            expect((await synthReactor.users(bobby.address)).shares).to.eq(expectedBobbyShares)
+            expect(await synthReactor.totalShares()).to.eq(expectedTotalShares)
+
+            // alice deposits some helix
+            let aliceLockAmount = expandTo18Decimals(100)
+            let aliceDurationIndex = 0
+            await synthReactor.connect(alice).lock(aliceLockAmount, aliceDurationIndex)
+
+            // check that alice's values are properly calculated
+            let expectedAliceDepositedHelix = aliceLockAmount
+            expect((await synthReactor.users(alice.address)).depositedHelix).to.eq(expectedAliceDepositedHelix)
+
+            let expectedAliceWeightedDeposits = getWeightedDeposit(aliceLockAmount, await weight(aliceDurationIndex))
+            expect((await synthReactor.users(alice.address)).weightedDeposits).to.eq(expectedAliceWeightedDeposits)
+
+            expectedAliceShares = getShares(expectedAliceWeightedDeposits, await stakedNfts(alice.address))
+            expect((await synthReactor.users(alice.address)).shares).to.eq(expectedAliceShares)
+
+            // check that the total shares match alice's shares
+            expectedTotalShares = expectedAliceShares
+            expect(await synthReactor.totalShares()).to.eq(expectedTotalShares)
+
+            // bobby deposits some helix
+            let bobbyLockAmount = expandTo18Decimals(50)
+            let bobbyDurationIndex = 2
+            await synthReactor.connect(bobby).lock(bobbyLockAmount, bobbyDurationIndex)
+
+            // check that bobby's values are properly calculated
+            let expectedBobbyDepositedHelix = bobbyLockAmount
+            expect((await synthReactor.users(bobby.address)).depositedHelix).to.eq(expectedBobbyDepositedHelix)
+
+            let expectedBobbyWeightedDeposits = getWeightedDeposit(bobbyLockAmount, await weight(bobbyDurationIndex))
+            expect((await synthReactor.users(bobby.address)).weightedDeposits).to.eq(expectedBobbyWeightedDeposits)
+
+            expectedBobbyShares = getShares(expectedBobbyWeightedDeposits, await stakedNfts(bobby.address))
+            expect((await synthReactor.users(bobby.address)).shares).to.eq(expectedBobbyShares)
+
+            // check that the total shares match the sum of alice's and bobby's shares
+            expectedTotalShares = expectedAliceShares.add(expectedBobbyShares)
+            expect(await synthReactor.totalShares()).to.eq(expectedTotalShares)
+
+            // alice deposits more helix
+            aliceLockAmount = expandTo18Decimals(115)
+            aliceDurationIndex = 1
+            await synthReactor.connect(alice).lock(aliceLockAmount, aliceDurationIndex)
+
+            // check that alice's values are properly calculated
+            expectedAliceDepositedHelix = expectedAliceDepositedHelix.add(aliceLockAmount)
+            expect((await synthReactor.users(alice.address)).depositedHelix).to.eq(expectedAliceDepositedHelix)
+
+            expectedAliceWeightedDeposits = expectedAliceWeightedDeposits.add(getWeightedDeposit(aliceLockAmount, await weight(aliceDurationIndex)))
+            expect((await synthReactor.users(alice.address)).weightedDeposits).to.eq(expectedAliceWeightedDeposits)
+
+            expectedAliceShares = expectedAliceShares.add(getShares(expectedAliceWeightedDeposits, await stakedNfts(alice.address)))
+            expect((await synthReactor.users(alice.address)).shares).to.eq(expectedAliceShares)
         })
 
         it("accrues higher rewards to users with higher weights", async () => {
@@ -666,6 +736,28 @@ describe("SynthReactor", () => {
             // expect(aliceSynthBalance).to.eq(expectedAliceReward)
         })
     })
+
+    function getWeightedDeposit(amount, weight) {
+        return amount.mul(bigInt(100).add(weight)).div(bigInt(100))
+    }
+
+    function getShares(weightedDeposit, stakedNfts) {
+        if (stakedNfts <= 0) {
+            return weightedDeposit
+        } else if (stakedNfts <= 2) {
+            return weightedDeposit.mul(15).div(10)
+        } else {
+            return weightedDeposit.mul(2)
+        }
+    }
+
+    async function stakedNfts(user) {
+        return await nftChef.getUserStakedNfts(user)
+    }
+
+    async function weight(durationIndex) {
+        return (await synthReactor.durations(durationIndex)).weight
+    }
 
     function hex(int) {
         return "0x" + int.toString(16)
