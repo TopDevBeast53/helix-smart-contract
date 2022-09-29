@@ -330,6 +330,7 @@ module.exports = {
         66: '0x186784afb7FD97c5D4bC3Fbf349D82F95dAAe60C',    // deployed 9/07/2022
     },
     synthToken: {
+        1: '0x1a22f557529Aff98A0BbC7D34248Db4a97dD3bdc',    // deployed 9/29/2022
         4: '0x963380733f447f760621524F6cF8e35CFB40fB8f',    // deployed 9/29/2022
     }
 }
