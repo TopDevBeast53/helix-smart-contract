@@ -5,6 +5,7 @@ const { verifyTreasuryMultiSig } = require("./treasuryMultiSig")
 const { verifyDevTeamMultiSig } = require("./devTeamMultiSig")
 const { verifyTimelock } = require("./timelock")
 const { verifyHelixToken } = require("./helixToken")
+const { verifySynthToken } = require("./synthToken")
 const { verifyHelixNft } = require("./helixNft")
 const { verifyFeeMinter } = require("./feeMinter")
 const { verifyHelixNftBridge } = require("./helixNftBridge")
@@ -33,6 +34,7 @@ module.exports = {
     verifyDevTeamMultiSig,
     verifyTimelock,
     verifyHelixToken,
+    verifySynthToken,
     verifyHelixNft,
     verifyFeeMinter,
     verifyHelixNftBridge,

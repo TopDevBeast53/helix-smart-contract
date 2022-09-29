@@ -17,56 +17,11 @@ contract RouterProxy is Ownable {
     event SetPartner(address partner);
     event SetPartnerPercent(uint256 partnerPercent);
     event CollectFee(address token, address from, uint256 amount);
-    event SwapExactTokensForTokens(
+    event Swap(
         uint256 indexed swapAmount,
         uint256 indexed fee,
         address[] path,
         uint256[] amounts
-    );
-    event SwapTokensForExactTokens(
-        uint256 indexed swapAmount,
-        uint256 indexed fee,
-        address[] path,
-        uint256[] amounts
-    );
-    event SwapExactETHForTokens(
-        uint256 indexed swapAmount,
-        uint256 indexed fee,
-        address[] path,
-        uint256[] amounts
-    );
-    event SwapTokensForExactETH(
-        uint256 indexed swapAmount,
-        uint256 indexed fee,
-        address[] path,
-        uint256[] amounts
-    );
-    event SwapExactTokensForETH(
-        uint256 indexed swapAmount,
-        uint256 indexed fee,
-        address[] path,
-        uint256[] amounts
-    );
-    event SwapETHForExactTokens(
-        uint256 indexed swapAmount,
-        uint256 indexed fee,
-        address[] path,
-        uint256[] amounts
-    );
-    event SwapExactTokensForTokensSupportingFeeOnTransferTokens(
-        uint256 indexed swapAmount,
-        uint256 indexed fee,
-        address[] path
-    );
-    event SwapExactETHForTokensSupportingFeeOnTransferTokens(
-        uint256 indexed swapAmount,
-        uint256 indexed fee,
-        address[] path
-    );
-    event SwapExactTokensForETHSupportingFeeOnTransferTokens(
-        uint256 indexed swapAmount,
-        uint256 indexed fee,
-        address[] path
     );
 
     modifier onlyPartner() {
@@ -136,7 +91,7 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawErc20(path[0], fee);
-        emit SwapExactTokensForTokens(
+        emit Swap(
             amountIn,
             fee,
             path,
@@ -166,7 +121,7 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawErc20(path[0], fee);
-        emit SwapTokensForExactTokens(
+        emit Swap(
             amounts[0],
             fee,
             path,
@@ -192,7 +147,7 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawEth(fee);
-        emit SwapExactETHForTokens(
+        emit Swap(
             msg.value - fee,
             fee,
             path,
@@ -222,7 +177,7 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawErc20(path[0], fee);
-        emit SwapTokensForExactETH(
+        emit Swap(
             amounts[0],
             fee,
             path,
@@ -252,7 +207,7 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawErc20(path[0], fee);
-        emit SwapExactTokensForETH(
+        emit Swap(
             amountIn,
             fee,
             path,
@@ -282,7 +237,7 @@ contract RouterProxy is Ownable {
         if (msg.value > amounts[0] + fee) {
             TransferHelper.safeTransferETH(msg.sender, msg.value - (amounts[0] + fee));
         }
-        emit SwapETHForExactTokens(
+        emit Swap(
             amounts[0],
             fee,
             path,
@@ -311,10 +266,12 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawErc20(path[0], fee);
-        emit SwapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint256[] memory amounts;
+        emit Swap(
             amountIn,
             fee,
-            path
+            path,
+            amounts
         );
     }
 
@@ -335,10 +292,12 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawEth(fee);
-        emit SwapExactETHForTokensSupportingFeeOnTransferTokens(
+        uint256[] memory amounts;
+        emit Swap(
             msg.value - fee,
             fee,
-            path
+            path,
+            amounts
         );
     }
 
@@ -363,10 +322,12 @@ contract RouterProxy is Ownable {
             deadline
         );
         _withdrawErc20(path[0], fee);
-        emit SwapExactTokensForETHSupportingFeeOnTransferTokens(
+        uint256[] memory amounts;
+        emit Swap(
             amountIn,
             fee,
-            path
+            path,
+            amounts
         );
     }
 

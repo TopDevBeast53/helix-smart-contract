@@ -75,7 +75,7 @@ module.exports = {
         4: '0x3024763fbf44041E97f14e88B8b7b5ad9eF1f1eB',
     },
     helixChefNFT: {
-        1: '0xbFF5672d78E7Ef1eBE7F6B2EBD8Be7A7BbD4E9E1',    // deployed 7/4/2022
+        1: '0xC3a923b8008104309Defd9e455C70CC649e89242',    // deployed 9/15/2022
         3: '0x8022E2b5960391F4cCBfCf0f026DE84eb77B24a6',
         4: '0x970D934034C3a7f04c195395a938A49f93A97fe7',
         30: '0x0000000000000000000000000000000000000000',   // deployed 7/29/2022
@@ -85,7 +85,7 @@ module.exports = {
         97: '0x0000000000000000000000000000000000000000',
     },
     helixChefNFTImplementation: {
-        1: '0xE39019a7Aef925BdD4E9F2Bc1dB7A3E600E08c80',    // deployed 7/4/2022
+        1: '0x2ee984106cbadbb38a9310c7e327123c23a59ffd',    // deployed 9/15/2022
         3: '0x1F59ccdb55F61Bf5Eaf6f152111455d2244886B1',
         4: '0x82968b91074F8f271E24F8Aa4e4C8a038790394a',
     },
@@ -324,9 +324,13 @@ module.exports = {
     },    
     routerProxy: {
         1: '0x6190A8e824972e2A085Dc689968DBc694184574E',    // deployed 9/07/2022
-        4: '0x75281009831e2189Cf738ae49776FCE222b198CC',    // deployed 9/07/2022
+        4: '0x9b72d61CeC35E732fCeEe5c4E9DC7441A71D779C',    // deployed 9/07/2022
         30: '0xA42427746F3406873CF2618B6dC92b23daFCc8D5',    // deployed 9/07/2022
         56: '0x0ca51aFF1e3E056fA0d35Ef6B12d055fa1fd9D7D',    // deployed 9/07/2022
         66: '0x186784afb7FD97c5D4bC3Fbf349D82F95dAAe60C',    // deployed 9/07/2022
     },
+    synthToken: {
+        1: '0x1a22f557529Aff98A0BbC7D34248Db4a97dD3bdc',    // deployed 9/29/2022
+        4: '0x963380733f447f760621524F6cF8e35CFB40fB8f',    // deployed 9/29/2022
+    }
 }
