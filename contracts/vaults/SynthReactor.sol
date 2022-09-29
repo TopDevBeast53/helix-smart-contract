@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+/// Lock helixToken and earn synthToken. Longer lock durations and staking nfts increases rewards. 
 contract SynthReactor is 
     OwnableUpgradeable, 
     PausableUpgradeable, 
@@ -33,7 +34,7 @@ contract SynthReactor is
         bool withdrawn;                 // only true if the deposit has been withdrawn
     }
     
-    struct Duration {
+    struct LockModifier {
         uint256 duration;               // length of time a deposit will be locked (in seconds)
         uint256 weight;                 // modifies the reward based on the lock duration
     }
@@ -45,15 +46,7 @@ contract SynthReactor is
     Deposit[] public deposits;
 
     /// Owner-curated list of valid deposit durations and associated weights
-    Duration[] public durations;
-
-    /// Last block that update was called
-    uint256 public lastUpdateBlock;
-
-    /// Used for calculating rewards
-    uint256 public accTokenPerShare;
-    uint256 private constant _REWARD_PRECISION = 1e19;
-    uint256 private constant _WEIGHT_PRECISION = 100;
+    LockModifier[] public lockModifiers;
 
     /// Token locked in the reactor
     address public helixToken;
@@ -64,6 +57,14 @@ contract SynthReactor is
     /// Contract the reactor references for stakedNfts
     address public nftChef;
 
+    /// Last block that update was called
+    uint256 public lastUpdateBlock;
+
+    /// Used for calculating rewards
+    uint256 public accTokenPerShare;
+    uint256 private constant _REWARD_PRECISION = 1e19;
+    uint256 private constant _WEIGHT_PRECISION = 100;
+    
     /// Amount of synthToken to mint per block
     uint256 public synthToMintPerBlock;
 
@@ -88,21 +89,21 @@ contract SynthReactor is
         uint256 shares,
         uint256 totalShares
     );
-    event UpdatePool(uint256 accTokenPerShare, uint256 lastUpdateBlock);
-    event HarvestReward(address user, uint256 reward, uint256 rewardDebt);
-    event EmergencyWithdrawErc20(address token, uint256 amount);
-    event SetNftChef(address nftChef);
     event UpdateUserStakedNfts(
         address user,
         uint256 stakedNfts,
         uint256 userShares,
         uint256 totalShares
     );
+    event HarvestReward(address user, uint256 reward, uint256 rewardDebt);
+    event UpdatePool(uint256 accTokenPerShare, uint256 lastUpdateBlock);
+    event SetNftChef(address nftChef);
     event SetSynthToMintPerBlock(uint256 synthToMintPerBlock);
-    event SetDuration(uint256 durationIndex, uint256 duration, uint256 weight);
-    event AddDuration(uint256 duration, uint256 weight, uint256 durationsLength);
-    event RemoveDuration(uint256 durationIndex, uint256 durationsLength);
-   
+    event SetLockModifier(uint256 lockModifierIndex, uint256 duration, uint256 weight);
+    event AddLockModifier(uint256 duration, uint256 weight, uint256 lockModifiersLength);
+    event RemoveLockModifier(uint256 lockModifierIndex, uint256 lockModifiersLength);
+    event EmergencyWithdrawErc20(address token, uint256 amount);
+
     modifier onlyValidAddress(address _address) {
         require(_address != address(0), "invalid address");
         _;
@@ -113,8 +114,8 @@ contract SynthReactor is
         _;
     }
 
-    modifier onlyValidDurationIndex(uint256 durationIndex) {
-        require(durationIndex < durations.length, "invalid duration index");
+    modifier onlyValidLockModifierIndex(uint256 lockModifierIndex) {
+        require(lockModifierIndex < lockModifiers.length, "invalid lock modifier index");
         _;
     }
 
@@ -160,20 +161,20 @@ contract SynthReactor is
         lastUpdateBlock = block.number;
 
         // default locked deposit durations and their weights
-        durations.push(Duration(90 days, 5));
-        durations.push(Duration(180 days, 10));
-        durations.push(Duration(360 days, 30));
-        durations.push(Duration(540 days, 50));
-        durations.push(Duration(720 days, 100));
+        lockModifiers.push(LockModifier(90 days, 5));
+        lockModifiers.push(LockModifier(180 days, 10));
+        lockModifiers.push(LockModifier(360 days, 30));
+        lockModifiers.push(LockModifier(540 days, 50));
+        lockModifiers.push(LockModifier(720 days, 100));
     }
 
-    /// Create a new deposit and lock _amount of helixToken for duration based on _durationIndex
-    function lock(uint256 _amount, uint256 _durationIndex) 
+    /// Create a new deposit and lock _amount of helixToken for _lockModifierIndex duration
+    function lock(uint256 _amount, uint256 _lockModifierIndex) 
         external 
         whenNotPaused
         nonReentrant
         onlyValidAmount(_amount) 
-        onlyValidDurationIndex(_durationIndex) 
+        onlyValidLockModifierIndex(_lockModifierIndex) 
     {
         _harvestReward(msg.sender);
 
@@ -184,9 +185,8 @@ contract SynthReactor is
 
         user.depositedHelix += _amount;
 
-        uint256 weight = durations[_durationIndex].weight;
-        uint256 weightedDeposit = _getWeightedDeposit(_amount, weight);
-        user.weightedDeposits += weightedDeposit;
+        uint256 weight = lockModifiers[_lockModifierIndex].weight;
+        user.weightedDeposits += _getWeightedDepositIncrement(_amount, weight);
 
         uint256 stakedNfts = _getUserStakedNfts(msg.sender);
         uint256 prevShares = user.shares;
@@ -195,7 +195,7 @@ contract SynthReactor is
         totalShares += shares - prevShares;
         user.shares = shares;
   
-        uint256 unlockTimestamp = block.timestamp + durations[_durationIndex].duration;
+        uint256 unlockTimestamp = block.timestamp + lockModifiers[_lockModifierIndex].duration;
         deposits.push(
             Deposit({
                 depositor: msg.sender, 
@@ -235,10 +235,10 @@ contract SynthReactor is
         require(block.timestamp >= deposit.unlockTimestamp, "deposit is locked");
 
         User storage user = users[msg.sender];
-        user.depositedHelix -= deposit.amount;
-
-        uint256 weightedDeposit = _getWeightedDeposit(deposit.amount, deposit.weight);
-        user.weightedDeposits -= weightedDeposit;
+    
+        uint256 amount = deposit.amount;
+        user.depositedHelix -= amount;
+        user.weightedDeposits -= _getWeightedDepositIncrement(amount, deposit.weight);
 
         uint256 stakedNfts = _getUserStakedNfts(msg.sender);
         uint256 prevShares = user.shares;
@@ -249,7 +249,7 @@ contract SynthReactor is
 
         deposit.withdrawn = true;
 
-        TransferHelper.safeTransfer(helixToken, msg.sender, deposit.amount);
+        TransferHelper.safeTransfer(helixToken, msg.sender, amount);
 
         emit Unlock(
             msg.sender, 
@@ -272,13 +272,17 @@ contract SynthReactor is
         if (block.number > lastUpdateBlock) {
             _accTokenPerShare += _getAccTokenPerShareIncrement();
         }
-        User memory user = users[msg.sender];     
+        User memory user = users[_user];     
         uint256 toMint = user.shares * _accTokenPerShare / _REWARD_PRECISION;
         return toMint > user.rewardDebt ? toMint - user.rewardDebt : 0;
     }
 
     /// Update user and contract shares when the user stakes or unstakes nfts
-    function updateUserStakedNfts(address _user, uint256 _stakedNfts) external onlyNftChef {
+    function updateUserStakedNfts(address _user, uint256 _stakedNfts) 
+        external 
+        onlyNftChef 
+        nonReentrant
+    {
         // Do nothing if the user has no open deposits
         if (users[_user].depositedHelix <= 0) {
             return;
@@ -307,43 +311,43 @@ contract SynthReactor is
         emit SetSynthToMintPerBlock(_synthToMintPerBlock);
     }
     
-    /// Set a durationIndex's _duration and _weight pair
-    function setDuration(uint256 _durationIndex, uint256 _duration, uint256 _weight)
+    /// Set a lockModifierIndex's _duration and _weight pair
+    function setLockModifier(uint256 _lockModifierIndex, uint256 _duration, uint256 _weight)
         external
         onlyOwner
-        onlyValidDurationIndex(_durationIndex)
+        onlyValidLockModifierIndex(_lockModifierIndex)
         onlyValidDuration(_duration)
         onlyValidWeight(_weight)  
     {
-        durations[_durationIndex].duration = _duration;
-        durations[_durationIndex].weight = _weight;
-        emit SetDuration(_durationIndex, _duration, _weight);
+        lockModifiers[_lockModifierIndex].duration = _duration;
+        lockModifiers[_lockModifierIndex].weight = _weight;
+        emit SetLockModifier(_lockModifierIndex, _duration, _weight);
     }
    
     /// Add a new _duration and _weight pair
-    function addDuration(uint256 _duration, uint256 _weight) 
+    function addLockModifier(uint256 _duration, uint256 _weight) 
         external 
         onlyOwner
         onlyValidDuration(_duration) 
         onlyValidWeight(_weight)
     {
-        durations.push(Duration(_duration, _weight));
-        emit AddDuration(_duration, _weight, durations.length);
+        lockModifiers.push(LockModifier(_duration, _weight));
+        emit AddLockModifier(_duration, _weight, lockModifiers.length);
     }
 
-    /// Remove an existing _duration and _weight pair by _durationIndex
-    function removeDuration(uint256 _durationIndex) 
+    /// Remove an existing _duration and _weight pair by _lockModifierIndex
+    function removeLockModifier(uint256 _lockModifierIndex) 
         external 
         onlyOwner
-        onlyValidDurationIndex(_durationIndex)
+        onlyValidLockModifierIndex(_lockModifierIndex)
     {
         // remove by array shift to preserve order
-        uint256 length = durations.length - 1;
-        for (uint256 i = _durationIndex; i < length; i++) {
-            durations[i] = durations[i + 1];
+        uint256 length = lockModifiers.length - 1;
+        for (uint256 i = _lockModifierIndex; i < length; i++) {
+            lockModifiers[i] = lockModifiers[i + 1];
         }
-        durations.pop();
-        emit RemoveDuration(_durationIndex, durations.length);
+        lockModifiers.pop();
+        emit RemoveLockModifier(_lockModifierIndex, lockModifiers.length);
     }
 
     /// Set the _nftChef contract that the reactor uses to get a user's stakedNfts
@@ -365,8 +369,8 @@ contract SynthReactor is
     /// Withdraw all the tokens in this contract. Emergency ONLY
     function emergencyWithdrawErc20(address _token) external onlyOwner {
         uint256 amount = IERC20(_token).balanceOf(address(this));
-        TransferHelper.safeTransfer(_token, msg.sender, amount);
         emit EmergencyWithdrawErc20(_token, amount); 
+        TransferHelper.safeTransfer(_token, msg.sender, amount);
     }
 
     // Return the user's array of depositIndices
@@ -374,9 +378,9 @@ contract SynthReactor is
         return users[_user].depositIndices;
     }
 
-    /// Return the length of the durations array
-    function getDurationsLength() external view returns (uint256) {
-        return durations.length;
+    /// Return the length of the lockModifiers array
+    function getLockModifiersLength() external view returns (uint256) {
+        return lockModifiers.length;
     }
 
     /// Return the length of the deposits array
@@ -387,7 +391,6 @@ contract SynthReactor is
     /// Harvest rewards accrued in synthToken by the caller's deposits
     function harvestReward() 
         external
-        whenNotPaused 
     {
         _harvestReward(msg.sender);
     }
@@ -405,6 +408,10 @@ contract SynthReactor is
 
     // Harvest rewards accrued in synthToken by the _caller's deposits
     function _harvestReward(address _caller) private {
+        if (paused()) {
+            return;
+        }
+
         updatePool();
 
         User storage user = users[_caller];
@@ -413,12 +420,11 @@ contract SynthReactor is
         uint256 toMint = reward > user.rewardDebt ? reward - user.rewardDebt : 0;
         user.rewardDebt = reward;
 
+        emit HarvestReward(_caller, toMint, user.rewardDebt);
         if (toMint > 0) {
             bool success = ISynthToken(synthToken).mint(_caller, toMint);
             require(success, "harvest reward failed");
         }
-
-        emit HarvestReward(_caller, toMint, user.rewardDebt);
     }
 
     // Return the _user's stakedNfts
@@ -436,7 +442,11 @@ contract SynthReactor is
     }
 
     // Return the deposit _amount weighted by _weight
-    function _getWeightedDeposit(uint256 _amount, uint256 _weight) private pure returns (uint256) {
+    function _getWeightedDepositIncrement(uint256 _amount, uint256 _weight) 
+        private 
+        pure 
+        returns (uint256) 
+    {
         return _amount * (_WEIGHT_PRECISION + _weight) / _WEIGHT_PRECISION;
     }
 

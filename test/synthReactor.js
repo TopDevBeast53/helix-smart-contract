@@ -52,23 +52,23 @@ describe("SynthReactor", () => {
         expect(await synthReactor.helixToken()).to.eq(helixToken.address)
         expect(await synthReactor.synthToken()).to.eq(synthToken.address)
         
-        const duration0 = await synthReactor.durations(0)
+        const duration0 = await synthReactor.lockModifiers(0)
         expect(duration0.duration).to.eq(90 * SECONDS_PER_DAY)
         expect(duration0.weight).to.eq(5)
 
-        const duration1 = await synthReactor.durations(1)
+        const duration1 = await synthReactor.lockModifiers(1)
         expect(duration1.duration).to.eq(180 * SECONDS_PER_DAY)
         expect(duration1.weight).to.eq(10)
 
-        const duration2 = await synthReactor.durations(2)
+        const duration2 = await synthReactor.lockModifiers(2)
         expect(duration2.duration).to.eq(360 * SECONDS_PER_DAY)
         expect(duration2.weight).to.eq(30)
 
-        const duration3 = await synthReactor.durations(3)
+        const duration3 = await synthReactor.lockModifiers(3)
         expect(duration3.duration).to.eq(540 * SECONDS_PER_DAY)
         expect(duration3.weight).to.eq(50)
 
-        const duration4 = await synthReactor.durations(4)
+        const duration4 = await synthReactor.lockModifiers(4)
         expect(duration4.duration).to.eq(720 * SECONDS_PER_DAY)
         expect(duration4.weight).to.eq(100)
 
@@ -108,12 +108,12 @@ describe("SynthReactor", () => {
         it("sets the lastUpdateBlock when the reactor has shares", async () => {
             // alice locks her helix balance
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
     
             // check that the reactor has shares
-            const weight = (await synthReactor.durations(durationIndex)).weight
+            const weight = (await synthReactor.lockModifiers(lockModifierIndex)).weight
             const expectedTotalShares = lockAmount.mul(bigInt(100).add(weight)).div(bigInt(100))
             expect(await synthReactor.totalShares()).to.eq(expectedTotalShares)
 
@@ -134,9 +134,9 @@ describe("SynthReactor", () => {
 
             // alice locks her helix balance
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
   
             // expect the current block number to be greater than the lastUpdateBlock
             await mineBlocks(1)
@@ -145,7 +145,7 @@ describe("SynthReactor", () => {
             expect(blockNumber).to.be.above(lastUpdateBlock)
            
             // expect the totalShares to be greater than 0
-            const weight = (await synthReactor.durations(durationIndex)).weight
+            const weight = (await synthReactor.lockModifiers(lockModifierIndex)).weight
             const expectedTotalShares = lockAmount.mul(bigInt(100).add(weight)).div(bigInt(100))
             expect(expectedTotalShares).to.not.eq(0)
             const totalShares = await synthReactor.totalShares()
@@ -189,12 +189,19 @@ describe("SynthReactor", () => {
             await synthReactor.setSynthToMintPerBlock(synthToMintPerBlock)
         })
 
+        it("does nothing if reactor is paused", async () => {
+            await synthReactor.connect(deployer).pause()
+            expect(await synthReactor.paused()).to.be.true
+            await expect(synthReactor.connect(alice).harvestReward())
+                .to.not.emit(synthReactor, "HarvestReward")
+        })
+
         it("calls updatePool", async () => {
             // alice locks her helix balance
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // check that updatePool is called
             await expect(synthReactor.connect(alice).harvestReward())
@@ -204,9 +211,9 @@ describe("SynthReactor", () => {
         it("updates user.rewardDebt", async () => {
             // alice locks her helix balance
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // calculate the expected rewardDebt
             const userShares = (await synthReactor.users(alice.address)).shares
@@ -236,9 +243,9 @@ describe("SynthReactor", () => {
 
             // alice locks her helix balance
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // harvest rewards on the next block
             const depositIndex = 0
@@ -258,9 +265,9 @@ describe("SynthReactor", () => {
         it("emits HarvestReward event", async () => {
             // alice locks her helix balance
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             await expect(synthReactor.connect(alice).harvestReward())
                 .to.emit(synthReactor, "HarvestReward")
@@ -270,25 +277,25 @@ describe("SynthReactor", () => {
     describe("lock", async () => {
         it("fails if called with an invalid amount", async () => {
             const lockAmount = bigInt(0)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await expect(synthReactor.connect(alice).lock(lockAmount, durationIndex))
+            await expect(synthReactor.connect(alice).lock(lockAmount, lockModifierIndex))
                 .to.be.revertedWith("invalid amount")
         })
 
-        it("fails if called with an invalid durationIndex", async () => {
+        it("fails if called with an invalid rationIndex", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = await synthReactor.getDurationsLength()
+            const lockModifierIndex = await synthReactor.getLockModifiersLength()
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await expect(synthReactor.connect(alice).lock(lockAmount, durationIndex))
-                .to.be.revertedWith("invalid duration index")
+            await expect(synthReactor.connect(alice).lock(lockAmount, lockModifierIndex))
+                .to.be.revertedWith("invalid lock modifier index")
         })
 
         it("calls harvestReward", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await expect(synthReactor.connect(alice).lock(lockAmount, durationIndex))
+            await expect(synthReactor.connect(alice).lock(lockAmount, lockModifierIndex))
                 .to.emit(synthReactor, "HarvestReward")
         })
 
@@ -296,11 +303,11 @@ describe("SynthReactor", () => {
             const prevTotalShares = await helixToken.balanceOf(synthReactor.address)
 
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
     
-            const weight = (await synthReactor.durations(durationIndex)).weight
+            const weight = (await synthReactor.lockModifiers(lockModifierIndex)).weight
             const expectedTotalShares = prevTotalShares.add(lockAmount.mul(bigInt(100).add(weight)).div(bigInt(100)))
             expect(await synthReactor.totalShares()).to.eq(expectedTotalShares)
         })
@@ -310,9 +317,9 @@ describe("SynthReactor", () => {
             expect(await synthReactor.getUserDepositIndices(alice.address)).to.deep.eq(prevExpectedDepositIndices)
 
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             const expectedDepositIndices = [bigInt(0)]
             expect(await synthReactor.getUserDepositIndices(alice.address)).to.deep.eq(expectedDepositIndices)
@@ -322,9 +329,9 @@ describe("SynthReactor", () => {
             expect((await synthReactor.users(alice.address)).depositedHelix).to.eq(bigInt(0))
 
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             expect((await synthReactor.users(alice.address)).depositedHelix).to.eq(lockAmount)
         })
@@ -335,12 +342,12 @@ describe("SynthReactor", () => {
 
             // alice locks her helix balance
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // calculate the weighted deposit increment
-            const weight = (await synthReactor.durations(durationIndex)).weight
+            const weight = (await synthReactor.lockModifiers(lockModifierIndex)).weight
             const expectedWeightedDeposits = lockAmount.mul(bigInt(100).add(weight)).div(bigInt(100))
             
             // check that the amount matches the expected
@@ -354,12 +361,12 @@ describe("SynthReactor", () => {
 
             // alice locks her helix balance
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // calculate the shares increment
-            const weight = (await synthReactor.durations(durationIndex)).weight
+            const weight = (await synthReactor.lockModifiers(lockModifierIndex)).weight
             const weightedDeposits = lockAmount.mul(bigInt(100).add(weight)).div(bigInt(100))
             const expectedShares = weightedDeposits
             
@@ -373,7 +380,7 @@ describe("SynthReactor", () => {
             await expect(synthReactor.deposits(0)).to.be.revertedWith("")
 
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
 
             // expected deposit values
             const expectedDepositor = alice.address
@@ -381,12 +388,12 @@ describe("SynthReactor", () => {
             const expectedWeight = bigInt(5)
             const now = bigInt((await hre.ethers.provider.getBlock("latest")).timestamp).add(2)
             const expectedDepositTimestamp = now
-            const lockDuration = (await synthReactor.durations(0)).duration
+            const lockDuration = (await synthReactor.lockModifiers(0)).duration
             const expectedUnlockTimestamp = now.add(lockDuration)
             const expectedWithdrawn = false
 
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             const deposit = await synthReactor.deposits(0)
             expect(deposit.depositor).to.eq(expectedDepositor)
@@ -399,9 +406,9 @@ describe("SynthReactor", () => {
 
         it("transfers helix from the caller to the synthReactor contract", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             expect(await helixToken.balanceOf(alice.address)).to.eq(bigInt(0))
         })
@@ -410,8 +417,8 @@ describe("SynthReactor", () => {
             // alice locks her helix balance
             const lockAmount = await helixToken.balanceOf(alice.address)
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            const durationIndex = 0
-            await expect(synthReactor.connect(alice).lock(lockAmount, durationIndex))
+            const lockModifierIndex = 0
+            await expect(synthReactor.connect(alice).lock(lockAmount, lockModifierIndex))
                 .to.emit(synthReactor, "Lock")
         })
 
@@ -421,12 +428,12 @@ describe("SynthReactor", () => {
 
             // alice locks her helix
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // calculate alice's expected totalShares accounting for stakedNfts
-            const weight = (await synthReactor.durations(durationIndex)).weight
+            const weight = (await synthReactor.lockModifiers(lockModifierIndex)).weight
             const weightedDeposits = lockAmount.mul(bigInt(100).add(weight)).div(bigInt(100))
             const expectedShares = weightedDeposits.mul(15).div(10)
 
@@ -451,9 +458,9 @@ describe("SynthReactor", () => {
         it("fails if the caller is not the depositor", async () => {
             // lock as alice
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
         
             // unlock the deposit as bobby
             const depositIndex = bigInt(0)
@@ -464,9 +471,9 @@ describe("SynthReactor", () => {
         it("fails if the deposit is still locked", async () => {
             // lock as alice
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // do not advance time until unlocked
 
@@ -478,9 +485,9 @@ describe("SynthReactor", () => {
 
         it("calls harvestReward", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // advance time until the deposit can be unlocked
             const unlockTimestamp = ((await synthReactor.deposits(0)).unlockTimestamp).toNumber()
@@ -493,9 +500,9 @@ describe("SynthReactor", () => {
 
         it("decrements the contract totalShares", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // advance time until the deposit can be unlocked
             const unlockTimestamp = ((await synthReactor.deposits(0)).unlockTimestamp).toNumber()
@@ -510,9 +517,9 @@ describe("SynthReactor", () => {
 
         it("decrements the user's deposited helix", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // advance time until the deposit can be unlocked
             const unlockTimestamp = ((await synthReactor.deposits(0)).unlockTimestamp).toNumber()
@@ -528,9 +535,9 @@ describe("SynthReactor", () => {
 
         it("decrements the user's weighted deposits", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // advance time until the deposit can be unlocked
             const unlockTimestamp = ((await synthReactor.deposits(0)).unlockTimestamp).toNumber()
@@ -546,9 +553,9 @@ describe("SynthReactor", () => {
 
         it("decrements the user's shares", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // advance time until the deposit can be unlocked
             const unlockTimestamp = ((await synthReactor.deposits(0)).unlockTimestamp).toNumber()
@@ -564,9 +571,9 @@ describe("SynthReactor", () => {
 
         it("marks deposit as withdrawn", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
            
             // expect the deposit not to be withdrawn
             expect((await synthReactor.deposits(0)).withdrawn).to.be.false
@@ -585,9 +592,9 @@ describe("SynthReactor", () => {
 
         it("returns the deposited amount to the caller", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // expect alice's helix balance to be 0
             const prevHelixBalance = await helixToken.balanceOf(alice.address)
@@ -608,9 +615,9 @@ describe("SynthReactor", () => {
 
         it("emits Unlock event", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
+            const lockModifierIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // advance time until the deposit can be unlocked
             const unlockTimestamp = ((await synthReactor.deposits(0)).unlockTimestamp).toNumber()
@@ -636,6 +643,11 @@ describe("SynthReactor", () => {
             await helixToken.connect(bobby).approve(synthReactor.address, bobbyHelixBalance)
         })
 
+        it("fails if caller is not nftChef", async () => {
+            await expect(synthReactor.connect(alice).updateUserStakedNfts(alice.address, 1))
+                .to.be.revertedWith("caller is not nftChef")
+        })
+
         it("does nothing if the user has no open deposits", async () => {
             const aliceTokenIds = [1]
             await expect(nftChef.connect(alice).stake(aliceTokenIds))
@@ -645,8 +657,8 @@ describe("SynthReactor", () => {
         it("calls harvestReward", async () => {
             // alice locks her helix
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            const lockModifierIndex = 0
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // check that alice has deposited helix
             const aliceDepositedHelix = (await synthReactor.users(alice.address)).depositedHelix
@@ -659,11 +671,71 @@ describe("SynthReactor", () => {
                 .to.emit(synthReactor, "UpdateUserStakedNfts")
         })
 
+        it("increases the total shares when the user increases their stakedNfts", async () => {
+            // alice locks her helix
+            const lockAmount = await helixToken.balanceOf(alice.address)
+            const lockModifierIndex = 0
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
+
+            // record the total shares before staking
+            const prevTotalShares = await synthReactor.totalShares()
+
+            // the nft(s) alice will stake
+            const tokenIds = [1]
+            const stakedNfts = tokenIds.length
+
+            // calculate alice's shares she should have after staking
+            const weight = (await synthReactor.lockModifiers(lockModifierIndex)).weight
+            const weightedDeposit = await getWeightedDeposit(lockAmount, weight)
+            const expectedTotalShares = await getShares(weightedDeposit, stakedNfts)
+
+            // alice stakes an nft
+            await expect(nftChef.connect(alice).stake(tokenIds))
+                .to.emit(synthReactor, "UpdateUserStakedNfts")
+
+            // check that alice's shares were increased and correctly set
+            const totalShares = await synthReactor.totalShares()
+            expect(totalShares).to.be.above(prevTotalShares)
+            expect(totalShares).to.eq(expectedTotalShares)
+        })
+
+        it("decreases the total shares when the user decreases their stakedNfts", async () => {
+            // alice locks her helix
+            const lockAmount = await helixToken.balanceOf(alice.address)
+            const lockModifierIndex = 0
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
+
+            // the nft(s) alice will stake
+            const tokenIds = [1]
+
+            // alice stakes an nft
+            await expect(nftChef.connect(alice).stake(tokenIds))
+                .to.emit(synthReactor, "UpdateUserStakedNfts")
+
+            // record the total shares before unstaking
+            const prevTotalShares = await synthReactor.totalShares()
+
+            // calculate alice's shares she should have after unstaking
+            const weight = (await synthReactor.lockModifiers(lockModifierIndex)).weight
+            const weightedDeposit = await getWeightedDeposit(lockAmount, weight)
+            const stakedNfts = bigInt(0)
+            const expectedTotalShares = await getShares(weightedDeposit, stakedNfts)
+
+            // alice unstakes her nft
+            await expect(nftChef.connect(alice).unstake(tokenIds))
+                .to.emit(synthReactor, "UpdateUserStakedNfts")
+
+            // check that alice's shares were decreased and correctly set
+            const totalShares = await synthReactor.totalShares()
+            expect(totalShares).to.be.below(prevTotalShares)
+            expect(totalShares).to.eq(expectedTotalShares)
+        })
+
         it("increases the user's shares when the user increases their stakedNfts", async () => {
             // alice locks her helix
             const lockAmount = await helixToken.balanceOf(alice.address)
-            const durationIndex = 0
-            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+            const lockModifierIndex = 0
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
 
             // record alice's shares before staking
             const prevShares = (await synthReactor.users(alice.address)).shares
@@ -672,8 +744,8 @@ describe("SynthReactor", () => {
             const tokenIds = [1]
             const stakedNfts = tokenIds.length
 
-            // calculated alice's shares she should have after staking
-            const weight = (await synthReactor.durations(durationIndex)).weight
+            // calculate alice's shares she should have after staking
+            const weight = (await synthReactor.lockModifiers(lockModifierIndex)).weight
             const weightedDeposit = await getWeightedDeposit(lockAmount, weight)
             const expectedShares = await getShares(weightedDeposit, stakedNfts)
 
@@ -688,7 +760,49 @@ describe("SynthReactor", () => {
         })
 
         it("decreases the user's shares when the user decreases their stakedNfts", async () => {
-            // TODO
+            // alice locks her helix
+            const lockAmount = await helixToken.balanceOf(alice.address)
+            const lockModifierIndex = 0
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
+
+            // the nft(s) alice will stake
+            const tokenIds = [1]
+
+            // alice stakes an nft
+            await expect(nftChef.connect(alice).stake(tokenIds))
+                .to.emit(synthReactor, "UpdateUserStakedNfts")
+
+            // record alice's shares before unstaking
+            const prevShares = (await synthReactor.users(alice.address)).shares
+
+            // calculate alice's shares she should have after unstaking
+            const weight = (await synthReactor.lockModifiers(lockModifierIndex)).weight
+            const weightedDeposit = await getWeightedDeposit(lockAmount, weight)
+            const stakedNfts = bigInt(0)
+            const expectedShares = await getShares(weightedDeposit, stakedNfts)
+
+            // alice unstakes her nft
+            await expect(nftChef.connect(alice).unstake(tokenIds))
+                .to.emit(synthReactor, "UpdateUserStakedNfts")
+
+            // check that alice's shares were decreased and correctly set
+            const shares = (await synthReactor.users(alice.address)).shares
+            expect(shares).to.be.below(prevShares)
+            expect(shares).to.eq(expectedShares)
+        })
+
+        it("emits UpdateUserStakedNfts event", async() => {
+            // alice locks her helix
+            const lockAmount = await helixToken.balanceOf(alice.address)
+            const lockModifierIndex = 0
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
+
+            // the nft(s) alice will stake
+            const tokenIds = [1]
+
+            // alice stakes an nft
+            await expect(nftChef.connect(alice).stake(tokenIds))
+                .to.emit(synthReactor, "UpdateUserStakedNfts")
         })
     })
 
@@ -843,14 +957,14 @@ describe("SynthReactor", () => {
             const aliceLockAmount = await helixToken.balanceOf(alice.address)
             const aliceDurationIndex = 0
             await helixToken.connect(alice).approve(synthReactor.address, aliceLockAmount)
-            const aliceWeight = (await synthReactor.durations(aliceDurationIndex)).weight
+            const aliceWeight = (await synthReactor.lockModifiers(aliceDurationIndex)).weight
 
             // bobby prepares to lock his helix balance
             const prevBobbySynthBalance = await synthToken.balanceOf(bobby.address)
             const bobbyLockAmount = await helixToken.balanceOf(bobby.address)
             const bobbyDurationIndex = 1
             await helixToken.connect(bobby).approve(synthReactor.address, bobbyLockAmount)
-            const bobbyWeight = (await synthReactor.durations(bobbyDurationIndex)).weight
+            const bobbyWeight = (await synthReactor.lockModifiers(bobbyDurationIndex)).weight
 
             // alice locks her helix 
             await synthReactor.connect(alice).lock(aliceLockAmount, aliceDurationIndex)
@@ -901,8 +1015,8 @@ describe("SynthReactor", () => {
         return await nftChef.getUserStakedNfts(user)
     }
 
-    async function weight(durationIndex) {
-        return (await synthReactor.durations(durationIndex)).weight
+    async function weight(lockModifierIndex) {
+        return (await synthReactor.lockModifiers(lockModifierIndex)).weight
     }
 
     function hex(int) {
