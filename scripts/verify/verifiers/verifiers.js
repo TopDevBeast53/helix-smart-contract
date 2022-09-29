@@ -27,6 +27,7 @@ const { verifyAdvisorRewards } = require("./advisorRewards")
 const { verifyPaymentSplitter } = require("./paymentSplitter")
 const { verifyAirdropPaymentSplitter } = require("./airdropPaymentSplitter")
 const { verifyRouterProxy } = require("./routerProxy")
+const { verifySynthReactor } = require("./synthReactor")
 
 module.exports = {
     verifyOwnerMultiSig,
@@ -56,4 +57,5 @@ module.exports = {
     verifyPaymentSplitter,
     verifyAirdropPaymentSplitter,
     verifyRouterProxy,
+    verifySynthReactor,
 }
