@@ -332,5 +332,12 @@ module.exports = {
     synthToken: {
         1: '0x1a22f557529Aff98A0BbC7D34248Db4a97dD3bdc',    // deployed 9/29/2022
         4: '0x963380733f447f760621524F6cF8e35CFB40fB8f',    // deployed 9/29/2022
-    }
+    },
+    synthReactor: {
+        4: '0xbcBa71A842Ba856432d35Af1fA84dEDf56f69ccd',    // deployed 9/29/2022
+    },
+    synthReactorImplementation: {
+        4: '0x54B803846DA214C920a2dd21D7146f9641dDd72B',    // deployed 9/29/2022
+    },
+
 }
