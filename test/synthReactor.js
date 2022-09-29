@@ -623,7 +623,76 @@ describe("SynthReactor", () => {
         })
     })
 
-    describe("deposits with differing weights", async () => {
+    describe("updateUserStakedNfts", async () => {
+        beforeEach(async () => {
+            // set the synth to mint per block
+            const synthToMintPerBlock = expandTo18Decimals(100)
+            await synthReactor.setSynthToMintPerBlock(synthToMintPerBlock)
+
+            const aliceHelixBalance = await helixToken.balanceOf(alice.address)
+            await helixToken.connect(alice).approve(synthReactor.address, aliceHelixBalance)
+
+            const bobbyHelixBalance = await helixToken.balanceOf(bobby.address)
+            await helixToken.connect(bobby).approve(synthReactor.address, bobbyHelixBalance)
+        })
+
+        it("does nothing if the user has no open deposits", async () => {
+            const aliceTokenIds = [1]
+            await expect(nftChef.connect(alice).stake(aliceTokenIds))
+                .to.not.emit(synthReactor, "UpdateUserStakedNfts")
+        })
+
+        it("calls harvestReward", async () => {
+            // alice locks her helix
+            const lockAmount = await helixToken.balanceOf(alice.address)
+            const durationIndex = 0
+            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+
+            // check that alice has deposited helix
+            const aliceDepositedHelix = (await synthReactor.users(alice.address)).depositedHelix
+            expect(aliceDepositedHelix).to.not.eq(bigInt(0))
+            expect(aliceDepositedHelix).to.eq(lockAmount)
+
+            // alice stakes an nft
+            const aliceTokenIds = [1]
+            await expect(nftChef.connect(alice).stake(aliceTokenIds))
+                .to.emit(synthReactor, "UpdateUserStakedNfts")
+        })
+
+        it("increases the user's shares when the user increases their stakedNfts", async () => {
+            // alice locks her helix
+            const lockAmount = await helixToken.balanceOf(alice.address)
+            const durationIndex = 0
+            await synthReactor.connect(alice).lock(lockAmount, durationIndex)
+
+            // record alice's shares before staking
+            const prevShares = (await synthReactor.users(alice.address)).shares
+
+            // the nft(s) alice will stake
+            const tokenIds = [1]
+            const stakedNfts = tokenIds.length
+
+            // calculated alice's shares she should have after staking
+            const weight = (await synthReactor.durations(durationIndex)).weight
+            const weightedDeposit = await getWeightedDeposit(lockAmount, weight)
+            const expectedShares = await getShares(weightedDeposit, stakedNfts)
+
+            // alice stakes an nft
+            await expect(nftChef.connect(alice).stake(tokenIds))
+                .to.emit(synthReactor, "UpdateUserStakedNfts")
+
+            // check that alice's shares were increased and correctly set
+            const shares = (await synthReactor.users(alice.address)).shares
+            expect(shares).to.be.above(prevShares)
+            expect(shares).to.eq(expectedShares)
+        })
+
+        it("decreases the user's shares when the user decreases their stakedNfts", async () => {
+            // TODO
+        })
+    })
+
+    describe("multiple locks with different weights and stakedNfts", async () => {
         beforeEach(async () => {
             // set the synth to mint per block
             const synthToMintPerBlock = expandTo18Decimals(100)

@@ -175,7 +175,7 @@ contract SynthReactor is
         onlyValidAmount(_amount) 
         onlyValidDurationIndex(_durationIndex) 
     {
-        harvestReward();
+        _harvestReward(msg.sender);
 
         User storage user = users[msg.sender];
 
@@ -228,7 +228,7 @@ contract SynthReactor is
         nonReentrant 
         onlyValidDepositIndex(_depositIndex)
     {
-        harvestReward();
+        _harvestReward(msg.sender);
 
         Deposit storage deposit = deposits[_depositIndex];
         require(msg.sender == deposit.depositor, "caller is not depositor");
@@ -284,6 +284,8 @@ contract SynthReactor is
             return;
         }
 
+        _harvestReward(_user);
+
         User storage user = users[_user];
         uint256 prevShares = user.shares;
         uint256 shares = _getShares(user.weightedDeposits, _stakedNfts);
@@ -295,8 +297,6 @@ contract SynthReactor is
             totalShares -= prevShares - shares;
         }
         user.shares = shares;
-
-        updatePool();
 
         emit UpdateUserStakedNfts(_user, _stakedNfts, user.shares, totalShares);
     }
@@ -386,23 +386,10 @@ contract SynthReactor is
 
     /// Harvest rewards accrued in synthToken by the caller's deposits
     function harvestReward() 
-        public 
+        external
         whenNotPaused 
     {
-        updatePool();
-
-        User storage user = users[msg.sender];
-
-        uint256 reward = user.shares * accTokenPerShare / _REWARD_PRECISION;
-        uint256 toMint = reward > user.rewardDebt ? reward - user.rewardDebt : 0;
-        user.rewardDebt = reward;
-
-        if (toMint > 0) {
-            bool success = ISynthToken(synthToken).mint(msg.sender, toMint);
-            require(success, "harvest reward failed");
-        }
-
-        emit HarvestReward(msg.sender, toMint, user.rewardDebt);
+        _harvestReward(msg.sender);
     }
 
     /// Update the pool
@@ -414,6 +401,24 @@ contract SynthReactor is
         accTokenPerShare += _getAccTokenPerShareIncrement();
         lastUpdateBlock = block.number;
         emit UpdatePool(accTokenPerShare, lastUpdateBlock);
+    }
+
+    // Harvest rewards accrued in synthToken by the _caller's deposits
+    function _harvestReward(address _caller) private {
+        updatePool();
+
+        User storage user = users[_caller];
+
+        uint256 reward = user.shares * accTokenPerShare / _REWARD_PRECISION;
+        uint256 toMint = reward > user.rewardDebt ? reward - user.rewardDebt : 0;
+        user.rewardDebt = reward;
+
+        if (toMint > 0) {
+            bool success = ISynthToken(synthToken).mint(_caller, toMint);
+            require(success, "harvest reward failed");
+        }
+
+        emit HarvestReward(_caller, toMint, user.rewardDebt);
     }
 
     // Return the _user's stakedNfts
