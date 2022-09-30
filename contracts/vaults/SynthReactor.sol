@@ -27,8 +27,7 @@ contract SynthReactor is
 
     struct Deposit {
         address depositor;              // user making the deposit
-        uint256 deposited;              // initial amount of helix deposited
-        uint256 balance;                // unwithdrawn helix remaining out of the initial deposited
+        uint256 amount;                 // amount of deposited helix
         uint256 weight;                 // weight based on lock duration
         uint256 depositTimestamp;       // when the deposit was made
         uint256 unlockTimestamp;        // when the deposit can be unlocked
@@ -85,8 +84,6 @@ contract SynthReactor is
     event Unlock(
         address user,
         uint256 depositIndex,
-        uint256 balance,
-        bool withdrawn,
         uint256 depositedHelix,
         uint256 weightedDeposits,
         uint256 shares,
@@ -202,8 +199,7 @@ contract SynthReactor is
         deposits.push(
             Deposit({
                 depositor: msg.sender, 
-                deposited: _amount,
-                balance: _amount,
+                amount: _amount,
                 weight: weight,
                 depositTimestamp: block.timestamp,
                 unlockTimestamp: unlockTimestamp,
@@ -226,29 +222,23 @@ contract SynthReactor is
     }
 
     /// Unlock a deposit based on _depositIndex and return the caller's locked helixToken
-    function unlock(uint256 _depositIndex, uint256 _amount) 
+    function unlock(uint256 _depositIndex) 
         external 
         whenNotPaused 
         nonReentrant 
         onlyValidDepositIndex(_depositIndex)
-        onlyValidAmount(_amount)
     {
         _harvestReward(msg.sender);
 
         Deposit storage deposit = deposits[_depositIndex];
         require(msg.sender == deposit.depositor, "caller is not depositor");
         require(block.timestamp >= deposit.unlockTimestamp, "deposit is locked");
-        require(_amount <= deposit.balance, "amount exceeds balance");
-
-        deposit.balance -= _amount;
-        if (deposit.balance == 0) {
-            deposit.withdrawn = true;
-        }
 
         User storage user = users[msg.sender];
     
-        user.depositedHelix -= _amount;
-        user.weightedDeposits -= _getWeightedDepositIncrement(_amount, deposit.weight);
+        uint256 amount = deposit.amount;
+        user.depositedHelix -= amount;
+        user.weightedDeposits -= _getWeightedDepositIncrement(amount, deposit.weight);
 
         uint256 stakedNfts = _getUserStakedNfts(msg.sender);
         uint256 prevShares = user.shares;
@@ -257,13 +247,13 @@ contract SynthReactor is
         totalShares -= prevShares - shares;
         user.shares = shares;
 
-        TransferHelper.safeTransfer(helixToken, msg.sender, _amount);
+        deposit.withdrawn = true;
+
+        TransferHelper.safeTransfer(helixToken, msg.sender, amount);
 
         emit Unlock(
             msg.sender, 
             _depositIndex,
-            deposit.balance,
-            deposit.withdrawn,
             user.depositedHelix,
             user.weightedDeposits,
             user.shares,
