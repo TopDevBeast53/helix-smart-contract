@@ -397,7 +397,8 @@ describe("SynthReactor", () => {
 
             const deposit = await synthReactor.deposits(0)
             expect(deposit.depositor).to.eq(expectedDepositor)
-            expect(deposit.amount).to.eq(expectedAmount)
+            expect(deposit.deposited).to.eq(expectedAmount)
+            expect(deposit.balance).to.eq(expectedAmount)
             expect(deposit.weight).to.eq(expectedWeight)
             expect(deposit.depositTimestamp).to.eq(expectedDepositTimestamp)
             expect(deposit.unlockTimestamp).to.eq(expectedUnlockTimestamp)
@@ -451,8 +452,31 @@ describe("SynthReactor", () => {
         })
 
         it("fails if the deposit index is invalid", async () => {
-            await expect(synthReactor.connect(alice).unlock(0))
+            const unlockAmount = bigInt(0)
+            await expect(synthReactor.connect(alice).unlock(0, unlockAmount))
                 .to.be.revertedWith("invalid deposit index")
+        })
+
+        it("fails if the amount is invalid", async () => {
+            // fails if amount is 0
+            // lock as alice
+            const lockAmount = await helixToken.balanceOf(alice.address)
+            const lockModifierIndex = 0
+            await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
+
+            let unlockAmount = bigInt(0)
+            await expect(synthReactor.connect(alice).unlock(0, unlockAmount))
+                .to.be.revertedWith("invalid amount")
+
+            // fails if amount exceeds balance
+            // advance time until the deposit can be unlocked
+            const unlockTimestamp = ((await synthReactor.deposits(0)).unlockTimestamp).toNumber()
+            await setNextBlockTimestamp(unlockTimestamp)
+
+            unlockAmount = lockAmount.add(1) 
+            await expect(synthReactor.connect(alice).unlock(0, unlockAmount))
+                .to.be.revertedWith("amount exceeds balance")
         })
 
         it("fails if the caller is not the depositor", async () => {
@@ -464,7 +488,7 @@ describe("SynthReactor", () => {
         
             // unlock the deposit as bobby
             const depositIndex = bigInt(0)
-            await expect(synthReactor.connect(bobby).unlock(depositIndex))
+            await expect(synthReactor.connect(bobby).unlock(depositIndex, lockAmount))
                 .to.be.revertedWith("caller is not depositor")
         })
 
@@ -479,7 +503,7 @@ describe("SynthReactor", () => {
 
             // try to unlock the deposit
             const depositIndex = bigInt(0)
-            await expect(synthReactor.connect(alice).unlock(depositIndex))
+            await expect(synthReactor.connect(alice).unlock(depositIndex, lockAmount))
                 .to.be.revertedWith("deposit is locked")
         })
 
@@ -494,8 +518,37 @@ describe("SynthReactor", () => {
             await setNextBlockTimestamp(unlockTimestamp)
 
             const depositIndex = bigInt(0)
-            await expect(synthReactor.connect(alice).unlock(depositIndex))
+            await expect(synthReactor.connect(alice).unlock(depositIndex, lockAmount))
                 .to.emit(synthReactor, "HarvestReward")
+        })
+
+        it("decrements the deposit balance", async () => {
+            const lockAmount = await helixToken.balanceOf(alice.address)
+            const lockModifierIndex = 0
+            await helixToken.connect(alice).approve(synthReactor.address, lockAmount)
+            await synthReactor.connect(alice).lock(lockAmount, lockModifierIndex)
+
+            // advance time until the deposit can be unlocked
+            const unlockTimestamp = ((await synthReactor.deposits(0)).unlockTimestamp).toNumber()
+            await setNextBlockTimestamp(unlockTimestamp)
+
+            // unlock some portion of the locked helix
+            const depositIndex = bigInt(0)
+            const unlockAmount = bigInt(100)
+            synthReactor.connect(alice).unlock(depositIndex, unlockAmount)
+
+            // calculate the expected balance left in the deposit after unlocking
+            let expectedBalance = lockAmount.sub(unlockAmount)
+            let balance = (await synthReactor.deposits(depositIndex)).balance
+            expect(roundBigInt(balance)).to.eq(roundBigInt(expectedBalance))
+
+            // unlock again
+            synthReactor.connect(alice).unlock(depositIndex, unlockAmount)
+
+            // calculate the expected balance left in the deposit after unlocking
+            expectedBalance = lockAmount.sub(unlockAmount).sub(unlockAmount)
+            balance = (await synthReactor.deposits(depositIndex)).balance
+            expect(roundBigInt(balance)).to.eq(roundBigInt(expectedBalance))
         })
 
         it("decrements the contract totalShares", async () => {
@@ -510,7 +563,7 @@ describe("SynthReactor", () => {
 
             // alice unlocks her locked helix
             const depositIndex = bigInt(0)
-            await synthReactor.connect(alice).unlock(depositIndex)
+            await synthReactor.connect(alice).unlock(depositIndex, lockAmount)
 
             expect(await synthReactor.totalShares()).to.eq(bigInt(0))
         })
@@ -527,7 +580,7 @@ describe("SynthReactor", () => {
 
             // alice unlocks her locked helix
             const depositIndex = bigInt(0)
-            await synthReactor.connect(alice).unlock(depositIndex)
+            await synthReactor.connect(alice).unlock(depositIndex, lockAmount)
 
             // compare the amount with the expected
             expect((await synthReactor.users(alice.address)).depositedHelix).to.eq(bigInt(0))
@@ -545,7 +598,7 @@ describe("SynthReactor", () => {
 
             // alice unlocks her locked helix
             const depositIndex = bigInt(0)
-            await synthReactor.connect(alice).unlock(depositIndex)
+            await synthReactor.connect(alice).unlock(depositIndex, lockAmount)
 
             // compare the amount with the expected
             expect((await synthReactor.users(alice.address)).weightedDeposits).to.eq(bigInt(0))
@@ -563,7 +616,7 @@ describe("SynthReactor", () => {
 
             // alice unlocks her locked helix
             const depositIndex = bigInt(0)
-            await synthReactor.connect(alice).unlock(depositIndex)
+            await synthReactor.connect(alice).unlock(depositIndex, lockAmount)
 
             // compare the amount with the expected
             expect((await synthReactor.users(alice.address)).shares).to.eq(bigInt(0))
@@ -584,7 +637,7 @@ describe("SynthReactor", () => {
 
             // unlock the deposit
             const depositIndex = bigInt(0)
-            await synthReactor.connect(alice).unlock(depositIndex)
+            await synthReactor.connect(alice).unlock(depositIndex, lockAmount)
 
             // expect the deposit to be marked as withdrawn
             expect((await synthReactor.deposits(0)).withdrawn).to.be.true
@@ -606,7 +659,7 @@ describe("SynthReactor", () => {
 
             // alice unlocks her locked helix
             const depositIndex = bigInt(0)
-            await synthReactor.connect(alice).unlock(depositIndex)
+            await synthReactor.connect(alice).unlock(depositIndex, lockAmount)
 
             // expect alice's deposited amount to be returned
             const expectedHelixBalance = prevHelixBalance.add(lockAmount)
@@ -625,7 +678,7 @@ describe("SynthReactor", () => {
 
             // alice unlocks her locked helix
             const depositIndex = bigInt(0)
-            await expect(synthReactor.connect(alice).unlock(depositIndex))
+            await expect(synthReactor.connect(alice).unlock(depositIndex, lockAmount))
                 .to.emit(synthReactor, "Unlock")
         })
     })
