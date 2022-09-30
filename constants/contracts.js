@@ -85,9 +85,9 @@ module.exports = {
         97: '0x0000000000000000000000000000000000000000',
     },
     helixChefNFTImplementation: {
-        1: '0x2ee984106cbadbb38a9310c7e327123c23a59ffd',    // deployed 9/15/2022
+        1: '0x5b7c4af5c08406b5b77e0f0b79294a6e7897d114',    // deployed 9/15/2022
         3: '0x1F59ccdb55F61Bf5Eaf6f152111455d2244886B1',
-        4: '0x82968b91074F8f271E24F8Aa4e4C8a038790394a',
+        4: '0xCc89Faa5340947B4b522Dc49AC108c402B35E1e7',    // deployed 9/30/2022
     },
     feeHandler: {
         1: '0x2d4c985Fe0BD68706cBC18fB0C8fE72cFC158849',    // deployed 7/4/2022
@@ -334,9 +334,11 @@ module.exports = {
         4: '0x963380733f447f760621524F6cF8e35CFB40fB8f',    // deployed 9/29/2022
     },
     synthReactor: {
+        1: '0xb6e0d4fdeabe595f7bb4618a9f2621a079a66193',    // deployed 9/30/2022
         4: '0xbcBa71A842Ba856432d35Af1fA84dEDf56f69ccd',    // deployed 9/29/2022
     },
     synthReactorImplementation: {
+        1: '0xe3246C76d6796c1b4e0099B7C900085F273303Ce',    // deployed 9/30/2022
         4: '0x54B803846DA214C920a2dd21D7146f9641dDd72B',    // deployed 9/29/2022
     },
 

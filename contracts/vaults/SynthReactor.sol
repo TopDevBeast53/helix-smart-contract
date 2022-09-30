@@ -160,6 +160,8 @@ contract SynthReactor is
         synthToken = _synthToken;
         nftChef = _nftChef;
 
+        synthToMintPerBlock = 135 * 1e17;   // 13.5
+
         lastUpdateBlock = block.number;
 
         // default locked deposit durations and their weights
