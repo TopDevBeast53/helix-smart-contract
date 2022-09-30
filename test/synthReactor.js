@@ -283,7 +283,7 @@ describe("SynthReactor", () => {
                 .to.be.revertedWith("invalid amount")
         })
 
-        it("fails if called with an invalid rationIndex", async () => {
+        it("fails if called with an invalid lockModifierIndex", async () => {
             const lockAmount = await helixToken.balanceOf(alice.address)
             const lockModifierIndex = await synthReactor.getLockModifiersLength()
             await helixToken.connect(alice).approve(synthReactor.address, lockAmount)

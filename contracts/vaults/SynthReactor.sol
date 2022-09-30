@@ -5,6 +5,7 @@ import "../interfaces/ISynthToken.sol";
 import "../interfaces/IHelixToken.sol";
 import "../interfaces/IHelixChefNFT.sol";
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -13,6 +14,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// Lock helixToken and earn synthToken. Longer lock durations and staking nfts increases rewards. 
 contract SynthReactor is 
+    Initializable,
     OwnableUpgradeable, 
     PausableUpgradeable, 
     ReentrancyGuardUpgradeable
@@ -157,6 +159,8 @@ contract SynthReactor is
         helixToken = _helixToken;
         synthToken = _synthToken;
         nftChef = _nftChef;
+
+        synthToMintPerBlock = 135 * 1e17;   // 13.5
 
         lastUpdateBlock = block.number;
 
