@@ -29,6 +29,7 @@ const { deployAdvisorRewards } = require("./advisorRewards")
 const { deployPaymentSplitter } = require("./paymentSplitter")
 const { deployAirdropPaymentSplitter } = require("./airdropPaymentSplitter")
 const { deployRouterProxy } = require("./routerProxy")
+const { deploySynthReactor } = require("./synthReactor")
 
 module.exports = {
     deployOwnerMultiSig,
@@ -60,4 +61,5 @@ module.exports = {
     deployPaymentSplitter,
     deployAirdropPaymentSplitter,
     deployRouterProxy,
+    deploySynthReactor,
 }
