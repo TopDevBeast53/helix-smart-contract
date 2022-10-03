@@ -335,11 +335,10 @@ module.exports = {
     },
     synthReactor: {
         1: '0xb6e0d4fdeabe595f7bb4618a9f2621a079a66193',    // deployed 9/30/2022
-        4: '0x6310d8561f220b93C0Ae38308cF64e4F4498F690',    // deployed 9/29/2022
+        4: '0xbcBa71A842Ba856432d35Af1fA84dEDf56f69ccd',    // deployed 9/29/2022
     },
     synthReactorImplementation: {
         1: '0xe3246C76d6796c1b4e0099B7C900085F273303Ce',    // deployed 9/30/2022
-        4: '0x6D31b73fBdC84ea1aF452dEC107365Ac3B08cA2E',    // deployed 9/29/2022
+        4: '0x54B803846DA214C920a2dd21D7146f9641dDd72B',    // deployed 9/29/2022
     },
-
 }
