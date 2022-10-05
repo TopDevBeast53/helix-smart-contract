@@ -200,6 +200,7 @@ contract SynthReactor is
         totalShares += shares - prevShares;
 
         user.shares = shares;
+        user.rewardDebt = shares * accTokenPerShare / _REWARD_PRECISION;
          
         uint256 unlockTimestamp = block.timestamp + lockModifiers[_lockModifierIndex].duration;
         deposits.push(
@@ -254,6 +255,7 @@ contract SynthReactor is
         totalShares -= prevShares - shares;
 
         user.shares = shares;
+        user.rewardDebt = shares * accTokenPerShare / _REWARD_PRECISION;
 
         deposit.withdrawn = true;
 
@@ -311,6 +313,7 @@ contract SynthReactor is
         }
 
         user.shares = shares;
+        user.rewardDebt = shares * accTokenPerShare / _REWARD_PRECISION;
 
         emit UpdateUserStakedNfts(_user, _stakedNfts, user.shares, totalShares);
     }
