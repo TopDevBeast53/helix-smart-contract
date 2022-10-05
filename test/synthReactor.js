@@ -915,8 +915,20 @@ describe("SynthReactor", () => {
             // advance blocks to current
             await setBlockNumber(11496558)
 
-            const alicePendingReward = await synthReactor.getPendingReward(alice.address)
-            console.log(alicePendingReward)
+            // check the results
+            const totalBlockDelta = 11496558 - 11472311
+            const maxExpectedSynthToMint = synthToMintPerBlock.mul(totalBlockDelta)
+
+            await synthReactor.connect(alice).harvestReward()
+            await synthReactor.connect(bobby).harvestReward()
+            await synthReactor.connect(carol).harvestReward()
+
+            const aliceSynth = await synthToken.balanceOf(alice.address)
+            const bobbySynth = await synthToken.balanceOf(bobby.address)
+            const carolSynth = await synthToken.balanceOf(carol.address)
+            
+            const totalSynthMinted = aliceSynth.add(bobbySynth).add(carolSynth)
+            expect(totalSynthMinted).to.be.below(maxExpectedSynthToMint)
         })
 
         it("calculates shares properly", async() => {
