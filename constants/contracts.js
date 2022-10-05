@@ -53,11 +53,13 @@ module.exports = {
         1: '0x6D90915AFcd1577DfF311d9c20d5aCD959fC7C8a',    // deployed 7/12/2022
         3: '0x24be493d0f3b9C9Dd1f702d0917Cdcb6CbFfF0a2',
         4: '0xdD62271F8a54446032bfF3cEC93861D4F8100F4b',
+        97: '0xC4B1B238Cd989a83bB3EEC030183E73A4562A38D'    // deployed 10/5/2022
     },
     helixNFTImplementation: {
         1: '0xC0663d87c82e4eC8093fE7AFd899Ba1244C49984',    // deployed 7/12/2022
         3: '0x13A54Ee2FDA40A26C9A11167c8304338821eDD7B',
         4: '0xd3EC4a703aC914a5777F2fd0bF434eAE1a19628D',
+        97: '0x461e3e7C700Ba1a2282e63F43f34F9F0a37D328b'    // deployed 10/5/2022
     },
     feeMinter: {
         1: '0xfdaE467192a8eFd6eF00Ab3eaf3f52Ad4c60C615',    // deployed 7/4/2022
@@ -82,12 +84,13 @@ module.exports = {
         31: '0x1f59f5ad0460f90881330678F1cFacE43d2F9cc8',
         56: '0x0000000000000000000000000000000000000000',
         66: '0x0000000000000000000000000000000000000000',
-        97: '0x0000000000000000000000000000000000000000',
+        97: '0x9c344695a43E85774F8F886DaBF9AE5C11428bC2'    // deployed 10/5/2022
     },
     helixChefNFTImplementation: {
         1: '0x5b7c4af5c08406b5b77e0f0b79294a6e7897d114',    // deployed 9/15/2022
         3: '0x1F59ccdb55F61Bf5Eaf6f152111455d2244886B1',
         4: '0xCc89Faa5340947B4b522Dc49AC108c402B35E1e7',    // deployed 9/30/2022
+        97: '0x3F64c1c57D20c946077e49a30bC8A6e008EEeb24'    // deployed 10/5/2022
     },
     feeHandler: {
         1: '0x2d4c985Fe0BD68706cBC18fB0C8fE72cFC158849',    // deployed 7/4/2022
@@ -332,13 +335,16 @@ module.exports = {
     synthToken: {
         1: '0x1a22f557529Aff98A0BbC7D34248Db4a97dD3bdc',    // deployed 9/29/2022
         4: '0x963380733f447f760621524F6cF8e35CFB40fB8f',    // deployed 9/29/2022
+        97: '0x1d600cc9dEfabc384F17B53596d7909DB1030987'    // deployed 10/5/2022
     },
     synthReactor: {
         1: '0xb6e0d4fdeabe595f7bb4618a9f2621a079a66193',    // deployed 9/30/2022
         4: '0xbcBa71A842Ba856432d35Af1fA84dEDf56f69ccd',    // deployed 9/29/2022
+        97: '0x6C3f85c7F3979308751EBFba244F6eF5400aA911'    // deployed 10/5/2022
     },
     synthReactorImplementation: {
         1: '0xe3246C76d6796c1b4e0099B7C900085F273303Ce',    // deployed 9/30/2022
         4: '0x54B803846DA214C920a2dd21D7146f9641dDd72B',    // deployed 9/29/2022
+        97: '0xB3F97C4DbBEf56f3220e9ceFf80b93eB483D0Ef7'    // deployed 10/5/2022
     },
 }
