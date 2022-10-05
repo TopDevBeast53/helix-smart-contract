@@ -35,9 +35,10 @@ describe("SynthReactor", () => {
         await synthToken.addMinter(synthReactor.address)
 
         // mint helix to alice for her to lock
-        const mintAmount = expandTo18Decimals(1000)
+        const mintAmount = expandTo18Decimals(2000)
         await helixToken.connect(minter).mint(alice.address, mintAmount)
         await helixToken.connect(minter).mint(bobby.address, mintAmount)
+        await helixToken.connect(minter).mint(carol.address, mintAmount)
 
         // mint nfts to alice for her to stake
         await helixNft.connect(minter).mint(alice.address)      // tokenId 1
@@ -817,6 +818,102 @@ describe("SynthReactor", () => {
 
             const bobbyHelixBalance = await helixToken.balanceOf(bobby.address)
             await helixToken.connect(bobby).approve(synthReactor.address, bobbyHelixBalance)
+
+            const carolHelixBalance = await helixToken.balanceOf(carol.address)
+            await helixToken.connect(carol).approve(synthReactor.address, carolHelixBalance)
+
+        })
+
+        it("should calculate reward properly after user makes multiple deposits/withdrawals", async () => {
+            // add a short duration, high weight lock modifier
+            const lockModifierDuration = 60
+            const lockModifierWeight = 100
+            await synthReactor.connect(deployer).addLockModifier(lockModifierDuration, lockModifierWeight)
+
+            // set the synth to mint per block
+            let synthToMintPerBlock = 100
+            await synthReactor.setSynthToMintPerBlock(synthToMintPerBlock)
+
+            await setBlockNumber(11472311 - 1)
+            // bobby locks 100 helix with 100 weight on block number 11472311
+            let bobbyLockAmount = expandTo18Decimals(100)
+            let bobbyDurationIndex = 5
+            await synthReactor.connect(bobby).lock(bobbyLockAmount, bobbyDurationIndex)
+
+            await setBlockNumber(11472329 - 1)
+            await synthReactor.connect(bobby).harvestReward()
+            // console.log(await synthToken.balanceOf(bobby.address)) 
+       
+            let depositIndex = 0
+            let unlockTimestamp = (await synthReactor.deposits(depositIndex)).unlockTimestamp.toNumber()
+            await setNextBlockTimestamp(unlockTimestamp)
+            await setBlockNumber(11472331 - 1)
+            await synthReactor.connect(bobby).unlock(depositIndex)
+            // console.log(await synthToken.balanceOf(bobby.address)) 
+
+            // set the synth to mint per block
+            await setBlockNumber(11472334 - 1)
+            synthToMintPerBlock = expandTo18Decimals(100)
+            await synthReactor.setSynthToMintPerBlock(synthToMintPerBlock)
+
+            await setBlockNumber(11472335 - 1)
+            bobbyLockAmount = expandTo18Decimals(100)
+            bobbyDurationIndex = 5
+            await synthReactor.connect(bobby).lock(bobbyLockAmount, bobbyDurationIndex)
+
+            depositIndex = 1
+            unlockTimestamp = (await synthReactor.deposits(depositIndex)).unlockTimestamp.toNumber()
+            await setNextBlockTimestamp(unlockTimestamp)
+            await setBlockNumber(11472341 - 1)
+            await synthReactor.connect(bobby).unlock(depositIndex)
+
+            // alice deposits some helix
+            await setBlockNumber(11489701 - 1)
+            let aliceLockAmount = expandTo18Decimals(100)
+            let aliceDurationIndex = 0
+            await synthReactor.connect(alice).lock(aliceLockAmount, aliceDurationIndex)
+            
+            // alice harvests
+            await setBlockNumber(11489714 - 1)
+            await synthReactor.connect(alice).harvestReward()
+
+            // alice harvests
+            await setBlockNumber(11489735 - 1)
+            await synthReactor.connect(alice).harvestReward()
+
+            // alice harvests
+            await setBlockNumber(11494475 - 1)
+            await synthReactor.connect(alice).harvestReward()
+
+            // alice locks
+            await setBlockNumber(11494494 - 1)
+            aliceLockAmount = expandTo18Decimals(20)
+            aliceDurationIndex = 5
+            await synthReactor.connect(alice).lock(aliceLockAmount, aliceDurationIndex)
+
+            // alice unlocks
+            depositIndex = 3
+            unlockTimestamp = (await synthReactor.deposits(depositIndex)).unlockTimestamp.toNumber()
+            await setNextBlockTimestamp(unlockTimestamp)
+            await setBlockNumber(11494613 - 1)
+            await synthReactor.connect(alice).unlock(depositIndex)
+
+            // alice locks
+            await setBlockNumber(11495222 - 1)
+            aliceLockAmount = expandTo18Decimals(1000)
+            aliceDurationIndex = 5
+            await synthReactor.connect(alice).lock(aliceLockAmount, aliceDurationIndex)
+
+            // carol locks
+            await setBlockNumber(11495357 - 1)
+            let carolLockAmount = expandTo18Decimals(1100)
+            let carolDurationIndex = 5
+            await synthReactor.connect(carol).lock(carolLockAmount, carolDurationIndex)
+
+            await setBlockNumber(11496558)
+
+            const alicePendingReward = await synthReactor.getPendingReward(alice.address)
+            console.log(alicePendingReward)
         })
 
         it("calculates shares properly", async() => {
@@ -1051,6 +1148,10 @@ describe("SynthReactor", () => {
 
     async function currentBlockNumber() {
         return (await hre.ethers.provider.getBlock("latest")).number
+    }
+
+    async function setBlockNumber(int) {
+        await mineBlocks(int - (await currentBlockNumber()))
     }
 
 })
