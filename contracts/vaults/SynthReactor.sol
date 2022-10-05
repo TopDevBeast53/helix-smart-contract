@@ -195,10 +195,13 @@ contract SynthReactor is
         uint256 stakedNfts = _getUserStakedNfts(msg.sender);
         uint256 prevShares = user.shares;
         uint256 shares = _getShares(user.weightedDeposits, stakedNfts);
+
         assert(shares >= prevShares);
         totalShares += shares - prevShares;
+
         user.shares = shares;
-  
+        user.rewardDebt = shares * accTokenPerShare / _REWARD_PRECISION;
+         
         uint256 unlockTimestamp = block.timestamp + lockModifiers[_lockModifierIndex].duration;
         deposits.push(
             Deposit({
@@ -247,9 +250,12 @@ contract SynthReactor is
         uint256 stakedNfts = _getUserStakedNfts(msg.sender);
         uint256 prevShares = user.shares;
         uint256 shares = _getShares(user.weightedDeposits, stakedNfts);
+
         assert(prevShares >= shares);
         totalShares -= prevShares - shares;
+
         user.shares = shares;
+        user.rewardDebt = shares * accTokenPerShare / _REWARD_PRECISION;
 
         deposit.withdrawn = true;
 
@@ -297,6 +303,7 @@ contract SynthReactor is
         User storage user = users[_user];
         uint256 prevShares = user.shares;
         uint256 shares = _getShares(user.weightedDeposits, _stakedNfts);
+
         if (shares >= prevShares) {
             // if the user has increased their stakedNfts
             totalShares += shares - prevShares;
@@ -304,7 +311,9 @@ contract SynthReactor is
             // if the user has decreased their staked nfts
             totalShares -= prevShares - shares;
         }
+
         user.shares = shares;
+        user.rewardDebt = shares * accTokenPerShare / _REWARD_PRECISION;
 
         emit UpdateUserStakedNfts(_user, _stakedNfts, user.shares, totalShares);
     }
