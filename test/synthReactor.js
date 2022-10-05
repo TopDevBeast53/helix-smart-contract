@@ -834,54 +834,56 @@ describe("SynthReactor", () => {
             let synthToMintPerBlock = 100
             await synthReactor.setSynthToMintPerBlock(synthToMintPerBlock)
 
+            // bobby locks
             await setBlockNumber(11472311 - 1)
-            // bobby locks 100 helix with 100 weight on block number 11472311
             let bobbyLockAmount = expandTo18Decimals(100)
             let bobbyDurationIndex = 5
             await synthReactor.connect(bobby).lock(bobbyLockAmount, bobbyDurationIndex)
 
+            // bobby harvests rewards
             await setBlockNumber(11472329 - 1)
             await synthReactor.connect(bobby).harvestReward()
-            // console.log(await synthToken.balanceOf(bobby.address)) 
-       
+      
+            // bobby unlocks
             let depositIndex = 0
             let unlockTimestamp = (await synthReactor.deposits(depositIndex)).unlockTimestamp.toNumber()
             await setNextBlockTimestamp(unlockTimestamp)
             await setBlockNumber(11472331 - 1)
             await synthReactor.connect(bobby).unlock(depositIndex)
-            // console.log(await synthToken.balanceOf(bobby.address)) 
 
             // set the synth to mint per block
             await setBlockNumber(11472334 - 1)
             synthToMintPerBlock = expandTo18Decimals(100)
             await synthReactor.setSynthToMintPerBlock(synthToMintPerBlock)
-
+            
+            // bobby locks
             await setBlockNumber(11472335 - 1)
             bobbyLockAmount = expandTo18Decimals(100)
             bobbyDurationIndex = 5
             await synthReactor.connect(bobby).lock(bobbyLockAmount, bobbyDurationIndex)
 
+            // bobby unlocks
             depositIndex = 1
             unlockTimestamp = (await synthReactor.deposits(depositIndex)).unlockTimestamp.toNumber()
             await setNextBlockTimestamp(unlockTimestamp)
             await setBlockNumber(11472341 - 1)
             await synthReactor.connect(bobby).unlock(depositIndex)
 
-            // alice deposits some helix
+            // alice locks
             await setBlockNumber(11489701 - 1)
             let aliceLockAmount = expandTo18Decimals(100)
             let aliceDurationIndex = 0
             await synthReactor.connect(alice).lock(aliceLockAmount, aliceDurationIndex)
             
-            // alice harvests
+            // alice harvests rewards
             await setBlockNumber(11489714 - 1)
             await synthReactor.connect(alice).harvestReward()
 
-            // alice harvests
+            // alice harvests rewards
             await setBlockNumber(11489735 - 1)
             await synthReactor.connect(alice).harvestReward()
 
-            // alice harvests
+            // alice harvests rewards
             await setBlockNumber(11494475 - 1)
             await synthReactor.connect(alice).harvestReward()
 
@@ -910,6 +912,7 @@ describe("SynthReactor", () => {
             let carolDurationIndex = 5
             await synthReactor.connect(carol).lock(carolLockAmount, carolDurationIndex)
 
+            // advance blocks to current
             await setBlockNumber(11496558)
 
             const alicePendingReward = await synthReactor.getPendingReward(alice.address)
