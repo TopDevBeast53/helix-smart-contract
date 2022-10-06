@@ -338,7 +338,7 @@ module.exports = {
         4: '0xbcBa71A842Ba856432d35Af1fA84dEDf56f69ccd',    // deployed 9/29/2022
     },
     synthReactorImplementation: {
-        1: '0xe3246C76d6796c1b4e0099B7C900085F273303Ce',    // deployed 9/30/2022
+        1: '0xa4383581Ad9E2D5a2C219f6825Ba1C7764d6CB42',    // deployed 10/6/2022
         4: '0x54B803846DA214C920a2dd21D7146f9641dDd72B',    // deployed 9/29/2022
     },
 }
