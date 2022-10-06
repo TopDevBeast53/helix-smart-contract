@@ -343,7 +343,7 @@ module.exports = {
         97: '0x6C3f85c7F3979308751EBFba244F6eF5400aA911'    // deployed 10/5/2022
     },
     synthReactorImplementation: {
-        1: '0xe3246C76d6796c1b4e0099B7C900085F273303Ce',    // deployed 9/30/2022
+        1: '0xa4383581Ad9E2D5a2C219f6825Ba1C7764d6CB42',    // deployed 10/6/2022
         4: '0x54B803846DA214C920a2dd21D7146f9641dDd72B',    // deployed 9/29/2022
         97: '0xB3F97C4DbBEf56f3220e9ceFf80b93eB483D0Ef7'    // deployed 10/5/2022
     },
