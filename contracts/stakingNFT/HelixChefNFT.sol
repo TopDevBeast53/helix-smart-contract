@@ -147,6 +147,7 @@ contract HelixChefNFT is
             stakedNfts += (wrappedNfts > 0) ? wrappedNfts : 1;
         }
         user.stakedNfts += stakedNfts;
+        user.rewardDebt = user.stakedNfts * accTokenPerShare / REWARDS_PRECISION;
         totalStakedNfts += stakedNfts;
 
         _notifySynthReactor(msg.sender, user.stakedNfts);
@@ -179,6 +180,7 @@ contract HelixChefNFT is
             unstakedNfts += (wrappedNfts > 0) ? wrappedNfts : 1;
         }
         user.stakedNfts -= unstakedNfts;
+        user.rewardDebt = user.stakedNfts * accTokenPerShare / REWARDS_PRECISION;
         totalStakedNfts -= unstakedNfts;
 
         _notifySynthReactor(msg.sender, user.stakedNfts);
