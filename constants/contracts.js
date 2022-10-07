@@ -87,7 +87,7 @@ module.exports = {
         97: '0x9c344695a43E85774F8F886DaBF9AE5C11428bC2'    // deployed 10/5/2022
     },
     helixChefNFTImplementation: {
-        1: '0x5b7c4af5c08406b5b77e0f0b79294a6e7897d114',    // deployed 9/15/2022
+        1: '0xd71f6F000604BC9bdDFdA2e11cD31C4843B9A42A',    // deployed 10/8/2022
         3: '0x1F59ccdb55F61Bf5Eaf6f152111455d2244886B1',
         4: '0xCc89Faa5340947B4b522Dc49AC108c402B35E1e7',    // deployed 9/30/2022
         97: '0x3F64c1c57D20c946077e49a30bC8A6e008EEeb24'    // deployed 10/5/2022
